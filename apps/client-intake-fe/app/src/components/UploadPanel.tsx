@@ -67,7 +67,7 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
       <div className="app-card__head">
         <h2 className="app-card__title">Upload documents</h2>
       </div>
-      <div className="app-stack">
+      <div className="app-stack app-card__body">
         {!data.can_upload && (
           <Notice
             variant="warning"
@@ -85,9 +85,9 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
           onDrop={onDrop}
         >
           <KbIcon name="upload" className="kb-icon--32 kb-icon--accent" />
-          <div>
-            <p>Drag and drop PDF files here</p>
-            <p className="dropzone__hint">or choose them from your computer</p>
+          <div className="dropzone__text">
+            <p>Drop PDF files here</p>
+            <p className="dropzone__hint">or browse your device</p>
           </div>
           <button type="button" className="kb-btn kb-btn--secondary kb-btn--small" onClick={() => inputRef.current?.click()}>
             Choose files
@@ -140,19 +140,6 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
 
         {error && <Notice variant="error" title="Upload failed" description={error} />}
 
-        <div className="app-actions">
-          <button
-            type="button"
-            className={`kb-btn kb-btn--primary${isUploading ? " is-loading" : ""}`}
-            disabled={!canUpload || isUploading}
-            aria-busy={isUploading}
-            onClick={onUpload}
-          >
-            <KbIcon name="upload" />
-            {files.length > 1 ? `Upload ${files.length} files` : "Upload"}
-          </button>
-        </div>
-
         {uploaded.length > 0 && (
           <>
             <Notice
@@ -171,6 +158,18 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
             </ul>
           </>
         )}
+      </div>
+      <div className="app-actions">
+        <button
+          type="button"
+          className={`kb-btn kb-btn--primary${isUploading ? " is-loading" : ""}`}
+          disabled={!canUpload || isUploading}
+          aria-busy={isUploading}
+          onClick={onUpload}
+        >
+          <KbIcon name="upload" />
+          {files.length > 1 ? `Upload ${files.length} files` : "Upload"}
+        </button>
       </div>
     </section>
   );
