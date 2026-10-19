@@ -7,5 +7,5 @@ const normalize = (value: string) =>
 export default function filterClients(clients: Client[], query: string): Client[] {
   const q = normalize(query);
   if (!q) return clients;
-  return clients.filter((c) => normalize(c.name).includes(q) || normalize(c.id).includes(q));
+  return clients.filter((c) => normalize(c.name).includes(q) || normalize(c.id).includes(q) || c.ico.includes(q));
 }

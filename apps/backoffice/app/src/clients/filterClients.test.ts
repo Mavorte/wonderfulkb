@@ -9,11 +9,11 @@ describe("filterClients", () => {
   });
 
   it("ignores case and diacritics", () => {
-    assert.deepEqual(filterClients(mockClients, "dvorak").map((c) => c.name), ["Lucie Dvořáková"]);
-    assert.deepEqual(filterClients(mockClients, "ČERNÝ").map((c) => c.name), ["Tomáš Černý"]);
+    assert.deepEqual(filterClients(mockClients, "obrabeni").map((c) => c.name), ["Dravonex Obrábění s.r.o."]);
+    assert.deepEqual(filterClients(mockClients, "VŘESAVA").map((c) => c.name), ["Agroluh Vřesava s.r.o."]);
   });
 
   it("matches by client ID", () => {
-    assert.deepEqual(filterClients(mockClients, "cl-1026").map((c) => c.id), ["CL-102611"]);
+    assert.deepEqual(filterClients(mockClients, "98007106").map((c) => c.id), [mockClients[1].id]);
   });
 });

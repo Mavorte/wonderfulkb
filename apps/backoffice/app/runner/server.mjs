@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocket, WebSocketServer } from "ws";
+import createDocumentProxy from "./createDocumentProxy.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,12 @@ const controllerBaseUrl = process.env.CONTROLLER_BASE_URL ?? "http://localhost:5
 const apiKey = process.env.WONDERFUL_API_KEY ?? "";
 const port = Number(process.env.RUNNER_PORT ?? "3200");
 const useHmr = process.env.RUNNER_HMR !== "0";
+const documentProxy = createDocumentProxy({
+  documentApiUrl: process.env.DOCUMENT_API_URL ?? "http://127.0.0.1:8010",
+  caseClientApiUrl: process.env.CASE_CLIENT_API_URL,
+  documentApiKey: process.env.DOCUMENT_API_KEY,
+  caseClientApiKey: process.env.CASE_CLIENT_API_KEY,
+});
 
 function getTheme(theme) {
   return theme === "dark" ? "dark" : "light";
@@ -269,6 +276,11 @@ async function main() {
 
       if (requestUrl.pathname.startsWith("/proxy/")) {
         await handleProxy(req, res, requestUrl);
+        return;
+      }
+
+      if (requestUrl.pathname.startsWith("/document-api/")) {
+        await documentProxy(req, res, requestUrl);
         return;
       }
 
