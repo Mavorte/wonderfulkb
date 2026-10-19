@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Komerční banka — design system</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .spec { max-width: 1200px; margin: 0 auto; padding: 48px 32px 96px; }
+  .spec-head { display: flex; align-items: center; gap: 24px; padding-bottom: 32px; border-bottom: 1px solid var(--kb-border); margin-bottom: 48px; }
+  .spec-head img { height: 32px; }
+  .spec-head p { margin: 0; color: var(--kb-text-secondary); }
+  .spec section { margin-bottom: 72px; }
+  .spec h2.spec-title { font-size: 2.125rem; line-height: 3rem; letter-spacing: -0.035rem; font-weight: 400; margin: 0 0 8px; }
+  .spec .spec-lead { margin: 0 0 32px; color: var(--kb-text-secondary); max-width: 720px; }
+  .spec h3.spec-sub { font-size: 1.125rem; line-height: 1.875rem; font-weight: 600; margin: 32px 0 16px; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+  .swatch { background: var(--kb-surface-card); border-radius: var(--kb-radius); overflow: hidden; border: 1px solid var(--kb-grey-5); }
+  .swatch i { display: block; height: 72px; }
+  .swatch div { padding: 10px 12px 12px; font-size: 0.875rem; line-height: 1.375rem; }
+  .swatch b { display: block; font-weight: 600; }
+  .swatch code, .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.75rem; color: var(--kb-text-muted); }
+  .roles { width: 100%; border-collapse: collapse; background: var(--kb-surface-card); border-radius: var(--kb-radius); overflow: hidden; }
+  .roles th, .roles td { text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--kb-grey-5); font-size: 0.875rem; line-height: 1.5rem; vertical-align: middle; }
+  .roles th { font-weight: 600; background: var(--kb-surface-muted); }
+  .roles .chip { display: inline-block; width: 20px; height: 20px; border-radius: 4px; vertical-align: middle; margin-right: 8px; border: 1px solid #0000001a; }
+  .type-row { display: grid; grid-template-columns: 180px 1fr; gap: 24px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--kb-grey-5); }
+  .type-row .meta { font-size: 0.75rem; line-height: 1.125rem; color: var(--kb-text-muted); font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .weights { display: flex; gap: 32px; flex-wrap: wrap; font-size: 1.75rem; line-height: 2.5rem; }
+  .note { background: var(--kb-notice-surface); border-radius: var(--kb-radius-sm); padding: 12px 16px; font-size: 0.875rem; line-height: 1.5rem; margin-top: 16px; max-width: 820px; }
+  .scale { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+  .scale div { text-align: center; font-size: 0.75rem; line-height: 1rem; color: var(--kb-text-muted); }
+  .scale i { display: block; background: var(--kb-accent); margin: 0 auto 8px; }
+  .radii { display: flex; gap: 20px; flex-wrap: wrap; }
+  .radii div { width: 112px; height: 88px; background: var(--kb-surface-card); border: 1px solid var(--kb-border); display: flex; align-items: flex-end; padding: 8px 10px; font-size: 0.75rem; line-height: 1rem; color: var(--kb-text-secondary); }
+  .elev { display: flex; gap: 24px; flex-wrap: wrap; }
+  .elev div { width: 220px; height: 120px; background: var(--kb-surface-card); border-radius: var(--kb-radius); padding: 16px; font-size: 0.875rem; line-height: 1.375rem; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .row-label { width: 120px; font-size: 0.75rem; line-height: 1rem; color: var(--kb-text-muted); font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .dark-pad { background: var(--kb-surface-inverse); padding: 16px; border-radius: var(--kb-radius); display: flex; gap: 16px; flex-wrap: wrap; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-cta { display: grid; grid-template-columns: 738fr 430fr; gap: 32px; }
+  .usage { font-size: 0.875rem; line-height: 1.5rem; color: var(--kb-text-secondary); max-width: 820px; margin: 0 0 20px; }
+  .frame { border: 1px solid var(--kb-border); border-radius: var(--kb-radius); overflow: hidden; background: var(--kb-surface-page); }
+  .frame-inner { padding: 0 32px; }
+  .hero-object { position: absolute; right: 22%; top: 50%; width: 232px; height: 300px; transform: translateY(-50%) rotate(-4deg) skewY(4deg); background: linear-gradient(145deg, #ffffff 0%, #eef1f4 60%, #dcdfe3 100%); border-radius: 36px; box-shadow: 18px 22px 30px #586f8b33, inset -10px -10px 18px #c9ced480; }
+  .hero-object::after { content: ""; position: absolute; left: 24px; right: 74px; top: 140px; height: 26px; background: linear-gradient(180deg, #e8302a, #b8141a); border-radius: 2px; box-shadow: 6px 6px 8px #00000026; }
+  .placeholder-img { width: 100%; height: 100%; background: linear-gradient(135deg, #e9edf1, #c6d0da); display: flex; align-items: center; justify-content: center; color: var(--kb-text-muted); font-size: 0.75rem; }
+  @media (max-width: 991px) { .grid-2, .grid-cta { grid-template-columns: 1fr; } .type-row { grid-template-columns: 1fr; gap: 4px; } }
+</style>
+</head>
+<body class="kb-root">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-arrow-right" viewBox="0 0 32 32"><path d="M17.061 16L12.111 11.05L13.525 9.63599L19.889 16L13.525 22.364L12.111 20.95L17.061 16Z"/></symbol>
+  <symbol id="i-arrow-down" viewBox="0 0 32 32"><path d="m16 17.061 4.95-4.95 1.414 1.414L16 19.889l-6.364-6.364 1.414-1.414 4.95 4.95Z"/></symbol>
+  <symbol id="i-menu-arrow" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M17.5007 8.18933L12.0007 13.6893L6.50068 8.18933L5.44002 9.24999L11.4704 15.2803C11.611 15.421 11.8018 15.5 12.0007 15.5C12.1996 15.5 12.3904 15.421 12.531 15.2803L18.5613 9.24999L17.5007 8.18933Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m10.409 14.387 6.894-6.895 1.061 1.06-7.955 7.956-4.773-4.773 1.06-1.06 3.713 3.712Z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 32 32"><path d="M23 25.8241H9C8.73478 25.8241 8.48043 25.7188 8.29289 25.5312C8.10536 25.3437 8 25.0894 8 24.8241V15.8241H5L15.327 6.43614C15.5111 6.26862 15.7511 6.17578 16 6.17578C16.2489 6.17578 16.4889 6.26862 16.673 6.43614L27 15.8241H24V24.8241C24 25.0894 23.8946 25.3437 23.7071 25.5312C23.5196 25.7188 23.2652 25.8241 23 25.8241ZM17 23.8241H22V13.9811L16 8.52714L10 13.9811V23.8241H15V17.8241H17V23.8241Z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2.25 12.5C2.25 10.9812 3.48122 9.75 5 9.75H19C20.5188 9.75 21.75 10.9812 21.75 12.5V19.5C21.75 21.0188 20.5188 22.25 19 22.25H5C3.48122 22.25 2.25 21.0188 2.25 19.5V12.5ZM5 11.25C4.30964 11.25 3.75 11.8096 3.75 12.5V19.5C3.75 20.1904 4.30964 20.75 5 20.75H19C19.6904 20.75 20.25 20.1904 20.25 19.5V12.5C20.25 11.8096 19.6904 11.25 19 11.25H5Z"/><path fill-rule="evenodd" d="M6.25 7.5C6.25 4.32436 8.82436 1.75 12 1.75C15.1756 1.75 17.75 4.32436 17.75 7.5V11.25H6.25V7.5ZM12 3.25C9.65279 3.25 7.75 5.15279 7.75 7.5V9.75H16.25V7.5C16.25 5.15279 14.3472 3.25 12 3.25Z"/><path fill-rule="evenodd" d="M12.75 13.75V18.75H11.25V13.75H12.75Z"/></symbol>
+  <symbol id="i-user-add" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M11.5 2.75C9.15279 2.75 7.25 4.65279 7.25 7C7.25 9.34721 9.15279 11.25 11.5 11.25C13.8472 11.25 15.75 9.34721 15.75 7C15.75 4.65279 13.8472 2.75 11.5 2.75ZM5.75 7C5.75 3.82436 8.32436 1.25 11.5 1.25C14.6756 1.25 17.25 3.82436 17.25 7C17.25 10.1756 14.6756 12.75 11.5 12.75C8.32436 12.75 5.75 10.1756 5.75 7Z"/><path fill-rule="evenodd" d="M8.5 15.75C6.15279 15.75 4.25 17.6528 4.25 20V22H2.75V20C2.75 16.8244 5.32436 14.25 8.5 14.25H14.5V15.75H8.5Z"/><path fill-rule="evenodd" d="M18.25 15.25V22.75H16.75V15.25H18.25Z"/><path fill-rule="evenodd" d="M21.25 19.75H13.75V18.25H21.25V19.75Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 17 16"><path fill-rule="evenodd" d="M3.02865 7.3335C3.02865 4.75617 5.11798 2.66683 7.69531 2.66683C10.2726 2.66683 12.362 4.75617 12.362 7.3335C12.362 9.91083 10.2726 12.0002 7.69531 12.0002C5.11798 12.0002 3.02865 9.91083 3.02865 7.3335ZM7.69531 1.3335C4.3816 1.3335 1.69531 4.01979 1.69531 7.3335C1.69531 10.6472 4.3816 13.3335 7.69531 13.3335C9.18243 13.3335 10.5432 12.7925 11.5915 11.8965L14.3619 14.6669L15.3047 13.7241L12.5036 10.923C13.2521 9.92204 13.6953 8.67953 13.6953 7.3335C13.6953 4.01979 11.009 1.3335 7.69531 1.3335Z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.52632 18.5L5.5 17.4737L10.9737 12L5.5 6.52632L6.52632 5.5L12 10.9737L17.4737 5.5L18.5 6.52632L13.0263 12L18.5 17.4737L17.4737 18.5L12 13.0263L6.52632 18.5Z"/></symbol>
+</svg>
+<main class="spec">
+  <header class="spec-head">
+    <img src="assets/kb-logo.svg" alt="Komerční banka">
+    <p>Design system captured from kb.cz (Běžný účet page), October 2026. Values are observed unless marked as inferred or proposed.</p>
+  </header>
+
+  <section id="color">
+    <h2 class="spec-title">Barvy / Color</h2>
+    <p class="spec-lead">KB is mostly white, cool grey and near-black. Corporate red is reserved for the primary action, icons and accent links. The logo uses its own red, which differs slightly from the UI red.</p>
+
+    <h3 class="spec-sub">Brand and action</h3>
+    <div class="swatches">
+      <div class="swatch"><i style="background:#e00000"></i><div><b>red-corporate</b><code>#E00000</code></div></div>
+      <div class="swatch"><i style="background:#b8002e"></i><div><b>red hover</b><code>#B8002E</code></div></div>
+      <div class="swatch"><i style="background:#e60028"></i><div><b>logo red</b><code>#E60028</code></div></div>
+      <div class="swatch"><i style="background:#a50000"></i><div><b>promo stripe</b><code>#A50000</code></div></div>
+      <div class="swatch"><i style="background:#fff0f3"></i><div><b>red-5</b><code>#FFF0F3</code></div></div>
+      <div class="swatch"><i style="background:#000"></i><div><b>black</b><code>#000000</code></div></div>
+    </div>
+
+    <h3 class="spec-sub">Greys and surfaces</h3>
+    <div class="swatches">
+      <div class="swatch"><i style="background:#020203"></i><div><b>grey-200</b><code>#020203</code></div></div>
+      <div class="swatch"><i style="background:#2a3037"></i><div><b>grey-160</b><code>#2A3037</code></div></div>
+      <div class="swatch"><i style="background:#343b44"></i><div><b>grey dark mode</b><code>#343B44</code></div></div>
+      <div class="swatch"><i style="background:#525e6a"></i><div><b>grey-180</b><code>#525E6A</code></div></div>
+      <div class="swatch"><i style="background:#7b8b9d"></i><div><b>grey-80</b><code>#7B8B9D</code></div></div>
+      <div class="swatch"><i style="background:#97a6b6"></i><div><b>dark tertiary</b><code>#97A6B6</code></div></div>
+      <div class="swatch"><i style="background:#c6d0da"></i><div><b>grey-30</b><code>#C6D0DA</code></div></div>
+      <div class="swatch"><i style="background:#d8dfe7"></i><div><b>grey-20</b><code>#D8DFE7</code></div></div>
+      <div class="swatch"><i style="background:#eaeef3"></i><div><b>grey-5</b><code>#EAEEF3</code></div></div>
+      <div class="swatch"><i style="background:#f4f7f9"></i><div><b>blue-10</b><code>#F4F7F9</code></div></div>
+      <div class="swatch"><i style="background:#f9f9f9"></i><div><b>neutral F9</b><code>#F9F9F9</code></div></div>
+      <div class="swatch"><i style="background:#fff"></i><div><b>white</b><code>#FFFFFF</code></div></div>
+    </div>
+
+    <h3 class="spec-sub">Feedback and checks</h3>
+    <div class="swatches">
+      <div class="swatch"><i style="background:#226a57"></i><div><b>teal-170</b><code>#226A57</code></div></div>
+      <div class="swatch"><i style="background:#11c998"></i><div><b>mint (on dark)</b><code>#11C998</code></div></div>
+      <div class="swatch"><i style="background:#267c29"></i><div><b>success icon</b><code>#267C29</code></div></div>
+      <div class="swatch"><i style="background:#e2f5de"></i><div><b>success bg</b><code>#E2F5DE</code></div></div>
+      <div class="swatch"><i style="background:#fff9df"></i><div><b>yellow-10</b><code>#FFF9DF</code></div></div>
+    </div>
+
+    <h3 class="spec-sub">Semantic roles</h3>
+    <table class="roles">
+      <tr><th>Role</th><th>Value</th><th>Where it appears</th></tr>
+      <tr><td>Text</td><td><span class="chip" style="background:#020203"></span>#020203</td><td>Body, headings, nav, links</td></tr>
+      <tr><td>Text secondary</td><td><span class="chip" style="background:#2a3037"></span>#2A3037</td><td>Tariff card copy, breadcrumb home icon</td></tr>
+      <tr><td>Text muted</td><td><span class="chip" style="background:#7b8b9d"></span>#7B8B9D</td><td>Placeholders, breadcrumb chevrons, disabled text</td></tr>
+      <tr><td>Page background</td><td><span class="chip" style="background:#f4f7f9"></span>#F4F7F9</td><td>Body, active segment tab</td></tr>
+      <tr><td>Card surface</td><td><span class="chip" style="background:#fff"></span>#FFFFFF</td><td>Cards, CTA panels, hero text box</td></tr>
+      <tr><td>Subtle surface</td><td><span class="chip" style="background:#d8dfe7"></span>#D8DFE7</td><td>Promo tile</td></tr>
+      <tr><td>Highlight surface</td><td><span class="chip" style="background:#343b44"></span>#343B44</td><td>Recommended tariff card (text #D8DFE7, titles white)</td></tr>
+      <tr><td>Inverse surface</td><td><span class="chip" style="background:#020203"></span>#020203 / #000</td><td>Footer (#020203), segment bar (#000)</td></tr>
+      <tr><td>Border</td><td><span class="chip" style="background:#c6d0da"></span>#C6D0DA</td><td>Inputs, accordion dividers</td></tr>
+      <tr><td>Border strong</td><td><span class="chip" style="background:#7b8b9d"></span>#7B8B9D</td><td>Input focus</td></tr>
+      <tr><td>Primary action</td><td><span class="chip" style="background:#e00000"></span>#E00000 → #B8002E</td><td>Primary button, red links, icons, badges</td></tr>
+      <tr><td>Primary action text</td><td><span class="chip" style="background:#f9f9f9"></span>#F9F9F9</td><td>Text on red buttons</td></tr>
+      <tr><td>Disabled</td><td><span class="chip" style="background:#eaeef3"></span>#EAEEF3 / #7B8B9D</td><td>All button variants</td></tr>
+      <tr><td>Error</td><td><span class="chip" style="background:#e00000"></span>#E00000</td><td>Input border and message</td></tr>
+    </table>
+  </section>
+
+  <section id="type">
+    <h2 class="spec-title">Typografie / Type</h2>
+    <p class="spec-lead">One family: Inter, mostly 400 and 600. Every size has its own negative tracking. Section headings are large and <em>regular</em> weight; card and page titles are semibold.</p>
+    <div class="type-row"><div class="meta">4xl · 44/60 · 600<br>H1 page title</div><div class="kb-text-4xl" style="font-weight:600">Běžný účet</div></div>
+    <div class="type-row"><div class="meta">3xl · 34/48 · 400<br>H2 section</div><div class="kb-text-3xl">Založte si účet v tarifu</div></div>
+    <div class="type-row"><div class="meta">2xl · 28/40 · 600<br>Card / CTA title</div><div class="kb-text-2xl" style="font-weight:600">Zavoláme vám</div></div>
+    <div class="type-row"><div class="meta">xl · 22/32 · 400<br>Hero perex</div><div class="kb-text-xl">Založte si online účet v tarifu s <b style="font-weight:600">bonusem až 4 000 Kč</b></div></div>
+    <div class="type-row"><div class="meta">xl · 22/32 · 600<br>Product card title</div><div class="kb-text-xl" style="font-weight:600">Číslo účtu, které si zapamatujete</div></div>
+    <div class="type-row"><div class="meta">lg · 18/30 · 600<br>Price</div><div class="kb-text-lg" style="font-weight:600">39 Kč měsíčně</div></div>
+    <div class="type-row"><div class="meta">base · 16/28 · 400<br>Body</div><div class="kb-text-base">Všechny své produkty a služby snadno ovládáte v aplikaci KB+. Pokud potřebujete něco řešit s bankéřem, máme víc než 200 poboček.</div></div>
+    <div class="type-row"><div class="meta">base · 16/28 · 600<br>Nav, button</div><div class="kb-text-base" style="font-weight:600">Tarify &nbsp; Produkty &nbsp; Extra služby</div></div>
+    <div class="type-row"><div class="meta">sm · 15/26 · 400<br>Footer link</div><div class="kb-text-sm">Pobočky a bankomaty</div></div>
+    <div class="type-row"><div class="meta">xs · 14/24 · 600<br>Segment tab, error</div><div class="kb-text-xs" style="font-weight:600">Občané · Živnostníci a malé firmy</div></div>
+    <div class="type-row"><div class="meta">2xs · 12/16 · 600<br>Badge</div><div class="kb-text-2xs" style="font-weight:600">ZDARMA · Akce</div></div>
+    <h3 class="spec-sub">Weights</h3>
+    <div class="weights"><span style="font-weight:400">Regular 400</span><span style="font-weight:500">Medium 500</span><span style="font-weight:600">Semibold 600</span><span style="font-weight:700">Bold 700</span></div>
+    <p class="note">On phones (below 992px) headings step down one size: H1 44 → 28, H2 34 → 28, CTA titles 28 → 22.</p>
+  </section>
+  <section id="space">
+    <h2 class="spec-title">Rozestupy a tvary / Spacing and shapes</h2>
+    <p class="spec-lead">A 4px base. Cards use 32px padding, CTA panels 48 × 64, accordion rows 24 × 32, buttons 10 × 32 (50px tall). Sections are separated by 48–64px.</p>
+    <div class="scale">
+      <div><i style="width:4px;height:4px"></i>1 · 4</div>
+      <div><i style="width:8px;height:8px"></i>2 · 8</div>
+      <div><i style="width:12px;height:12px"></i>3 · 12</div>
+      <div><i style="width:16px;height:16px"></i>4 · 16</div>
+      <div><i style="width:20px;height:20px"></i>5 · 20</div>
+      <div><i style="width:24px;height:24px"></i>6 · 24</div>
+      <div><i style="width:32px;height:32px"></i>8 · 32</div>
+      <div><i style="width:48px;height:48px"></i>12 · 48</div>
+      <div><i style="width:64px;height:64px"></i>16 · 64</div>
+    </div>
+    <h3 class="spec-sub">Radius</h3>
+    <div class="radii">
+      <div style="border-radius:2px">3xs · 2</div>
+      <div style="border-radius:4px">2xs · 4<br>badge, tab, small btn</div>
+      <div style="border-radius:6px">xs · 6<br>input</div>
+      <div style="border-radius:8px">sm · 8<br>button</div>
+      <div style="border-radius:12px">default · 12<br>card, image</div>
+      <div style="border-radius:24px">lg · 24</div>
+      <div style="border-radius:9999px;justify-content:center">full</div>
+    </div>
+    <h3 class="spec-sub">Elevation</h3>
+    <p class="usage">KB is almost flat. Cards sit on the light page background without a shadow; shadows are reserved for floating layers.</p>
+    <div class="elev">
+      <div>Flat card<br><span class="mono">no shadow</span></div>
+      <div style="box-shadow:var(--kb-shadow-cookie)">Cookie / popover<br><span class="mono">0 2px 6px #2C36450D</span></div>
+      <div style="box-shadow:var(--kb-shadow-card)">Floating card<br><span class="mono">0 4 20 #2C364512 + 0 2 6</span></div>
+      <div style="box-shadow:var(--kb-shadow-services)">Services<br><span class="mono">6-layer soft shadow</span></div>
+    </div>
+    <h3 class="spec-sub">Layout</h3>
+    <p class="usage">Container max width 94rem (98rem on wide screens), 16px side padding on phones and 32px on desktop, 24-column grid. Main breakpoint is 992px; text blocks such as accordions span 14 columns with a 1-column offset.</p>
+  </section>
+
+  <section id="components">
+    <h2 class="spec-title">Komponenty / Components</h2>
+    <p class="spec-lead">Re-created from the live page. They're a portable stylesheet, not KB's own code.</p>
+
+    <h3 class="spec-sub">Button</h3>
+    <p class="usage">Primary red for the single main action per view. Secondary is outlined dark, tertiary is a light fill used inside dark cards, quaternary is outlined white for dark surfaces. Pressing scales the button down. Every variant uses the same grey disabled style. <b>Proposed:</b> the 2px dark focus ring (kb.cz relies on the browser default).</p>
+    <div class="row"><span class="row-label">primary</span><button class="kb-btn kb-btn--primary">Chci účet v tarifu</button><button class="kb-btn kb-btn--primary is-hover">Hover</button><button class="kb-btn kb-btn--primary" style="outline:2px solid var(--kb-focus-ring);outline-offset:2px">Focus</button><button class="kb-btn kb-btn--primary" disabled>Disabled</button><button class="kb-btn kb-btn--primary is-loading" aria-busy="true">Loading</button></div>
+    <div class="row"><span class="row-label">secondary</span><button class="kb-btn kb-btn--secondary">Vybrat pobočku</button><button class="kb-btn kb-btn--secondary is-hover">Hover</button><button class="kb-btn kb-btn--secondary" disabled>Disabled</button></div>
+    <div class="row"><span class="row-label">tertiary</span><button class="kb-btn kb-btn--tertiary">Sjednat online</button><button class="kb-btn kb-btn--tertiary is-hover">Hover</button><button class="kb-btn kb-btn--tertiary" disabled>Disabled</button></div>
+    <div class="row"><span class="row-label">quaternary</span><div class="dark-pad"><button class="kb-btn kb-btn--quaternary">Zjistit více</button><button class="kb-btn kb-btn--quaternary is-hover">Hover</button><button class="kb-btn kb-btn--tertiary">Sjednat online</button></div></div>
+    <div class="row"><span class="row-label">small</span><button class="kb-btn kb-btn--primary kb-btn--small">Souhlasím</button><button class="kb-btn kb-btn--secondary kb-btn--small">Upravit</button></div>
+
+    <h3 class="spec-sub">Links</h3>
+    <p class="usage">Inline links in body copy stay text-coloured and underlined. Action links in cards are red, medium weight, with a red chevron that slides 8px right on hover.</p>
+    <div class="row">
+      <span class="row-label">inline</span><span>Máme víc než <a class="kb-link" href="#">200 poboček</a> a nonstop linku.</span>
+    </div>
+    <div class="row">
+      <span class="row-label">action</span><a class="kb-link-arrow" href="#">Zadat číslo <svg class="kb-icon"><use href="#i-arrow-right"/></svg></a>
+      <a class="kb-link-arrow kb-link-arrow--neutral" href="#">Detail produktu <svg class="kb-icon kb-icon--accent"><use href="#i-arrow-right"/></svg></a>
+    </div>
+
+    <h3 class="spec-sub">Badge</h3>
+    <div class="row"><span class="kb-badge">Zdarma</span><span class="kb-badge kb-badge--dark">Akce</span><span class="kb-badge kb-badge--label">Novinka</span></div>
+
+    <h3 class="spec-sub">Form field</h3>
+    <p class="usage">Inputs and selects are 48px tall with a 6px radius and a grey border that darkens on focus. In the error state the border and message turn red. The select uses a red chevron. <b>Proposed:</b> the focus ring and visible labels.</p>
+    <div class="grid-2" style="max-width:820px">
+      <div class="kb-field"><label for="f1">Telefonní číslo</label><input id="f1" class="kb-input" placeholder="+420 000 000 000"></div>
+      <div class="kb-field"><label for="f2">Focus</label><input id="f2" class="kb-input is-focus" value="+420 777 123 456"></div>
+      <div class="kb-field"><label for="f3">Error</label><input id="f3" class="kb-input" aria-invalid="true" aria-describedby="f3e" value="777 12"><span id="f3e" class="kb-field__error">Zadejte platné telefonní číslo</span></div>
+      <div class="kb-field"><label for="f4">Disabled</label><input id="f4" class="kb-input" disabled value="Nelze upravit"></div>
+      <div class="kb-field"><label for="f5">Select</label><select id="f5" class="kb-select"><option>Praha</option><option>Brno</option></select></div>
+    </div>
+
+    <h3 class="spec-sub">Breadcrumb</h3>
+    <ul class="kb-breadcrumb"><li><a href="#" aria-label="Domů"><svg class="kb-icon" style="fill:var(--kb-text-secondary)"><use href="#i-home"/></svg></a></li><li><svg class="kb-icon"><use href="#i-arrow-right"/></svg><a href="#">Účty</a></li><li><svg class="kb-icon"><use href="#i-arrow-right"/></svg><span>Běžný účet</span></li></ul>
+
+    <h3 class="spec-sub">Tariff comparator</h3>
+    <p class="usage">Four plans side by side on a white band. The recommended plan is lifted onto a dark slate card with a red badge, white title, mint check icons and a light tertiary button. Other plans use teal checks.</p>
+    <div class="kb-tariffs" style="padding:24px 0">
+      <div class="kb-tariff kb-tariff--highlight"><span class="kb-badge kb-tariff__badge">Zdarma</span><h3>Start</h3><div class="kb-tariff__price">0 Kč měsíčně</div><p class="kb-tariff__perex">Využívejte všechny moderní funkce s bezplatným účtem</p><a class="kb-btn kb-btn--tertiary" href="#">Sjednat online</a><ul><li><svg class="kb-icon"><use href="#i-check"/></svg>1 běžný účet v Kč</li><li><svg class="kb-icon"><use href="#i-check"/></svg>1 debetní karta</li><li><svg class="kb-icon"><use href="#i-check"/></svg>Sjednání od 6 let</li></ul><a class="kb-link-arrow" href="#">Více o tarifu <svg class="kb-icon"><use href="#i-arrow-right"/></svg></a></div>
+      <div class="kb-tariff"><h3>Standard</h3><div class="kb-tariff__price">39 Kč měsíčně</div><p class="kb-tariff__perex">Pro ty, kteří chtějí chytrý účet a občas si vyrazí za hranice</p><a class="kb-btn kb-btn--tertiary" href="#">Sjednat online</a><ul><li><svg class="kb-icon"><use href="#i-check"/></svg>1 multiměnový účet</li><li><svg class="kb-icon"><use href="#i-check"/></svg>Až 2 debetní karty</li></ul><a class="kb-link-arrow" href="#">Více o tarifu <svg class="kb-icon"><use href="#i-arrow-right"/></svg></a></div>
+      <div class="kb-tariff"><h3>Komfort</h3><div class="kb-tariff__price">89 Kč měsíčně</div><p class="kb-tariff__perex">Když je vás víc a často cestujete nebo nakupujete online</p><a class="kb-btn kb-btn--tertiary" href="#">Sjednat online</a><ul><li><svg class="kb-icon"><use href="#i-check"/></svg>Až 3 multiměnové účty</li><li><svg class="kb-icon"><use href="#i-check"/></svg>Až 6 debetních karet</li></ul><a class="kb-link-arrow" href="#">Více o tarifu <svg class="kb-icon"><use href="#i-arrow-right"/></svg></a></div>
+      <div class="kb-tariff"><h3>Exclusive</h3><div class="kb-tariff__price">169 Kč měsíčně</div><p class="kb-tariff__perex">Užívejte si ty nejlepší služby bez omezení doma i v zahraničí</p><a class="kb-btn kb-btn--tertiary" href="#">Sjednat online</a><ul><li><svg class="kb-icon"><use href="#i-check"/></svg>Až 10 multiměnových účtů</li><li><svg class="kb-icon"><use href="#i-check"/></svg>Až 100 debetních karet</li></ul><a class="kb-link-arrow" href="#">Více o tarifu <svg class="kb-icon"><use href="#i-arrow-right"/></svg></a></div>
+    </div>
+
+    <h3 class="spec-sub">CTA cards</h3>
+    <p class="usage">Large white panels with content anchored to the bottom. The whole card is the link; its red action text underlines on hover. Pair a wide card (image + text) with a narrow text-only card.</p>
+    <div class="grid-cta">
+      <a class="kb-cta kb-group" href="#"><h3>Schůzka na pobočce</h3><p>Vyberte si čas schůzky na pobočce nebo poradenském místě</p><span class="kb-link-arrow">Vybrat pobočku <svg class="kb-icon"><use href="#i-arrow-right"/></svg></span></a>
+      <a class="kb-cta kb-group" href="#"><h3>Zavoláme vám</h3><p>Dejte nám své číslo. Ozveme se vám a poradíme, jak na to</p><span class="kb-link-arrow">Zadat číslo <svg class="kb-icon"><use href="#i-arrow-right"/></svg></span></a>
+    </div>
+
+    <h3 class="spec-sub">Feature row and product card</h3>
+    <div class="grid-2">
+      <div class="kb-feature"><div class="kb-feature__media"><div class="placeholder-img">photo 4:3 · radius 12</div></div><div><h4>Jsme vám k dispozici</h4><p>Produkty ovládáte v aplikaci KB+. Máme víc než <a href="#">200 poboček</a>.</p></div></div>
+      <a class="kb-product kb-group" href="#"><div class="kb-product__media"><div class="placeholder-img">220 × 180</div></div><div><h3>Spořicí účet</h3><p>Získejte <b>úrokovou sazbu až 3,5 % p. a.</b></p><span class="kb-link-arrow kb-link-arrow--neutral">Detail produktu <svg class="kb-icon kb-icon--accent"><use href="#i-arrow-right"/></svg></span></div></a>
+    </div>
+
+    <h3 class="spec-sub">Promo tile</h3>
+    <a class="kb-tile kb-group" href="#"><h3>Staňte se klientem a získejte až 4 000 Kč</h3><span class="kb-link-arrow">Chci bonus <svg class="kb-icon"><use href="#i-arrow-right"/></svg></span></a>
+
+    <h3 class="spec-sub">Accordion</h3>
+    <div class="kb-accordion" style="max-width:690px">
+      <div class="kb-accordion__item"><button class="kb-accordion__button" aria-expanded="true">O účtu <svg class="kb-icon"><use href="#i-arrow-down"/></svg></button><div class="kb-accordion__panel">Běžný účet si založíte online během 10 minut.</div></div>
+      <div class="kb-accordion__item"><button class="kb-accordion__button" aria-expanded="false" style="background:var(--kb-surface-card)">Hover · Směnné kurzy <svg class="kb-icon"><use href="#i-arrow-down"/></svg></button></div>
+      <div class="kb-accordion__item"><button class="kb-accordion__button" aria-expanded="false" style="outline:2px solid var(--kb-focus-ring);outline-offset:-2px">Focus · Dokumenty <svg class="kb-icon"><use href="#i-arrow-down"/></svg></button></div>
+    </div>
+  </section>
+  <section id="a11y">
+    <h2 class="spec-title">Přístupnost / Accessibility notes</h2>
+    <p class="spec-lead">Kept separate from the observed design.</p>
+    <table class="roles">
+      <tr><th>Pair</th><th>Contrast</th><th>Verdict</th></tr>
+      <tr><td><span class="chip" style="background:#e00000"></span>#E00000 on white</td><td>≈ 5.0 : 1</td><td>AA text</td></tr>
+      <tr><td><span class="chip" style="background:#f9f9f9"></span>#F9F9F9 on #E00000</td><td>≈ 4.8 : 1</td><td>AA text</td></tr>
+      <tr><td><span class="chip" style="background:#d8dfe7"></span>#D8DFE7 on #343B44</td><td>≈ 8.4 : 1</td><td>AAA text</td></tr>
+      <tr><td><span class="chip" style="background:#7b8b9d"></span>#7B8B9D on white</td><td>≈ 3.5 : 1</td><td><b>Gap:</b> use only for placeholders, icons, disabled</td></tr>
+      <tr><td>Keyboard focus</td><td>—</td><td><b>Gap:</b> kb.cz has no custom focus style; 2px #020203 ring proposed</td></tr>
+      <tr><td>Accordion semantics</td><td>—</td><td><b>Gap:</b> kb.cz uses links; use buttons with aria-expanded</td></tr>
+    </table>
+  </section>
+
+  <section id="composition">
+    <h2 class="spec-title">Kompozice / Composition</h2>
+    <p class="spec-lead">A product page assembled only from the tokens and components above. The 3D hero object is a CSS stand-in for KB's rendered imagery; the copy is sample content.</p>
+    <div class="frame">
+      <div class="kb-stripe"><span class="kb-badge kb-badge--dark">Akce</span><span>Až 4 000 Kč a účet zdarma. <a href="#">To mě zajímá</a></span><svg class="kb-icon" style="margin-left:auto;fill:#fff"><use href="#i-close"/></svg></div>
+      <div class="kb-segments"><ul><li><a href="#" aria-current="page">Občané</a></li><li><a href="#">Živnostníci a malé firmy</a></li><li><a href="#">Střední a velké firmy, instituce</a></li></ul><div class="kb-segments__tools"><a href="#">Podpora</a><a href="#">Kontakt</a><a href="#">English</a><svg class="kb-icon kb-icon--16" style="fill:var(--kb-grey-20)"><use href="#i-search"/></svg></div></div>
+      <div class="kb-header"><a class="kb-header__logo" href="#"><img src="assets/kb-logo.svg" alt="Komerční banka"></a><nav><a href="#">Tarify</a><a href="#">Produkty <svg class="kb-icon kb-icon--16 kb-icon--accent"><use href="#i-menu-arrow"/></svg></a><a href="#">Extra služby</a><a href="#">O bance <svg class="kb-icon kb-icon--16 kb-icon--accent"><use href="#i-menu-arrow"/></svg></a></nav><div class="kb-header__actions"><a href="#"><svg class="kb-icon kb-icon--16"><use href="#i-user-add"/></svg><span class="kb-label">Stát se klientem</span></a><a href="#"><svg class="kb-icon kb-icon--16"><use href="#i-lock"/></svg><span class="kb-label">Přihlásit</span></a></div></div>
+      <div class="frame-inner">
+        <ul class="kb-breadcrumb" style="margin:0 0 16px"><li><a href="#" aria-label="Domů"><svg class="kb-icon" style="fill:var(--kb-text-secondary)"><use href="#i-home"/></svg></a></li><li><svg class="kb-icon"><use href="#i-arrow-right"/></svg><a href="#">Účty</a></li><li><svg class="kb-icon"><use href="#i-arrow-right"/></svg><span>Běžný účet</span></li></ul>
+        <div class="kb-hero"><div class="kb-hero__panel"><h1>Běžný účet</h1><p>Založte si online účet v tarifu s <strong>bonusem až 4 000 Kč</strong></p><a class="kb-btn kb-btn--primary" href="#" style="align-self:flex-start">Chci účet v tarifu</a></div><div class="hero-object" aria-hidden="true"></div></div>
+        <div style="padding:64px 0 24px"><h2 class="kb-section-title">Založte si účet v tarifu</h2><p class="kb-section-lead">Vyberte si tarif, který se k vám hodí.</p></div>
+        <div class="kb-tariffs" style="padding:24px 0 48px">
+          <div class="kb-tariff kb-tariff--highlight"><span class="kb-badge kb-tariff__badge">Zdarma</span><h3>Start</h3><div class="kb-tariff__price">0 Kč měsíčně</div><p class="kb-tariff__perex">Všechny moderní funkce s bezplatným účtem</p><a class="kb-btn kb-btn--tertiary" href="#">Sjednat online</a><ul><li><svg class="kb-icon"><use href="#i-check"/></svg>1 běžný účet v Kč</li><li><svg class="kb-icon"><use href="#i-check"/></svg>1 debetní karta</li></ul></div>
+          <div class="kb-tariff"><h3>Standard</h3><div class="kb-tariff__price">39 Kč měsíčně</div><p class="kb-tariff__perex">Chytrý účet i na cesty</p><a class="kb-btn kb-btn--tertiary" href="#">Sjednat online</a><ul><li><svg class="kb-icon"><use href="#i-check"/></svg>1 multiměnový účet</li></ul></div>
+          <div class="kb-tariff"><h3>Komfort</h3><div class="kb-tariff__price">89 Kč měsíčně</div><p class="kb-tariff__perex">Pro rodiny a cestovatele</p><a class="kb-btn kb-btn--tertiary" href="#">Sjednat online</a><ul><li><svg class="kb-icon"><use href="#i-check"/></svg>Až 3 multiměnové účty</li></ul></div>
+          <div class="kb-tariff"><h3>Exclusive</h3><div class="kb-tariff__price">169 Kč měsíčně</div><p class="kb-tariff__perex">Služby bez omezení</p><a class="kb-btn kb-btn--tertiary" href="#">Sjednat online</a><ul><li><svg class="kb-icon"><use href="#i-check"/></svg>Až 10 multiměnových účtů</li></ul></div>
+        </div>
+        <h2 class="kb-section-title" style="margin-bottom:32px">Poradíme vám s výběrem</h2>
+        <div class="grid-cta" style="margin-bottom:64px">
+          <a class="kb-cta kb-group" href="#"><h3>Schůzka na pobočce</h3><p>Vyberte si čas schůzky na pobočce</p><span class="kb-link-arrow">Vybrat pobočku <svg class="kb-icon"><use href="#i-arrow-right"/></svg></span></a>
+          <a class="kb-cta kb-group" href="#"><h3>Zavoláme vám</h3><p>Dejte nám své číslo</p><span class="kb-link-arrow">Zadat číslo <svg class="kb-icon"><use href="#i-arrow-right"/></svg></span></a>
+        </div>
+        <a class="kb-tile kb-group" href="#" style="margin-bottom:64px"><h3>Staňte se klientem a získejte až 4 000 Kč</h3><span class="kb-link-arrow">Chci bonus <svg class="kb-icon"><use href="#i-arrow-right"/></svg></span></a>
+        <h2 class="kb-section-title" style="margin-bottom:32px">Hodí se vědět</h2>
+        <div class="kb-accordion" style="max-width:690px;margin-bottom:64px">
+          <div class="kb-accordion__item"><button class="kb-accordion__button" aria-expanded="false">O účtu <svg class="kb-icon"><use href="#i-arrow-down"/></svg></button></div>
+          <div class="kb-accordion__item"><button class="kb-accordion__button" aria-expanded="false">Dokumenty <svg class="kb-icon"><use href="#i-arrow-down"/></svg></button></div>
+        </div>
+      </div>
+      <footer class="kb-footer">
+        <div class="kb-footer__cols">
+          <div><span class="kb-footer__heading">Nabídka</span><ul><li><a href="#">Osobní finance</a></li><li><a href="#">Živnostníci a malé firmy</a></li><li><a href="#">KB Privátní bankovnictví</a></li></ul></div>
+          <div><span class="kb-footer__heading">Nástroje a rady</span><ul><li><a href="#">Bezpečnost</a></li><li><a href="#">Ceny a sazby</a></li><li><a href="#">Kurzovní lístek</a></li></ul></div>
+          <div><span class="kb-footer__heading">O bance</span><ul><li><a href="#">Pro média</a></li><li><a href="#">Pro investory</a></li><li><a href="#">Kariéra v KB</a></li></ul></div>
+          <div><span class="kb-footer__heading">Užitečné</span><ul><li><a href="#"><svg class="kb-icon"><use href="#i-home"/></svg>Pobočky a bankomaty</a></li><li><a href="#"><svg class="kb-icon"><use href="#i-lock"/></svg>Bezpečnost</a></li></ul></div>
+        </div>
+        <div style="margin-top:40px"><img src="assets/kb-logo-inverse.svg" alt="Komerční banka" style="height:32px"></div>
+        <div class="kb-footer__legal"><span>Podmínky používání</span><span>Prohlášení o přístupnosti</span><span>Ochrana osobních údajů</span><span style="margin-left:auto">©2026 Komerční banka</span></div>
+      </footer>
+    </div>
+  </section>
+</main>
+</body>
+</html>
