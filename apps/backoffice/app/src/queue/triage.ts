@@ -30,7 +30,7 @@ export type QueueCase = {
 // Blocking stops the case; material must be resolved before a decision.
 export type Severity = "blocking" | "material";
 
-export type Finding = { severity: Severity; title: string; detail: string; action: string };
+export type Finding = { severity: Severity; title: string; action: string };
 
 // Listed most acute first; the queue renders tiers in this order.
 // decision: the worker's move. waiting: the client's move. processing: the
@@ -80,21 +80,18 @@ export function findIssues(c: QueueCase): Finding[] {
     findings.push({
       severity: "blocking",
       title: "Case not in the case registry",
-      detail: `The evaluator ran on case ${c.case_id}, which the case API does not know.`,
       action: "Check which case the evaluator was run on",
     });
   } else if (!c.client) {
     findings.push({
       severity: "blocking",
       title: "Client not in registry",
-      detail: "The case points to a client that does not exist in the client registry.",
       action: "Link the case to a registered client",
     });
   } else if (c.client.kyc_status !== "ok") {
     findings.push({
       severity: "blocking",
       title: c.client.kyc_status ? `KYC ${c.client.kyc_status}` : "KYC not on file",
-      detail: `${c.client.name} has no passed KYC check.`,
       action: "Run KYC before any further step",
     });
   }
@@ -104,7 +101,6 @@ export function findIssues(c: QueueCase): Finding[] {
     findings.push({
       severity: "material",
       title: "Checks did not finish",
-      detail: "The latest case-evaluator run failed, so no check results are available.",
       action: "Run the case evaluation again",
     });
   }
@@ -115,7 +111,6 @@ export function findIssues(c: QueueCase): Finding[] {
       findings.push({
         severity: issueSeverity[issue.status] ?? "material",
         title: `${label}: ${(rawStatusLabel[issue.status] ?? issue.status).toLowerCase()}`,
-        detail: issue.found ?? issue.reasoning,
         action: issueAction[issue.status] ?? "Check the rule in the case review",
       });
     }

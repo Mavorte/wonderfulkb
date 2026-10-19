@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
 import { Link } from "react-router-dom";
 import CaseStatusPill from "../cases/CaseStatusPill";
@@ -26,6 +26,15 @@ const statusAction: Record<CaseStatus, string> = {
 };
 
 const nextAction = (c: TriagedCase) => c.findings[0]?.action ?? statusAction[c.status];
+
+// The app runs inside the host's router, which swallows plain "#hash" navigation, so scroll by hand.
+function jumpToTier(event: MouseEvent<HTMLAnchorElement>) {
+  const section = document.getElementById(event.currentTarget.hash.slice(1));
+  if (!section) return;
+  event.preventDefault();
+  section.querySelector("details")?.setAttribute("open", "");
+  section.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 function QueueTable({ cases, rank }: { cases: TriagedCase[]; rank: Map<string, number> }) {
   return (
@@ -67,7 +76,6 @@ function QueueTable({ cases, rank }: { cases: TriagedCase[]; rank: Map<string, n
                           {f.severity === "blocking" ? "Blocking" : "Material"}
                         </span>
                         <span className="bo-queue__finding-title">{f.title}</span>
-                        <span className="bo-table__meta">{f.detail}</span>
                       </li>
                     ))}
                   </ul>
@@ -164,7 +172,7 @@ export default function QueuePage() {
       <ul className="bo-queue__summary" aria-label="Queue summary">
         {byTier.map(({ tier, cases }) => (
           <li key={tier}>
-            <a className={`bo-queue__tile bo-queue__tile--${tier}`} href={`#queue-${tier}`}>
+            <a className={`bo-queue__tile bo-queue__tile--${tier}`} href={`#queue-${tier}`} onClick={jumpToTier}>
               <span className="bo-queue__tile-count">{cases.length}</span>
               <span className="bo-queue__tile-title">{tierInfo[tier].title}</span>
             </a>

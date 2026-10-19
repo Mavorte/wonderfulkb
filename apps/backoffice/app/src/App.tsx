@@ -9,24 +9,16 @@ import CaseReviewPage from "./review/CaseReviewPage";
 // Routes are relative to the app; the host mounts them under /apps/<slug>.
 const navItems: { to: string; label: string; matches: string[]; icon: ReactNode }[] = [
   {
-    to: "/queue",
-    label: "Work queue",
-    matches: ["/queue"],
-    icon: <path d="M3 5h4v4H3V5Zm6 1h12v2H9V6Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Z" />,
-  },
-  {
-    to: "/cases",
-    label: "Case review",
-    matches: ["/cases", "/cases/:caseId"],
-    icon: (
-      <path d="M9 2h6v2h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h4V2Zm0 4H6v14h12V6h-3v2H9V6Zm1.5 10.4-3-3 1.4-1.4 1.6 1.6 4.6-4.6 1.4 1.4-6 6Z" />
-    ),
-  },
-  {
     to: "/cases/new",
     label: "New case",
     matches: ["/cases/new"],
     icon: <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />,
+  },
+  {
+    to: "/queue",
+    label: "Work queue",
+    matches: ["/queue", "/cases", "/cases/:caseId"],
+    icon: <path d="M3 5h4v4H3V5Zm6 1h12v2H9V6Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Z" />,
   },
   {
     to: "/clients",
@@ -40,8 +32,8 @@ const navItems: { to: string; label: string; matches: string[]; icon: ReactNode 
 // @wonderful/ui-base, so the app matches KB's own visual language.
 export default function App() {
   const { pathname } = useLocation();
-  // "/cases/new" also matches "/cases/:caseId", so the most specific item wins.
-  const current = [...navItems].reverse().find((item) => item.matches.some((pattern) => matchPath(pattern, pathname)));
+  // "/cases/new" also matches "/cases/:caseId", so "New case" must stay before "Work queue".
+  const current = navItems.find((item) => item.matches.some((pattern) => matchPath(pattern, pathname)));
 
   return (
     <div className="app-root bo-shell">

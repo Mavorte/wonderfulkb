@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import ActivityTimeline from "./ActivityTimeline";
 import DecisionPanel from "./DecisionPanel";
 import DocumentPanel, { type Focus } from "./DocumentPanel";
@@ -12,7 +12,6 @@ import {
   formatTime,
   type CaseView,
   type CheckStatus,
-  type EvaluationRow,
   type RuleGroup,
   type RuleView,
 } from "./evaluation";
@@ -164,12 +163,7 @@ function GroupCard({
   );
 }
 
-function runLabel(e: EvaluationRow) {
-  const outcome = e.status === "completed" ? (verdictLabel[e.verdict ?? ""] ?? e.verdict ?? "Completed") : e.status;
-  return `${e.case_id} · ${formatTime(e.started_at)} · ${outcome}`;
-}
-
-function Review({ view, evaluations, onPick }: { view: CaseView; evaluations: EvaluationRow[]; onPick: (id: string) => void }) {
+function Review({ view }: { view: CaseView }) {
   const { evaluation: ev } = view;
   const [focus, setFocus] = useState<Focus | null>(null);
   const [open, setOpen] = useState<Set<number>>(
@@ -252,16 +246,6 @@ function Review({ view, evaluations, onPick }: { view: CaseView; evaluations: Ev
             </span>
           </div>
         </div>
-        <label className="cr-picker">
-          <span>Evaluation run</span>
-          <select className="kb-select" value={ev.evaluation_id} onChange={(e) => onPick(e.target.value)}>
-            {evaluations.map((e) => (
-              <option key={e.evaluation_id} value={e.evaluation_id}>
-                {runLabel(e)}
-              </option>
-            ))}
-          </select>
-        </label>
       </header>
 
       <section className={`cr-action cr-action--${view.decision ?? "none"}`} aria-labelledby="cr-action-title">
@@ -392,7 +376,6 @@ function Review({ view, evaluations, onPick }: { view: CaseView; evaluations: Ev
 export default function CaseReviewPage() {
   const caseId = useParams<{ caseId: string }>().caseId ?? null;
   const evaluationId = useSearchParams()[0].get("evaluation");
-  const navigate = useNavigate();
   const state = useEvaluation({ caseId, evaluationId });
 
   const view = useMemo(
@@ -403,11 +386,6 @@ export default function CaseReviewPage() {
     [state],
   );
 
-  const pick = (id: string) => {
-    const picked = state.status === "ready" ? state.payload.evaluations.find((e) => e.evaluation_id === id) : undefined;
-    if (picked) navigate(getCasePath(picked.case_id, id));
-  };
-
   if (state.status === "loading") return <p className="cr-state">Loading evaluation…</p>;
   if (state.status === "error") return <p className="cr-state cr-state--error">Couldn't load the evaluation: {state.message}</p>;
   if (!view) {
@@ -417,5 +395,5 @@ export default function CaseReviewPage() {
   // "/cases" shows the latest run; give it its case's address so the link can be shared.
   if (!caseId) return <Navigate to={getCasePath(view.evaluation.case_id)} replace />;
 
-  return <Review key={view.evaluation.evaluation_id} view={view} evaluations={state.payload.evaluations} onPick={pick} />;
+  return <Review key={view.evaluation.evaluation_id} view={view} />;
 }

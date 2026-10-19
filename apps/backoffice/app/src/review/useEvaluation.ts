@@ -25,7 +25,6 @@ async function loadSnapshot({ caseId, evaluationId }: EvaluationRequest): Promis
     ) ?? null;
   return {
     evaluation,
-    evaluations: snapshot.evaluations,
     results: snapshot.results.filter((r) => r.evaluation_id === evaluation?.evaluation_id),
   };
 }
