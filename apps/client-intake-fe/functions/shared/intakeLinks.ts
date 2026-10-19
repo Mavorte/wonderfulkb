@@ -7,7 +7,7 @@ const LINKS_TABLE = "client_intake.intake_links";
 
 // Secret names (type "API Key", header x-api-key). The two AWS services use
 // different keys: API Gateway for the case/client API, the service itself for ingest.
-export const CASE_API_SECRET = "kb-aws-api-key";
+export const CASE_API_SECRET = "aws_api_key";
 export const INGEST_SECRET = "kb-aws-ingest-api-key";
 
 export async function getCaseIdForHash(context: FunctionContext, hash: string): Promise<string | null> {
