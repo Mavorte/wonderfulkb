@@ -13,7 +13,7 @@ from .service import now
 
 
 class DocumentWorker:
-    def __init__(self, service, ocr=None, extractor=None):
+    def __init__(self, service, ocr=None, extractor=None, signature_detector=None):
         self.service, self.settings = service, service.settings
         self.repo, self.blobs = service.repo, service.blobs
         self.ocr = ocr or LocalOcr()
@@ -23,6 +23,10 @@ class DocumentWorker:
             from .pdf_first import PdfFirstOcr
             self.ocr = ocr or PdfFirstOcr(BedrockOcr(self.settings))
             self.extractor = extractor or BedrockExtractor(self.settings, self.ocr.client)
+        self.signature_detector = signature_detector
+        if signature_detector is None and self.settings.signatures_enabled:
+            from .signatures import TextractSignatureDetector
+            self.signature_detector = TextractSignatureDetector(self.settings.bucket, region=self.settings.bedrock_region)
 
     def process(self, job_id):
         pending = self.repo.get("JOBS", job_id)
@@ -106,11 +110,14 @@ class DocumentWorker:
                     retryable = retryable or error.retryable
                     errors.append({"code": error.code, "page_number": None, "retryable": error.retryable})
             status = "completed" if not errors else "partial" if completed else "failed"
+            # A signature failure is reported in its own section; it never degrades the OCR status.
+            signatures = (self.signature_detector.detect(document["source_key"], document["content_type"], job["source_version"])
+                          .model_dump() if self.signature_detector else None)
             result = {"schema_version": "1.0", "case_id": case_id, "client_id": document["client_id"],
                       "document_id": document_id, "run_id": job["run_id"], "source_sha256": job["source_sha256"],
                       "page_count": len(pages), "processing_status": status,
                       "ocr": {"pages": [p.model_dump() for p in pages]}, "extraction": extraction,
-                      "errors": errors, "processing": {"pipeline_version": PIPELINE_VERSION,
+                      "errors": errors, "signatures": signatures, "processing": {"pipeline_version": PIPELINE_VERSION,
                           "prompt_version": PROMPT_VERSION, "config": job["config"],
                           "ocr_models": sorted({p.model for p in pages if p.model}),
                           "extraction_model": extraction.get("model"), "attempt": job["attempts"],

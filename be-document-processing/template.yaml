@@ -36,6 +36,7 @@ Globals:
         CLIENTS_TABLE_NAME: !Ref ClientsTableName
         QUEUE_URL: !Ref DocumentQueue
         ALLOWED_ORIGIN: !Ref AllowedOrigin
+        SIGNATURES_ENABLED: 'true'
     Tags:
       project: wonderfulkb
 
@@ -154,6 +155,16 @@ Resources:
               Resource:
                 - !Sub arn:${AWS::Partition}:dynamodb:eu-central-1:${AWS::AccountId}:table/${CasesTableName}
                 - !Sub arn:${AWS::Partition}:dynamodb:eu-central-1:${AWS::AccountId}:table/${ClientsTableName}
+            - Effect: Allow
+              # Textract actions do not support resource-level permissions.
+              Action:
+                - textract:StartDocumentAnalysis
+                - textract:GetDocumentAnalysis
+                - textract:AnalyzeDocument
+              Resource: '*'
+              Condition:
+                StringEquals:
+                  aws:RequestedRegion: eu-central-1
             - Effect: Allow
               Action: bedrock-mantle:CreateInference
               Resource: !Sub arn:${AWS::Partition}:bedrock-mantle:eu-central-1:${AWS::AccountId}:project/*

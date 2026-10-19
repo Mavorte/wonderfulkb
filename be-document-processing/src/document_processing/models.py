@@ -201,6 +201,28 @@ class OcrResult(Contract):
     pages: list[Page]
 
 
+class SignatureItem(Contract):
+    signature_id: str
+    page: int = Field(ge=1)
+    bbox: list[float] = Field(min_length=4, max_length=4)
+    detector: Literal["textract"] = "textract"
+    # Textract's own 0-100 score. Orientation only: neither a calibrated
+    # probability nor a decision threshold (a score of 12 was a true signature).
+    detection_score: float | None = Field(default=None, ge=0, le=100)
+    role: Role | None = None
+    role_source: Literal["nearest_text", "ocr_blocks"] | None = None
+    role_evidence: str | None = None
+    nearby_text: list[str] = Field(default_factory=list)
+
+
+class SignatureSection(Contract):
+    # "completed" with an empty list means "no signature found", not an error.
+    status: Literal["completed", "failed"]
+    detector: Literal["textract"] = "textract"
+    signatures: list[SignatureItem] = Field(default_factory=list)
+    error: str | None = None
+
+
 class DocumentResult(Contract):
     schema_version: Literal["1.0"]
     case_id: CaseId
@@ -215,6 +237,8 @@ class DocumentResult(Contract):
     errors: list[dict]
     processing: dict
     corrections: list[dict] = Field(default_factory=list)
+    # None when signature detection was not run for this result.
+    signatures: SignatureSection | None = None
 
     @model_validator(mode="after")
     def all_pages_present(self):

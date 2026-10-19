@@ -798,6 +798,16 @@
             },
             "type": "array",
             "title": "Corrections"
+          },
+          "signatures": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignatureSection"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -1218,6 +1228,150 @@
           "text"
         ],
         "title": "Page"
+      },
+      "SignatureItem": {
+        "properties": {
+          "signature_id": {
+            "type": "string",
+            "title": "Signature Id"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "bbox": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Bbox"
+          },
+          "detector": {
+            "type": "string",
+            "const": "textract",
+            "title": "Detector",
+            "default": "textract"
+          },
+          "detection_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detection Score"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "provider",
+                  "borrower",
+                  "buyer",
+                  "supplier",
+                  "guarantor",
+                  "insurer",
+                  "unknown"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "role_source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "nearest_text",
+                  "ocr_blocks"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Source"
+          },
+          "role_evidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Evidence"
+          },
+          "nearby_text": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Nearby Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "signature_id",
+          "page",
+          "bbox"
+        ],
+        "title": "SignatureItem"
+      },
+      "SignatureSection": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "detector": {
+            "type": "string",
+            "const": "textract",
+            "title": "Detector",
+            "default": "textract"
+          },
+          "signatures": {
+            "items": {
+              "$ref": "#/components/schemas/SignatureItem"
+            },
+            "type": "array",
+            "title": "Signatures"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "SignatureSection"
       },
       "Table": {
         "properties": {

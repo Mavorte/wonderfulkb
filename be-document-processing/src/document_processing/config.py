@@ -25,6 +25,7 @@ class Settings:
     bucket: str = ""
     queue_url: str = ""
     allowed_origin: str = "http://localhost:3200"
+    signatures_enabled: bool = False
 
     def __post_init__(self):
         if self.bedrock_region != "eu-central-1":
@@ -51,4 +52,5 @@ class Settings:
             bucket=os.getenv("DOCUMENTS_BUCKET", ""),
             queue_url=os.getenv("QUEUE_URL", ""),
             allowed_origin=os.getenv("ALLOWED_ORIGIN", "http://localhost:3200"),
+            signatures_enabled=os.getenv("SIGNATURES_ENABLED", "false").lower() == "true",
         )
