@@ -487,6 +487,155 @@
       "title": "Page",
       "type": "object"
     },
+    "SignatureItem": {
+      "additionalProperties": false,
+      "properties": {
+        "signature_id": {
+          "title": "Signature Id",
+          "type": "string"
+        },
+        "page": {
+          "minimum": 1,
+          "title": "Page",
+          "type": "integer"
+        },
+        "bbox": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Bbox",
+          "type": "array"
+        },
+        "detector": {
+          "const": "textract",
+          "default": "textract",
+          "title": "Detector",
+          "type": "string"
+        },
+        "detection_score": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detection Score"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "enum": [
+                "provider",
+                "borrower",
+                "buyer",
+                "supplier",
+                "guarantor",
+                "insurer",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        },
+        "role_source": {
+          "anyOf": [
+            {
+              "enum": [
+                "nearest_text",
+                "ocr_blocks"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role Source"
+        },
+        "role_evidence": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role Evidence"
+        },
+        "nearby_text": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Nearby Text",
+          "type": "array"
+        }
+      },
+      "required": [
+        "signature_id",
+        "page",
+        "bbox"
+      ],
+      "title": "SignatureItem",
+      "type": "object"
+    },
+    "SignatureSection": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "completed",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "detector": {
+          "const": "textract",
+          "default": "textract",
+          "title": "Detector",
+          "type": "string"
+        },
+        "signatures": {
+          "items": {
+            "$ref": "#/$defs/SignatureItem"
+          },
+          "title": "Signatures",
+          "type": "array"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "SignatureSection",
+      "type": "object"
+    },
     "Table": {
       "additionalProperties": false,
       "properties": {
@@ -602,6 +751,17 @@
       },
       "title": "Corrections",
       "type": "array"
+    },
+    "signatures": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SignatureSection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [
