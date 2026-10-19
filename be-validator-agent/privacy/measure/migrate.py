@@ -159,7 +159,7 @@ def log(msg):
     print(msg, flush=True)
 
 
-def stage_redacted(g, args, case, did, d, st):
+def stage_redacted(g, args, case, did, d, st, write=True):
     """(a) Vrací (masked_bytes | None, ok). Při chybě ověření dokument přeskočí."""
     if not d["original"]:
         st["redacted"] = "bez originálu v original/ (nic k maskování)"
@@ -173,8 +173,19 @@ def stage_redacted(g, args, case, did, d, st):
         js = json.loads(g.get(d["json"])[0])
         findings = [{"page": s["page"], "bbox": s["bbox"]} for s in js.get("signatures", []) if s.get("bbox")]
     elif args.detect == "pipeline":
-        findings = local_findings(data, [], "pipeline", args.cache)
-    regions = regions_of(data, findings, args.zones)
+        doc = pymupdf.open(stream=data, filetype="pdf")
+        text_pages = sum(1 for pg in doc if len(pg.get_text("words")) >= 5)
+        scan = text_pages * 2 < doc.page_count
+        doc.close()
+        # Textract jen pro skeny (jako v měření); digitální PDF dostanou lokální zálohy bez služby
+        mode = "pipeline" if (scan or args.textract == "all") else "local"
+        findings = local_findings(data, [], mode, args.cache)
+        st["detection"] = mode
+    ocr = None
+    if args.detect == "pipeline" and st.get("detection") == "pipeline":
+        from measure import _TEXTRACT
+        ocr = _TEXTRACT.get("t")
+    regions = regions_of(data, findings, args.zones, ocr)
     masked = redact_pdf(data, regions)
     problems = verify_redacted(data, masked, regions)
     if problems and args.tolerant:
@@ -191,7 +202,7 @@ def stage_redacted(g, args, case, did, d, st):
         same = meta.get("original-sha256") == sha
         st["redacted"] = f"existuje ({'stejný' if same else 'JINÝ'} original-sha256), nepřepisuji"
         return masked, True
-    if args.apply:
+    if args.apply and write:
         g.put_new(key, masked, "application/pdf", {"original-sha256": sha, "original-size": str(len(data))})
         st["redacted"] = f"zapsáno {key} ({len(masked)} B)"
     else:
@@ -325,10 +336,13 @@ def main():
     ap.add_argument("--only", action="append", default=[], help="case/document_id (lze opakovat)")
     ap.add_argument("--all", action="store_true", help="všechny dokumenty (nutné pro --apply bez --only)")
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--shard", help="K/N: zpracuje každý N-tý dokument od K (souběžné běhy; u --apply dělit --rpm)")
     ap.add_argument("--stages", default=",".join(STAGES))
     ap.add_argument("--detect", choices=["pipeline", "stored", "none"], default="pipeline",
                     help="nálezy pro maskování: výchozí řetěz pipeline (Textract, cache), uložené signatures.json, žádné")
-    ap.add_argument("--zones", choices=["v1", "v2"], default="v2")
+    ap.add_argument("--textract", choices=["scans", "all"], default="scans",
+                    help="Textract pro skeny (výchozí) nebo pro všechna PDF; digitální dostanou lokální zálohy")
+    ap.add_argument("--zones", choices=["v1", "v2", "v3", "v4"], default="v2")
     ap.add_argument("--cache", help="cache odpovědí Textractu")
     ap.add_argument("--tolerant", action="store_true", help="tolerovat okrajové úlomky slov při ověření")
     ap.add_argument("--rpm", type=float, default=20.0, help="limit volání Bedrocku za minutu")
@@ -347,6 +361,9 @@ def main():
     provider = KmsKeyProvider() if args.apply and "crops" in stages else None
     log(("ZÁPIS" if args.apply else "DRY-RUN") + f" stages={sorted(stages)} zones={args.zones} detect={args.detect}")
     inv = doc_inventory(g, set(args.only), args.limit)
+    if args.shard:
+        k, n = (int(x) for x in args.shard.split("/"))
+        inv = inv[k::n]
     log(f"dokumentů: {len(inv)}")
     state = {"last": 0.0}
     report, skipped = [], []
@@ -355,7 +372,7 @@ def main():
         try:
             masked, ok = (None, True)
             if "redacted" in stages or "vectors" in stages:
-                masked, ok = stage_redacted(g, args, case, did, d, st) if "redacted" in stages else (None, True)
+                masked, ok = stage_redacted(g, args, case, did, d, st, write="redacted" in stages)
             if not ok:
                 skipped.append((case, did, st["redacted"]))
             else:

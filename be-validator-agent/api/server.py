@@ -23,8 +23,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urlparse(self.path)
         if INDEX is not None and u.path == "/v1/_mock/cases":
-            if not API.keys.check(self.headers.get("x-api-key")):
-                status, body = 403, {"error": "Chybí nebo je špatný API klíč"}
+            if not self.headers.get("x-api-key"):
+                status, body = 401, {"error": "Chybí API klíč"}
+            elif not API.keys.check(self.headers.get("x-api-key")):
+                status, body = 403, {"error": "Špatný API klíč"}
             else:
                 status, body = 200, INDEX
         else:

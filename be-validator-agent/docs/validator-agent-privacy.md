@@ -94,6 +94,8 @@ Stránka se mění jen málo: na 16 vzorových PDF (`docs/vzorove-dokumenty`, n�
 
 `changed_outside(...)` měří kolaterální změny mimo oblasti (příliš široké zóny).
 
+**Jediný obdélník pro redakci i ověření (oprava 19. 10. 2026, nález pilotu SYN-A03).** Redakce, ověření i měření kolaterální změny berou plochu z jedné funkce `_region_rect` (`full` = bbox + okraj `PAD` 1 % strany, zóna `graphics` bez okraje), takže ověření nemůže hlídat větší plochu než redakce maže. Příčina pádu u `11_Predavaci_protokol` ale nebyla v rozdílných obdélnících (oba už měly `PAD`): redakce MuPDF maže znaky podle vlastního kritéria glyfu a znak, který obdélník jen protíná, někdy zůstane jako úlomek (písmeno „v“ ze slova Lipová, 0,4 pt uvnitř obdélníku), zatímco ověření počítá každý znak, který obdélník protíná. Po `apply_redactions` proto `_remove_glyph_fragments` najde znaky protínající obdélník a odstraní je celé (jen ty znaky, bez další plochy a bez vybarvení; až 3 kola). Co se přesto nepodaří, zachytí ověření (dokument skončí jako neúspěšný, jako dosud).
+
 Testy (`tests/test_redact.py`): redakce odstraní obrázek, vektor i text; ověření **umí selhat** (nezamaskovaný soubor, nebo jen černý obdélník přes obsah, ohlásí problém); nepokrytý podpis mimo nález i zóny zůstane (test to hlídá, ať se neslibuje víc); sken (celostránkový obrázek) se zamaskuje po pixelech; kolaterální změna se změří. Navíc jsem redakci s ověřením spustil na 16 vzorových PDF včetně skenů: ověření bez problémů. To je kontrola, že **oblasti jsou čisté**, nikoli že pokrývají všechny podpisy.
 
 ### 4.3 Konzervativní maskování a zbytkové riziko
@@ -108,6 +110,16 @@ Co **zůstane** a co s tím:
 - Největší vektorový tah, který zónu dotýká, se odstraní celý; rámečky a tabulky, které ji dotýkají, také (viditelné jako kolaterální změna).
 
 Doporučení: (1) změřit zbytek: na 20 syntetických případech a vzorových PDF ručně prohlédnout zamaskované stránky a spočítat podpisy, které zůstaly (úplnost zamaskování je jiné číslo než úplnost detekce); (2) jako druhou vrstvu omezit čtení bucketu a politiku KMS klíče; (3) tvrdit jen „podpisy odstraněny, kde jsme je našli nebo čekali“.
+
+**Změřeno (19. 10. 2026, [measure/report.md](../privacy/measure/report.md), lokálně, bez zásahu do AWS dat):** úplnost zamaskování na 323 pravdivých podpisech 129 syntetických dokumentů (skupina A, anotace balíku) a na 37 rukopisných podpisech 16 původních PDF (skupina B, ruční prohlídka všech 15 stran s podpisy). Skupiny se nesčítají.
+
+| | skupina A (323) | skupina B (37) |
+|---|---|---|
+| jen zóny `v1`, bez detektoru | 4,6 % skryto (2,8 až 7,5 %) | neměřeno |
+| **stávající knihovna + řetěz detekce pipeline** | **98,8 %** (96,9 až 99,5 %); 4 čitelné, všechny na skenech | **35 z 37** (94,6 %; 82,3 až 98,5 %); 2 čitelné (sken, Textract je nenašel) |
+| zóny `v2` (podle role a funkce, na skenech z OCR) + detekce | 323 z 323 (98,8 až 100 %) | 37 z 37 (90,6 až 100 %), u 1 podpisu zůstal nečitelný ocas tahu |
+
+Závěry: (a) zóny podle popisku „podpis“ v generických dokumentech samy téměř nefungují (pod podpisem je jméno a funkce, nad ním hlavička role), (b) skeny bez textové vrstvy nemají zóny vůbec, spoléhají se na detektor (96 % na skenech skupiny A) a čtyři podpisy zůstaly čitelné, (c) zóny `v2` je zachytí, ale u skenů smažou i tištěný text v zóně (průměrně čtvrtina plochy strany), proto je nutné brát text a popisky z originálu před redakcí, (d) `v2` jsem laděl na týchž datech, výsledek 100 % tedy není odhad pro cizí dokumenty, (e) přísné `verify_redacted` selhávalo v měření na okrajových úlomcích slov u 13 % dokumentů (falešný poplach, oprava `measure/verify_tolerant.py`; dry-run migrace u 91 dokumentů ale žádné selhání neukázal, rozpor je neověřený, viz report, část 5). Tvrzení zůstává „podpisy odstraněny, kde jsme je našli nebo čekali“.
 
 Zapomenutý podpis má ještě jednu stinnou stranu: pokud originál po migraci zmizí, takový podpis zůstává čitelně jen v zamaskované kopii a **nemá šifrovaný výřez**, takže ho nejde ani „ukázat odkrytý“. Pozdější lepší detektor ho v kopii najde, zamaskuje a z kopie vyřízne, ale to je poslední čitelná podoba, ne originál.
 
@@ -275,9 +287,9 @@ Pořadí s migrací (část 8): zamražení rozsahu (`--plan`) → **záloha (`-
 
 ## 9. Co je a není ověřeno
 
-Ověřeno bez AWS (63 testů): šifrování a dešifrování, vazba na kontext (každé ze tří polí), odolnost proti poškození (každý bajt bloku), formát s verzí, zkreslení náhledu (ztráta detailu, dva různé podpisy se stejným hrubým rozložením dávají shodný náhled), shoda `phash` se stávajícím kódem, `KmsKeyProvider` a odkrytí proti mocku (moto), audit, redakce PDF a PNG včetně ověření, že pod oblastí nic nezbylo (a že ověření umí selhat).
+Ověřeno bez AWS (68 testů): šifrování a dešifrování, vazba na kontext (každé ze tří polí), odolnost proti poškození (každý bajt bloku), formát s verzí, zkreslení náhledu (ztráta detailu, dva různé podpisy se stejným hrubým rozložením dávají shodný náhled), shoda `phash` se stávajícím kódem, `KmsKeyProvider` a odkrytí proti mocku (moto), audit, redakce PDF a PNG včetně ověření, že pod oblastí nic nezbylo (a že ověření umí selhat).
 Ověřeno živě: `KmsKeyProvider` proti klíči `alias/wonderfulkb-signatures` (část 7). Redakce spuštěna lokálně na 16 vzorových PDF: ověření bez problémů, kolaterální změna do 0,32 % pixelů strany.
-Neověřeno: napojení do Lambdy, `store.py` a pipeline (jen návrh); IAM politiky a politika klíče (nezkoušeno); výkon při stovkách výřezů (jedno KMS volání na výřez); čitelnost náhledu **lidským okem** na skutečných podpisech (test měří ztrátu informace na syntetických datech); odhad rizika rekonstrukce z embeddingu (úvaha, ne experiment); **úplnost zamaskování** (kolik podpisů v zamaskovaných souborech zůstane, nikdo nezměřil); chování redakce na skenech s vektorovými vrstvami a na PDF s komplikovanými strukturami (formuláře, vrstvy) mimo vzorek.
+Neověřeno: napojení do Lambdy, `store.py` a pipeline (jen návrh); IAM politiky a politika klíče (nezkoušeno); výkon při stovkách výřezů (jedno KMS volání na výřez); čitelnost náhledu **lidským okem** na skutečných podpisech (test měří ztrátu informace na syntetických datech); odhad rizika rekonstrukce z embeddingu (úvaha, ne experiment); **úplnost zamaskování na cizích dokumentech** (změřeno jen na syntetických datech a 16 původních PDF, viz část 4.3; zóny `v2` jsou laděné na týchž datech); chování redakce na skenech s vektorovými vrstvami a na PDF s komplikovanými strukturami (formuláře, vrstvy) mimo vzorek.
 
 ## 10. Otevřené otázky pro uživatele
 1. Schválit migraci (část 8), nejdřív kroky 1 až 6 bez mazání, a zálohu před krokem 7?

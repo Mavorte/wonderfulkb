@@ -147,3 +147,75 @@ def test_redact_png_blacks_box_only():
     img = Image.new("RGB", (200, 100), "white")
     out = np.asarray(Image.open(io.BytesIO(redact_png(png(img), [(0.25, 0.25, 0.5, 0.5)]))).convert("L"))
     assert out[40:45, 60:90].max() == 0 and out[90, 190] == 255
+
+
+# ---- regrese: text těsně vedle bboxu (SYN-A03/11_Predavaci_protokol, Textract označil textová pole za podpis) ----
+
+TEXT_LINE = "Zelmoris ICO 980 739 61 Lipova"
+
+
+def _text_pdf(font="helv"):
+    doc = pymupdf.open()
+    page = doc.new_page(width=W, height=H)
+    page.insert_text((300, 430), TEXT_LINE, fontsize=6.3, fontname=font)
+    page.insert_text((60, 700), "Tisteny text daleko od nalezu musi zustat cely.", fontsize=11)
+    return doc.tobytes()
+
+
+def _region_for(x1):
+    """Oblast `full`, jejíž obdélník (s okrajem PAD) končí uprostřed textu na x = x1."""
+    from signature_privacy.redact import PAD
+    return Region(1, (250 / W + PAD, 420 / H + PAD, x1 / W - PAD, 440 / H - PAD), "full")
+
+
+def _chars(pdf, outside=None):
+    d = pymupdf.open(stream=pdf, filetype="pdf")
+    out = []
+    for blk in d[0].get_text("rawdict")["blocks"]:
+        for line in blk.get("lines", []):
+            for span in line["spans"]:
+                out += [(c["c"], pymupdf.Rect(c["bbox"])) for c in span["chars"] if c["c"].strip()]
+    return out
+
+
+# x1 hodnoty, u kterých samotná redakce MuPDF nechává úlomek znaku (zjištěno měřením, viz docs)
+EDGE_X1 = [300.2, 309.2, 329.8, 336.4, 339.8, 343.4, 355.6, 378.0]
+
+
+@pytest.mark.parametrize("font", ["helv", "tiro", "cour"])
+def test_text_next_to_bbox_leaves_no_glyph_fragment(font):
+    """Ověření i redakce používají tentýž obdélník a po redakci se v něm nenajde ani úlomek znaku."""
+    from signature_privacy.redact import PAD, _region_rect
+    src = _text_pdf(font)
+    for i in range(0, 400, 57):
+        x1 = 300 + i * 0.2
+        regions = [_region_for(x1)]
+        red = redact_pdf(src, regions)
+        assert verify_redacted(src, red, regions) == [], f"{font} x1={x1}"
+
+
+def test_edge_cases_and_collateral_text_loss_is_limited_to_touched_chars():
+    from signature_privacy.redact import _region_rect
+    src = _text_pdf()
+    page = pymupdf.open(stream=src, filetype="pdf")[0]
+    before = _chars(src)
+    for x1 in EDGE_X1:
+        regions = [_region_for(x1)]
+        red = redact_pdf(src, regions)
+        assert verify_redacted(src, red, regions) == [], x1
+        rect = _region_rect(page, regions[0])
+        after = _chars(red)
+        survivors = {(c, tuple(round(v, 1) for v in b)) for c, b in after}
+        for c, b in before:
+            touched = b.intersects(rect)
+            kept = (c, tuple(round(v, 1) for v in b)) in survivors
+            assert not (touched and kept), f"úlomek {c!r} zůstal u x1={x1}"
+            assert touched or kept, f"zbytečně smazán znak {c!r} mimo oblast u x1={x1}"
+
+
+def test_verify_uses_same_rect_as_redaction():
+    """Ověření hlídá přesně plochu, kterou redakce maže (jediná funkce `_region_rect`)."""
+    import inspect
+    from signature_privacy import redact
+    assert "_region_rect(page, r)" in inspect.getsource(redact.redact_pdf)
+    assert "_region_rect(pb, r)" in inspect.getsource(redact.verify_redacted)

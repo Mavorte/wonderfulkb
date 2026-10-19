@@ -1,15 +1,18 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-# NENASAZENO. Nasazení schvaluje uživatel (be-validator-agent/docs/validator-agent-storage.md, pravidla pro všechny části).
+# Nasazení schvaluje uživatel (be-validator-agent/docs/validator-agent-storage.md, pravidla pro všechny části).
 #   sam build && sam deploy --guided --profile hackathon --region eu-central-1 --stack-name wonderfulkb-agent-api
 # Pozor: sam build zabalí celý adresář; testy, fixtury a server.py se do Lambdy dostanou také (nejsou použité).
 Description: wonderfulkb validator agent API (document / vectors / signatures; odkrytí podpisu = jen KMS Decrypt)
 
 Parameters:
   AnalysisTable: {Type: String, Default: wonderfulkb-uw-document-analysis}
-  # Volitelné: tabulka případů jen pro rozlišení "case existuje, ale nemá zpracované dokumenty" (200 []) od 404.
-  # Výchozí prázdné = Lambda k ní nemá přístup a case bez řádků v analýze vrací 404.
-  CasesTable: {Type: String, Default: ""}
+  # Tabulky Case & Client API (stejná Lambda obsluhuje /cases a /clients; tabulky vlastní část 1, jen data, ne životní cyklus).
+  # CasesTable zároveň rozlišuje "case existuje, ale nemá dokumenty" (200 []) od 404.
+  CasesTable: {Type: String, Default: wonderfulkb-uw-cases}
+  ClientsTable: {Type: String, Default: wonderfulkb-uw-clients}
+  ClientsIcoIndex: {Type: String, Default: ico-index}
+  CasesClientCreatedIndex: {Type: String, Default: client-created-index}
   RawBucket: {Type: String, Default: wonderfulkb-raw-document-storage}
   VectorBucket: {Type: String, Default: wonderfulkb-vectors}
   ApiKeySecretName: {Type: String, Default: wonderfulkb/ingest-api-key}
@@ -20,12 +23,13 @@ Parameters:
   # KMS klíč pro odkrytí podpisů (alias/wonderfulkb-signatures); jen Decrypt, jen s kontextem case/document/signature.
   SignatureKmsKeyId: {Type: String, Default: <KMS_KEY_ID>}
   SignatureKmsAlias: {Type: String, Default: alias/wonderfulkb-signatures}
-  # Přechod z `crop_url` (viz README): obojí výchozí false = žádný čitelný odkaz a žádný klíč `crop_url`.
-  LegacyPlainCropUrl: {Type: String, Default: "false", AllowedValues: ["false", "true"]}
+  # Přechod z `crop_url` (viz README). DOČASNĚ true do migrace starých čitelných výřezů (rozhodnutí uživatele, audit V3):
+  # nezmigrované sig_NN.png (např. SYN-A01) dál vracejí crop_url, šifrované .png.enc jdou jen přes /image.
+  # Po migraci vrátit na "false". CropUrlCompat výchozí false = žádný klíč `crop_url` u šifrovaných výřezů.
+  LegacyPlainCropUrl: {Type: String, Default: "true", AllowedValues: ["false", "true"]}
   CropUrlCompat: {Type: String, Default: "false", AllowedValues: ["false", "true"]}
 
 Conditions:
-  HasCasesTable: !Not [!Equals [!Ref CasesTable, ""]]
   HasContentHashes: !Not [!Equals [!Ref ContentHashesTable, ""]]
 
 Resources:
@@ -49,13 +53,27 @@ Resources:
                 Effect: Allow
                 Action: [dynamodb:GetItem, dynamodb:Query]
                 Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
-              - !If
-                - HasCasesTable
-                - Sid: ReadCasesTable
-                  Effect: Allow
-                  Action: dynamodb:GetItem
-                  Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
-                - !Ref AWS::NoValue
+              # Case & Client API (dříve role wonderfulkb-lambda-role Lambdy wonderfulkb-case-client): čtení klientů a případů,
+              # založení případu = transakce ConditionCheck na aktivního klienta + Put s attribute_not_exists.
+              - Sid: CaseClientClients
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Scan, dynamodb:ConditionCheckItem]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ClientsTable}"
+              - Sid: CaseClientCases
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Scan]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
+              - Sid: CaseClientIndexes
+                Effect: Allow
+                Action: dynamodb:Query
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ClientsTable}/index/${ClientsIcoIndex}"
+                  - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}/index/${CasesClientCreatedIndex}"
+              # Seznam dokumentů případu zahrnuje i nahrané a dosud nezpracované dokumenty z tabulky ingestu.
+              - Sid: ListIngestDocuments
+                Effect: Allow
+                Action: dynamodb:Query
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DocumentsTable}"
               - !If
                 - HasContentHashes
                 - Sid: ReadContentHashes
@@ -127,7 +145,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: wonderfulkb-agent-api
-      Description: Čtecí API pro validačního agenta (GET dokument, vektory, podpisy, odkrytí podpisu)
+      Description: wonderfulkb API (případy a klienti, dokumenty, vektory, podpisy, odkrytí podpisu)
       CodeUri: .
       Handler: app.handler
       Runtime: python3.14
@@ -144,6 +162,13 @@ Resources:
         Variables:
           ANALYSIS_TABLE: !Ref AnalysisTable
           CASES_TABLE: !Ref CasesTable
+          # Case & Client API (case_client_handler)
+          DATA_BACKEND: dynamodb
+          ALLOW_EPHEMERAL_MOCK: "false"
+          CLIENTS_TABLE_NAME: !Ref ClientsTable
+          CASES_TABLE_NAME: !Ref CasesTable
+          CLIENTS_ICO_INDEX_NAME: !Ref ClientsIcoIndex
+          CASES_CLIENT_CREATED_INDEX_NAME: !Ref CasesClientCreatedIndex
           HASHES_TABLE: !Ref ContentHashesTable
           DOCUMENTS_TABLE: !Ref DocumentsTable
           RAW_BUCKET: !Ref RawBucket
@@ -160,6 +185,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /{proxy+}
             Method: GET
+        CreateCase:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /cases
+            Method: POST
         Health:
           Type: HttpApi
           Properties:

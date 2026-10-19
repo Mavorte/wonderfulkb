@@ -2,3 +2,4 @@
 boto3>=1.40
 # odkrytí výřezu podpisu (AES-256-GCM); v Lambda runtime není
 cryptography>=43
+simplejson>=3.19

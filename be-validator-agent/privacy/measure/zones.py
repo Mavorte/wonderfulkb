@@ -51,7 +51,12 @@ def _anchor_lines(page, terms, ocr, number):
             yield pymupdf.Rect(l.x0, l.y0, l.x1, l.y1)
 
 
-def regions_v2(pdf_bytes, findings, labels=LABELS, ocr=None):
+SCAN_ABOVE_FUNC_MM = 30       # v3: užší zóny na skenech (tam zóna smaže i tištěný text v obrazu)
+SCAN_BELOW_ROLE_MM = 40
+SCAN_ABOVE_LABEL_MM = 35
+
+
+def regions_v2(pdf_bytes, findings, labels=LABELS, ocr=None, tight_scans=False, block=True):
     doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
     out = []
     try:
@@ -60,12 +65,15 @@ def regions_v2(pdf_bytes, findings, labels=LABELS, ocr=None):
             by_page.setdefault(int(d["page"]), []).append(d["bbox"])
         for i, page in enumerate(doc, start=1):
             zones = []
+            scan = tight_scans and len(page.get_text("words")) < 5
+            up_label, up_func, down_role = ((SCAN_ABOVE_LABEL_MM, SCAN_ABOVE_FUNC_MM, SCAN_BELOW_ROLE_MM) if scan
+                                            else (ABOVE_LABEL_MM, ABOVE_FUNC_MM, BELOW_ROLE_MM))
             for line in _anchor_lines(page, labels, ocr, i):
-                zones.append(_zone(page, line, ABOVE_LABEL_MM, BELOW_LABEL_MM))
+                zones.append(_zone(page, line, up_label, BELOW_LABEL_MM))
             for line in _anchor_lines(page, FUNCTIONS, ocr, i):
-                zones.append(_zone(page, line, ABOVE_FUNC_MM, 1))
+                zones.append(_zone(page, line, up_func, 1))
             for line in _anchor_lines(page, ROLES, ocr, i):
-                zones.append(_zone(page, line, 2, BELOW_ROLE_MM))
+                zones.append(_zone(page, line, 2, down_role))
             zones = [z for k, z in enumerate(zones) if z is not None and z not in zones[:k]]
             dets = [tuple(b) for b in by_page.get(i, [])]
             for b in dets:
@@ -73,7 +81,7 @@ def regions_v2(pdf_bytes, findings, labels=LABELS, ocr=None):
             for z in zones:
                 out.append(Region(i, z, "graphics", "label"))
             allb = zones + [(max(0, b[0] - PAD), max(0, b[1] - PAD), min(1, b[2] + PAD), min(1, b[3] + PAD)) for b in dets]
-            if len(allb) > 1:
+            if block and len(allb) > 1:
                 blk = (min(b[0] for b in allb), min(b[1] for b in allb), max(b[2] for b in allb), max(b[3] for b in allb))
                 if blk[3] - blk[1] <= MAX_BLOCK_HEIGHT:
                     out.append(Region(i, blk, "graphics", "block"))

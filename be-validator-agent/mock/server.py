@@ -1,11 +1,13 @@
 """Mock Validator Agent API podle be-document-processing/contracts/openapi-validator-agent.yaml.
 
 Bez závislostí (jen stdlib). Spuštění:
-    API_KEY=mock-key python3 server.py            # port 8080, PORT=...
+    API_KEY=mock-key python3 server.py            # 127.0.0.1:8080, PORT=...
+    MOCK_BIND_ALL=1 python3 server.py             # výslovně i na 0.0.0.0 (např. Docker)
 Pomocné (mimo spec): GET /healthz, GET /v1/_mock/cases (seznam id), GET /v1/_mock/crops/{doc}/{sig}.png
 """
 import json
 import os
+import traceback
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -192,8 +194,9 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(404, "Neznámá cesta")
         except ApiError as e:
             self._send(e.status, {"error": e.msg, **e.extra})
-        except Exception as e:  # noqa: BLE001
-            self._send(500, {"error": f"Interní chyba: {e}"})
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()  # detail jen do logu serveru, klient dostane obecnou chybu
+            self._send(500, {"error": "Interní chyba"})
 
     def log_message(self, fmt, *args):
         if os.environ.get("QUIET") != "1":
@@ -202,5 +205,6 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
-    print(f"Mock Validator Agent API na :{port}{BASE}, x-api-key = $API_KEY (výchozí 'mock-key')")
-    ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
+    bind = "0.0.0.0" if os.environ.get("MOCK_BIND_ALL") == "1" else "127.0.0.1"
+    print(f"Mock Validator Agent API na {bind}:{port}{BASE}, x-api-key = $API_KEY (výchozí 'mock-key')")
+    ThreadingHTTPServer((bind, port), Handler).serve_forever()

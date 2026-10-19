@@ -111,8 +111,9 @@ TEXT
 step_stream() {
   [ -z "$(stream_arn)" ] || { echo "The stream is already on: $(stream_arn)"; exit 0; }
   echo "Updates stack $TABLES_STACK with documents-table-with-stream.yaml (enables the stream, nothing else)."
+  # --tags must be repeated: `deploy` without it clears the stack tags (and so the table's tag) on update
   aws cloudformation deploy --stack-name "$TABLES_STACK" --template-file documents-table-with-stream.yaml \
-    --no-execute-changeset --no-fail-on-empty-changeset
+    --tags project=wonderfulkb --no-execute-changeset --no-fail-on-empty-changeset
   local cs; cs=$(aws cloudformation list-change-sets --stack-name "$TABLES_STACK" --query 'Summaries[0].ChangeSetName' --output text)
   aws cloudformation describe-change-set --stack-name "$TABLES_STACK" --change-set-name "$cs" \
     --query 'Changes[].ResourceChange.{Action:Action,Resource:LogicalResourceId,Replacement:Replacement,Details:Details[].Target.Attribute}' --output json
@@ -165,7 +166,7 @@ TEXT
     aws cloudformation delete-stack --stack-name "$ECR_STACK"; aws cloudformation wait stack-delete-complete --stack-name "$ECR_STACK"
   fi
   if [ -n "$(stream_arn)" ]; then
-    aws cloudformation deploy --stack-name "$TABLES_STACK" --template-file "$ORIGINAL_TEMPLATE" --no-fail-on-empty-changeset
+    aws cloudformation deploy --stack-name "$TABLES_STACK" --template-file "$ORIGINAL_TEMPLATE" --tags project=wonderfulkb --no-fail-on-empty-changeset
   fi
   echo "Done."
 }

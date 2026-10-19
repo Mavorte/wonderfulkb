@@ -282,7 +282,8 @@ def signatures_expected(rule, ctx):
             missing = [r for r in roles if r not in got]
             for s in sigs:
                 ev.append(evidence(d, s.get("page"), f"popisek podpisu: {s['role_evidence']}" if s.get("role_evidence") else None, signature_id=s.get("signature_id"), role=s.get("role"),
-                                   detection_score=s.get("detection_score"), crop_url=s.get("crop_url")))
+                                   detection_score=s.get("detection_score"), crop_url=s.get("crop_url"),
+                                   preview_url=s.get("preview_url"), reveal_path=s.get("reveal_path")))
             if any(s.get("role") in (None, "unknown") for s in sigs):
                 issues.append("U některého nalezeného podpisu se nepodařilo určit roli (nejbližší text nestačil); roli neodhadujeme, ověřte ji.")
             if missing:

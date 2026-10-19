@@ -73,7 +73,8 @@ def local_findings(pdf, base, mode="local", cache=None):
 def regions_of(pdf, findings, variant, ocr=None):
     if variant == "v1":
         return conservative_regions(pdf, findings)
-    return zones_mod.regions_v2(pdf, findings, ocr=ocr)      # v2 umí zóny i na skenech (OCR řádky Textractu)
+    # v2 umí zóny i na skenech (OCR řádky Textractu); v3 = v2 s užšími zónami na stránkách bez textové vrstvy
+    return zones_mod.regions_v2(pdf, findings, ocr=ocr, tight_scans=(variant == "v3"), block=(variant != "v4"))      # v4 = v2 bez sjednoceného bloku
 
 
 def notext_gray(doc, pno, dpi=RENDER_DPI):
@@ -207,7 +208,7 @@ def main():
     ap.add_argument("data_dir")
     ap.add_argument("out_dir")
     ap.add_argument("--scenario", choices=["zones", "findings", "local", "pipeline", "pipeline_vec"], required=True)
-    ap.add_argument("--zones", choices=["v1", "v2"], default="v1")
+    ap.add_argument("--zones", choices=["v1", "v2", "v3", "v4"], default="v1")
     ap.add_argument("--only", help="podřetězec názvu souboru (ladění)")
     ap.add_argument("--keep-pdf", action="store_true", help="uloží zamaskované PDF do OUT_DIR/pdf")
     ap.add_argument("--textract-all", action="store_true",

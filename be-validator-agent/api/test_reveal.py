@@ -206,8 +206,9 @@ def test_reveal_matches_original_crop_bytes(env):
 def test_reveal_requires_api_key(env):
     api, index, _ = env
     cid, did = doc(index)
-    for k in (None, "", "wrong"):
-        assert call(api, sig_path(cid, did), key=k) == (403, {"error": "Chybí nebo je špatný API klíč"})
+    for k in (None, ""):
+        assert call(api, sig_path(cid, did), key=k) == (401, {"error": "Chybí API klíč"})
+    assert call(api, sig_path(cid, did), key="wrong") == (403, {"error": "Špatný API klíč"})
 
 
 def test_reveal_404_unknown_signature_document_case(env):
@@ -377,6 +378,9 @@ def test_lambda_adapter_returns_base64_png_with_headers(env, monkeypatch):
     ev["headers"] = {"x-api-key": "wrong"}
     r = app.handler(ev)
     assert r["statusCode"] == 403 and r["headers"]["Content-Type"].startswith("application/json")
+    ev["headers"] = {}
+    r = app.handler(ev)
+    assert r["statusCode"] == 401 and r["headers"]["Content-Type"].startswith("application/json")
 
 
 # ---- šifrování: shoda s knihovnou signature_privacy a s KMS ----------------------------------------

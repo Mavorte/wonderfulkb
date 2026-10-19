@@ -258,6 +258,21 @@ class Repo:
                 return rows, False
             kw["ExclusiveStartKey"] = r["LastEvaluatedKey"]
 
+    def ingest_rows(self, case_id):
+        """Dokumenty nahrané přes ingest (tabulka dokumentů) jako řádky seznamu se stavem "queued"."""
+        if not self.cfg.documents_table:
+            return []
+        kw = dict(TableName=self.cfg.documents_table, KeyConditionExpression="case_id = :c",
+                  ExpressionAttributeValues={":c": {"S": case_id}}, ProjectionExpression="document_id, filename")
+        rows = []
+        while True:
+            r = self.c.ddb.query(**kw)
+            rows += [{"document_id": i["document_id"], "title": i.get("filename", ""), "processing_status": "queued"}
+                     for i in map(_item, r.get("Items", []))]
+            if "LastEvaluatedKey" not in r:
+                return rows
+            kw["ExclusiveStartKey"] = r["LastEvaluatedKey"]
+
     def document_sha256(self, case_id, document_id):
         """SHA-256 obsahu z tabulky dokumentů ingestu (jen tento atribut), nebo None."""
         r = self.c.ddb.get_item(TableName=self.cfg.documents_table, ProjectionExpression="sha256",
@@ -415,9 +430,14 @@ class Api:
                     raise ValueError
             except (ValueError, KeyError, TypeError, binascii.Error):
                 raise ApiError(400, "Neplatný next_token") from None
-        rows, more = self.repo.query_rows(case_id, status, limit, start)
-        if not rows and not start and not self.repo.case_exists(case_id):
+        # Analýza (zpracované) + ingest (nahrané, pipeline je ještě nezpracovala = "queued").
+        merged = {r["document_id"]: r for r in self.repo.ingest_rows(case_id)}
+        merged.update({r["document_id"]: r for r in self.repo.query_rows(case_id, None, 10**6, None)[0]})
+        if not merged and not self.repo.case_exists(case_id):
             raise ApiError(404, "Case neexistuje")
+        rows = [merged[d] for d in sorted(merged) if (start is None or d > start)
+                and (status is None or merged[d]["processing_status"] == status)]
+        rows, more = rows[:limit], len(rows) > limit
         docs = [{"document_id": r["document_id"], "title": r.get("title", ""), "label": r.get("label"),
                  "label_status": r.get("label_status", "predicted") if r.get("label") else None,
                  "processing_status": r["processing_status"],
@@ -429,6 +449,8 @@ class Api:
         _ids(case_id, document_id)
         row = self.repo.get_row(case_id, document_id)
         if not row:
+            if self.cfg.documents_table and self.repo.document_sha256(case_id, document_id):
+                raise ApiError(409, "OCR ještě nedoběhlo", {"processing_status": "queued"})  # jen v ingestu
             raise ApiError(404, "Dokument neexistuje")
         return row
 
@@ -808,6 +830,36 @@ def _duplicate_policy():
 _default = None
 
 
+def _check_key(api, hdr):
+    if not hdr.get("x-api-key"):  # jako ingest: chybějící klíč 401, špatný 403
+        raise ApiError(401, "Chybí API klíč")
+    if not api.keys.check(hdr.get("x-api-key")):
+        raise ApiError(403, "Špatný API klíč")
+
+
+def strip_base(path):
+    path = unquote(path)
+    return path[len(BASE):] if path.startswith(BASE + "/") else path
+
+
+def authorize(headers, api=None):
+    """Stejná kontrola klíče jako v `handle` pro cesty obsluhované jinde (případy a klienti).
+    None = povoleno, jinak (status, body)."""
+    global _default
+    if api is None:
+        if _default is None:
+            _default = Api()
+        api = _default
+    try:
+        _check_key(api, {k.lower(): v for k, v in (headers or {}).items()})
+        return None
+    except ApiError as e:
+        return e.status, {"error": e.msg}
+    except Exception:  # noqa: BLE001
+        log.exception("Neošetřená chyba")
+        return 500, {"error": "Interní chyba služby"}
+
+
 def handle(method, path, query=None, headers=None, api=None, request=None):
     """(status, body). `path` smí mít prefix /v1; `query` je {název: hodnota | [hodnoty]}; `headers` bez ohledu na velikost písmen.
     `body` je dict (JSON) nebo `Binary` (odkrytý výřez). `request`: {request_id, api_key_id} z Lambdy pro audit."""
@@ -824,8 +876,7 @@ def handle(method, path, query=None, headers=None, api=None, request=None):
             path = path[len(BASE):]
         if path == "/healthz":
             return 200, {"status": "ok"}
-        if not api.keys.check(hdr.get("x-api-key")):
-            raise ApiError(403, "Chybí nebo je špatný API klíč")
+        _check_key(api, hdr)
         for rx, name in Api.ROUTES:
             m = rx.match(path)
             if m:

@@ -125,7 +125,7 @@ check("409 nese processing_status", b["processing_status"] == "processing")
 expect(f"/cases/{C}/documents/neexistuje", 404, "Error")
 expect(f"/cases/neexistuje/documents/x", 404, "Error")
 expect(f"/cases/{C}/documents/{smlouva['document_id']}", 403, "Error", key="spatny")
-expect(f"/cases/{C}/documents/{smlouva['document_id']}", 403, "Error", key="")
+expect(f"/cases/{C}/documents/{smlouva['document_id']}", 401, "Error", key="")
 expect(f"/cases/bad%20id/documents/x", 400, "Error")
 
 # 1b. duplicity napříč případy: pole jsou volitelná, schéma je musí přijmout v obou podobách
@@ -205,7 +205,7 @@ check("odkrytí: 200, image/png, no-store, inline, PNG", st == 200 and hdr.get("
       and hdr.get("Cache-Control") == "no-store" and hdr.get("Content-Disposition") == "inline" and data[:8] == PNG,
       (st, hdr.get("Content-Type"), hdr.get("Cache-Control")))
 check("odkrytý výřez není tentýž objekt jako náhled", data != body if CLIENTS and not preview.startswith(BASE.split("/v1")[0]) else True)
-for label, path, key, want in (("špatný klíč", sg["reveal_path"], "spatny", 403), ("bez klíče", sg["reveal_path"], "", 403),
+for label, path, key, want in (("špatný klíč", sg["reveal_path"], "spatny", 403), ("bez klíče", sg["reveal_path"], "", 401),
                                ("neexistující podpis", sg["reveal_path"].replace(sg["signature_id"], "sig_99"), KEY, 404),
                                ("neexistující dokument", sg["reveal_path"].replace(protokol["document_id"], "neexistuje"), KEY, 404),
                                ("neplatné id", f"/cases/{C}/documents/{protokol['document_id']}/signatures/%2E%2E/image", KEY, 400)):

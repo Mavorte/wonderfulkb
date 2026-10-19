@@ -56,7 +56,7 @@ DATA_TOOLS = [
      "input_schema": {"type": "object", "properties": {"document_id": {"type": "string"},
                       "similar_to_verified": {"type": "integer", "minimum": 1, "maximum": 20}}, "required": ["document_id"]}},
     {"name": "get_document_signatures",
-     "description": "Vrátí podpisy, které detektor našel (page, role, role_evidence, copy_suspicion, crop_url). Prázdné pole není důkaz, že podpis chybí. copy_suspicion nevypovídá o pravosti.",
+     "description": "Vrátí podpisy, které detektor našel (page, role, role_evidence, copy_suspicion, preview_url, reveal_path; u starších dokumentů crop_url). Prázdné pole není důkaz, že podpis chybí. copy_suspicion nevypovídá o pravosti.",
      "input_schema": {"type": "object", "properties": {"document_id": {"type": "string"}, "match_client": {"type": "boolean"}}, "required": ["document_id"]}},
 ]
 

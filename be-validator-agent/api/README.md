@@ -41,13 +41,13 @@ a `LocalKeyProvider` s klíčem jen v paměti) a `<sig>.preview.png`; proto `req
 Lambda potřebuje jen `cryptography` (`requirements.txt`).
 
 ## Chování
-- **Autentizace:** `x-api-key` proti hodnotě ze Secrets Manageru `wonderfulkb/ingest-api-key` (čtení při prvním požadavku, cache 5 min), `hmac.compare_digest`. Klíč se nevypisuje, neloguje a není v odpovědích; selhání čtení secretu dá `500` bez detailů. `API_KEY` v prostředí je jen pro lokální vývoj a testy (v šabloně se nenastavuje). `/healthz` je bez klíče. Jiná metoda než GET je `405`.
+- **Autentizace:** `x-api-key` proti hodnotě ze Secrets Manageru `wonderfulkb/ingest-api-key` (čtení při prvním požadavku, cache 5 min), `hmac.compare_digest`. Chybějící (nebo prázdná) hlavička `x-api-key` = `401` `{"error": "Chybí API klíč"}`, špatný klíč = `403` `{"error": "Špatný API klíč"}` (sjednoceno s ingestem, audit S7; HTTP API nemá vlastní autorizaci, oba kódy vrací Lambda). Klíč se nevypisuje, neloguje a není v odpovědích; selhání čtení secretu dá `500` bez detailů. `API_KEY` v prostředí je jen pro lokální vývoj a testy (v šabloně se nenastavuje). `/healthz` je bez klíče. Jiná metoda než GET je `405`.
 - **Seznam (`listCaseDocuments`)**, doplněný navíc ke třem voláním ze zadání, protože je ve spec a mock ho má: Query podle `case_id`, `next_token` = base64 posledního `document_id`, filtr `processing_status` s doplňováním stránek. `404`, když case nemá žádný řádek (a nepovolíš-li parametr `CasesTable`, ani případ bez zpracovaných dokumentů nejde odlišit od neexistujícího; viz Nasazení).
 - **Dokument:** řádek tabulky + `text.txt`. `404` bez řádku, `409` s `processing_status` pro vše mimo `completed`/`partial`. `pages_failed` (NS) jen u `partial`. `label`/`label_status` jsou `null`, dokud není štítek.
 - **Vektory:** klíče se odvozují z kontraktu (`<document_id>#t<i>`, `#p<strana>`) a čtou se `get_vectors` po 100 (`list_vectors` neumí prefix; text se čte po blocích, dokud blok není neúplný, strany podle `page_count`). `include`, `include_values=false` (S3 Vectors se pak ptá bez dat). `similar_to_verified=N`: `query_vectors` nad `wonderfulkb-text` (s `include=image` nad obrazem; bez textu nad obrazem) s dotazem = těžiště vektorů dokumentu, `topK=100`, filtr `verified = true` a `document_id != vlastní`; části se spojí na dokument (nejlepší část), `score = 1 − kosinová vzdálenost` ořezané na 0 až 1. Nezpracovaný dokument nebo dokument bez vektorů dává `200` a prázdná pole.
 - **Podpisy:** odpověď má povinné `status`: `completed` (soubor existuje a je čitelný; prázdné `signatures` pak znamená „nic nenalezeno“), `not_run` (dokument není zpracovaný nebo `signatures.json` neexistuje; prázdné pole NENÍ nález) a `failed` (existuje, ale je poškozený, má špatný tvar nebo nese `status: failed` / `error`). Klíč souboru je atribut `signatures_s3_key`, jinak konvenční `cases/<case_id>/analysis/<document_id>/signatures.json`; existence se zjišťuje `ListObjectsV2`. `signatures.json` se vrací tak, jak ho zapsala pipeline, plus pole výřezu popsaná níže (**`crop_url` na čitelný výřez už neexistuje**). `include_vectors` (výchozí true): chybí-li `vector` v souboru, dočte se z indexu `wonderfulkb-signatures`; s `false` se `vector` odstraní. `match_client=true`: `similar_signatures` z indexu (3 nejbližší, jiný dokument). 
 
-## Podpisy: náhled a odkrytí (krok 3, nenasazeno)
+## Podpisy: náhled a odkrytí (krok 3, nasazeno 19. 10. 2026)
 Čitelný podpis se neukládá. Výřez leží v S3 šifrovaný (`signatures/<sig>.png.enc`, AES-256-GCM, datový klíč obalený KMS
 `alias/wonderfulkb-signatures`, kontext = `case_id`, `document_id`, `signature_id`) a vedle něj zkreslený náhled
 (`signatures/<sig>.preview.png`). Rozhodnutí a návrh: [validator-agent-privacy.md](../../../be-validator-agent/docs/validator-agent-privacy.md).
@@ -77,7 +77,7 @@ dokumentu). Odpověď `200 image/png`, `Cache-Control: no-store`, `Pragma: no-ca
 | `404` | dokument není nebo není zpracovaný; `signatures.json` neexistuje; podpis tam není; výřez v S3 chybí |
 | `409` | výřez není šifrovaný (starý čitelný objekt, nebo objekt bez hlavičky `WKBS`); **nikdy se nevrací čitelně** |
 | `500` obecná zpráva | blok nejde dešifrovat (jiný kontext, zamítnutí KMS, poškozený blok), neplatný `crop_source`/`signatures.json`; důvod jen v auditu (`denied`/`error`) |
-| `403` | chybí nebo je špatný API klíč (jako všude; neauditováno jako odkrytí) |
+| `401` / `403` | chybí API klíč (`401`) / špatný API klíč (`403`), jako všude a jako ingest; neauditováno jako odkrytí |
 
 **Audit.** Každé volání s platným klíčem zapíše jeden JSON řádek (logger `wonderfulkb.agent_api.audit`, úroveň INFO nastavená v kódu, aby
 prošel i v Lambdě) do `/aws/lambda/wonderfulkb-agent-api`:
@@ -90,7 +90,7 @@ Druhá stopa: CloudTrail zapisuje každé KMS `Decrypt` i s kontextem.
 | Proměnná | Výchozí | Význam |
 |---|---|---|
 | `PRIVACY_KMS_KEY_ID` | `alias/wonderfulkb-signatures` | klíč pro `Decrypt` (alias nebo ARN) |
-| `LEGACY_PLAIN_CROP_URL` | `false` | `true` = nezmigrovaný čitelný výřez dostane `crop_url` (300 s). Jen přechod/nouze: obchází rozhodnutí o neukládání čitelných podpisů. Šifrovaný výřez čitelný odkaz nedostane nikdy |
+| `LEGACY_PLAIN_CROP_URL` | `true` (**dočasně**, viz níže) | `true` = nezmigrovaný čitelný výřez dostane `crop_url` (300 s). Jen přechod/nouze: obchází rozhodnutí o neukládání čitelných podpisů. Šifrovaný výřez čitelný odkaz nedostane nikdy |
 | `CROP_URL_COMPAT` | `false` | `true` = klíč `crop_url` zůstane v odpovědi, vždy `null` (pro klienty, kteří hodnotu čtou bez kontroly klíče) |
 
 **Přechod z `crop_url`** (změna je nekompatibilní; Wonderful pole zatím čte). Doporučení: (1) nasadit s `CropUrlCompat=true`: odpověď má `crop_url: null`
@@ -98,6 +98,11 @@ vedle `preview_url`/`reveal_path`, starý kód nespadne na chybějícím klíči
 a tlačítko „odkrýt“ na `reveal_path` (volá se s `x-api-key`, odpověď je PNG); (3) po potvrzení Wonderful `CropUrlCompat=false` (stack update bez dalšího kódu).
 Čitelný `crop_url` se v žádné fázi nevrací, takže „krátké období s oběma poli“ znamená `null` + nová pole, ne čitelný odkaz. `LEGACY_PLAIN_CROP_URL=true`
 jen na výslovné rozhodnutí, dokud migrace (privacy doc, část 8) neproběhne.
+
+**Dočasně nasazeno s `LEGACY_PLAIN_CROP_URL=true`** (rozhodnutí uživatele k auditu V3, 19. 10. 2026; parametr `LegacyPlainCropUrl`,
+výchozí v `template.yaml` i `deploy.sh`): starší případy se čitelnými `sig_NN.png` v S3 (např. `SYN-A01`) dál vracejí `crop_url`
+(300 s), nové šifrované výřezy (`.png.enc`) jen `preview_url` + `reveal_path` (`/image`). Bucket ani existující objekty se neměnily.
+**Platí jen do migrace** starých výřezů na šifrované; po ní nasadit s `LEGACY_PLAIN_CROP_URL=false ./deploy.sh` a výchozí hodnoty vrátit na `false`.
 
 **IAM** (role `wonderfulkb-agent-api-lambda`): přibylo `kms:Decrypt` na klíč `<KMS_KEY_ID>` (`SignatureKmsKeyId`) s podmínkou `ForAllValues:StringEquals`
 nad `kms:EncryptionContextKeys` = `case_id`, `document_id`, `signature_id` a `Null: false` (bez kontextu by `ForAllValues` vyšlo vždy pravdivě). Žádné `GenerateDataKey`,

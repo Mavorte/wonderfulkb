@@ -39,10 +39,12 @@ def ingest(aws, monkeypatch):
     from fastapi.testclient import TestClient
     client = TestClient(main.app, raise_server_exceptions=False)
 
-    def upload(case, *files):
-        return client.post(f"/v1/cases/{case}/documents", headers={"x-api-key": "test-key-not-a-secret"},
+    def upload(case, *files, include_also_in=True):
+        url = f"/v1/cases/{case}/documents" + ("?include_also_in=true" if include_also_in else "")
+        return client.post(url, headers={"x-api-key": "test-key-not-a-secret"},
                            files=[("files", (name, io.BytesIO(data), "application/pdf")) for name, data in files])
     main.upload_as = upload
+    main.client = client
     yield main
     sys.modules.pop("main", None)
     sys.modules.pop("content_hashes", None)
@@ -155,3 +157,19 @@ def test_ingest_copy_of_index_code_matches_the_library(ingest):
     assert [m["document_id"] for m in lookup(s, exclude_case_id="case-2")] == ["doc-x"]
     ingest.content_hashes.register(s, "case-2", "doc-y")   # ingest nesmaže štítek od pipeline
     assert next(m for m in lookup(s) if m["case_id"] == "case-2")["label"] == "faktura"
+
+
+def test_also_in_is_off_by_default_and_never_looked_up(ingest, monkeypatch):
+    """Výchozí odpověď neprozrazuje cizí případy (volá ji i anonymní klient přes intake-fe); registrace v indexu zůstává."""
+    data = pdf("vychozi")
+    first = ingest.upload_as("case-1", ("a.pdf", data), include_also_in=False).json()["documents"][0]
+    monkeypatch.setattr(ingest.content_hashes, "lookup_other_cases",
+                        lambda *a: (_ for _ in ()).throw(AssertionError("index se bez include_also_in nesmí číst")))
+    r = ingest.upload_as("case-2", ("a.pdf", data), include_also_in=False)
+    assert r.status_code == 201 and "also_in" not in r.json()["documents"][0]
+    assert "case-1" not in r.text and first["document_id"] not in r.text
+    assert len(lookup(sha(data))) == 2                      # dokument je v indexu i bez parametru
+    for value in ("false", "0", "no"):
+        r = ingest.client.post(f"/v1/cases/case-3/documents?include_also_in={value}", headers={"x-api-key": "test-key-not-a-secret"},
+                               files=[("files", ("a.pdf", io.BytesIO(data), "application/pdf"))])
+        assert "also_in" not in r.json()["documents"][0]

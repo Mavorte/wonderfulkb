@@ -69,6 +69,7 @@ Stav je jediný, řádek v `wonderfulkb-uw-document-analysis`; SQS i stream jsou
 | `backfill.py` | zařazení dokumentů bez `completed` řádku do fronty |
 | `build.sh`, `Dockerfile` | složí balíčky v `build/` ze sourozeneckých modulů (pipeline, classify, embed, dedup, signature_pipeline, signature_privacy) (čtou se, nic se v nich nemění) |
 | `deploy.sh` | `--plan`, `stream`, `trigger`, `rollback` |
+| `scripts/e2e_check.sh` | po nasazení: jeden nový unikátní dokument pod případem `trigger-test-<čas>` přes ingest → `queued` → `completed`, pak duplicitní upload (nic nespustí); nic nemaže |
 | `tests/` | testy nad moto, bez AWS |
 
 ## Změna tabulky `wonderfulkb-uw-documents` (zapnutí streamu)

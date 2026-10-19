@@ -33,9 +33,12 @@ def test_auth_and_healthz(env, caplog):
     cid, did = doc(index, "Stavby Fišer a.s.", "0_F")
     assert core.handle("GET", "/healthz", {}, {}, api=api)[0] == 200
     assert core.handle("GET", "/v1/healthz", {}, {}, api=api)[0] == 200  # cesta přes API Gateway se stage
-    for k in (None, "", "wrong", KEY + "x", KEY[:-1]):
+    for k in (None, ""):  # chybějící klíč = 401 (jako ingest)
         st, body = call(api, f"/cases/{cid}/documents/{did}", key=k)
-        assert st == 403 and body == {"error": "Chybí nebo je špatný API klíč"}
+        assert st == 401 and body == {"error": "Chybí API klíč"}
+    for k in ("wrong", KEY + "x", KEY[:-1]):
+        st, body = call(api, f"/cases/{cid}/documents/{did}", key=k)
+        assert st == 403 and body == {"error": "Špatný API klíč"}
     caplog.set_level(logging.DEBUG)
     call(api, f"/cases/{cid}/documents/{did}", key="wrong")
     assert KEY not in caplog.text and "wrong" not in caplog.text
@@ -452,3 +455,40 @@ def test_duplicate_corrupted_index_items_are_skipped(env):
     clients.ddb.put_item(TableName=clients.cfg.hashes_table, Item={"sha256": {"S": sha}, "case_document": {"S": "ok-case#ok-doc"}})
     dup, relevant = _dup(api, cid, did)
     assert dup == [{"case_id": "ok-case", "document_id": "ok-doc", "label": None}] and relevant is True
+
+
+# ---- dokumenty jen v ingestu (nahrané, pipeline je ještě nezpracovala) -------
+
+def test_list_includes_ingest_only_documents(env):
+    api, index, clients = env
+    ddb, t = clients.ddb, clients.cfg.documents_table
+    for did, name in (("ingest-only-b", "b.pdf"), ("ingest-only-a", "a.pdf")):
+        ddb.put_item(TableName=t, Item={"case_id": {"S": "ingest-case"}, "document_id": {"S": did},
+                                        "filename": {"S": name}})
+    st, body = call(api, "/cases/ingest-case/documents")  # case není v tabulce případů ani v analýze
+    assert st == 200
+    assert body["documents"] == [
+        {"document_id": "ingest-only-a", "title": "a.pdf", "label": None, "label_status": None,
+         "processing_status": "queued", "page_count": None},
+        {"document_id": "ingest-only-b", "title": "b.pdf", "label": None, "label_status": None,
+         "processing_status": "queued", "page_count": None}]
+    st, body = call(api, "/cases/ingest-case/documents", {"limit": "1"})
+    assert [d["document_id"] for d in body["documents"]] == ["ingest-only-a"] and body["next_token"]
+    st, body = call(api, "/cases/ingest-case/documents", {"limit": "1", "next_token": body["next_token"]})
+    assert [d["document_id"] for d in body["documents"]] == ["ingest-only-b"] and body["next_token"] is None
+    assert call(api, "/cases/ingest-case/documents", {"processing_status": "completed"})[1]["documents"] == []
+    st, body = call(api, "/cases/ingest-case/documents/ingest-only-a")
+    assert st == 404  # bez sha256 v ingestu
+    ddb.put_item(TableName=t, Item={"case_id": {"S": "ingest-case"}, "document_id": {"S": "ingest-only-c"},
+                                    "sha256": {"S": "ab" * 32}})
+    assert call(api, "/cases/ingest-case/documents/ingest-only-c") == (
+        409, {"error": "OCR ještě nedoběhlo", "processing_status": "queued"})
+
+
+def test_processed_document_wins_over_ingest_row(env):
+    api, index, clients = env
+    c = index["cases"][0]
+    d = c["documents"][0]
+    st, body = call(api, f"/cases/{c['case_id']}/documents")
+    row = next(x for x in body["documents"] if x["document_id"] == d["document_id"])
+    assert row["processing_status"] != "queued"

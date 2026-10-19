@@ -114,6 +114,7 @@ def main():
         st, b = get(f"/cases/{CASE}/documents/{A}/signatures", {"include_vectors": ["false"]})
         check("podpisy bez vektoru", st == 200 and "vector" not in b["signatures"][0], st)
         check("špatný klíč 403", get(f"/cases/{CASE}/documents", k="spatny")[0] == 403)
+        check("bez klíče 401", get(f"/cases/{CASE}/documents", k="")[0] == 401)
         check("neznámý dokument 404", get(f"/cases/{CASE}/documents/neexistuje")[0] == 404)
         check("neznámý case 404", get("/cases/wonderfulkb-neexistuje/documents")[0] == 404)
     finally:

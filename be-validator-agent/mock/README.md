@@ -7,6 +7,8 @@ API_KEY=mock-key PORT=8080 python3 server.py
 curl -H 'x-api-key: mock-key' localhost:8080/v1/_mock/cases     # seznam case_id a document_id
 ```
 
+Server poslouchá jen na `127.0.0.1`; na všech rozhraních (`0.0.0.0`, např. v Dockeru) jen s výslovným `MOCK_BIND_ALL=1`. Interní chyba vrací 500 s obecným textem, detail jde jen do logu serveru.
+
 Test proti spec (`pip install pyyaml jsonschema`): `BASE_URL=http://localhost:8080/v1 python3 contract_test.py`
 
 ## Data
