@@ -18,7 +18,7 @@ dokládá původní `nodejs22.x` / `handler.handler` a recovery smoke 403/403/20
 To je historická evidence, nikoli nový cloudový readback této session.
 
 - Cíl: profil `ai-hackathon`, účet `609394381050`, region `eu-central-1`,
-  Lambda `wonderfulkb-case-client`, API `bgm7k1ggqi`, stage `v1`.
+  Lambda `wonderfulkb-case-client`, API `<CASE_API_ID>`, stage `v1`.
 - Vyčerpáno **5/5 deploy pokusů**; zůstaly čtyři syntetičtí klienti a jeden
   neověřený POST, žádné potvrzené case ID. Ledger se nesmí vynulovat.
 - Další live běh nebo mutace v tomto tasku nejsou povoleny. Nový pokus vyžaduje
@@ -188,3 +188,16 @@ ověřit nekličové atributy proti OpenAPI, zejména:
 
 Úplná persistence a souběžná HTTP matice zůstávají neprokázané. Statické IAM/SAM
 testy ani Stubber tyto důkazy nenahrazují; stav zůstává BLOCKED.
+
+## Nasazený stav vs `template.yaml` (ověřeno 19. 10. 2026, jen čtení)
+
+Nasazené prostředky **nevznikly z této šablony** (žádný CloudFormation stack); `template.yaml` je cílový stav, ne popis produkce.
+
+| Prostředek | Nasazeno | Šablona |
+|---|---|---|
+| Lambda `wonderfulkb-case-client` | python3.13, 128 MB, timeout 15 s, role `wonderfulkb-lambda-role`, env `DATA_BACKEND=dynamodb`; kód = `src/` z `origin/main` 07165c3 | vlastní role ze šablony |
+| REST API `wonderfulkb-case-client` (`<CASE_API_ID>`) | typ EDGE, stage `v1`, bez tagů, bez vlastních gateway responses | regionální, s tagy a responses |
+| Usage plan `wonderfulkb-demo-plan` | throttle 10/20 req/s, bez kvóty, klíče `wonderfulkb-demo-key`, `wonderfulkb-demo-key-2` | jeden generovaný klíč |
+| Log group | bez retence | s retencí |
+
+Sjednocení (import do stacku nebo nové nasazení ze šablony) patří hostovi; do té doby šablonu proti existujícímu API nenasazovat.

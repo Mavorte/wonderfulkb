@@ -3,10 +3,11 @@ info:
   title: wonderfulkb Case & Client API (část 1)
   version: 1.4.0
   description: |
-    Návrh (zatím nenasazeno). Část 1: klienti (jen čtení, syntetická data) a case.
+    Nasazeno (REST API Gateway `wonderfulkb-case-client`, stage `v1`, Lambda python3.13). Část 1: klienti (jen čtení, syntetická data) a case.
     Jedna Lambda `wonderfulkb-case-client`, tabulky wonderfulkb-uw-clients a wonderfulkb-uw-cases.
     Klient se při založení case ověřuje v databázi klientů. Část 2 (dokumenty, služba
-    `wonderfulkb-ingest`) je v openapi-ingest.yaml. API klíč `x-api-key` je společný s touto službou.
+    `wonderfulkb-ingest`) je v openapi-ingest.yaml. API klíč `x-api-key` je vlastní: klíč z usage plánu
+    `wonderfulkb-demo-plan` (API Gateway). Klíč ingestu a agent API tu neplatí (403, ověřeno 19. 10. 2026).
 servers:
   - url: https://{apiId}.execute-api.eu-central-1.amazonaws.com/v1
     variables:
