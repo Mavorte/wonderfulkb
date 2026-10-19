@@ -20,6 +20,8 @@ info:
     | Je dokument opravdu to, za co se vydává? Jaké ověřené dokumenty se mu podobají? | `getDocumentVectors` (`similar_to_verified`) |
     | Jsou na dokumentu podpisy, čí jsou, nejsou to kopie? | `getDocumentSignatures` |
     | Ukázat člověku čitelný podpis (jen lidská kontrola, auditováno) | `revealSignatureImage` |
+    | Zobrazit dokument po stranách se zamaskovanými podpisy (např. vyznačit `bbox` na straně) | `getDocumentPages` |
+    | Ukázat člověku čitelný originál dokumentu (jen lidská kontrola, auditováno) | `revealDocumentOriginal` |
 
     ## Doporučený postup agenta
 
@@ -64,6 +66,8 @@ tags:
     description: Vektory textu a obrazu, nejbližší ověřené dokumenty (S3 Vectors)
   - name: signatures
     description: Podpisy nalezené v dokumentu, jejich role, podezření na kopii, zkreslený náhled a odkrytí výřezu
+  - name: view
+    description: Zobrazení dokumentu člověku – stránky zamaskované kopie (náhled) a čitelný originál (odkrytí, auditováno)
 
 paths:
   /clients:
@@ -489,6 +493,73 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/Error'}
 
+  /cases/{case_id}/documents/{document_id}/pages:
+    get:
+      tags: [view]
+      operationId: getDocumentPages
+      summary: Náhled dokumentu po stranách (zamaskovaná kopie, bez auditu)
+      description: |
+        Obdoba `preview_url` u podpisů pro celý dokument. Vrací předpodepsané odkazy (300 s) na stránky PNG a na PDF
+        **zamaskované kopie**: podpisy jsou začerněné, zbytek dokumentu čitelný. Hodí se pro UI, které má na straně
+        vyznačit oblast (`bbox` podpisu nebo regionu): `bbox` je `[x0, y0, x1, y1]` relativně ke straně (0–1, počátek
+        vlevo nahoře), stránka PNG je celá strana, takže obdélník jde nad `<img>` umístit v procentech.
+
+        - Dokument zpracovaný před zavedením maskování (`redacted: false`) náhled nemá (`preview_url: null`), protože
+          jeho stránky vznikly z čitelného originálu. Zbývá `revealDocumentOriginal`.
+        - Odkazy vyprší; pro nové stačí volání zopakovat.
+        - Čitelný originál se odsud nikdy nevrací, jen cesta `reveal_path`.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Strany dokumentu
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentPages'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409':
+          description: Dokument se ještě zpracovává (`processing_status` v těle chyby)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+
+  /cases/{case_id}/documents/{document_id}/original:
+    get:
+      tags: [view]
+      operationId: revealDocumentOriginal
+      summary: Čitelný originál dokumentu (odkrytí na vyžádání, auditováno)
+      description: |
+        Vrátí předpodepsaný odkaz platný **60 s** na původní nahraný soubor (s čitelnými podpisy). Určeno pro lidskou
+        kontrolu, **ne pro kontext LLM**. Soubor se nevrací v těle (PDF mají až desítky MB); odkaz otevři hned
+        (`<iframe>`, PDF.js, nové okno). Odkaz posílá `Content-Disposition: inline` s původním názvem souboru.
+
+        - Každé volání s platným API klíčem (i neúspěšné) se zapíše do auditního logu (`event: document_reveal`):
+          volající (ID nebo otisk klíče), čas, case, dokument, výsledek. Odkaz do logu nejde.
+        - Funguje i pro dokument, který se ještě zpracovává (stačí, že byl nahrán).
+        - `bbox` z podpisů a regionů platí i pro originál (stejná strana, relativní souřadnice).
+        - Cesta je v `reveal_path` z `getDocumentPages`.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Krátkodobý odkaz na originál
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentOriginal'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404':
+          description: Dokument nebo jeho originál neexistuje
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -544,6 +615,58 @@ components:
         application/json:
           schema: {$ref: '#/components/schemas/Error'}
   schemas:
+    DocumentPages:
+      type: object
+      required: [case_id, document_id, page_count, redacted, preview_pdf_url, pages, original_available, reveal_path]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        page_count: {type: integer, minimum: 0}
+        redacted:
+          type: boolean
+          description: '`true` = existuje zamaskovaná kopie a stránky náhledu vznikly z ní'
+        preview_pdf_url:
+          type: string
+          nullable: true
+          description: Předpodepsaný odkaz (300 s) na PDF zamaskované kopie; `null` bez kopie
+        pages:
+          type: array
+          items:
+            type: object
+            required: [page, preview_url]
+            properties:
+              page: {type: integer, minimum: 1, description: 'Číslo strany od 1 (jako `page` u podpisů a regionů)'}
+              preview_url:
+                type: string
+                nullable: true
+                description: Předpodepsaný odkaz (300 s) na PNG zamaskované strany; `null`, když strana nemá náhled
+        original_available:
+          type: boolean
+          description: '`true` = originál existuje a `reveal_path` vrátí odkaz'
+        reveal_path:
+          type: string
+          description: 'Cesta `revealDocumentOriginal`, relativní k adrese serveru: `/cases/{case_id}/documents/{document_id}/original`'
+      example:
+        case_id: 3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47
+        document_id: 8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10
+        page_count: 2
+        redacted: true
+        preview_pdf_url: https://wonderfulkb-raw-document-storage.s3.eu-central-1.amazonaws.com/cases/…/redacted/….pdf?X-Amz-…
+        pages:
+          - {page: 1, preview_url: 'https://…/analysis/…/pages/1.png?X-Amz-…'}
+          - {page: 2, preview_url: 'https://…/analysis/…/pages/2.png?X-Amz-…'}
+        original_available: true
+        reveal_path: /cases/3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47/documents/8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10/original
+    DocumentOriginal:
+      type: object
+      required: [case_id, document_id, filename, content_type, url, expires_in]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        filename: {type: string, description: Původní název nahraného souboru}
+        content_type: {type: string, example: application/pdf}
+        url: {type: string, description: Předpodepsaný odkaz na originál}
+        expires_in: {type: integer, description: Platnost odkazu v sekundách, example: 60}
     Error:
       type: object
       required: [error]

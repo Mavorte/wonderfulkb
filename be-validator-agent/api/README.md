@@ -126,6 +126,28 @@ nad `kms:EncryptionContextKeys` = `case_id`, `document_id`, `signature_id` a `Nu
 
 - **Duplicity napříč případy (volání 1):** `duplicate_of` (dokumenty v jiných případech se stejným SHA-256, bez vlastního případu) a `duplicate_relevant` (jen u individuálních dokladů podle `duplicate_policy` štítku a mimo šablony ve ≥ 3 případech). SHA-256 se čte z `wonderfulkb-uw-documents` (jen atribut), případy z indexu `wonderfulkb-uw-content-hashes` (`Query`); politika je snapshot `duplicate_policy.json` z `classify/taxonomy.yaml` (obnova: `python -I -m dedup.policy --write api/duplicate_policy.json`; modul `dedup` zatím není v tomto repu). Chyba čtení indexu, tabulky dokumentů nebo politiky = pole se vynechají, odpověď zůstává 200. Prázdné `HASHES_TABLE` funkci vypne. Kód je nasazený (19. 10. 2026).
 
+## Dokument: náhled stran a odkrytí originálu (19. 10. 2026)
+Obdoba podpisů pro celý dokument (`getDocumentPages`, `revealDocumentOriginal` v `be-document-processing/contracts/openapi-validator-agent.yaml`).
+Hlavní použití: UI ukáže stranu a vyznačí na ní `bbox` podpisu nebo regionu (segmentace).
+`bbox` je `[x0, y0, x1, y1]` relativně ke straně, počátek vlevo nahoře; strana PNG je celá strana, obdélník jde v %.
+
+| Cesta | Co vrací | Audit |
+|---|---|---|
+| `GET …/documents/{d}/pages` | `pages[{page, preview_url}]` (PNG `analysis/<d>/pages/<n>.png`), `preview_pdf_url` (`redacted/<d>.pdf`), oba 300 s; `redacted`, `original_available`, `reveal_path` | ne |
+| `GET …/documents/{d}/original` | JSON `{url, expires_in: 60, filename, content_type}`: předpodepsaný odkaz na originál s `inline; filename*=` | `event: document_reveal`, výsledek `revealed/not_found/error` |
+
+- Náhled se vydá jen u dokumentu s `redacted_s3_key` (pod `cases/<case>/redacted/`): stránky dokumentů zpracovaných před
+  redakcí vznikly z čitelného originálu, proto mají `preview_url: null` a `redacted: false` (stejně jako nezmigrované výřezy).
+- `…/pages` chce dokončené zpracování (jinak `409` jako detail dokumentu); `…/original` jde i u nahraného, nezpracovaného dokumentu.
+- Klíč originálu z tabulky ingestu (`s3_key`, `filename`, `content_type`); použije se jen pod `cases/<case>/` a mimo `analysis/` a
+  `redacted/`, jinak konvenční `cases/<case>/original/<d>.pdf`. Neexistuje-li, `404`. Dokumenty SYN mimo ingest mají originály pod jinými
+  názvy a dají `404`.
+- Originál se nevrací v těle: Lambda má limit odpovědi 6 MB, ingest přijímá až desítky MB. Odkaz je 60 s „na doručitele“; audit
+  zaznamená každé vydání, ne každé stažení (to by šlo jen přes S3 server access logy nebo CloudTrail data events).
+- IAM: `s3:GetObject` na `cases/*/redacted/*` a `cases/*/original/*` (předpodepsaný odkaz platí jen s oprávněním podepisující role),
+  `s3:ListBucket` s předponami `analysis`, `redacted`, `original`, `dynamodb:GetItem` na tabulku ingestu.
+- Testy: `test_document_view.py` (moto).
+
 ## Předpoklady nad rámec kontraktu (potvrdit s ostatními sessions)
 1. **Klíč vektoru podpisu** je `<document_id>#s<n>` jako v `embed.write_signature_vectors` (n od 0 podle pořadí výřezů): `n` = číslo ze `signature_id` mínus 1 (`sig_01` → `#s0`), jinak pořadí v souboru. `signature_id` u `similar_signatures` se z klíče skládá zpět (`#s0` → `sig_01`), protože ho `embed` do metadat nezapisuje. Metadata podpisu mají obsahovat `case_id` a `document_id` (zapisuje `embed`).
 2. **„Podpisy téhož klienta"** se v indexu poznají jen přes `case_id` (klient v metadatech vektoru není). Pokud má mít shoda zahrnout víc případů klienta, musí do metadat přibýt `client_id`.

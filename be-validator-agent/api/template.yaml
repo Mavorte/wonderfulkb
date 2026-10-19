@@ -95,6 +95,19 @@ Resources:
                 Effect: Allow
                 Action: s3:GetObject
                 Resource: !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
+              - Sid: PresignDocumentFiles
+                # …/pages: zamaskovaná kopie (redacted/); …/original: čitelný originál, jen odkaz na 60 s s auditem.
+                # Předpodepsaná adresa platí jen s oprávněním role, která ji podepsala.
+                Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/redacted/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/original/*"
+              - Sid: ReadIngestDocument
+                # klíč, název a typ originálu (ProjectionExpression s3_key, filename, content_type)
+                Effect: Allow
+                Action: dynamodb:GetItem
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DocumentsTable}"
               - Sid: RevealSignatureCrops
                 # Odkrytí (dešifrování) smí jen toto API, ne pipeline. Jen Decrypt, jen tento klíč a jen volání s kontextem,
                 # který obsahuje právě case_id, document_id, signature_id (Null chrání před voláním bez kontextu, kdy by
@@ -108,13 +121,13 @@ Resources:
                   "Null":
                     "kms:EncryptionContextKeys": "false"
               - Sid: ListAnalysisPrefix
-                # jen kvůli rozlišení "objekt neexistuje" od "zamítnuto" (signatures.json); jen předpona analysis
+                # jen kvůli rozlišení "objekt neexistuje" od "zamítnuto" (signatures.json, stránky, kopie, originál)
                 Effect: Allow
                 Action: s3:ListBucket
                 Resource: !Sub "arn:${AWS::Partition}:s3:::${RawBucket}"
                 Condition:
                   StringLike:
-                    "s3:prefix": "cases/*/analysis/*"
+                    "s3:prefix": ["cases/*/analysis/*", "cases/*/redacted/*", "cases/*/original/*"]
               - Sid: ReadVectors
                 Effect: Allow
                 Action: [s3vectors:GetVectors, s3vectors:QueryVectors]
