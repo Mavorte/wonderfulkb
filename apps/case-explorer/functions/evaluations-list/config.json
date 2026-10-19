@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Evaluations List",
+  "description": "Lists a case's rows in agent_functions.case_evaluations and agent_functions.case_evaluation_results",
+  "method": "POST",
+  "path_slug": "evaluations-list"
+}

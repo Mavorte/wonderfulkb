@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "name": "Case evaluation: robustness",
+  "description": "Task input without JSON or without a case ID, an instruction inside a document, a cross-document mismatch, and failing APIs.",
+  "scenario_slugs": [
+    "clean_case_natural_language_input",
+    "missing_case_id",
+    "prompt_injection_in_document",
+    "invoice_for_different_asset",
+    "documents_api_down",
+    "document_read_fails",
+    "unknown_case"
+  ],
+  "max_parallel_evaluations": 7
+}

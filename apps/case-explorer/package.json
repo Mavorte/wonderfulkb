@@ -1,0 +1,17 @@
+{
+  "name": "@wonderful/app-repo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A Wonderful App, plus the functions and custom tables it manages.",
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "build": "node build.mjs",
+    "package:plugin": "node scripts/package-plugin.mjs",
+    "typecheck": "tsc -p functions"
+  },
+  "devDependencies": {
+    "@wonderful/types": "^0.1.27",
+    "esbuild": "0.28.1",
+    "typescript": "~5.9.3"
+  }
+}

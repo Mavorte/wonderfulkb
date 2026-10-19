@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Case Get",
+  "description": "Fetches one case from the AWS case/client API (GET /cases/{case_id})",
+  "method": "POST",
+  "path_slug": "case-get"
+}

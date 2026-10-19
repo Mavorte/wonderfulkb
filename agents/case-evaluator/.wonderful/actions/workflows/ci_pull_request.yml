@@ -1,0 +1,13 @@
+name: ci_pull_request
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  evals:
+    name: Critical eval scenarios
+    runs-on: wonderful-evals
+    steps:
+      - name: ci_pull_request batch
+        uses: wonderful/agent-evals@v1
+        with:
+          batch: ci_pull_request

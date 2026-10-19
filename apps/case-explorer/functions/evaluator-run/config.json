@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Evaluator Run",
+  "description": "Starts the case-evaluator agent for a case ID through its webhook trigger",
+  "method": "POST",
+  "path_slug": "evaluator-run"
+}

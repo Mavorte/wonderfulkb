@@ -1,0 +1,23 @@
+{
+  "name": "case_evaluation_results",
+  "description": "One row per business rule per case-evaluator run, written as the agent records it.",
+  "columns": [
+    {
+      "name": "evaluation_id",
+      "type": "string",
+      "required": true,
+      "primary_key": true,
+      "reference": { "table": "agent_functions.case_evaluations", "on_delete": "cascade" }
+    },
+    { "name": "rule_id", "type": "string", "required": true, "primary_key": true },
+    { "name": "case_id", "type": "string", "required": true },
+    { "name": "status", "type": "string", "required": true },
+    { "name": "expected", "type": "string" },
+    { "name": "found", "type": "string" },
+    { "name": "sources", "type": "string" },
+    { "name": "details", "type": "string" },
+    { "name": "reasoning", "type": "string", "required": true },
+    { "name": "recorded_at", "type": "datetime" }
+  ],
+  "indexes": [{ "name": "by_case", "columns": ["case_id"] }]
+}

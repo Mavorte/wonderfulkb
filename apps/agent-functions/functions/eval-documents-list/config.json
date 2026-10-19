@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Eval Documents List",
+  "description": "Lists a case's documents for the case-evaluator agent (body: case_id)",
+  "method": "POST",
+  "path_slug": "eval-documents-list"
+}

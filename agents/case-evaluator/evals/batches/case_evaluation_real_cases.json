@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "name": "Case evaluation: real case bundles",
+  "description": "The Solom Rec, Stavby Fišer and unhappy bundles, and an unknown case.",
+  "scenario_slugs": [
+    "solom_rec_baseline",
+    "stavby_fiser_baseline",
+    "unhappy_recipient_ico",
+    "unknown_case"
+  ],
+  "max_parallel_evaluations": 4
+}

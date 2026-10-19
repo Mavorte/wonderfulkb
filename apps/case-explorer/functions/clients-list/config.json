@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Clients List",
+  "description": "Lists clients from the AWS case/client API (GET /clients), with optional ico, name, status and next_token filters",
+  "method": "POST",
+  "path_slug": "clients-list"
+}
