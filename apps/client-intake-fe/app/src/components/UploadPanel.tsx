@@ -1,8 +1,9 @@
 import { useWonderful } from "@wonderful/app-sdk";
-import { Alert, Box, Button, Card, Icon, Stack, Text } from "@wonderful/ui-base";
 import { type DragEvent, useRef, useState } from "react";
 import createUploadRequest from "../createUploadRequest";
 import type { IntakeData, UploadedDocument } from "../types";
+import KbIcon from "./KbIcon";
+import Notice from "./Notice";
 
 function isPdf(file: File) {
   return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
@@ -56,11 +57,16 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
     }
   };
 
+  const canUpload = Boolean(data.upload) && files.length > 0;
+
   return (
-    <Card padding={5} title="Upload documents">
-      <Stack gap={4}>
+    <section className="app-card">
+      <div className="app-card__head">
+        <h2 className="app-card__title">Upload documents</h2>
+      </div>
+      <div className="app-stack">
         {!data.upload && (
-          <Alert
+          <Notice
             variant="warning"
             title="Uploads are not available yet"
             description="The document service is not configured. Please try again later."
@@ -75,15 +81,14 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
           onDragLeave={() => setIsDragging(false)}
           onDrop={onDrop}
         >
-          <Box direction="column" align="center" gap={2} padding={6}>
-            <Icon name="cloud-arrow-up" size={32} color="secondary" />
-            <Text variant="body" align="center">
-              Drag and drop PDF files here
-            </Text>
-            <Button variant="outlined" size="small" onClick={() => inputRef.current?.click()}>
-              Choose files
-            </Button>
-          </Box>
+          <KbIcon name="upload" className="kb-icon--32 kb-icon--accent" />
+          <div>
+            <p>Drag and drop PDF files here</p>
+            <p className="dropzone__hint">or choose them from your computer</p>
+          </div>
+          <button type="button" className="kb-btn kb-btn--secondary kb-btn--small" onClick={() => inputRef.current?.click()}>
+            Choose files
+          </button>
           <input
             ref={inputRef}
             type="file"
@@ -98,67 +103,64 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
         </div>
 
         {rejected.length > 0 && (
-          <Alert variant="warning" title="Only PDF files can be uploaded" description={`Skipped: ${rejected.join(", ")}`} />
+          <Notice variant="warning" title="Only PDF files can be uploaded" description={`Skipped: ${rejected.join(", ")}`} />
         )}
 
         {files.length > 0 && (
-          <Stack gap={2}>
+          <ul className="app-files">
             {files.map((file) => (
-              <Box direction="row" align="center" justify="between" gap={3} key={file.name}>
-                <Box direction="row" align="center" gap={2}>
-                  <Icon name="file-pdf" color="secondary" />
-                  <Text variant="body">{file.name}</Text>
-                  <Text variant="body-sm" color="secondary">
-                    {formatSize(file.size)}
-                  </Text>
-                </Box>
-                <Button
-                  variant="text"
-                  size="small"
-                  startIcon="x"
-                  isDisabled={isUploading}
+              <li key={file.name}>
+                <KbIcon name="file" className="kb-icon--muted" />
+                <span className="app-files__name">{file.name}</span>
+                <span className="app-list__meta">{formatSize(file.size)}</span>
+                <button
+                  type="button"
+                  className="app-files__remove"
+                  disabled={isUploading}
                   onClick={() => setFiles((current) => current.filter((f) => f !== file))}
                 >
-                  Remove
-                </Button>
-              </Box>
+                  <KbIcon name="close" />
+                  <span className="sr-only">Remove {file.name}</span>
+                </button>
+              </li>
             ))}
-          </Stack>
+          </ul>
         )}
 
-        {error && <Alert variant="error" title="Upload failed" description={error} />}
+        {error && <Notice variant="error" title="Upload failed" description={error} />}
 
-        <Box direction="row" justify="end">
-          <Button
-            color="primary"
-            startIcon="upload-simple"
-            isLoading={isUploading}
-            isDisabled={!data.upload || files.length === 0}
+        <div className="app-actions">
+          <button
+            type="button"
+            className={`kb-btn kb-btn--primary${isUploading ? " is-loading" : ""}`}
+            disabled={!canUpload || isUploading}
+            aria-busy={isUploading}
             onClick={onUpload}
           >
+            <KbIcon name="upload" />
             {files.length > 1 ? `Upload ${files.length} files` : "Upload"}
-          </Button>
-        </Box>
+          </button>
+        </div>
 
         {uploaded.length > 0 && (
-          <Stack gap={2}>
-            <Alert
+          <>
+            <Notice
               variant="success"
               title="Thank you, we received your documents"
               description="You can upload more files at any time using this link."
             />
-            {uploaded.map((doc) => (
-              <Box direction="row" align="center" gap={2} key={doc.document_id}>
-                <Icon name="check-circle" color="success" />
-                <Text variant="body">{doc.filename}</Text>
-                <Text variant="body-sm" color="secondary">
-                  {new Date(doc.received_at).toLocaleString()}
-                </Text>
-              </Box>
-            ))}
-          </Stack>
+            <ul className="app-list">
+              {uploaded.map((doc) => (
+                <li key={doc.document_id}>
+                  <KbIcon name="check" className="app-list__ok" />
+                  <span>{doc.filename}</span>
+                  <span className="app-list__meta">{new Date(doc.received_at).toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
-      </Stack>
-    </Card>
+      </div>
+    </section>
   );
 }

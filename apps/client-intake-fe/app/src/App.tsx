@@ -1,10 +1,12 @@
 import "./style.css";
 import { useWonderful } from "@wonderful/app-sdk";
-import { Alert, Box, PageLayout, PageLoader, Stack, Text } from "@wonderful/ui-base";
 import { useEffect, useRef, useState } from "react";
 import CaseSummary from "./components/CaseSummary";
+import Notice from "./components/Notice";
 import UploadPanel from "./components/UploadPanel";
 import getIntakeHash from "./getIntakeHash";
+import KbLogo from "./kb/kb-logo.svg?react";
+import KbLogoInverse from "./kb/kb-logo-inverse.svg?react";
 import type { IntakeData } from "./types";
 
 type State =
@@ -64,31 +66,40 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app-root">
-      <PageLayout maxWidth={960} padding={6}>
-        <PageLayout.Header>
-          <Stack gap={1}>
-            <Text variant="heading-2">Documents for your financing</Text>
-            <Text variant="body" color="secondary">
-              Check your case details and upload the requested documents as PDF files.
-            </Text>
-          </Stack>
-        </PageLayout.Header>
-        <PageLayout.Content>
+    <div className="kb-root app-root">
+      <header className="app-header">
+        <div className="app-container">
+          <KbLogo className="app-header__logo" />
+          <span className="app-header__tag">Equipment financing</span>
+        </div>
+      </header>
+      <main className="app-main">
+        <div className="app-container">
+          <div className="app-intro">
+            <h1>Documents for your financing</h1>
+            <p>Check your case details and upload the requested documents as PDF files.</p>
+          </div>
           {state.status === "loading" && (
-            <Box direction="column" align="center" padding={8}>
-              <PageLoader label="Loading your case" />
-            </Box>
+            <div className="app-loader" role="status">
+              <div className="app-loader__spinner" />
+              <p>Loading your case</p>
+            </div>
           )}
-          {state.status === "error" && <Alert variant="error" title={state.title} description={state.description} />}
+          {state.status === "error" && <Notice variant="error" title={state.title} description={state.description} />}
           {state.status === "ready" && (
-            <Stack gap={4}>
+            <div className="app-stack">
               <CaseSummary data={state.data} />
               <UploadPanel data={state.data} />
-            </Stack>
+            </div>
           )}
-        </PageLayout.Content>
-      </PageLayout>
+        </div>
+      </main>
+      <footer className="app-footer">
+        <div className="app-container">
+          <KbLogoInverse className="app-footer__logo" />
+          <span>© Komerční banka, a.s.</span>
+        </div>
+      </footer>
     </div>
   );
 }
