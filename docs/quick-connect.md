@@ -26,7 +26,9 @@ wget -qO- --header "x-api-key: $KEY" --header "Content-Type: application/json" \
 
 Odpověď `201` obsahuje přidělené `case_id` (UUID); použijte ho v dalších voláních (`GET /cases/{case_id}`, `POST /cases/{case_id}/documents`).
 
-`POST /cases` je prostý create (OpenAPI 1.4.0): bez idempotence, každé volání založí nový case. Případné `case_id` v těle se ignoruje.
+`POST /cases` je v kontraktu (OpenAPI 1.4.0) prostý create: `case_id` generuje služba, bez idempotence, případné `case_id` v těle se ignoruje.
+
+> **Nasazená verze je zatím stará (ověřeno 19. 10. 2026).** `POST /cases` bez `case_id` vrací `400 {"error":"case_id invalid"}`. Dokud se nenasadí nová Lambda (`infra/case-client/handler.mjs`), posílejte `case_id` (1–128 znaků `A-Za-z0-9._-`) a `client_id`; volání je idempotentní (stejné `case_id` + `client_id` → `200`, jiný klient → `409`).
 
 Sémantika chyb: chybějící nebo špatný klíč → **403** · neznámý klient/case → **404** · klient `inactive`/`blocked` → **409** · nad 10 req/s (burst 20) → **429**.
 
