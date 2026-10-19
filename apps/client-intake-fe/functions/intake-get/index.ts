@@ -114,13 +114,18 @@ async function getClient(baseUrl: string, caseData: IntakeCase): Promise<Upstrea
     const byId = await getJson<UpstreamClient>(`${baseUrl}/clients/${encodeURIComponent(caseData.client_id)}`);
     if (byId.ok && byId.body) return byId.body;
 
-    // Fallback while GET /clients/{client_id} does not exist: look the client up
-    // by IČO when the case has one, else scan the (small, synthetic) client list.
-    const ico = caseData.metadata?.ico;
-    const query = typeof ico === "string" && ico ? `ico=${encodeURIComponent(ico)}` : "limit=100";
-    const list = await getJson<{ clients?: UpstreamClient[] }>(`${baseUrl}/clients?${query}`);
-    if (!list.ok) return null;
-    return list.body?.clients?.find((c) => c.client_id === caseData.client_id) ?? null;
+    // Fallback while GET /clients/{client_id} does not exist: page through the
+    // (small, synthetic) client list until the case's client turns up.
+    let nextToken: string | null | undefined;
+    do {
+      const query = nextToken ? `?next_token=${encodeURIComponent(nextToken)}` : "";
+      const list = await getJson<{ clients?: UpstreamClient[]; next_token?: string | null }>(`${baseUrl}/clients${query}`);
+      if (!list.ok) return null;
+      const client = list.body?.clients?.find((c) => c.client_id === caseData.client_id);
+      if (client) return client;
+      nextToken = list.body?.next_token;
+    } while (nextToken);
+    return null;
   } catch (error) {
     console.log(`client API request failed: ${getErrorMessage(error)}`);
     return null;
