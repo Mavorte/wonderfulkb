@@ -3,6 +3,7 @@
 # Potřebuje: aws sso login --profile hackathon, SAM CLI (pip install aws-sam-cli), Python 3.14 na PATH.
 #   ./deploy.sh            vypíše, co vytvoří, a čeká na potvrzení (napsat "deploy"); pak sam deploy ukáže ještě changeset
 #   ./deploy.sh --plan     jen výpis a kontroly, nic se nevytvoří ani neprobíhá build
+# Povinná proměnná: EXPECTED_ACCOUNT (číslo účtu, ochrana proti nasazení jinam).
 # Volitelné proměnné: ARTIFACT_BUCKET (existující bucket pro balíček; jinak SAM založí spravovaný stack
 #   aws-sam-cli-managed-default), CASES_TABLE (viz template.yaml), STACK (výchozí wonderfulkb-agent-api).
 set -euo pipefail
@@ -18,11 +19,13 @@ RAW_BUCKET=wonderfulkb-raw-document-storage
 VECTOR_BUCKET=wonderfulkb-vectors
 SECRET=wonderfulkb/ingest-api-key
 KMS_ALIAS=alias/wonderfulkb-signatures
-KMS_KEY_ID=<KMS_KEY_ID>   # musí odpovídat parametru SignatureKmsKeyId v template.yaml
+# Klíč za aliasem se zjistí čtením (kms:DescribeKey) a předá jako SignatureKmsKeyId; v repu ID klíče není.
+KMS_KEY_ID=$(aws kms describe-key --key-id "$KMS_ALIAS" --query KeyMetadata.KeyId --output text 2>/dev/null || true)
 
 command -v sam >/dev/null || { echo "Chybí SAM CLI (pip install aws-sam-cli)." >&2; exit 1; }
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-[ "$ACCOUNT" = "<ACCOUNT_ID>" ] || { echo "Špatný účet $ACCOUNT (čekám <ACCOUNT_ID>)." >&2; exit 1; }
+EXPECTED_ACCOUNT="${EXPECTED_ACCOUNT:?nastav EXPECTED_ACCOUNT na číslo účtu hackathonu (v repu není)}"
+[ "$ACCOUNT" = "$EXPECTED_ACCOUNT" ] || { echo "Špatný účet $ACCOUNT (čekám $EXPECTED_ACCOUNT)." >&2; exit 1; }
 
 # Kontroly závislostí (jen existence, žádné hodnoty).
 ok=1
@@ -35,11 +38,10 @@ for i in text image signatures; do
 done
 chk "Secrets Manager $SECRET" aws secretsmanager describe-secret --secret-id "$SECRET"
 chk "KMS klíč $KMS_ALIAS (odkrytí podpisů)" aws kms describe-key --key-id "$KMS_ALIAS"
-if ACTUAL_KEY_ID=$(aws kms describe-key --key-id "$KMS_ALIAS" --query KeyMetadata.KeyId --output text 2>/dev/null); then
-  [ "$ACTUAL_KEY_ID" = "$KMS_KEY_ID" ] && echo "  ok      alias $KMS_ALIAS míří na klíč $KMS_KEY_ID (podle šablony)" \
-    || { echo "  CHYBÍ   alias $KMS_ALIAS míří na jiný klíč než SignatureKmsKeyId v šabloně ($KMS_KEY_ID)"; ok=0; }
-fi
+[ -n "$KMS_KEY_ID" ] && echo "  ok      alias $KMS_ALIAS míří na klíč $KMS_KEY_ID (předá se jako SignatureKmsKeyId)" \
+  || { echo "  CHYBÍ   klíč za aliasem $KMS_ALIAS"; ok=0; }
 [ -z "$CASES_TABLE" ] || chk "DynamoDB $CASES_TABLE" aws dynamodb describe-table --table-name "$CASES_TABLE"
+chk "DynamoDB wonderfulkb-uw-clients" aws dynamodb describe-table --table-name wonderfulkb-uw-clients
 [ "$ok" = 1 ] || { echo "Chybí závislosti, nasazení by selhalo za běhu. Končím." >&2; exit 1; }
 
 if [ -n "${ARTIFACT_BUCKET:-}" ]; then ARTIFACT_DESC="do bucketu $ARTIFACT_BUCKET"
@@ -52,19 +54,21 @@ Vytvoří / změní:
   - Lambda wonderfulkb-agent-api (python3.14, arm64, 512 MB, 20 s), kód z tohoto adresáře + boto3>=1.40
   - IAM role wonderfulkb-agent-api-lambda (jen čtení: $ANALYSIS_TABLE GetItem/Query;
     s3:GetObject na $RAW_BUCKET/cases/*/analysis/*; s3vectors GetVectors/QueryVectors na 3 indexy v $VECTOR_BUCKET;
-    GetSecretValue na $SECRET; zápis do vlastní log skupiny)${CASES_TABLE:+; GetItem na $CASES_TABLE}
+    GetSecretValue na $SECRET; zápis do vlastní log skupiny)
+    + případy a klienti: GetItem/PutItem/Scan na $CASES_TABLE, GetItem/Scan/ConditionCheckItem na wonderfulkb-uw-clients,
+      Query na indexy ico-index a client-created-index, Query na wonderfulkb-uw-documents (seznam dokumentů z ingestu)
     + odkrytí podpisů: kms:Decrypt jen na klíč $KMS_KEY_ID ($KMS_ALIAS) a jen s kontextem právě case_id, document_id,
       signature_id (žádné GenerateDataKey/Encrypt; zápis šifrovaných výřezů zůstává u pipeline). s3:GetObject se nemění
       (cases/*/analysis/* už pokrývá signatures/*)
   - proměnné Lambdy: PRIVACY_KMS_KEY_ID=$KMS_ALIAS, LEGACY_PLAIN_CROP_URL=$LEGACY_PLAIN_CROP_URL (dočasně do migrace),
-    CROP_URL_COMPAT=${CROP_URL_COMPAT:-false}
+    CROP_URL_COMPAT=${CROP_URL_COMPAT:-true}
   - Odpověď volání 3: přibude preview_url, reveal_path, crop_available a cesta GET …/signatures/{signature_id}/image
     (odkrytí, audit do logu Lambdy); crop_url zůstane jen u starých čitelných výřezů, dokud LEGACY_PLAIN_CROP_URL=true.
     Chybějící x-api-key vrací 401 (dříve 403), špatný klíč dál 403. Viz README, "Přechod z crop_url".
   - dedup: role navíc smí dynamodb:Query na wonderfulkb-uw-content-hashes a dynamodb:GetItem na wonderfulkb-uw-documents (jen sha256);
     tabulka hashů nemusí existovat, API pak pole duplicate_of a duplicate_relevant vynechá (parametr ContentHashesTable="" funkci vypne)
   - CloudWatch log skupina /aws/lambda/wonderfulkb-agent-api (14 dní)
-  - API Gateway HTTP API, stage v1, trasy GET /{proxy+} a GET /healthz, limit 10 req/s (burst 20)
+  - API Gateway HTTP API, stage v1, trasy GET /{proxy+}, POST /cases a GET /healthz, limit 10 req/s (burst 20)
   - balíček kódu: $ARTIFACT_DESC
 Nemění ani nemaže nic jiného. API klíč se nenastavuje; Lambda ho čte za běhu ze Secrets Manageru.
 PLAN
@@ -77,7 +81,8 @@ sam build
 OVERRIDES=()
 [ -z "$CASES_TABLE" ] || OVERRIDES+=("CasesTable=$CASES_TABLE")
 OVERRIDES+=("LegacyPlainCropUrl=$LEGACY_PLAIN_CROP_URL")
-[ -z "${CROP_URL_COMPAT:-}" ] || OVERRIDES+=("CropUrlCompat=$CROP_URL_COMPAT")   # přechod z crop_url, viz README
+OVERRIDES+=("CropUrlCompat=${CROP_URL_COMPAT:-true}")   # nasazeno s true (19. 10. 2026), přechod z crop_url, viz README
+OVERRIDES+=("SignatureKmsKeyId=$KMS_KEY_ID")
 PARAM_ARGS=()
 [ "${#OVERRIDES[@]}" = 0 ] || PARAM_ARGS=(--parameter-overrides "${OVERRIDES[@]}")
 S3_ARGS=(--resolve-s3)

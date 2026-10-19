@@ -1,21 +1,27 @@
 openapi: 3.0.3
 info:
-  title: wonderfulkb Validator Agent API (návrh)
+  title: wonderfulkb API (klienti, case, dokumenty pro validačního agenta)
   version: 0.4.0
   description: |
-    Čtecí API, kterým Wonderful vyhodnocovací (validační) agent získává vstupy k posouzení case.
-    Návrh, nic není nasazené. Podrobný popis a otevřené otázky: `VALIDATOR-AGENT.md`.
-    Autentizace, formát chyb a identifikátory jsou stejné jako u Case & Client API a Ingest API.
+    Jedno API (Lambda `wonderfulkb-agent-api`, HTTP API, stage `v1`) pro klienty a case (dříve samostatné
+    Case & Client API, Lambda `wonderfulkb-case-client`, smazaná 19. 10. 2026) a pro vstupy, kterými Wonderful
+    vyhodnocovací (validační) agent posuzuje case. Nasazená adresa (`<AGENT_API_BASE_URL>`) se předává mimo
+    repozitář. Kód: `be-validator-agent/api`.
+    Nahrání dokumentů je dál v Ingest API (`be-intake/openapi-ingest.yaml`). Všechna volání chrání stejný klíč
+    `x-api-key` jako Ingest API (Secrets Manager `wonderfulkb/ingest-api-key`).
 
     ## Na co se agent může ptát
 
     | Otázka agenta | Volání (`operationId`) |
     |---|---|
+    | Jaké case existují a komu patří? | `listCases`, `getCase`, `listClients`, `listClientCases` |
     | Jaké dokumenty case obsahuje a jsou zpracované? | `listCaseDocuments` |
     | Jaký je typ, popis a celý text dokumentu? | `getDocumentForValidation` |
     | Je dokument opravdu to, za co se vydává? Jaké ověřené dokumenty se mu podobají? | `getDocumentVectors` (`similar_to_verified`) |
     | Jsou na dokumentu podpisy, čí jsou, nejsou to kopie? | `getDocumentSignatures` |
     | Ukázat člověku čitelný podpis (jen lidská kontrola, auditováno) | `revealSignatureImage` |
+    | Zobrazit dokument po stranách se zamaskovanými podpisy (např. vyznačit `bbox` na straně) | `getDocumentPages` |
+    | Ukázat člověku čitelný originál dokumentu (jen lidská kontrola, auditováno) | `revealDocumentOriginal` |
 
     ## Doporučený postup agenta
 
@@ -39,9 +45,9 @@ info:
 
     ## Chyby
 
-    Vždy `{"error": "popis"}`. `400` neplatný parametr, `401` chybí API klíč (hlavička `x-api-key` chybí nebo je prázdná), `403` špatný API klíč (jako Ingest API), `404` neexistující case
-    nebo dokument, `409` OCR ještě nedoběhlo (v těle `processing_status`; u `revealSignatureImage` výřez není zašifrovaný), `5xx` chyba služby (volání je idempotentní,
-    lze opakovat).
+    Vždy `{"error": "popis"}` (u `/clients` a `/cases` anglicky, u dokumentů česky). `400` neplatný parametr, `401` chybí API klíč (hlavička `x-api-key` chybí nebo je prázdná), `403` špatný API klíč (jako Ingest API), `404` neexistující case,
+    dokument nebo klient, `409` OCR ještě nedoběhlo (v těle `processing_status`; u `revealSignatureImage` výřez není zašifrovaný), `5xx` chyba služby (volání je idempotentní,
+    lze opakovat; `createCase` idempotentní není). `429` při překročení limitu HTTP API (10 req/s, burst 20).
 servers:
   - url: https://{host}/v1
     variables:
@@ -50,14 +56,165 @@ servers:
 security:
   - ApiKeyAuth: []
 tags:
+  - name: clients
+    description: Klienti (jen čtení, syntetická data)
+  - name: cases
+    description: Case klientů (založení a čtení)
   - name: document
     description: Seznam dokumentů case, jejich text, typ a popis
   - name: vectors
     description: Vektory textu a obrazu, nejbližší ověřené dokumenty (S3 Vectors)
   - name: signatures
     description: Podpisy nalezené v dokumentu, jejich role, podezření na kopii, zkreslený náhled a odkrytí výřezu
+  - name: view
+    description: Zobrazení dokumentu člověku – stránky zamaskované kopie (náhled) a čitelný originál (odkrytí, auditováno)
 
 paths:
+  /clients:
+    get:
+      tags: [clients]
+      operationId: listClients
+      summary: Vylistuje klienty (s volitelným filtrem)
+      description: |
+        Bez filtrů vrací všechny klienty stránkovaně (Scan, pořadí není garantováno). Filtry se kombinují (AND).
+        Jen pro čtení, databáze klientů obsahuje syntetická data.
+      parameters:
+        - name: ico
+          in: query
+          description: Přesná shoda IČO.
+          schema: {type: string, pattern: '^[0-9]{8}$'}
+        - name: name
+          in: query
+          description: Část názvu, bez ohledu na velikost písmen, diakritiku a právní formu.
+          schema: {type: string, minLength: 2, maxLength: 255}
+        - name: status
+          in: query
+          schema: {$ref: '#/components/schemas/ClientStatus'}
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka klientů (může být prázdná)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClientList'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+
+  /clients/{client_id}/cases:
+    get:
+      tags: [cases]
+      operationId: listClientCases
+      summary: Vylistuje case klienta
+      description: Řazeno od nejnovějšího. Klient musí existovat (jinak 404); klient bez case vrací prázdné pole.
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: status
+          in: query
+          schema: {$ref: '#/components/schemas/CaseStatus'}
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka case klienta (může být prázdná)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClientCaseList'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404':
+          description: 'Klient neexistuje (`{"error": "Client not found"}`)'
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+
+  /cases:
+    get:
+      tags: [cases]
+      operationId: listCases
+      summary: Vylistuje case napříč klienty
+      description: Globální stránkovaný Scan; pořadí není garantováno a klienti se neověřují.
+      parameters:
+        - name: status
+          in: query
+          schema: {$ref: '#/components/schemas/CaseStatus'}
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka case
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CaseList'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [cases]
+      operationId: createCase
+      summary: Založí case pro aktivního klienta
+      description: |
+        `case_id` přidělí služba (UUID v4) a vrátí ho v odpovědi; v požadavku se neposílá (případné se ignoruje).
+        Volání není idempotentní, každé založí nový case. Údaje pro frontend (číslo smlouvy, předmět) patří do
+        `metadata` (nejvýš 16 KiB JSON).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCaseRequest'}
+            example:
+              client_id: 4727210c-8eb4-57fc-b223-6cea0072f143
+              metadata: {loan_agreement_no: "170170/25", asset_name: Epiroc CC 3100 demolition shears}
+      responses:
+        '201':
+          description: Case založen
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Case'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404':
+          description: Klient `client_id` neexistuje
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: Klient není `active` (`inactive`/`blocked`)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+
+  /cases/{case_id}:
+    get:
+      tags: [cases]
+      operationId: getCase
+      summary: Vrátí case podle case_id
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+      responses:
+        '200':
+          description: Case
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Case'}
+              example:
+                case_id: 7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90
+                client_id: 4727210c-8eb4-57fc-b223-6cea0072f143
+                status: open
+                created_at: '2026-10-19T19:01:35.412910Z'
+                metadata: {client_name: Zervanta Stavby a.s., ico: '98001418'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404':
+          description: 'Case neexistuje (`{"error": "Case not found"}`)'
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+
   /cases/{case_id}/documents:
     get:
       tags: [document]
@@ -65,8 +222,11 @@ paths:
       summary: Seznam dokumentů case (vstupní bod agenta)
       description: |
         Vrací stručný přehled všech dokumentů case bez textu. Slouží ke zjištění `document_id` a stavu zpracování.
+        Obsahuje i dokumenty nahrané přes Ingest API, které pipeline ještě nezpracovala: mají
+        `processing_status: queued`, `title` = název nahraného souboru, `label` a `page_count` `null`.
         Dokumenty ve stavu `awaiting_upload`, `queued`, `processing` nebo `failed` zatím nemají text; jejich
-        detailní volání vrací `409`. Řazeno podle `document_id`, stránkované.
+        detailní volání vrací `409`. Řazeno podle `document_id`, stránkované. `404` jen když case neexistuje
+        v tabulce case a nemá žádný dokument; existující case bez dokumentů vrací prázdný seznam.
       parameters:
         - $ref: '#/components/parameters/CaseId'
         - name: limit
@@ -152,7 +312,7 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409':
-          description: OCR ještě nedoběhlo (nebo selhalo)
+          description: OCR ještě nedoběhlo (nebo selhalo); dokument jen nahraný v Ingest API vrací `processing_status` `queued`
           content:
             application/json:
               schema: {$ref: '#/components/schemas/NotReady'}
@@ -333,6 +493,73 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/Error'}
 
+  /cases/{case_id}/documents/{document_id}/pages:
+    get:
+      tags: [view]
+      operationId: getDocumentPages
+      summary: Náhled dokumentu po stranách (zamaskovaná kopie, bez auditu)
+      description: |
+        Obdoba `preview_url` u podpisů pro celý dokument. Vrací předpodepsané odkazy (300 s) na stránky PNG a na PDF
+        **zamaskované kopie**: podpisy jsou začerněné, zbytek dokumentu čitelný. Hodí se pro UI, které má na straně
+        vyznačit oblast (`bbox` podpisu nebo regionu): `bbox` je `[x0, y0, x1, y1]` relativně ke straně (0–1, počátek
+        vlevo nahoře), stránka PNG je celá strana, takže obdélník jde nad `<img>` umístit v procentech.
+
+        - Dokument zpracovaný před zavedením maskování (`redacted: false`) náhled nemá (`preview_url: null`), protože
+          jeho stránky vznikly z čitelného originálu. Zbývá `revealDocumentOriginal`.
+        - Odkazy vyprší; pro nové stačí volání zopakovat.
+        - Čitelný originál se odsud nikdy nevrací, jen cesta `reveal_path`.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Strany dokumentu
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentPages'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409':
+          description: Dokument se ještě zpracovává (`processing_status` v těle chyby)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+
+  /cases/{case_id}/documents/{document_id}/original:
+    get:
+      tags: [view]
+      operationId: revealDocumentOriginal
+      summary: Čitelný originál dokumentu (odkrytí na vyžádání, auditováno)
+      description: |
+        Vrátí předpodepsaný odkaz platný **60 s** na původní nahraný soubor (s čitelnými podpisy). Určeno pro lidskou
+        kontrolu, **ne pro kontext LLM**. Soubor se nevrací v těle (PDF mají až desítky MB); odkaz otevři hned
+        (`<iframe>`, PDF.js, nové okno). Odkaz posílá `Content-Disposition: inline` s původním názvem souboru.
+
+        - Každé volání s platným API klíčem (i neúspěšné) se zapíše do auditního logu (`event: document_reveal`):
+          volající (ID nebo otisk klíče), čas, case, dokument, výsledek. Odkaz do logu nejde.
+        - Funguje i pro dokument, který se ještě zpracovává (stačí, že byl nahrán).
+        - `bbox` z podpisů a regionů platí i pro originál (stejná strana, relativní souřadnice).
+        - Cesta je v `reveal_path` z `getDocumentPages`.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Krátkodobý odkaz na originál
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentOriginal'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404':
+          description: Dokument nebo jeho originál neexistuje
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -340,11 +567,25 @@ components:
       in: header
       name: x-api-key
   parameters:
+    ClientId:
+      name: client_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    Limit:
+      name: limit
+      in: query
+      schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+    NextToken:
+      name: next_token
+      in: query
+      description: Hodnota `next_token` z předchozí odpovědi (neprůhledná).
+      schema: {type: string}
     CaseId:
       name: case_id
       in: path
       required: true
-      description: UUID case z `POST /cases` (Case & Client API)
+      description: UUID case z `POST /cases`
       schema: {type: string, pattern: '^[A-Za-z0-9._-]{1,128}$'}
     DocumentId:
       name: document_id
@@ -369,16 +610,145 @@ components:
         application/json:
           schema: {$ref: '#/components/schemas/Error'}
     NotFound:
-      description: Case nebo dokument neexistuje
+      description: Case, dokument nebo klient neexistuje
       content:
         application/json:
           schema: {$ref: '#/components/schemas/Error'}
   schemas:
+    DocumentPages:
+      type: object
+      required: [case_id, document_id, page_count, redacted, preview_pdf_url, pages, original_available, reveal_path]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        page_count: {type: integer, minimum: 0}
+        redacted:
+          type: boolean
+          description: '`true` = existuje zamaskovaná kopie a stránky náhledu vznikly z ní'
+        preview_pdf_url:
+          type: string
+          nullable: true
+          description: Předpodepsaný odkaz (300 s) na PDF zamaskované kopie; `null` bez kopie
+        pages:
+          type: array
+          items:
+            type: object
+            required: [page, preview_url]
+            properties:
+              page: {type: integer, minimum: 1, description: 'Číslo strany od 1 (jako `page` u podpisů a regionů)'}
+              preview_url:
+                type: string
+                nullable: true
+                description: Předpodepsaný odkaz (300 s) na PNG zamaskované strany; `null`, když strana nemá náhled
+        original_available:
+          type: boolean
+          description: '`true` = originál existuje a `reveal_path` vrátí odkaz'
+        reveal_path:
+          type: string
+          description: 'Cesta `revealDocumentOriginal`, relativní k adrese serveru: `/cases/{case_id}/documents/{document_id}/original`'
+      example:
+        case_id: 3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47
+        document_id: 8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10
+        page_count: 2
+        redacted: true
+        preview_pdf_url: https://wonderfulkb-raw-document-storage.s3.eu-central-1.amazonaws.com/cases/…/redacted/….pdf?X-Amz-…
+        pages:
+          - {page: 1, preview_url: 'https://…/analysis/…/pages/1.png?X-Amz-…'}
+          - {page: 2, preview_url: 'https://…/analysis/…/pages/2.png?X-Amz-…'}
+        original_available: true
+        reveal_path: /cases/3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47/documents/8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10/original
+    DocumentOriginal:
+      type: object
+      required: [case_id, document_id, filename, content_type, url, expires_in]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        filename: {type: string, description: Původní název nahraného souboru}
+        content_type: {type: string, example: application/pdf}
+        url: {type: string, description: Předpodepsaný odkaz na originál}
+        expires_in: {type: integer, description: Platnost odkazu v sekundách, example: 60}
     Error:
       type: object
       required: [error]
       properties:
         error: {type: string}
+    ClientStatus:
+      type: string
+      enum: [active, inactive, blocked]
+    Contact:
+      type: object
+      properties:
+        name: {type: string}
+        role: {type: string}
+        email: {type: string, format: email}
+        phone: {type: string}
+        preferred_channel: {type: string, enum: [email, phone]}
+    Signatory:
+      type: object
+      properties:
+        name: {type: string}
+        function: {type: string, example: jednatel}
+        authorized: {type: boolean}
+    Kyc:
+      type: object
+      properties:
+        status: {type: string, enum: [ok, pending, failed]}
+        checked_at: {type: string, format: date}
+    Client:
+      type: object
+      required: [client_id, ico, name, status]
+      properties:
+        client_id: {type: string, format: uuid}
+        ico: {type: string, pattern: '^[0-9]{8}$'}
+        dic: {type: string, example: CZ12345678}
+        name: {type: string}
+        legal_form: {type: string}
+        address: {type: string}
+        status: {$ref: '#/components/schemas/ClientStatus'}
+        contacts: {type: array, items: {$ref: '#/components/schemas/Contact'}}
+        signatories: {type: array, items: {$ref: '#/components/schemas/Signatory'}}
+        kyc: {$ref: '#/components/schemas/Kyc'}
+        source: {type: string, enum: [synthetic]}
+    ClientList:
+      type: object
+      required: [clients, next_token]
+      properties:
+        clients: {type: array, items: {$ref: '#/components/schemas/Client'}}
+        next_token: {type: string, nullable: true}
+    CaseStatus:
+      type: string
+      enum: [open]
+    CreateCaseRequest:
+      type: object
+      required: [client_id]
+      properties:
+        client_id: {type: string, format: uuid}
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Libovolný JSON nejvýš 16 KiB (např. `loan_agreement_no`, `asset_name`, `serial_number`)
+    Case:
+      type: object
+      required: [case_id, client_id, status, created_at, metadata]
+      properties:
+        case_id: {type: string, pattern: '^[A-Za-z0-9._-]{1,128}$', description: 'UUID přidělené službou'}
+        client_id: {type: string, format: uuid}
+        status: {$ref: '#/components/schemas/CaseStatus'}
+        created_at: {type: string, format: date-time}
+        metadata: {type: object, additionalProperties: true}
+    CaseList:
+      type: object
+      required: [cases, next_token]
+      properties:
+        cases: {type: array, items: {$ref: '#/components/schemas/Case'}}
+        next_token: {type: string, nullable: true}
+    ClientCaseList:
+      allOf:
+        - $ref: '#/components/schemas/CaseList'
+        - type: object
+          required: [client_id]
+          properties:
+            client_id: {type: string, format: uuid}
     ProcessingStatus:
       type: string
       description: Stav zpracování dokumentu; text, vektory a podpisy jsou k dispozici u `completed` a `partial`

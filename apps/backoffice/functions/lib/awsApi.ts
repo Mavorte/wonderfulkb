@@ -1,4 +1,4 @@
-// Calls the AWS case/client API (openapi-case-client.yaml).
+// Calls the AWS case/client API (be-document-processing/contracts/openapi-validator-agent.yaml).
 //
 // Configuration (tenant-level):
 // - global `case_eval_documents_api_url`: base URL of the API, e.g. `https://<id>.execute-api.eu-central-1.amazonaws.com/v1`.

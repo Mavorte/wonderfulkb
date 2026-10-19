@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   title: wonderfulkb Ingest API (část 2)
-  version: 0.6.0
+  version: 0.5.0
   description: |
-    Služba `wonderfulkb-ingest` běží na App Runner; adresu a API klíč dostanete od nás. Navazuje na Case & Client API (openapi-case-client.yaml), API klíč `x-api-key` je ale jiný: Case & Client API má vlastní klíč z usage plánu `wonderfulkb-demo-plan`, klíč ingestu sdílí jen Validator Agent API.
+    Služba `wonderfulkb-ingest` běží na App Runner; adresu a API klíč dostanete od nás. Navazuje na API případů a dokumentů (`wonderfulkb-agent-api`, be-document-processing/contracts/openapi-validator-agent.yaml), API klíč `x-api-key` je s ním společný.
     Kontrakt navrhl frontend / Wonderful, doplněný o poznámky v ingest-api-navrh.md. Běží jako kontejner
     (ne Lambda), proto vlastní adresa a API klíč kontrolovaný aplikací (hlavička `x-api-key`).
     Všechny cesty jsou pod `/v1`, jen `/healthz` je bez prefixu a bez klíče. Limity: 20 souborů,
@@ -47,21 +47,12 @@ paths:
       description: |
         Existence case se ověří před čtením těla. Pak se zkontrolují všechny části (při chybě se nezapíše nic),
         soubory se uloží do S3 a nové záznamy se zapíšou jednou DynamoDB transakcí (všechny, nebo žádný). Stejný obsah v témže case
-        vrátí stejné `document_id` a `duplicate=true`. Stejný obsah v jiných případech je s `?include_also_in=true` v `also_in`
-        (`document_id` se mezi případy liší; dokument se do nového případu uloží normálně, jen se to ohlásí). Limity: max 20 souborů, 25 MB na soubor
+        vrátí stejné `document_id` a `duplicate=true`. Limity: max 20 souborů, 25 MB na soubor
         a 100 MB souborů celkem. Typ se ověřuje podle hlavičky `%PDF-` (i prázdný soubor je `415`).
         `400` také při chybějícím `files`, více než 20 souborech, `uploaded_by` nad 255 znaků
         nebo neplatném `case_id`.
       parameters:
         - $ref: '#/components/parameters/CaseId'
-        - name: include_also_in
-          in: query
-          required: false
-          description: |
-            `true` přidá k dokumentům pole `also_in` (stejný obsah v jiných případech). **Ve výchozím stavu je pole
-            VYPNUTÉ**, protože prozrazuje ID cizích případů; smí ho zapnout jen důvěryhodný backend s API klíčem a nesmí
-            ho předat anonymnímu klientovi (`client-intake-fe` parametr nepoužívá).
-          schema: {type: boolean, default: false}
       requestBody:
         required: true
         content:
@@ -176,7 +167,7 @@ components:
       minLength: 1
       maxLength: 128
       pattern: '^[A-Za-z0-9._-]+$'
-      description: ID case přidělené službou při založení (`POST /cases`). Je zároveň klíčem case v databázi. Samotné `.` nebo `..` je neplatné (`400`).
+      description: ID case přidělené Wonderful. Je zároveň klíčem case v databázi.
       example: '170170-25'
 
     UploadRequest:
@@ -209,26 +200,7 @@ components:
         size_bytes: {type: integer}
         duplicate:
           type: boolean
-          description: 'true, pokud stejný obsah v case už byl (vrací se původní záznam včetně `received_at`). Týká se jen téhož case.'
-        also_in:
-          type: array
-          description: |
-            **Jen s `?include_also_in=true`; interní pole jen pro důvěryhodné volající** (backend s API klíčem). Obsahuje ID cizích případů, proto
-            se nesmí předat anonymnímu klientovi ani do prohlížeče; volající ho z odpovědi odstraní
-            (např. `client-intake-fe` vrací prohlížeči jen pole z whitelistu).
-            Stejný obsah (SHA-256) leží i v jiných případech; každý případ jen s dokumentem, který ho obsahuje.
-            Prázdné pole = nikde jinde není. Pole **chybí**, když index obsahových hashů není dostupný (výpadek nebo
-            vypnutý): nahrání kvůli tomu nikdy neselže a chybějící pole neznamená „nikde jinde není“.
-            Samo o sobě nic nenaznačuje: stejná šablona (např. VOP) leží legitimně v každém případu. Zda je to
-            podezřelé, říká až `duplicate_relevant` v Validator Agent API.
-          items:
-            type: object
-            required: [case_id, document_id]
-            properties:
-              case_id: {$ref: '#/components/schemas/CaseId'}
-              document_id: {type: string, format: uuid}
-          example:
-            - {case_id: 170170-25, document_id: 6f1c2e0d-7a11-5d3f-9b36-0a524a8b7c1e}
+          description: 'true, pokud stejný obsah v case už byl (vrací se původní záznam včetně `received_at`)'
 
     UploadResponse:
       type: object

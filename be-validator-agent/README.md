@@ -26,8 +26,8 @@ Stav k 19. 10. 2026 (večer): moduly jsou napsané a otestované samostatně (25
 | [mock/](mock/README.md) | mock Agent API se syntetickými daty | |
 
 ## Co v repu není a proč
-- **Vzorové dokumenty z hackathonového balíku** (PDF a jejich textové výpisy) a **ukázkové výstupy z nich**. Repozitář je veřejný. Skripty, které je potřebují (`classify/evaluate.py`, `embed/benchmark.py`, `eval/build_truth.py`, mock), čtou složku z proměnné `WONDERFULKB_SAMPLES_DIR`. Bez nich nefungují tyto skripty a mock s texty. **Pozor:** 9 testů (`api/test_api.py`, `api/test_contract.py`, `ref-agent/tests/test_rules_mock.py`, `eval/tests/test_e2e.py`) staví na textech mocku a bez `WONDERFULKB_SAMPLES_DIR` selžou (nepřeskočí se); s ní prochází vše (ověřeno 19. 10. 2026: api 67, ref-agent 71 + 1 skip, eval 56).
-- **Skutečné adresy API, číslo AWS účtu a klíče.** V textu jsou zástupné symboly (`<AGENT_API_BASE_URL>`, `<INGEST_API_BASE_URL>`, `<CASE_API_BASE_URL>`, `<ACCOUNT_ID>`, `<KMS_KEY_ID>`). Skutečné hodnoty se předávají mimo repozitář.
+- **Vzorové dokumenty z hackathonového balíku** (PDF a jejich textové výpisy) a **ukázkové výstupy z nich**. Repozitář je veřejný. Skripty, které je potřebují (`classify/evaluate.py`, `embed/benchmark.py`, `eval/build_truth.py`, mock), čtou složku z proměnné `WONDERFULKB_SAMPLES_DIR`. Bez nich nefungují tyto skripty a mock s texty. **Pozor:** 9 testů (`api/test_api.py`, `api/test_contract.py`, `ref-agent/tests/test_rules_mock.py`, `eval/tests/test_e2e.py`) staví na textech mocku a bez `WONDERFULKB_SAMPLES_DIR` selžou (nepřeskočí se); s ní prochází vše (ověřeno 19. 10. 2026: api 126, ref-agent 71 + 1 skip, eval 56).
+- **Skutečné adresy API, číslo AWS účtu a klíče.** V textu jsou zástupné symboly (`<AGENT_API_BASE_URL>`, `<INGEST_API_BASE_URL>`, `<ACCOUNT_ID>`, `<KMS_KEY_ID>`). Skutečné hodnoty se předávají mimo repozitář.
 - **Obrázky a výstupy z měření redakce** (lokální soubory z `privacy/measure/`); jsou regenerovatelné.
 
 ## Spuštění testů

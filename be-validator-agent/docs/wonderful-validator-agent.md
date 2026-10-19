@@ -4,8 +4,8 @@ Stav: **Agent API je nasazené** (adresy a klíče viz predani-wonderful.md; kde
 
 Pravidla validace včetně pravidel na podpisy píšete vy, ve Wonderful. Tohle API je jen zdroj dat: říká, **co v dokumentech je**, ne co s tím. Nic z něj není rozhodnutí.
 
-- Base URL: `<AGENT_API_BASE_URL>` (v dalším textu `<BASE_URL>`, všechny cesty jsou pod `/v1`). Je to jiná adresa než u Ingest API a Case & Client API.
-- Autentizace: hlavička `x-api-key: <klíč>` u každého volání pod `/v1`. **Klíč už máte**; Agent API a Ingest API používají stejný klíč, Case & Client API má vlastní (viz kapitola 1). Klíč nikam nezapisujte do repozitáře ani do kódu prohlížeče, volejte API z backendu.
+- Base URL: `<AGENT_API_BASE_URL>` (v dalším textu `<BASE_URL>`, všechny cesty jsou pod `/v1`). Je to jiná adresa než u Ingest API. Klienti a případy (`/clients`, `/cases`) jsou od 19. 10. 2026 na stejné adrese (dřívější samostatné Case & Client API je smazané).
+- Autentizace: hlavička `x-api-key: <klíč>` u každého volání pod `/v1`. **Klíč už máte**; Agent API (včetně `/clients` a `/cases`) a Ingest API používají stejný klíč. Klíč nikam nezapisujte do repozitáře ani do kódu prohlížeče, volejte API z backendu.
 - Kontrola dostupnosti: `GET /v1/healthz` (bez klíče, `200`). Cesta `/healthz` bez `/v1` na nasazené službě neexistuje (`404`).
 - Formát: jen `GET`, odpovědi jsou JSON (UTF-8), časy v ISO 8601 (UTC).
 - Chyby: `{"error": "popis"}` s kódem 400 (špatný parametr, neplatné `case_id`), 401 (chybí klíč: hlavička `x-api-key` chybí nebo je prázdná), 403 (špatný klíč; stejně jako Ingest API), 404 (case, dokument nebo cesta neexistuje), 405 (jiná metoda než `GET`), 409 (jen u detailu dokumentu: dokument ještě není zpracovaný, v těle je `processing_status`), 5xx (zkuste znovu, `{"error": "Interní chyba služby"}`).
@@ -26,17 +26,16 @@ ID v příkladech (`0f0625b1-…`, `35f7ea7b-…`) jsou z mocku. Na nasazeném A
 
 ### Tři služby, dva klíče
 
-Agent nepostaví všechno na třech voláních Agent API. Ta pokrývají jen **obsah dokumentů**.
+Tři volání Agent API (dokument, vektory, podpisy) pokrývají jen **obsah dokumentů**; případ, klienta a seznam dokumentů agent bere z dalších cest téhož API.
 
 | Služba | Adresa | Klíč | Co z ní agent bere |
 |---|---|---|---|
-| Agent API (tento dokument) | `<AGENT_API_BASE_URL>` | stejný jako Ingest | text, štítek, vektory, podpisy dokumentu |
-| Ingest API | `<INGEST_API_BASE_URL>` | stejný jako Agent API | **autoritativní seznam dokumentů případu** `GET /cases/{case_id}/documents`, nahrání dokumentů |
-| Case & Client API | `<CASE_API_BASE_URL>` | **vlastní** (klíč z Ingestu tam dává `403`) | případ `GET /cases/{case_id}` (číslo smlouvy, předmět), klienti `GET /clients` |
+| Agent API (tento dokument) | `<AGENT_API_BASE_URL>` | stejný jako Ingest | seznam dokumentů případu, text, štítek, vektory, podpisy dokumentu; případ `GET /cases/{case_id}`, klienti `GET /clients` |
+| Ingest API | `<INGEST_API_BASE_URL>` | stejný jako Agent API | nahrání dokumentů |
 
-- **Seznam dokumentů** berte z Ingestu. Agent API vrací jen dokumenty, které prošly pipeline: dokument bez analýzy dává `404`, případ bez zpracovaného dokumentu `404 Case neexistuje`. Nezpracovaný dokument z Ingestu je tedy pro agenta „nezpracováno", ne „neexistuje".
-- **Případ a klient** jsou v Case & Client API. **`GET /clients/{client_id}` neexistuje**: z případu se zjistí `client_id`, ale klienta jde hledat jen přes `GET /clients` s filtrem `ico`, `name` nebo `status`, případně projít všechny. `signatories` mají `name` a `function`, bez `authorized`.
-- **Datový most mezi podpisy a podepisujícími neexistuje.** Podpisy v Agent API mají roli (`borrower`, `guarantor`, …), ne jméno osoby. Srovnání s oprávněnými podepisujícími z Case API tedy přímo nejde.
+- **Seznam dokumentů** `GET /cases/{case_id}/documents` vrací i nahrané dokumenty, které pipeline ještě nezpracovala (`processing_status: queued`, detail dává `409`). Zpracovávejte jen `completed` a `partial`; `404` znamená neexistující případ.
+- **Případ a klient:** `GET /cases/{case_id}` a `GET /clients`. **`GET /clients/{client_id}` neexistuje**: z případu se zjistí `client_id`, ale klienta jde hledat jen přes `GET /clients` s filtrem `ico`, `name` nebo `status`, případně projít všechny. `signatories` mají `name` a `function`, bez `authorized`.
+- **Datový most mezi podpisy a podepisujícími neexistuje.** Podpisy v Agent API mají roli (`borrower`, `guarantor`, …), ne jméno osoby. Srovnání s oprávněnými podepisujícími z `/clients` tedy přímo nejde.
 
 ### Tři volání Agent API
 

@@ -13,6 +13,7 @@ Stav k 19. 10. 2026, 18:00 až 18:15 místního času. Recenzent: nezávislá se
   2. nasazená Lambda je starší než zdroje a spec (B2),
   3. `neighbors` a `similar_signatures` nemají kdo plnit, jsou vždy prázdné (B3, B4),
   4. pipeline píše `copy_suspicion: none` i tam, kde se kopie nikdy nehledaly (V1).
+- *Pozdější změna (19. 10. 2026 večer): Case & Client API je součástí `wonderfulkb-agent-api` se stejným klíčem jako Ingest, seznam dokumentů Agent API zahrnuje nezpracované dokumenty z ingestu (`queued`) a pipeline spouští trigger. Zbývají dvě služby a jeden klíč; `GET /clients/{client_id}` dál neexistuje.*
 - **Wonderful nevystačí s jedním API ani s jedním klíčem.** Jsou tři služby, dva klíče, a údaje o klientovi (podepisující) se z Case & Client API nedají vzít podle `client_id` (nemá `GET /clients/{id}`). Dokumentace to nepokrývá (kapitola 6).
 - **Nasazená Lambda už existuje** (stack `wonderfulkb-agent-api`, `<AGENT_API_BASE_URL>`), ale `docs/wonderful-validator-agent.md` pořád říká „reálné API není nasazené".
 
