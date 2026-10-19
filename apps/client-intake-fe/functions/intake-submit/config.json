@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Intake Submit",
+  "description": "Sends PDFs the client uploaded to Custom Storage to the AWS ingest service for the case of an intake link, then removes them from storage",
+  "method": "POST",
+  "path_slug": "intake-submit"
+}
