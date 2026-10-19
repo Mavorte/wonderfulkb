@@ -1,0 +1,1495 @@
+[
+ {
+  "case_id": "17794315-26",
+  "client_id": "5cc5e1bb-f2c9-48b6-baaf-2893149113ba",
+  "status": "open",
+  "created_at": "2026-10-19T12:32:13+00:00",
+  "client": {
+   "name": "Solom Rec s.r.o. (mock)",
+   "ico": "04606812",
+   "kyc_status": null,
+   "kyc_checked_at": null
+  },
+  "principal": null,
+  "months": null,
+  "schedule_rows": 0,
+  "disbursement": null,
+  "dates": {},
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "0_Form_Smlouva.pdf",
+    "received_at": "2026-10-19T13:57:24Z",
+    "label": "smlouva_o_uveru",
+    "confidence": 0.92
+   },
+   {
+    "filename": "4_Form_Ruceni.pdf",
+    "received_at": "2026-10-19T13:57:24Z",
+    "label": "ruceni",
+    "confidence": 0.92
+   },
+   {
+    "filename": "receipt_invoice_scan_01.pdf",
+    "received_at": "2026-10-19T14:46:10Z",
+    "label": "jine",
+    "confidence": 0.95
+   }
+  ]
+ },
+ {
+  "case_id": "396d9b3f-2ef0-4315-b31f-8c2877f58603",
+  "client_id": "a3d1c2e4-5b6f-4a7d-8e9f-0a1b2c3d4e5f",
+  "status": "open",
+  "created_at": "2026-10-19T14:08:46.004+00:00",
+  "client": null,
+  "principal": null,
+  "months": null,
+  "schedule_rows": 0,
+  "disbursement": null,
+  "dates": {},
+  "expected_documents": [],
+  "documents": []
+ },
+ {
+  "case_id": "8fe74717-ee66-4b1e-920c-f3656606f3a8",
+  "client_id": "5cc5e1bb-f2c9-48b6-baaf-2893149113ba",
+  "status": "open",
+  "created_at": "2026-10-19T15:00:48.880+00:00",
+  "client": {
+   "name": "Solom Rec s.r.o. (mock)",
+   "ico": "04606812",
+   "kyc_status": null,
+   "kyc_checked_at": null
+  },
+  "principal": null,
+  "months": null,
+  "schedule_rows": 0,
+  "disbursement": null,
+  "dates": {},
+  "expected_documents": [],
+  "documents": []
+ },
+ {
+  "case_id": "SYN-A01",
+  "client_id": "1c1a6983-e55d-53c2-83de-2174a604a91b",
+  "status": "open",
+  "created_at": "2026-02-24T12:00:00+00:00",
+  "client": {
+   "name": "Kavorin Rec s.r.o.",
+   "ico": "98001001",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-02-24"
+  },
+  "principal": 1749000.0,
+  "months": 60,
+  "schedule_rows": 60,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-02-21",
+   "offer": "2026-02-03",
+   "handover": "2026-02-21",
+   "approval": "2026-02-17",
+   "payment": "2026-02-22",
+   "invoice": "2026-02-20",
+   "activation": "2026-02-24",
+   "title": "2026-02-24",
+   "signing": "2026-02-23",
+   "order": "2026-02-06"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   },
+   {
+    "filename": "01_VOP.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   },
+   {
+    "filename": "04_Ruceni.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   },
+   {
+    "filename": "09_Dohoda_o_zaplaceni.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   },
+   {
+    "filename": "10_Objednavka.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   },
+   {
+    "filename": "11_Predavaci_protokol.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:19:26Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-A02",
+  "client_id": "30d428ce-ac71-57bd-bfc0-758226757e91",
+  "status": "open",
+  "created_at": "2026-03-28T12:00:00+00:00",
+  "client": {
+   "name": "Nuvrenda Rec s.r.o.",
+   "ico": "98001108",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-03-28"
+  },
+  "principal": 1865000.0,
+  "months": 60,
+  "schedule_rows": 60,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-03-25",
+   "offer": "2026-03-07",
+   "handover": "2026-03-25",
+   "approval": "2026-03-21",
+   "payment": "2026-03-26",
+   "invoice": "2026-03-24",
+   "activation": "2026-03-28",
+   "title": "2026-03-28",
+   "signing": "2026-03-27",
+   "order": "2026-03-10"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   },
+   {
+    "filename": "01_VOP.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   },
+   {
+    "filename": "04_Ruceni.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   },
+   {
+    "filename": "09_Dohoda_o_zaplaceni.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   },
+   {
+    "filename": "10_Objednavka.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   },
+   {
+    "filename": "11_Predavaci_protokol.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:07Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-A03",
+  "client_id": "c3335102-1b10-53f1-9dd7-395395fbf22f",
+  "status": "open",
+  "created_at": "2026-04-29T12:00:00+00:00",
+  "client": {
+   "name": "Zelmoris Rec s.r.o.",
+   "ico": "98001205",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-04-29"
+  },
+  "principal": 1538000.0,
+  "months": 60,
+  "schedule_rows": 60,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-04-26",
+   "offer": "2026-04-08",
+   "handover": "2026-04-26",
+   "approval": "2026-04-22",
+   "payment": "2026-04-27",
+   "invoice": "2026-04-25",
+   "activation": "2026-04-29",
+   "title": "2026-04-29",
+   "signing": "2026-04-28",
+   "order": "2026-04-11"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   },
+   {
+    "filename": "01_VOP.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   },
+   {
+    "filename": "04_Ruceni.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   },
+   {
+    "filename": "09_Dohoda_o_zaplaceni.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   },
+   {
+    "filename": "10_Objednavka.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   },
+   {
+    "filename": "11_Predavaci_protokol.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:08Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-A04",
+  "client_id": "8e5bdff8-3005-585a-ac30-6cbfd7ce5cff",
+  "status": "open",
+  "created_at": "2026-05-31T12:00:00+00:00",
+  "client": {
+   "name": "Tavrenda Rec s.r.o.",
+   "ico": "98001302",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-05-31"
+  },
+  "principal": 2099000.0,
+  "months": 60,
+  "schedule_rows": 60,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-05-28",
+   "offer": "2026-05-10",
+   "handover": "2026-05-28",
+   "approval": "2026-05-24",
+   "payment": "2026-05-29",
+   "invoice": "2026-05-27",
+   "activation": "2026-05-31",
+   "title": "2026-05-31",
+   "signing": "2026-05-30",
+   "order": "2026-05-13"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   },
+   {
+    "filename": "01_VOP.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   },
+   {
+    "filename": "04_Ruceni.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   },
+   {
+    "filename": "09_Dohoda_o_zaplaceni.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   },
+   {
+    "filename": "10_Objednavka.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   },
+   {
+    "filename": "11_Predavaci_protokol.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:09Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-A05",
+  "client_id": "b02b757e-f8e3-5fc8-b54e-5e11619ec254",
+  "status": "open",
+  "created_at": "2026-07-02T12:00:00+00:00",
+  "client": {
+   "name": "Orvesta Rec s.r.o.",
+   "ico": "98001400",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-07-02"
+  },
+  "principal": 1672500.0,
+  "months": 60,
+  "schedule_rows": 60,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-06-29",
+   "offer": "2026-06-11",
+   "handover": "2026-06-29",
+   "approval": "2026-06-25",
+   "payment": "2026-06-30",
+   "invoice": "2026-06-28",
+   "activation": "2026-07-02",
+   "title": "2026-07-02",
+   "signing": "2026-07-01",
+   "order": "2026-06-14"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   },
+   {
+    "filename": "01_VOP.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   },
+   {
+    "filename": "04_Ruceni.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   },
+   {
+    "filename": "09_Dohoda_o_zaplaceni.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   },
+   {
+    "filename": "10_Objednavka.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   },
+   {
+    "filename": "11_Predavaci_protokol.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:11Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-B01",
+  "client_id": "9588dbd8-aee5-52e9-aa1e-54f7fccc9b69",
+  "status": "open",
+  "created_at": "2026-02-28T12:00:00+00:00",
+  "client": {
+   "name": "Saveltra Stavby a.s.",
+   "ico": "98001019",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-02-28"
+  },
+  "principal": 4215000.0,
+  "months": 36,
+  "schedule_rows": 36,
+  "disbursement": "borrower_reimbursement",
+  "dates": {
+   "insurance": "2026-02-21",
+   "offer": "2026-02-03",
+   "handover": "2026-02-21",
+   "approval": "2026-02-17",
+   "payment": "2026-02-22",
+   "invoice": "2026-02-20",
+   "activation": "2026-02-28",
+   "title": "2026-02-22",
+   "signing": "2026-02-27",
+   "order": "2026-02-06"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:13Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:13Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:13Z"
+   },
+   {
+    "filename": "10_Objednavka_a_technicka_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:13Z"
+   },
+   {
+    "filename": "11_Potvrzeni_o_prevodu_vlastnictvi.pdf",
+    "received_at": "2026-10-19T15:20:13Z"
+   },
+   {
+    "filename": "14_Potvrzeni_o_uhrade.pdf",
+    "received_at": "2026-10-19T15:20:13Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:13Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-B02",
+  "client_id": "1616d3bf-cdad-5c79-847c-420bece57c36",
+  "status": "open",
+  "created_at": "2026-04-01T12:00:00+00:00",
+  "client": {
+   "name": "Veldrava Stavby a.s.",
+   "ico": "98001116",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-04-01"
+  },
+  "principal": 3987000.0,
+  "months": 36,
+  "schedule_rows": 36,
+  "disbursement": "borrower_reimbursement",
+  "dates": {
+   "insurance": "2026-03-25",
+   "offer": "2026-03-07",
+   "handover": "2026-03-25",
+   "approval": "2026-03-21",
+   "payment": "2026-03-26",
+   "invoice": "2026-03-24",
+   "activation": "2026-04-01",
+   "title": "2026-03-26",
+   "signing": "2026-03-31",
+   "order": "2026-03-10"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:14Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:14Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:14Z"
+   },
+   {
+    "filename": "10_Objednavka_a_technicka_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:14Z"
+   },
+   {
+    "filename": "11_Potvrzeni_o_prevodu_vlastnictvi.pdf",
+    "received_at": "2026-10-19T15:20:14Z"
+   },
+   {
+    "filename": "14_Potvrzeni_o_uhrade.pdf",
+    "received_at": "2026-10-19T15:20:14Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:14Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-B03",
+  "client_id": "200920d9-3e53-509b-b1ef-06cc48349726",
+  "status": "open",
+  "created_at": "2026-05-03T12:00:00+00:00",
+  "client": {
+   "name": "Korvesta Stavby a.s.",
+   "ico": "98001213",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-05-03"
+  },
+  "principal": 4479500.0,
+  "months": 36,
+  "schedule_rows": 36,
+  "disbursement": "borrower_reimbursement",
+  "dates": {
+   "insurance": "2026-04-26",
+   "offer": "2026-04-08",
+   "handover": "2026-04-26",
+   "approval": "2026-04-22",
+   "payment": "2026-04-27",
+   "invoice": "2026-04-25",
+   "activation": "2026-05-03",
+   "title": "2026-04-27",
+   "signing": "2026-05-02",
+   "order": "2026-04-11"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:16Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:16Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:16Z"
+   },
+   {
+    "filename": "10_Objednavka_a_technicka_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:16Z"
+   },
+   {
+    "filename": "11_Potvrzeni_o_prevodu_vlastnictvi.pdf",
+    "received_at": "2026-10-19T15:20:16Z"
+   },
+   {
+    "filename": "14_Potvrzeni_o_uhrade.pdf",
+    "received_at": "2026-10-19T15:20:16Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:16Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-B04",
+  "client_id": "c82d6f9d-03f3-58ad-b58b-d0384e1d5ab5",
+  "status": "open",
+  "created_at": "2026-06-04T12:00:00+00:00",
+  "client": {
+   "name": "Meldoria Stavby a.s.",
+   "ico": "98001311",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-06-04"
+  },
+  "principal": 3850000.0,
+  "months": 36,
+  "schedule_rows": 36,
+  "disbursement": "borrower_reimbursement",
+  "dates": {
+   "insurance": "2026-05-28",
+   "offer": "2026-05-10",
+   "handover": "2026-05-28",
+   "approval": "2026-05-24",
+   "payment": "2026-05-29",
+   "invoice": "2026-05-27",
+   "activation": "2026-06-04",
+   "title": "2026-05-29",
+   "signing": "2026-06-03",
+   "order": "2026-05-13"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:17Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:17Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:17Z"
+   },
+   {
+    "filename": "10_Objednavka_a_technicka_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:17Z"
+   },
+   {
+    "filename": "11_Potvrzeni_o_prevodu_vlastnictvi.pdf",
+    "received_at": "2026-10-19T15:20:17Z"
+   },
+   {
+    "filename": "14_Potvrzeni_o_uhrade.pdf",
+    "received_at": "2026-10-19T15:20:17Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:17Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-B05",
+  "client_id": "4727210c-8eb4-57fc-b223-6cea0072f143",
+  "status": "open",
+  "created_at": "2026-07-06T12:00:00+00:00",
+  "client": {
+   "name": "Zervanta Stavby a.s.",
+   "ico": "98001418",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-07-06"
+  },
+  "principal": 4632000.0,
+  "months": 36,
+  "schedule_rows": 36,
+  "disbursement": "borrower_reimbursement",
+  "dates": {
+   "insurance": "2026-06-29",
+   "offer": "2026-06-11",
+   "handover": "2026-06-29",
+   "approval": "2026-06-25",
+   "payment": "2026-06-30",
+   "invoice": "2026-06-28",
+   "activation": "2026-07-06",
+   "title": "2026-06-30",
+   "signing": "2026-07-05",
+   "order": "2026-06-14"
+  },
+  "expected_documents": [],
+  "documents": [
+   {
+    "filename": "00_Smlouva_o_uveru.pdf",
+    "received_at": "2026-10-19T15:20:18Z"
+   },
+   {
+    "filename": "02_Zajistovaci_prevod.pdf",
+    "received_at": "2026-10-19T15:20:18Z"
+   },
+   {
+    "filename": "03_Vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:18Z"
+   },
+   {
+    "filename": "10_Objednavka_a_technicka_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:18Z"
+   },
+   {
+    "filename": "11_Potvrzeni_o_prevodu_vlastnictvi.pdf",
+    "received_at": "2026-10-19T15:20:18Z"
+   },
+   {
+    "filename": "14_Potvrzeni_o_uhrade.pdf",
+    "received_at": "2026-10-19T15:20:18Z"
+   },
+   {
+    "filename": "99_Kontrola_smlouvy.pdf",
+    "received_at": "2026-10-19T15:20:18Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C01",
+  "client_id": "510ec21e-c68e-5f71-bdc5-92ad6ff82c52",
+  "status": "open",
+  "created_at": "2026-01-26T12:00:00+00:00",
+  "client": {
+   "name": "Dravonex Obrábění s.r.o.",
+   "ico": "98007009",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-01-26"
+  },
+  "principal": 1736000.0,
+  "months": 18,
+  "schedule_rows": 18,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-01-19",
+   "offer": "2026-01-05",
+   "handover": "2026-01-25",
+   "security": "2026-01-26",
+   "approval": "2026-01-13",
+   "first_tranche": "2026-01-21",
+   "buyer_payment": "2026-01-20",
+   "invoice": "2026-01-18",
+   "activation": "2026-01-26",
+   "title": "2026-01-26",
+   "signing": "2026-01-15",
+   "order": "2026-01-07"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:19Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:19Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:19Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:19Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C02",
+  "client_id": "d4331dae-5e01-5646-9170-2a7d138b2502",
+  "status": "open",
+  "created_at": "2026-02-16T12:00:00+00:00",
+  "client": {
+   "name": "Agroluh Vřesava s.r.o.",
+   "ico": "98007106",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-02-16"
+  },
+  "principal": 2496000.0,
+  "months": 60,
+  "schedule_rows": 60,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-02-09",
+   "offer": "2026-01-26",
+   "handover": "2026-02-15",
+   "security": "2026-02-16",
+   "approval": "2026-02-03",
+   "first_tranche": "2026-02-11",
+   "buyer_payment": "2026-02-10",
+   "invoice": "2026-02-08",
+   "activation": "2026-02-16",
+   "title": "2026-02-16",
+   "signing": "2026-02-05",
+   "order": "2026-01-28"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "objednavka",
+   "vinkulace",
+   "zajisteni",
+   "uhrada",
+   "splatky"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   },
+   {
+    "filename": "04_objednavka.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   },
+   {
+    "filename": "05_vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   },
+   {
+    "filename": "06_zajisteni.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   },
+   {
+    "filename": "09_uhrada.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   },
+   {
+    "filename": "10_splatky.pdf",
+    "received_at": "2026-10-19T15:20:21Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C03",
+  "client_id": "554b4943-7783-5430-8e4d-7eb9047aa194",
+  "status": "open",
+  "created_at": "2026-03-09T12:00:00+00:00",
+  "client": {
+   "name": "Plastovra Výroba s.r.o.",
+   "ico": "98007203",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-03-09"
+  },
+  "principal": 566280.0,
+  "months": 24,
+  "schedule_rows": 24,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-03-02",
+   "offer": "2026-02-16",
+   "handover": "2026-03-08",
+   "security": "2026-03-09",
+   "approval": "2026-02-24",
+   "first_tranche": "2026-03-04",
+   "invoice": "2026-03-01",
+   "activation": "2026-03-09",
+   "title": "2026-03-09",
+   "signing": "2026-02-26",
+   "order": "2026-02-18"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "objednavka",
+   "nabidka"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:22Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:22Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:22Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:22Z"
+   },
+   {
+    "filename": "04_objednavka.pdf",
+    "received_at": "2026-10-19T15:20:22Z"
+   },
+   {
+    "filename": "08_nabidka.pdf",
+    "received_at": "2026-10-19T15:20:22Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C04",
+  "client_id": "a90e4dfe-3a49-58d0-87df-b70ac78fe08b",
+  "status": "open",
+  "created_at": "2026-03-30T12:00:00+00:00",
+  "client": {
+   "name": "Polevra Agro a.s.",
+   "ico": "98007301",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-03-30"
+  },
+  "principal": 6585000.0,
+  "months": 84,
+  "schedule_rows": 28,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-03-23",
+   "offer": "2026-03-09",
+   "handover": "2026-03-29",
+   "security": "2026-03-30",
+   "approval": "2026-03-17",
+   "first_tranche": "2026-03-25",
+   "buyer_payment": "2026-03-24",
+   "invoice": "2026-03-22",
+   "activation": "2026-03-30",
+   "title": "2026-03-30",
+   "signing": "2026-03-19",
+   "order": "2026-03-11"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "objednavka",
+   "vinkulace",
+   "zajisteni",
+   "ruceni",
+   "nabidka",
+   "uhrada",
+   "splatky",
+   "specifikace"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "04_objednavka.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "05_vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "06_zajisteni.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "07_ruceni.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "08_nabidka.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "09_uhrada.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "10_splatky.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   },
+   {
+    "filename": "11_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:23Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C05",
+  "client_id": "880fbfb0-6b80-5235-8cb3-78fa06731d9f",
+  "status": "open",
+  "created_at": "2026-04-20T12:00:00+00:00",
+  "client": {
+   "name": "Kovrenda Systémy s.r.o.",
+   "ico": "98007408",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-04-20"
+  },
+  "principal": 1581000.0,
+  "months": 48,
+  "schedule_rows": 48,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-04-13",
+   "offer": "2026-03-30",
+   "handover": "2026-04-19",
+   "security": "2026-04-20",
+   "approval": "2026-04-07",
+   "first_tranche": "2026-04-15",
+   "buyer_payment": "2026-04-14",
+   "invoice": "2026-04-12",
+   "activation": "2026-04-20",
+   "title": "2026-04-20",
+   "signing": "2026-04-09",
+   "order": "2026-04-01"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "objednavka",
+   "specifikace",
+   "dodaci_list"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:25Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:25Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:25Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:25Z"
+   },
+   {
+    "filename": "04_objednavka.pdf",
+    "received_at": "2026-10-19T15:20:25Z"
+   },
+   {
+    "filename": "11_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:25Z"
+   },
+   {
+    "filename": "12_dodaci_list.pdf",
+    "received_at": "2026-10-19T15:20:25Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C06",
+  "client_id": "b12619b3-a54d-5c50-8d7b-60890f008073",
+  "status": "open",
+  "created_at": "2026-05-11T12:00:00+00:00",
+  "client": {
+   "name": "Zrnovia Sušárny s.r.o.",
+   "ico": "98007505",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-05-11"
+  },
+  "principal": 5076000.0,
+  "months": 72,
+  "schedule_rows": 72,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-05-04",
+   "offer": "2026-04-20",
+   "handover": "2026-05-10",
+   "security": "2026-05-11",
+   "approval": "2026-04-28",
+   "first_tranche": "2026-05-06",
+   "buyer_payment": "2026-05-05",
+   "invoice": "2026-05-03",
+   "activation": "2026-05-11",
+   "title": "2026-05-11",
+   "signing": "2026-04-30",
+   "order": "2026-04-22"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "objednavka",
+   "vinkulace",
+   "zajisteni",
+   "ruceni",
+   "nabidka",
+   "uhrada",
+   "splatky",
+   "specifikace",
+   "dodaci_list"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "04_objednavka.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "05_vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "06_zajisteni.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "07_ruceni.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "08_nabidka.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "09_uhrada.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "10_splatky.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "11_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   },
+   {
+    "filename": "12_dodaci_list.pdf",
+    "received_at": "2026-10-19T15:20:29Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C07",
+  "client_id": "6747f1d0-9196-54f1-b8e7-53df0069eea9",
+  "status": "open",
+  "created_at": "2026-06-01T12:00:00+00:00",
+  "client": {
+   "name": "Skladovra Logistika s.r.o.",
+   "ico": "98007602",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-06-01"
+  },
+  "principal": 795000.0,
+  "months": 36,
+  "schedule_rows": 36,
+  "disbursement": "borrower_reimbursement",
+  "dates": {
+   "insurance": "2026-05-25",
+   "offer": "2026-05-11",
+   "handover": "2026-05-31",
+   "security": "2026-06-01",
+   "approval": "2026-05-19",
+   "first_tranche": "2026-05-27",
+   "buyer_payment": "2026-05-26",
+   "invoice": "2026-05-24",
+   "activation": "2026-06-01",
+   "title": "2026-05-26",
+   "signing": "2026-05-21",
+   "order": "2026-05-13"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "uhrada"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:31Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:31Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:31Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:31Z"
+   },
+   {
+    "filename": "09_uhrada.pdf",
+    "received_at": "2026-10-19T15:20:31Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C08",
+  "client_id": "5971bf87-b169-5aae-9b97-d66c121ac113",
+  "status": "open",
+  "created_at": "2026-06-22T12:00:00+00:00",
+  "client": {
+   "name": "Loukovra Chov s.r.o.",
+   "ico": "98007700",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-06-22"
+  },
+  "principal": 988000.0,
+  "months": 60,
+  "schedule_rows": 60,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-06-15",
+   "offer": "2026-06-01",
+   "handover": "2026-06-21",
+   "security": "2026-06-22",
+   "approval": "2026-06-09",
+   "first_tranche": "2026-06-17",
+   "buyer_payment": "2026-06-16",
+   "invoice": "2026-06-14",
+   "activation": "2026-06-22",
+   "title": "2026-06-22",
+   "signing": "2026-06-11",
+   "order": "2026-06-03"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "objednavka",
+   "vinkulace",
+   "zajisteni",
+   "nabidka",
+   "uhrada",
+   "splatky"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "04_objednavka.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "05_vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "06_zajisteni.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "08_nabidka.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "09_uhrada.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   },
+   {
+    "filename": "10_splatky.pdf",
+    "received_at": "2026-10-19T15:20:32Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C09",
+  "client_id": "341c2a91-9ff7-5e4e-b78e-7628354c0af9",
+  "status": "open",
+  "created_at": "2026-07-13T12:00:00+00:00",
+  "client": {
+   "name": "Ferraluna Laser s.r.o.",
+   "ico": "98007807",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-07-13"
+  },
+  "principal": 3555000.0,
+  "months": 36,
+  "schedule_rows": 36,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-07-06",
+   "offer": "2026-06-22",
+   "handover": "2026-07-12",
+   "security": "2026-07-13",
+   "approval": "2026-06-30",
+   "first_tranche": "2026-07-08",
+   "buyer_payment": "2026-07-07",
+   "invoice": "2026-07-05",
+   "activation": "2026-07-13",
+   "title": "2026-07-13",
+   "signing": "2026-07-02",
+   "order": "2026-06-24"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "objednavka",
+   "vinkulace",
+   "zajisteni",
+   "specifikace"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:36Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:36Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:36Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:36Z"
+   },
+   {
+    "filename": "04_objednavka.pdf",
+    "received_at": "2026-10-19T15:20:36Z"
+   },
+   {
+    "filename": "05_vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:36Z"
+   },
+   {
+    "filename": "06_zajisteni.pdf",
+    "received_at": "2026-10-19T15:20:36Z"
+   },
+   {
+    "filename": "11_specifikace.pdf",
+    "received_at": "2026-10-19T15:20:36Z"
+   }
+  ]
+ },
+ {
+  "case_id": "SYN-C10",
+  "client_id": "b52e9b37-00c1-5afc-993b-1314cbc26e66",
+  "status": "open",
+  "created_at": "2026-08-03T12:00:00+00:00",
+  "client": {
+   "name": "Senovra Pícniny s.r.o.",
+   "ico": "98007904",
+   "kyc_status": "ok",
+   "kyc_checked_at": "2026-08-03"
+  },
+  "principal": 759500.0,
+  "months": 48,
+  "schedule_rows": 16,
+  "disbursement": "supplier_direct",
+  "dates": {
+   "insurance": "2026-07-27",
+   "offer": "2026-07-13",
+   "handover": "2026-08-02",
+   "security": "2026-08-03",
+   "approval": "2026-07-21",
+   "first_tranche": "2026-07-29",
+   "buyer_payment": "2026-07-28",
+   "invoice": "2026-07-26",
+   "activation": "2026-08-03",
+   "title": "2026-08-03",
+   "signing": "2026-07-23",
+   "order": "2026-07-15"
+  },
+  "expected_documents": [
+   "uver",
+   "faktura",
+   "predani",
+   "cerpani",
+   "objednavka",
+   "vinkulace",
+   "zajisteni",
+   "ruceni",
+   "nabidka",
+   "uhrada",
+   "splatky"
+  ],
+  "documents": [
+   {
+    "filename": "00_uver.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "01_faktura.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "02_predani.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "03_cerpani.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "04_objednavka.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "05_vinkulace.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "06_zajisteni.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "07_ruceni.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "08_nabidka.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "09_uhrada.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   },
+   {
+    "filename": "10_splatky.pdf",
+    "received_at": "2026-10-19T15:20:38Z"
+   }
+  ]
+ },
+ {
+  "case_id": "a2dcec26-b1a9-48a5-8b60-dda5d211595c",
+  "client_id": "a3d1c2e4-5b6f-4a7d-8e9f-0a1b2c3d4e5f",
+  "status": "open",
+  "created_at": "2026-10-19T14:06:17.585+00:00",
+  "client": null,
+  "principal": null,
+  "months": null,
+  "schedule_rows": 0,
+  "disbursement": null,
+  "dates": {},
+  "expected_documents": [],
+  "documents": []
+ },
+ {
+  "case_id": "d0d17a8b-dea6-43c7-8f51-9afc8d802aec",
+  "client_id": "a3d1c2e4-5b6f-4a7d-8e9f-0a1b2c3d4e5f",
+  "status": "open",
+  "created_at": "2026-10-19T14:25:16.483+00:00",
+  "client": null,
+  "principal": null,
+  "months": null,
+  "schedule_rows": 0,
+  "disbursement": null,
+  "dates": {},
+  "expected_documents": [],
+  "documents": []
+ }
+]

@@ -4,8 +4,6 @@ export type DirectoryCase = {
   id: string;
   status: string;
   createdAt: string;
-  asset: string | null;
-  principal: number | null;
 };
 
 export type DirectoryClient = {
@@ -39,7 +37,7 @@ type DirectoryClientResponse = {
   kyc_checked_at: string | null;
   signatory: { name: string; function: string } | null;
   email: string | null;
-  cases: { case_id: string; status: string; created_at: string; asset: string | null; principal: number | null }[];
+  cases: { case_id: string; status: string; created_at: string }[];
 };
 
 type ClientDirectoryResponse =
@@ -59,13 +57,7 @@ function toDirectoryClient(c: DirectoryClientResponse): DirectoryClient {
     kycCheckedAt: c.kyc_checked_at,
     signatory: c.signatory,
     email: c.email,
-    cases: c.cases.map((k) => ({
-      id: k.case_id,
-      status: k.status,
-      createdAt: k.created_at,
-      asset: k.asset,
-      principal: k.principal,
-    })),
+    cases: c.cases.map((k) => ({ id: k.case_id, status: k.status, createdAt: k.created_at })),
   };
 }
 

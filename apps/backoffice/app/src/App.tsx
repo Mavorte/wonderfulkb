@@ -3,10 +3,16 @@ import KbLogo from "./kb/kb-logo.svg?react";
 import CasesPage from "./cases/CasesPage";
 import NewCasePage from "./cases/NewCasePage";
 import ClientsPage from "./clients/ClientsPage";
+import QueuePage from "./queue/QueuePage";
 
-type Page = "cases" | "new-case" | "clients";
+type Page = "queue" | "cases" | "new-case" | "clients";
 
 const navItems: { page: Page; label: string; icon: ReactNode }[] = [
+  {
+    page: "queue",
+    label: "Work queue",
+    icon: <path d="M3 5h4v4H3V5Zm6 1h12v2H9V6Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Z" />,
+  },
   {
     page: "cases",
     label: "All cases",
@@ -27,7 +33,7 @@ const navItems: { page: Page; label: string; icon: ReactNode }[] = [
 // Built with the Komerční banka design system (src/kb) instead of
 // @wonderful/ui-base, so the app matches KB's own visual language.
 export default function App() {
-  const [page, setPage] = useState<Page>("cases");
+  const [page, setPage] = useState<Page>("queue");
 
   return (
     <div className="app-root bo-shell">
@@ -57,6 +63,7 @@ export default function App() {
         </nav>
       </aside>
       <main className="bo-main">
+        {page === "queue" && <QueuePage />}
         {page === "cases" && <CasesPage onNewCase={() => setPage("new-case")} />}
         {page === "new-case" && <NewCasePage />}
         {page === "clients" && <ClientsPage />}
