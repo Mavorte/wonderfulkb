@@ -46,7 +46,7 @@ Filtrovatelná metadata (všechny indexy): `case_id`, `document_id`, `page`, `la
 ## Rozhodnutí uživatele (19. 10. 2026)
 - **`label` a `description` plní LLM.** Když text přepisuje vizuální LLM (sken), vrací štítek a popis **ve stejném volání** jako přepis (jedno volání). Když text vzniká bez LLM (textová vrstva přes pypdf/pypdfium2), spustí se klasifikace s LLM **až po** přepisu. `description` je vždy z obsahu dokumentu, ne generický popis typu. Pravidla z hlavičky smí jen urychlit štítek, ne nahradit popis.
 - **Vektory:** model má být co nejsilnější. Do ověření měřením platí výchozí Titan (text V2 a Multimodal G1, oba 1024); indexy jsou prázdné, takže se model dá ještě změnit bez migrace. Dimenze indexů zůstává 1024.
-- **API:** samostatná Lambda `wonderfulkb-agent-api` (ne rozšíření case-clientu).
+- **API:** Lambda `wonderfulkb-agent-api`; od 19. 10. 2026 obsluhuje i klienty a case (původní Lambda `wonderfulkb-case-client` je smazaná).
 - **Pravidla podpisů (A6)** dělá agent na straně Wonderful nad dodaným kontraktem (volání 3); my pravidla nepíšeme.
 
 ## Rozhraní modulů v Pythonu (adresář `infra/validator-agent/`)

@@ -9,7 +9,7 @@ from unittest.mock import patch
 import base64
 from datetime import datetime, timezone
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import boto3
 from boto3.dynamodb.types import TypeSerializer
 from botocore.stub import Stubber

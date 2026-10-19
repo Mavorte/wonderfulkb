@@ -15,7 +15,7 @@ import os
 import re
 import time
 from decimal import Decimal
-from urllib.parse import unquote
+from urllib.parse import quote, unquote
 
 log = logging.getLogger("wonderfulkb.agent_api")
 audit_log = logging.getLogger("wonderfulkb.agent_api.audit")
@@ -27,6 +27,7 @@ ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 READY = ("completed", "partial")
 STATUSES = ("awaiting_upload", "queued", "processing", "completed", "partial", "failed")
 CROP_TTL = 300
+ORIGINAL_TTL = 60  # odkaz na čitelný originál: jen na otevření, každé vydání je v auditu
 GET_BATCH = 100  # limit S3 Vectors GetVectors na počet klíčů
 MAX_CROP_BLOB = 10 * 1024 * 1024
 
@@ -273,6 +274,15 @@ class Repo:
                 return rows
             kw["ExclusiveStartKey"] = r["LastEvaluatedKey"]
 
+    def ingest_document(self, case_id, document_id):
+        """{s3_key, filename, content_type} z tabulky dokumentů ingestu, nebo None."""
+        if not self.cfg.documents_table:
+            return None
+        r = self.c.ddb.get_item(TableName=self.cfg.documents_table,
+                                ProjectionExpression="s3_key, filename, content_type",
+                                Key={"case_id": {"S": case_id}, "document_id": {"S": document_id}})
+        return _item(r["Item"]) if "Item" in r else None
+
     def document_sha256(self, case_id, document_id):
         """SHA-256 obsahu z tabulky dokumentů ingestu (jen tento atribut), nebo None."""
         r = self.c.ddb.get_item(TableName=self.cfg.documents_table, ProjectionExpression="sha256",
@@ -349,9 +359,13 @@ class Repo:
             raise ApiError(500, "Výstup zpracování je neplatný")
         return r["Body"].read()
 
-    def presign(self, key):
-        return self.c.s3_presign.generate_presigned_url(
-            "get_object", Params={"Bucket": self.cfg.bucket, "Key": key}, ExpiresIn=CROP_TTL)
+    def presign(self, key, ttl=CROP_TTL, content_type=None, filename=None):
+        params = {"Bucket": self.cfg.bucket, "Key": key}
+        if content_type:
+            params["ResponseContentType"] = content_type
+        if filename:
+            params["ResponseContentDisposition"] = "inline; filename*=UTF-8''" + quote(filename, safe="")
+        return self.c.s3_presign.generate_presigned_url("get_object", Params=params, ExpiresIn=ttl)
 
     # S3 Vectors
     def get_vectors(self, index, keys, data):
@@ -754,6 +768,73 @@ class Api:
             raise _Denied()
         return png
 
+    # 4. náhled dokumentu (zamaskované stránky) a odkrytí originálu
+    def get_pages(self, case_id, document_id, query):
+        """Náhled dokumentu po stránkách, obdoba `preview_url` u podpisů: stránky PNG a PDF jen ze zamaskované kopie
+        (podpisy začerněné), bez auditu. Dokument zpracovaný před zavedením redakce nemá `redacted_s3_key` a jeho
+        `pages/<n>.png` vznikly z čitelného originálu, proto se nevydají (`preview_url: null`, `redacted: false`).
+        Čitelný originál jen přes `reveal_path`."""
+        row = self._row(case_id, document_id)
+        st = row.get("processing_status")
+        if st not in READY:
+            raise ApiError(409, "OCR ještě nedoběhlo", {"processing_status": st})
+        rkey = row.get("redacted_s3_key")
+        redacted = (isinstance(rkey, str) and rkey.startswith(f"cases/{case_id}/redacted/") and ".." not in rkey
+                    and rkey.endswith(".pdf"))
+        prefix = f"cases/{case_id}/analysis/{document_id}/pages/"
+        present = self.repo.list_keys(prefix) if redacted else set()
+        numbers = {int(m.group(1)) for k in present for m in [re.match(re.escape(prefix) + r"(\d+)\.png$", k)] if m}
+        count = row.get("page_count")
+        count = int(count) if count is not None and int(count) > 0 else max(numbers, default=0)
+        pages = [{"page": n, "preview_url": self.repo.presign(f"{prefix}{n}.png") if n in numbers else None}
+                 for n in range(1, count + 1)]
+        original = self._original_key(case_id, document_id)
+        return {"case_id": case_id, "document_id": document_id, "page_count": count, "redacted": redacted,
+                "preview_pdf_url": self.repo.presign(rkey, content_type="application/pdf")
+                if redacted and self.repo.object_exists(rkey) else None,
+                "pages": pages,
+                "original_available": original is not None,
+                "reveal_path": f"/cases/{case_id}/documents/{document_id}/original"}
+
+    def _original_key(self, case_id, document_id):
+        """(klíč, název souboru, typ) čitelného originálu, nebo None. Klíč z tabulky ingestu musí ležet pod
+        `cases/<case>/` a nesmí mířit do `analysis/` ani `redacted/`; bez řádku ingestu konvenční `original/<doc>.pdf`."""
+        ing = self.repo.ingest_document(case_id, document_id) or {}
+        key = ing.get("s3_key")
+        if not (isinstance(key, str) and key.startswith(f"cases/{case_id}/") and ".." not in key
+                and "/analysis/" not in key and "/redacted/" not in key):
+            key = f"cases/{case_id}/original/{document_id}.pdf"
+        if not self.repo.object_exists(key):
+            return None
+        ctype = ing.get("content_type") if isinstance(ing.get("content_type"), str) else None
+        if not ctype:
+            ctype = "application/pdf" if key.lower().endswith(".pdf") else "application/octet-stream"
+        name = ing.get("filename") if isinstance(ing.get("filename"), str) and ing.get("filename") else key.rsplit("/", 1)[1]
+        return key, name, ctype
+
+    def reveal_document_original(self, case_id, document_id, query, meta=None):
+        """Krátký předpodepsaný odkaz (60 s) na čitelný originál. Soubor se nevrací v těle (Lambda má limit 6 MB,
+        PDF z ingestu mají až desítky MB). Jde i u dokumentu, který se ještě zpracovává. Každé volání s platným
+        klíčem zapíše auditní řádek `document_reveal`."""
+        _ids(case_id, document_id)
+        meta = meta or {}
+        outcome = "error"
+        try:
+            found = self._original_key(case_id, document_id)
+            if found is None:
+                raise ApiError(404, "Originál dokumentu neexistuje")
+            key, name, ctype = found
+            out = {"case_id": case_id, "document_id": document_id, "filename": name, "content_type": ctype,
+                   "url": self.repo.presign(key, ttl=ORIGINAL_TTL, content_type=ctype, filename=name),
+                   "expires_in": ORIGINAL_TTL}
+            outcome = "revealed"
+            return out
+        except ApiError as e:
+            outcome = "not_found" if e.status == 404 else "error"
+            raise
+        finally:
+            _audit(meta, case_id, document_id, None, outcome, event="document_reveal")
+
     # směrování
     ROUTES = [
         (re.compile(r"^/cases/([^/]+)/documents$"), "list_documents"),
@@ -761,7 +842,10 @@ class Api:
         (re.compile(r"^/cases/([^/]+)/documents/([^/]+)/vectors$"), "get_vectors"),
         (re.compile(r"^/cases/([^/]+)/documents/([^/]+)/signatures$"), "get_signatures"),
         (re.compile(r"^/cases/([^/]+)/documents/([^/]+)/signatures/([^/]+)/image$"), "reveal_signature_image"),
+        (re.compile(r"^/cases/([^/]+)/documents/([^/]+)/pages$"), "get_pages"),
+        (re.compile(r"^/cases/([^/]+)/documents/([^/]+)/original$"), "reveal_document_original"),
     ]
+    AUDITED = ("reveal_signature_image", "reveal_document_original")
 
 
 class _Denied(Exception):
@@ -777,13 +861,15 @@ def _caller(meta, api_key):
     return "unknown"
 
 
-def _audit(meta, case_id, document_id, signature_id, outcome):
-    """Jeden JSON řádek: kdo, kdy, který podpis, výsledek. Bez obsahu obrázku, klíče i datového klíče."""
-    audit_log.info(json.dumps({
-        "event": "signature_reveal", "caller": meta.get("caller", "unknown"),
-        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "case_id": case_id, "document_id": document_id,
-        "signature_id": signature_id, "outcome": outcome, "request_id": meta.get("request_id")},
-        ensure_ascii=False))
+def _audit(meta, case_id, document_id, signature_id, outcome, event="signature_reveal"):
+    """Jeden JSON řádek: kdo, kdy, který podpis nebo dokument, výsledek. Bez obsahu obrázku, odkazu, klíče i datového
+    klíče. `document_reveal` (originál dokumentu) pole `signature_id` nemá."""
+    rec = {"event": event, "caller": meta.get("caller", "unknown"),
+           "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "case_id": case_id, "document_id": document_id,
+           "signature_id": signature_id, "outcome": outcome, "request_id": meta.get("request_id")}
+    if signature_id is None:
+        del rec["signature_id"]
+    audit_log.info(json.dumps(rec, ensure_ascii=False))
 
 
 def _chunk_no(key):
@@ -882,9 +968,9 @@ def handle(method, path, query=None, headers=None, api=None, request=None):
             if m:
                 if method.upper() != "GET":
                     raise ApiError(405, "Povolena je jen metoda GET")
-                if name == "reveal_signature_image":
+                if name in Api.AUDITED:
                     meta = dict(request or {}, caller=_caller(request or {}, hdr.get("x-api-key")))
-                    return 200, api.reveal_signature_image(*m.groups(), query, meta=meta)
+                    return 200, getattr(api, name)(*m.groups(), query, meta=meta)
                 return 200, getattr(api, name)(*m.groups(), query)
         raise ApiError(404, "Neznámá cesta")
     except ApiError as e:

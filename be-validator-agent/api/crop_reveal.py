@@ -1,6 +1,6 @@
 """Odkrytí šifrovaného výřezu podpisu: jen dešifrování (KMS Decrypt + AES-256-GCM). Šifrovat tu nelze.
 
-Formát bloku a kontext (AAD) jsou ty z infra/validator-agent/privacy/signature_privacy/blob.py (verze 1);
+Formát bloku a kontext (AAD) jsou ty z be-validator-agent/privacy/signature_privacy/blob.py (verze 1);
 shodu hlídá test_reveal.py (blok zašifrovaný knihovnou `signature_privacy` se tu odkryje a naopak špatný
 kontext selže). Knihovna se do Lambdy nebalí, protože tahá Pillow, numpy a PyMuPDF; tady stačí `cryptography`.
 Klíče, obsah ani obrázek se nikdy nelogují.

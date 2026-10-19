@@ -1,6 +1,6 @@
 import type { AwsCase } from "../lib/awsApi";
 
-/** Client as returned by GET /clients (openapi-case-client.yaml). */
+/** Client as returned by GET /clients (be-document-processing/contracts/openapi-validator-agent.yaml). */
 export type AwsClient = {
   client_id: string;
   ico: string;

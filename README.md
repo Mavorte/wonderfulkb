@@ -3,7 +3,7 @@
 Backoffice pro kontrolu firemních úvěrových dokumentů: výběr firmy podle názvu/IČO, trvalé případy, nahrání souborů, OCR, doložené vytěžení a kontroly napříč dokumenty.
 
 - `apps/backoffice/app/`: React UI s výběrem firmy, dokumenty, stavem zpracování, přepisem, náhledy a ručními opravami.
-- `be-case-client/`: původní kontrakt firem a případů; jeho cloudová implementace je samostatná komponenta.
+- [`be-validator-agent/api/`](be-validator-agent/api/README.md): AWS API firem, případů a dokumentů (Lambda `wonderfulkb-agent-api`, dříve také samostatný `be-case-client`); kontrakt [openapi-validator-agent.yaml](be-document-processing/contracts/openapi-validator-agent.yaml), rychlé připojení [docs/quick-connect.md](docs/quick-connect.md).
 - [`be-document-processing/README.md`](be-document-processing/README.md): spuštění backendu, API kontrakty, testy a AWS šablona.
 
 OCR používá AWS Bedrock **výhradně ve Frankfurtu (`eu-central-1`)**. Výchozí model je Qwen3 VL přes Mantle; alternativa Gemma 4 31B má vlastní podporovanou API cestu. Přihlašovací údaje AWS zůstávají na serveru.
