@@ -70,7 +70,7 @@ const external = [
   // Platform-shared packages — uncomment when you install them so your bundle
   // uses the host's copy instead of shipping its own.
   // See the "URL state" guide in the Wonderful Apps docs.
-  // "react-router-dom",
+  "react-router-dom",
   // "use-query-params",
 ];
 

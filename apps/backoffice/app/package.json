@@ -17,7 +17,8 @@
     "react-dom": "^18.2.0 || ^19.0.0"
   },
   "dependencies": {
-    "@wonderful/ui-base": "0.100.0"
+    "@wonderful/ui-base": "0.100.0",
+    "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
     "@babel/core": "^7.29.6",

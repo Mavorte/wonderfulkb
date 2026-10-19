@@ -1,33 +1,37 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { Link, Navigate, Route, Routes, matchPath, useLocation } from "react-router-dom";
 import KbLogo from "./kb/kb-logo.svg?react";
 import NewCasePage from "./cases/NewCasePage";
 import ClientsPage from "./clients/ClientsPage";
 import QueuePage from "./queue/QueuePage";
 import CaseReviewPage from "./review/CaseReviewPage";
 
-type Page = "queue" | "case-review" | "new-case" | "clients";
-
-const navItems: { page: Page; label: string; icon: ReactNode }[] = [
+// Routes are relative to the app; the host mounts them under /apps/<slug>.
+const navItems: { to: string; label: string; matches: string[]; icon: ReactNode }[] = [
   {
-    page: "queue",
+    to: "/queue",
     label: "Work queue",
+    matches: ["/queue"],
     icon: <path d="M3 5h4v4H3V5Zm6 1h12v2H9V6Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Z" />,
   },
   {
-    page: "case-review",
+    to: "/cases",
     label: "Case review",
+    matches: ["/cases", "/cases/:caseId"],
     icon: (
       <path d="M9 2h6v2h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h4V2Zm0 4H6v14h12V6h-3v2H9V6Zm1.5 10.4-3-3 1.4-1.4 1.6 1.6 4.6-4.6 1.4 1.4-6 6Z" />
     ),
   },
   {
-    page: "new-case",
+    to: "/cases/new",
     label: "New case",
+    matches: ["/cases/new"],
     icon: <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />,
   },
   {
-    page: "clients",
+    to: "/clients",
     label: "Clients",
+    matches: ["/clients", "/clients/:clientId"],
     icon: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" />,
   },
 ];
@@ -35,13 +39,9 @@ const navItems: { page: Page; label: string; icon: ReactNode }[] = [
 // Built with the Komerční banka design system (src/kb) instead of
 // @wonderful/ui-base, so the app matches KB's own visual language.
 export default function App() {
-  const [page, setPage] = useState<Page>("queue");
-  const [reviewId, setReviewId] = useState<string | null>(null);
-
-  const openReview = (evaluationId: string) => {
-    setReviewId(evaluationId);
-    setPage("case-review");
-  };
+  const { pathname } = useLocation();
+  // "/cases/new" also matches "/cases/:caseId", so the most specific item wins.
+  const current = [...navItems].reverse().find((item) => item.matches.some((pattern) => matchPath(pattern, pathname)));
 
   return (
     <div className="app-root bo-shell">
@@ -53,32 +53,28 @@ export default function App() {
         <nav aria-label="Main">
           <ul className="bo-nav">
             {navItems.map((item) => (
-              <li key={item.page}>
-                <button
-                  type="button"
-                  className="bo-nav__item"
-                  aria-current={page === item.page ? "page" : undefined}
-                  onClick={() => {
-                    // The nav item opens the review from the URL, not the last case opened from the queue.
-                    if (item.page === "case-review") setReviewId(null);
-                    setPage(item.page);
-                  }}
-                >
+              <li key={item.to}>
+                <Link className="bo-nav__item" to={item.to} aria-current={item === current ? "page" : undefined}>
                   <svg className="kb-icon" viewBox="0 0 24 24" aria-hidden="true">
                     {item.icon}
                   </svg>
                   {item.label}
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
         </nav>
       </aside>
       <main className="bo-main">
-        {page === "queue" && <QueuePage onOpenReview={openReview} />}
-        {page === "case-review" && <CaseReviewPage key={reviewId} initialEvaluationId={reviewId} />}
-        {page === "new-case" && <NewCasePage />}
-        {page === "clients" && <ClientsPage />}
+        <Routes>
+          <Route path="/queue" element={<QueuePage />} />
+          <Route path="/cases" element={<CaseReviewPage />} />
+          <Route path="/cases/new" element={<NewCasePage />} />
+          <Route path="/cases/:caseId" element={<CaseReviewPage />} />
+          <Route path="/clients" element={<ClientsPage />} />
+          <Route path="/clients/:clientId" element={<ClientsPage />} />
+          <Route path="*" element={<Navigate to="/queue" replace />} />
+        </Routes>
       </main>
     </div>
   );

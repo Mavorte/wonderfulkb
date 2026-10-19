@@ -1,4 +1,5 @@
-// Returns one case-evaluator run (body: evaluation_id; latest run when omitted),
+// Returns one case-evaluator run (body: evaluation_id, else the latest run of
+// case_id, else the latest run overall),
 // its per-rule results, and the most recent runs so the review screen can switch.
 // Both tables are owned by the agent-functions app and linked to this one.
 
@@ -9,23 +10,29 @@ const RESULTS_TABLE = "agent_functions.case_evaluation_results";
 const RECENT_LIMIT = 50;
 const RESULTS_LIMIT = 100;
 
-async function userFunction(context: FunctionContext) {
+export async function userFunction(context: FunctionContext) {
   const requested = String(context.data?.evaluation_id ?? "").trim();
+  const caseId = String(context.data?.case_id ?? "").trim();
 
   const recent = await context.tables.filter(EVALUATIONS_TABLE, [], RECENT_LIMIT, 0, [
     { column: "started_at", direction: "desc" },
   ]);
   const evaluations = recent.rows.map((row) => row.data);
 
-  let evaluation = requested ? evaluations.find((e) => e.evaluation_id === requested) : evaluations[0];
-  if (requested && !evaluation) {
-    const byId = await context.tables.filter(
+  let evaluation = requested
+    ? evaluations.find((e) => e.evaluation_id === requested)
+    : caseId
+      ? evaluations.find((e) => e.case_id === caseId)
+      : evaluations[0];
+  if (!evaluation && (requested || caseId)) {
+    const older = await context.tables.filter(
       EVALUATIONS_TABLE,
-      [{ column: "evaluation_id", operator: "eq", value: requested }],
+      [requested ? { column: "evaluation_id", operator: "eq", value: requested } : { column: "case_id", operator: "eq", value: caseId }],
       1,
       0,
+      [{ column: "started_at", direction: "desc" }],
     );
-    evaluation = byId.rows[0]?.data;
+    evaluation = older.rows[0]?.data;
   }
   if (!evaluation) {
     context.response.setStatus(404);

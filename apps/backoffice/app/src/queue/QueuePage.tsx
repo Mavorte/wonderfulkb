@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
+import { Link } from "react-router-dom";
 import CaseStatusPill from "../cases/CaseStatusPill";
 import type { CaseStatus } from "../cases/caseStatus";
 import formatDate from "../cases/formatDate";
+import getCasePath from "../cases/getCasePath";
 import listQueue, { type QueuePayload } from "./listQueue";
 import triage, { tiers, type Tier, type TriagedCase } from "./triage";
 
@@ -25,9 +27,7 @@ const statusAction: Record<CaseStatus, string> = {
 
 const nextAction = (c: TriagedCase) => c.findings[0]?.action ?? statusAction[c.status];
 
-type OpenReview = (evaluationId: string) => void;
-
-function QueueTable({ cases, rank, onOpenReview }: { cases: TriagedCase[]; rank: Map<string, number>; onOpenReview: OpenReview }) {
+function QueueTable({ cases, rank }: { cases: TriagedCase[]; rank: Map<string, number> }) {
   return (
     <div className="bo-table-wrap">
       <table className="bo-table bo-table--queue">
@@ -75,13 +75,9 @@ function QueueTable({ cases, rank, onOpenReview }: { cases: TriagedCase[]; rank:
               </td>
               <td className="bo-queue__action">
                 {nextAction(c) || "—"}
-                <button
-                  type="button"
-                  className="bo-link bo-queue__review"
-                  onClick={() => onOpenReview(c.evaluation.evaluation_id)}
-                >
+                <Link className="bo-link bo-queue__review" to={getCasePath(c.case_id)}>
                   Open case review
-                </button>
+                </Link>
               </td>
             </tr>
           ))}
@@ -91,7 +87,7 @@ function QueueTable({ cases, rank, onOpenReview }: { cases: TriagedCase[]; rank:
   );
 }
 
-export default function QueuePage({ onOpenReview }: { onOpenReview: OpenReview }) {
+export default function QueuePage() {
   const { api, track } = useWonderful();
   const apiRef = useRef(api);
   apiRef.current = api;
@@ -187,7 +183,7 @@ export default function QueuePage({ onOpenReview }: { onOpenReview: OpenReview }
           </header>
         );
         const body =
-          cases.length === 0 ? <p className="bo-empty">Nothing here.</p> : <QueueTable cases={cases} rank={rank} onOpenReview={onOpenReview} />;
+          cases.length === 0 ? <p className="bo-empty">Nothing here.</p> : <QueueTable cases={cases} rank={rank} />;
         return (
           <section key={tier} id={`queue-${tier}`} className="bo-card bo-card--queue" aria-labelledby={`queue-${tier}-title`}>
             {tier === "done" ? (
