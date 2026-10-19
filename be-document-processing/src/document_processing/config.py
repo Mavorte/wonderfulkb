@@ -10,6 +10,9 @@ class Settings:
     data_dir: Path = Path(".local-data")
     public_url: str = "http://127.0.0.1:8010"
     api_key: str = field(default="", repr=False)
+    # Without an API key the /v1 API rejects requests unless this explicit opt-in is set
+    # (local development, or AWS where API Gateway enforces its own key).
+    allow_no_auth: bool = False
     ocr_model: str = "qwen.qwen3-vl-235b-a22b-instruct"
     extraction_model: str = "qwen.qwen3-vl-235b-a22b-instruct"
     bedrock_region: str = "eu-central-1"
@@ -41,6 +44,7 @@ class Settings:
             data_dir=Path(os.getenv("DATA_DIR", ".local-data")),
             public_url=os.getenv("PUBLIC_URL", "http://127.0.0.1:8010").rstrip("/"),
             api_key=os.getenv("DOCUMENT_API_KEY", ""),
+            allow_no_auth=os.getenv("DOCUMENT_API_ALLOW_NO_AUTH", "") == "1",
             ocr_model=os.getenv("BEDROCK_OCR_MODEL", "qwen.qwen3-vl-235b-a22b-instruct"),
             extraction_model=os.getenv("BEDROCK_EXTRACTION_MODEL", "qwen.qwen3-vl-235b-a22b-instruct"),
             bedrock_region=os.getenv("BEDROCK_REGION", "eu-central-1"),

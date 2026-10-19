@@ -7,13 +7,15 @@ API_KEY=mock-key PORT=8080 python3 server.py
 curl -H 'x-api-key: mock-key' localhost:8080/v1/_mock/cases     # seznam case_id a document_id
 ```
 
+Server poslouchá jen na `127.0.0.1`; na všech rozhraních (`0.0.0.0`, např. v Dockeru) jen s výslovným `MOCK_BIND_ALL=1`. Interní chyba vrací 500 s obecným textem, detail jde jen do logu serveru.
+
 Test proti spec (`pip install pyyaml jsonschema`): `BASE_URL=http://localhost:8080/v1 python3 contract_test.py`
 
 ## Data
 - **Texty** se čtou z textových výpisů vzorových dokumentů z hackathonového balíku (nejsou v repu): složka `vzorove-dokumenty` v `WONDERFULKB_SAMPLES_DIR` (nebo `TEXT_DIR` na podsložku `text`). Bez nich mock běží a vrací dokumenty bez textu. Jsou to bankovní dokumenty, mock s nimi nenasazovat mimo schválené prostředí.
 - **Štítky** se odvozují z prefixu souboru (taxonomy.yaml v repu není). `0_`/`2_`/`99_` jsou `verified`, ostatní `predicted`.
 - **Vektory** (text, obraz i podpis mají 1024 dimenzí) jsou deterministické: stejný štítek ≈ 0,8 podobnosti, různý ≈ 0. `neighbors` počítá kosinus nad ověřenými dokumenty včetně syntetického `ref-corpus`.
-- **Podpisy** vznikají podle typu dokumentu (role + `role_evidence`), `crop_url` ukazuje na PNG z mocku.
+- **Podpisy** vznikají podle typu dokumentu (role + `role_evidence`), `preview_url` ukazuje na PNG z mocku (a stejný PNG vrací `reveal_path`); `crop_url` už není (spec 0.3.0).
   Odpověď volání 3 nese povinné `status`: `completed` u zpracovaných dokumentů (prázdné `signatures` = nic nenalezeno), `not_run` u nezpracovaných (např. `processing`). `failed` mock nevrací.
 
 ## Připravené scénáře

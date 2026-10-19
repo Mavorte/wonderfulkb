@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: wonderfulkb-trigger worker image repository (the Lambda image of the document trigger)
+
+Resources:
+  Repository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: wonderfulkb-trigger-worker
+      EmptyOnDelete: true   # deleting this stack removes the images in it, nothing else
+      ImageScanningConfiguration: {ScanOnPush: true}
+      EncryptionConfiguration: {EncryptionType: AES256}
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules": [{"rulePriority": 1, "description": "keep the last 5 images",
+                      "selection": {"tagStatus": "any", "countType": "imageCountMoreThan", "countNumber": 5},
+                      "action": {"type": "expire"}}]}
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+Outputs:
+  RepositoryUri:
+    Value: !GetAtt Repository.RepositoryUri

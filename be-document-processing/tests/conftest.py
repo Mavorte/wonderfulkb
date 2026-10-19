@@ -11,7 +11,7 @@ from document_processing.config import Settings
 
 @pytest.fixture
 def application(tmp_path):
-    return create_app(Settings(data_dir=tmp_path, worker_enabled=False))
+    return create_app(Settings(data_dir=tmp_path, worker_enabled=False, allow_no_auth=True))
 
 
 @pytest.fixture

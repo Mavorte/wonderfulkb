@@ -26,10 +26,11 @@ def strip_signed_query(rep):
     """Předpodepsané adresy výřezů nesou dočasné přihlašovací údaje v query; ve výstupu zůstane jen cesta."""
     for f in rep.get("findings", []):
         for e in f.get("evidence", []):
-            u = e.get("crop_url")
-            if u and "?" in u:
-                e["crop_url"] = u.split("?", 1)[0] + "?…"
-                e["crop_url_note"] = "podepsaná adresa vynechána; získáte ji novým voláním get_document_signatures (platí 300 s), nebo --full-crop-urls"
+            for k in ("crop_url", "preview_url"):
+                u = e.get(k)
+                if u and "?" in u:
+                    e[k] = u.split("?", 1)[0] + "?…"
+                    e[k + "_note"] = "podepsaná adresa vynechána; získáte ji novým voláním get_document_signatures (platí 300 s), nebo --full-crop-urls"
     return rep
 
 
@@ -45,6 +46,10 @@ def _ev_line(e):
         extra.append(f"skóre detektoru {e['detection_score']} (orientační)")
     if e.get("crop_url"):
         extra.append(f"výřez: {e['crop_url']} (platí 300 s)")
+    if e.get("preview_url"):
+        extra.append(f"náhled (zkreslený): {e['preview_url']} (platí 300 s)")
+    if e.get("reveal_path"):
+        extra.append(f"čitelný výřez: GET {e['reveal_path']} (s API klíčem, zapisuje se do auditu)")
     if e.get("note"):
         extra.append(e["note"])
     q = f" „{e['quote']}“" if e.get("quote") else ""

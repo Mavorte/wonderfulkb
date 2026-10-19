@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: "2010-09-09"
+# Kopie infra/documents-table/template.yaml se zapnutym DynamoDB Streamem (NEW_IMAGE) pro trigger.
+# 19. 10. 2026: pridano DeletionPolicy/UpdateReplacePolicy Retain (smazani stacku ani nahrazeni tabulku nesmaze),
+# point-in-time recovery a tag project=wonderfulkb. Vse jsou zmeny bez nahrazeni tabulky (No interruption).
+# Komentare bez diakritiky: CloudFormation je pri ulozeni sablony poskodil.
+Description: wonderfulkb-uw-documents table (uploaded documents per case). Clients and cases tables are managed separately (part 1).
+
+Resources:
+  DocumentsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: wonderfulkb-uw-documents
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: case_id, AttributeType: S}
+        - {AttributeName: document_id, AttributeType: S}
+      KeySchema:
+        - {AttributeName: case_id, KeyType: HASH}
+        - {AttributeName: document_id, KeyType: RANGE}
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+Outputs:
+  StreamArn:
+    Value: !GetAtt DocumentsTable.StreamArn

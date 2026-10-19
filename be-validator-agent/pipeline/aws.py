@@ -19,8 +19,18 @@ class Aws:
         except self.s3.exceptions.NoSuchKey:
             return None
 
-    def put_bytes(self, key, body, content_type):
-        self.s3.put_object(Bucket=self.settings.bucket, Key=key, Body=body, ContentType=content_type)
+    def put_bytes(self, key, body, content_type, metadata=None, tagging=None):
+        extra = {k: v for k, v in (("Metadata", metadata), ("Tagging", tagging)) if v}
+        self.s3.put_object(Bucket=self.settings.bucket, Key=key, Body=body, ContentType=content_type, **extra)
+
+    def head_metadata(self, key):
+        """User metadata of an object, None when it does not exist."""
+        try:
+            return self.s3.head_object(Bucket=self.settings.bucket, Key=key)["Metadata"]
+        except self.s3.exceptions.ClientError as error:
+            if error.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
+                return None
+            raise
 
     def list_documents(self, case_id):
         from boto3.dynamodb.conditions import Key

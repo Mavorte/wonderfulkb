@@ -36,7 +36,7 @@ Bez `provider` se použije výchozí: `PRIVACY_KMS_KEY_ID` (alias nebo ARN) → 
 
 ```bash
 python -m venv venv && venv/bin/pip install --only-binary :all: -r requirements-dev.txt
-venv/bin/python -m pytest        # 63 testů, bez AWS (KMS a S3 přes moto); redakce vyžaduje PyMuPDF
+venv/bin/python -m pytest        # 68 testů, bez AWS (KMS a S3 přes moto); redakce vyžaduje PyMuPDF
 
 # živý KMS (jen syntetická data, nic se nikam nezapisuje):
 AWS_PROFILE=hackathon PRIVACY_KMS_KEY_ID=alias/wonderfulkb-signatures venv/bin/python live_check.py

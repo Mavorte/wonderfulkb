@@ -15,6 +15,8 @@ Resources:
       GenerateSecretString:
         PasswordLength: 40
         ExcludePunctuation: true
+      Tags:
+        - {Key: project, Value: wonderfulkb}
 
   InstanceRole:
     Type: AWS::IAM::Role
@@ -26,6 +28,8 @@ Resources:
           - Effect: Allow
             Principal: {Service: tasks.apprunner.amazonaws.com}
             Action: sts:AssumeRole
+      Tags:
+        - {Key: project, Value: wonderfulkb}
       Policies:
         - PolicyName: data
           PolicyDocument:
@@ -34,12 +38,22 @@ Resources:
               - Effect: Allow
                 Action: [s3:PutObject, s3:GetObject, s3:AbortMultipartUpload]
                 Resource: !Sub "arn:aws:s3:::${RawBucket}/cases/*"
+              - Sid: CleanupOwnUploads
+                # jen úklid: po selhání transakce ingest smaže verzi objektu, kterou sám nahrál (main.py remove_uncommitted)
+                Effect: Allow
+                Action: [s3:DeleteObject, s3:DeleteObjectVersion]
+                Resource: !Sub "arn:aws:s3:::${RawBucket}/cases/*/original/*"
               - Effect: Allow
                 Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wonderfulkb-uw-documents"
               - Effect: Allow
                 Action: dynamodb:GetItem
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wonderfulkb-uw-cases"
+              - Sid: ContentHashes
+                # index obsahových hashů (dedup napříč případy, infra/validator-agent/dedup): čtení a idempotentní zápis
+                Effect: Allow
+                Action: [dynamodb:Query, dynamodb:UpdateItem]
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wonderfulkb-uw-content-hashes"
               - Effect: Allow
                 Action: secretsmanager:GetSecretValue
                 Resource: !Ref ApiKeySecret

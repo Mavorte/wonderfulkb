@@ -60,6 +60,23 @@ def _rect(page, bbox, pad=0.0):
                         r.x0 + (x1 + pad) * r.width, r.y0 + (y1 + pad) * r.height) & r
 
 
+def _region_rect(page, region):
+    """Obdélník oblasti: JEDINÉ místo, které určuje plochu pro redakci, ověření i měření kolaterální změny
+    (`full` má okraj `PAD`, zóna `graphics` ne). Redakce a ověření se tak nemohou rozejít."""
+    return _rect(page, region.bbox, PAD if region.mode == "full" else 0.0)
+
+
+def _chars_touching(page, rect):
+    """Bboxy znaků textové vrstvy, které `rect` protíná i jen částí (úlomky glyfů, ne jen znaky uvnitř)."""
+    out = []
+    for blk in page.get_text("rawdict", clip=rect).get("blocks", []):
+        for line in blk.get("lines", []):
+            for span in line["spans"]:
+                out += [pymupdf.Rect(c["bbox"]) for c in span["chars"] if c["c"].strip()
+                        and pymupdf.Rect(c["bbox"]).intersects(rect)]
+    return out
+
+
 def _rel(page, rect):
     r = page.rect
     return (max(0.0, (rect.x0 - r.x0) / r.width), max(0.0, (rect.y0 - r.y0) / r.height),
@@ -127,7 +144,7 @@ def redact_pdf(pdf_bytes: bytes, regions) -> bytes:
                     raise PrivacyError("Oblast mimo rozsah stran")
                 page = doc[pno - 1]
                 for r in (x for x in regions if x.page == pno and x.mode == mode):
-                    rect = _rect(page, r.bbox, PAD if mode == "full" else 0.0)
+                    rect = _region_rect(page, r)
                     if rect.is_empty:
                         continue
                     if mode == "full":
@@ -138,6 +155,8 @@ def redact_pdf(pdf_bytes: bytes, regions) -> bytes:
                     page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_PIXELS,
                                           graphics=pymupdf.PDF_REDACT_LINE_ART_REMOVE_IF_TOUCHED,
                                           text=pymupdf.PDF_REDACT_TEXT_REMOVE)
+                    _remove_glyph_fragments(page, [_region_rect(page, x) for x in regions
+                                                   if x.page == pno and x.mode == "full"])
                 else:
                     page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_PIXELS,
                                           graphics=pymupdf.PDF_REDACT_LINE_ART_REMOVE_IF_TOUCHED,
@@ -147,6 +166,20 @@ def redact_pdf(pdf_bytes: bytes, regions) -> bytes:
         return doc.tobytes(garbage=4, deflate=True, clean=True)
     finally:
         doc.close()
+
+
+def _remove_glyph_fragments(page, rects, rounds=3):
+    """Redakce MuPDF maže znaky podle vlastního kritéria glyfu; znak, který obdélník jen protíná, někdy zůstane
+    (úlomek písmene u okraje). Takové znaky se dodatečně odstraní celé (jen znaky, žádná další plocha, bez
+    vybarvení), dokud se v obdélnících nenajde žádný. Co se nepodaří, zachytí `verify_redacted`."""
+    for _ in range(rounds):
+        left = [c for rect in rects for c in _chars_touching(page, rect)]
+        if not left:
+            return
+        for c in left:
+            page.add_redact_annot(c, fill=False)
+        page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_NONE, graphics=pymupdf.PDF_REDACT_LINE_ART_NONE,
+                              text=pymupdf.PDF_REDACT_TEXT_REMOVE)
 
 
 def _stream_hashes(doc):
@@ -179,13 +212,13 @@ def verify_redacted(original_pdf: bytes, redacted_pdf: bytes, regions, dpi=100) 
         notext = {}
         for r in regions:
             pa, pb = a[r.page - 1], b[r.page - 1]
-            rect = _rect(pb, r.bbox, PAD if r.mode == "full" else 0.0)
+            rect = _region_rect(pb, r)
             for info in pa.get_image_info(xrefs=True):
                 if pymupdf.Rect(info["bbox"]).intersects(rect) and info.get("xref"):
                     raw = a.xref_stream_raw(info["xref"])
                     if raw and len(raw) > 64 and hashlib.sha256(raw).hexdigest() in new_hashes:
                         problems.append(f"strana {r.page}: původní obrázek (xref {info['xref']}) zůstal v souboru")
-            fills = [_rect(pb, x.bbox, PAD) + (-2, -2, 2, 2) for x in regions if x.page == r.page and x.mode == "full"]
+            fills = [_region_rect(pb, x) + (-2, -2, 2, 2) for x in regions if x.page == r.page and x.mode == "full"]
             for d in pb.get_drawings():
                 if d.get("fill") == (0.0, 0.0, 0.0) and len(d["items"]) == 1 and d["items"][0][0] == "re" \
                         and any(pymupdf.Rect(d["rect"]) in f for f in fills):
@@ -199,7 +232,7 @@ def verify_redacted(original_pdf: bytes, redacted_pdf: bytes, regions, dpi=100) 
                 if not _zone_clean(notext[r.page], rect, fills, dpi):
                     problems.append(f"strana {r.page}: v oblasti {r.source} zůstal obrázek nebo kresba")
             if r.mode == "full":
-                if pb.get_text("words", clip=rect):
+                if _chars_touching(pb, rect):
                     problems.append(f"strana {r.page}: text v oblasti full")
                 if not _is_black(pb, rect, dpi):
                     problems.append(f"strana {r.page}: oblast full není černá")
@@ -275,7 +308,7 @@ def _outside_mask(page, regions, shape, dpi):
     s = dpi / 72
     mask = np.ones(shape, dtype=bool)
     for r in regions:
-        rect = _rect(page, r.bbox, PAD if r.mode == "full" else 0.0)
+        rect = _region_rect(page, r)
         x0, y0 = max(0, int(rect.x0 * s) - 2), max(0, int(rect.y0 * s) - 2)
         mask[y0:int(rect.y1 * s) + 3, x0:int(rect.x1 * s) + 3] = False
     return mask

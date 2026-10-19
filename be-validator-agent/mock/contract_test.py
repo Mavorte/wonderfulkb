@@ -132,8 +132,11 @@ b = expect(f"/cases/{C}/documents/{protokol['document_id']}/signatures?match_cli
 check("kopie podpisu v protokolu + similar_signatures bez vektoru",
       b["signatures"][0]["copy_suspicion"]["matches"] and "vector" not in b["signatures"][0]
       and "similar_signatures" in b["signatures"][0])
-with urllib.request.urlopen(urllib.request.Request(b["signatures"][0]["crop_url"], headers={"x-api-key": KEY})) as r:
-    check("crop_url vrací PNG", r.read(8) == b"\x89PNG\r\n\x1a\n")
+with urllib.request.urlopen(urllib.request.Request(b["signatures"][0]["preview_url"], headers={"x-api-key": KEY})) as r:
+    check("preview_url vrací PNG", r.read(8) == b"\x89PNG\r\n\x1a\n")
+check("podpis má reveal_path a crop_available, crop_url není",
+      b["signatures"][0]["reveal_path"].endswith("/image") and b["signatures"][0]["crop_available"] is True
+      and "crop_url" not in b["signatures"][0])
 b = expect(f"/cases/{C}/documents/{by_title(fiser, '99_')['document_id']}/signatures", 200, "DocumentSignatures")
 check("dokument bez podpisů: prázdné pole", b["signatures"] == [])
 expect(f"/cases/{C}/documents/{D}/signatures?match_client=x", 400, "Error")

@@ -1,0 +1,10 @@
+# balíček Lambdy (image z Dockerfile; jen hotová kola, bez kompilace)
+boto3>=1.40
+httpx>=0.27
+pypdf>=5
+pypdfium2>=4.30
+Pillow>=10
+numpy>=2
+PyMuPDF>=1.24
+PyYAML>=6
+cryptography>=43

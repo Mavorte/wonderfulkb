@@ -6,16 +6,29 @@
 #   re:   regulární výraz (hledá se re.search v dané zóně), w: váha; pravidlo se započítá nejvýš jednou.
 # Název souboru se k pravidlům nikdy nepoužívá.
 
+#
+# Politika duplicit (duplicate_policy) pro hlídání „stejný doklad ve dvou financováních“ (infra/validator-agent/dedup):
+#   flag   = stejný obsah (SHA-256) v jiném případu je podezřelý: individuální doklad (faktura, protokol, objednávka,
+#            doklad o úhradě) ani formulář s dosazenými údaji (zajišťovací převod, vinkulace, ručení, smlouva) nemá mít
+#            dva případy společný. Vzorky solom-rec a stavby-fiser potvrzují: formuláře 2_Form (zajištění) a 3_Form
+#            (vinkulace) se mezi případy liší dosazenými údaji stran, nejde o prázdnou šablonu.
+#   ignore = standardní text bez údajů o případu, který je legitimně stejný ve všech případech (jen VOP).
+# Neznámý štítek a `jine` = flag (raději podezření navíc než přehlédnutá duplicita).
+# Navíc se duplicita ignoruje, pokud stejný hash leží v >= duplicate_template_threshold různých případech
+# (šablona, kterou klasifikátor mohl označit jako individuální); viz settings.
+
 settings:
   title_chars: 300      # zóna "title": začátek dokumentu
   head_chars: 2500      # zóna "head": hlavička a úvod
   accept_score: 9       # minimální skóre nejlepšího štítku pro přijetí bez modelu
   accept_margin: 4      # minimální náskok před druhým štítkem
   min_text_chars: 40    # kratší text = dokument bez textové vrstvy, model se nevolá
+  duplicate_template_threshold: 3   # stejný hash v tolika a více různých případech = šablona, duplicita není relevantní
 
 labels:
   smlouva_o_uveru:
     group: "0x"
+    duplicate_policy: flag
     name: Smlouva o úvěru
     description: Úvěrová smlouva mezi poskytovatelem financování (SGEF) a příjemcem financování na pořízení předmětu financování; šablonový dokument se stranami, parametry úvěru, výčtem požadovaných podkladů, zajištěním a podpisovou tabulkou.
     key_signs:
@@ -33,6 +46,7 @@ labels:
 
   vop:
     group: "0x"
+    duplicate_policy: ignore
     name: Všeobecné obchodní podmínky (VOP)
     description: Všeobecné obchodní podmínky ke smlouvě o úvěru (několik desítek stran právního textu, které se jen podepisují); nenesou údaje o konkrétním případu.
     key_signs:
@@ -47,6 +61,7 @@ labels:
 
   dodatek_ke_smlouve:
     group: "0x"
+    duplicate_policy: flag
     name: Dodatek ke smlouvě o úvěru
     description: Dodatek, který mění nebo doplňuje existující smlouvu o úvěru (odkazuje na číslo původní smlouvy a uvádí měněná ustanovení).
     key_signs:
@@ -60,6 +75,7 @@ labels:
 
   dohoda_o_zaplaceni_kupni_ceny:
     group: "0x/1x"
+    duplicate_policy: flag
     name: Dohoda o zaplacení kupní ceny
     description: Třístranná dohoda ke kupní smlouvě/objednávce a smlouvě o úvěru mezi poskytovatelem financování, prodávajícím a kupujícím (příjemcem) o způsobu zaplacení kupní ceny, DPH a podmínkách výplaty.
     key_signs:
@@ -75,6 +91,7 @@ labels:
 
   objednavka:
     group: "1x"
+    duplicate_policy: flag
     name: Objednávka / kupní smlouva
     description: Objednávka nebo kupní smlouva mezi objednatelem (příjemcem financování) a dodavatelem na dodání předmětu financování (strany s IČO, položky, cena bez DPH, termín plnění); může obsahovat přiloženou technickou specifikaci.
     key_signs:
@@ -91,6 +108,7 @@ labels:
 
   technicka_specifikace:
     group: "1x"
+    duplicate_policy: flag
     name: Technická specifikace
     description: Technická specifikace nebo cenová nabídka předmětu financování (parametry, výbava, rozměry, typ a model stroje).
     key_signs:
@@ -103,6 +121,7 @@ labels:
 
   predavaci_protokol:
     group: "1x"
+    duplicate_policy: flag
     name: Předávací protokol / potvrzení o převodu vlastnictví
     description: Protokol o předání a převzetí předmětu financování nebo potvrzení dodavatele o převodu vlastnického práva po úhradě kupní ceny (předmět, výrobní číslo, číslo faktury, datum převodu, podpis).
     key_signs:
@@ -118,6 +137,7 @@ labels:
 
   uhrada_kupni_ceny:
     group: "1x"
+    duplicate_policy: flag
     name: Doklad o úhradě
     description: Bankovní doklad o provedené platbě (oznámení o provedení příkazu k úhradě, výpis z účtu) s účty plátce a příjemce, částkou, datem a symboly platby.
     key_signs:
@@ -134,6 +154,7 @@ labels:
 
   faktura:
     group: "1x"
+    duplicate_policy: flag
     name: Faktura / daňový doklad
     description: Faktura nebo daňový doklad dodavatele za předmět financování (dodavatel, odběratel, výrobní číslo, částka, DPH, bankovní účet, splatnost).
     key_signs:
@@ -149,6 +170,7 @@ labels:
 
   zajistovaci_prevod_vlastnickeho_prava:
     group: "2-4"
+    duplicate_policy: flag
     name: Zajišťovací převod vlastnického práva
     description: Standardní formulář smlouvy o zajišťovacím převodu vlastnického práva k předmětu financování na poskytovatele financování jako zajištění úvěru (strany, předmět, výrobní číslo, hodnota, podpisy).
     key_signs:
@@ -162,6 +184,7 @@ labels:
 
   vinkulace_pojisteni:
     group: "2-4"
+    duplicate_policy: flag
     name: Vinkulace pojistného plnění
     description: Formulář vinkulace pojištění, v němž se pojistitel neodvolatelně zavazuje vyplatit pojistné plnění k předmětu pojištění poskytovateli financování (pojistník, předmět, výrobní číslo, začátek pojištění, číslo pojistné smlouvy, pojistná částka).
     key_signs:
@@ -178,6 +201,7 @@ labels:
 
   ruceni:
     group: "2-4"
+    duplicate_policy: flag
     name: Prohlášení o ručení
     description: Ručitelské prohlášení, kterým ručitel převzetím ručení podle § 2018 a násl. občanského zákoníku zajišťuje dluhy příjemce financování vůči poskytovateli financování (ručitel s IČ, číslo smlouvy, příjemce financování).
     key_signs:
@@ -193,6 +217,7 @@ labels:
 
   data_ze_systemu:
     group: "99"
+    duplicate_policy: flag
     name: Kontrola smlouvy (záznam ze systému)
     description: Výstup ze systému banky („Kontrola smlouvy č. …“) s referenčními údaji o smlouvě, klientovi, předmětu, dodavateli, faktuře, platbě, pojištění a ručení, se kterými se ostatní dokumenty porovnávají.
     key_signs:
@@ -208,6 +233,7 @@ labels:
 
   jine:
     group: ""
+    duplicate_policy: flag
     name: Jiný dokument
     description: Dokument, který nepatří do žádného z výše uvedených typů nebo z jehož textu typ nelze určit.
     key_signs:

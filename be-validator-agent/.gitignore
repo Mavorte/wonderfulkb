@@ -9,3 +9,6 @@ crops/
 .DS_Store
 ref-agent/demo/
 eval/reports/
+trigger/build/
+privacy/measure/downloads/
+privacy/measure/out/

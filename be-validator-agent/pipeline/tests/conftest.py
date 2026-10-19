@@ -101,8 +101,10 @@ def aws_env(monkeypatch):
 
 @pytest.fixture
 def make_options(aws_env):
-    def make(vision=None, skip=("classify", "embed", "signatures"), **kwargs):
-        return Options(settings=Settings(skip=frozenset(skip)), vision=vision or FakeVision(), **kwargs)
+    def make(vision=None, skip=("classify", "embed", "signatures"), redact=False, **kwargs):
+        # redact=False keeps the older tests on the plain path (they test text, labels, status); test_redaction.py
+        # runs with redact=True, which is the default of Settings
+        return Options(settings=Settings(skip=frozenset(skip), redact=redact), vision=vision or FakeVision(), **kwargs)
     return make
 
 

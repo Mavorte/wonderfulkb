@@ -99,3 +99,19 @@ def test_signed_crop_url_query_is_stripped_unless_requested(stub, monkeypatch, c
     assert "SECRETSIG" not in text and "SECRETSIG" not in out.read_text() and "https://s3.invalid/c.png" in text
     validate_case.main(["--case-id", cid, "--base-url", stub.base_url, "--no-llm", "--full-crop-urls"])
     assert "SECRETSIG" in capsys.readouterr().out
+
+
+def test_new_signature_shape_shows_preview_and_reveal_path(stub, monkeypatch, capsys, tmp_path):
+    """Volání 3 po redakci: místo crop_url přijde zkreslený preview_url a reveal_path; podepsaná query se ořízne."""
+    cid = clean_case(stub)
+    new = dict(sig(1, "provider", 3, suspected=True), preview_url="https://s3.invalid/p.png?X-Amz-Signature=PREVSIG",
+               reveal_path=f"/cases/{cid}/documents/d-contract/signatures/sig_01/image", crop_available=True)
+    new.pop("crop_url", None)
+    stub.cases[cid]["d-contract"]["sigs"] = [new, sig(2, "borrower", 3)]
+    monkeypatch.setenv("AGENT_API_KEY", KEY)
+    out = tmp_path / "r.json"
+    validate_case.main(["--case-id", cid, "--base-url", stub.base_url, "--no-llm", "--json-out", str(out)])
+    text = capsys.readouterr().out
+    assert "PREVSIG" not in text and "PREVSIG" not in out.read_text()
+    assert "náhled (zkreslený): https://s3.invalid/p.png" in text
+    assert f"GET /cases/{cid}/documents/d-contract/signatures/sig_01/image" in text

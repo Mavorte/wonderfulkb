@@ -9,8 +9,8 @@ Očekávaný typ se odvozuje z číselného prefixu názvu souboru JEN pro vyhod
   python evaluate.py --strip-head 600   bez nadpisu a úvodu (zátěžový test)
   AWS přihlášení z prostředí (AWS_PROFILE=hackathon), region eu-central-1.
 """
-import argparse
 import os
+import argparse
 import json
 import re
 import sys
@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from classify import classify_document_detailed  # noqa: E402
 from classify.llm import make_backend  # noqa: E402
 
-# Vzorové dokumenty z hackathonového balíku nejsou v repu: cesta ke složce `vzorove-dokumenty` v proměnné WONDERFULKB_SAMPLES_DIR.
+# Vzorové dokumenty z hackathonového balíku nejsou v repu: WONDERFULKB_SAMPLES_DIR ukazuje na složku `vzorove-dokumenty`.
 DEFAULT_DIR = Path(os.environ.get("WONDERFULKB_SAMPLES_DIR", "vzorove-dokumenty")) / "text"
 # prefix názvu souboru -> očekávaný štítek (jen pro vyhodnocení)
 EXPECTED = {"0": "smlouva_o_uveru", "01": "vop", "09": "dohoda_o_zaplaceni_kupni_ceny",

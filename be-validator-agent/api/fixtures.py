@@ -1,6 +1,6 @@
 """Fixtury pro lokální vývoj a kontraktový test: moto (DynamoDB, S3, Secrets Manager) + FakeVectors.
 
-Data převezme z mocku (be-validator-agent/mock/seed.py: skutečné texty vzorových dokumentů, deterministické
+Data převezme z mocku (infra/validator-agent-mock/seed.py: skutečné texty vzorových dokumentů, deterministické
 vektory a podpisy) a zapíše je ve tvaru z be-validator-agent/docs/validator-agent-storage.md. Mock se tím nemění, jen se čte.
 """
 import hashlib
@@ -20,7 +20,10 @@ from signature_privacy import LocalKeyProvider, SignatureContext, distorted_prev
 
 API_KEY = "test-api-key-not-a-secret"
 HERE = os.path.dirname(os.path.abspath(__file__))
-SEED_PATH = os.path.join(HERE, "..", "mock", "seed.py")
+# repo: be-validator-agent/mock; pracovní kopie: infra/validator-agent-mock
+SEED_PATH = next((p for p in (os.path.join(HERE, "..", "mock", "seed.py"),
+                              os.path.join(HERE, "..", "..", "validator-agent-mock", "seed.py")) if os.path.exists(p)),
+                 os.path.join(HERE, "..", "mock", "seed.py"))
 REGION = "eu-central-1"
 _ser = TypeSerializer()
 

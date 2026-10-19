@@ -71,7 +71,7 @@ sam build --use-container
 sam deploy --guided --region eu-central-1 --profile ai-hackathon
 ```
 
-Nasazení vytváří placené AWS prostředky. Šablona ani testy žádné nasazení samy neprovádějí. Prohlížeč nemá dostat API klíč; používá serverový proxy přístup. Lokálně je možné API klíč nastavit přes `DOCUMENT_API_KEY`. V cloudu jej vynucuje API Gateway. `AllowedOrigin` nastavte na skutečný původ backoffice kvůli přímému uploadu do S3.
+Nasazení vytváří placené AWS prostředky. Šablona ani testy žádné nasazení samy neprovádějí. Prohlížeč nemá dostat API klíč; používá serverový proxy přístup. Lokálně se API klíč nastavuje přes `DOCUMENT_API_KEY`. Bez něj API **odmítá** požadavky na `/v1/` (503 `API_AUTH_NOT_CONFIGURED`); běh bez klíče je jen výslovný opt-in `DOCUMENT_API_ALLOW_NO_AUTH=1` pro lokální vývoj (je v `.env.example`). V cloudu klíč vynucuje API Gateway, proto šablona nastavuje Lambdě `DOCUMENT_API_ALLOW_NO_AUTH=1`. `AllowedOrigin` nastavte na skutečný původ backoffice kvůli přímému uploadu do S3.
 
 ## Ověření
 
