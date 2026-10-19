@@ -29,7 +29,7 @@ All `POST`, called as `case-explorer/<slug>`. Each returns `{ url, status, ok, b
 
 | Name | Kind | Value |
 | --- | --- | --- |
-| `case_eval_documents_api_url` | global | AWS API serving cases, clients and documents, `https://rzt8s2u0p6.execute-api.eu-central-1.amazonaws.com/v1` (API Gateway `wonderfulkb-agent-api`; `openapi-case-client.yaml`, `documents_for_agent_api.json`). |
+| `case_eval_documents_api_url` | global | AWS API serving cases, clients and documents, `<AGENT_API_BASE_URL>` (API Gateway `wonderfulkb-agent-api`; `openapi-case-client.yaml`, `documents_for_agent_api.json`). |
 | `kb-aws-ingest-api-key` | secret | Key for that API. |
 | `case_eval_webhook_secret` | secret (API Key, header `X-Webhook-Secret`) | Secret of the webhook trigger above, created for this app. |
 
