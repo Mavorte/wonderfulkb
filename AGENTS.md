@@ -12,10 +12,7 @@ This project is built on the Wonderful platform. Use the Wonderful SDK, the `wfu
 
 ## Branches and worktrees
 
-- Coding and planning agents must not create, switch, merge, rebase, commit, push, delete branches, or create/remove worktrees. Git lifecycle is owned exclusively by the host operator (Jackie), following Michal's explicit direction.
-- Agents share this checkout and may run in parallel. Work on the branch already checked out by the host; never switch branches to satisfy a planning skill or a generic feature-branch convention.
-- The root checkout uses `main` unless Michal explicitly requests a different branch through the host. Any required branch/worktree operation must be reported to the host, not executed by a task agent.
-- These ownership rules also apply to the nested Wonderful repositories: agents prepare source and verification only; host-managed publication retains its separate approval requirements.
+- Agents may run in parallel in a shared checkout. Do your own changes on a separate branch or worktree instead of switching the branch someone else has checked out.
 
 ## AWS test environment — standing deployment authorization (2026-10-19)
 
