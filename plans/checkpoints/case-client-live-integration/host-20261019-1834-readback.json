@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "sso": "STS and AWS preflight PASS",
+  "runtime": "python3.13",
+  "handler": "case_client_handler.lambda_handler",
+  "deployed_source_matches_current_py_files": 4,
+  "deployed_code_hash_matches_successful_live_manifest": true,
+  "auth_missing_invalid": [
+    403,
+    403
+  ],
+  "clients_get": 200,
+  "existing_cases_http_get": {
+    "count": 2,
+    "status": 200
+  },
+  "ddb_consistent_reads": 2,
+  "client_case_list": "PASS both cases present",
+  "new_mutations": 0,
+  "new_POST": 0,
+  "prior_POST_results": {
+    "blocked": 409,
+    "create-0": 201,
+    "create-1": 201,
+    "inactive": 409,
+    "unknown": 404
+  }
+}
