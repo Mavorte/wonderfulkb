@@ -1,0 +1,118 @@
+{
+  "sourceRef": "origin/feat-be-intake",
+  "sourceCommit": "88c04ee6e850c147ffeba46fe626bb0acd4863f3",
+  "files": [
+    {
+      "path": "apps/README.md",
+      "sha256": "04a2d192ccd40290d3bb6c805706d94e4a3f40a16058f60568a69f0152d2c85c"
+    },
+    {
+      "path": "apps/backoffice/README.md",
+      "sha256": "18c6b38db302ffa8c241c0435ee91766aa48a141ade07b15f12ede699a2fa273"
+    },
+    {
+      "path": "be-case-client/README.md",
+      "sha256": "9f42aef20f47d7a8c6f236873a067d1cc8e928ff64d60767b19a2762a75f7656"
+    },
+    {
+      "path": "be-case-client/events/README.md",
+      "sha256": "790944ab9b9fc36c49d11b3ed199c849f96e8bfb5cbee1cc4dd66229e3b32db4"
+    },
+    {
+      "path": "be-case-client/events/create-case.json",
+      "sha256": "f298ba03be25f6022f849deec6ff67112266dae5acd7144c40adf5117a158930"
+    },
+    {
+      "path": "be-case-client/openapi-case-client.yaml",
+      "sha256": "4e01b1663641f3edd54fe08ac340f167ceec8a534c23a2f5b31549f903735a6e"
+    },
+    {
+      "path": "be-case-client/src/README.md",
+      "sha256": "8b02bf63b7688dd2b48118f91aba395c3169b53b67756d2f15ef5238e1a28102"
+    },
+    {
+      "path": "be-case-client/src/case_client_handler.py",
+      "sha256": "6e5a74bcede281755fceb10f96cb36fd1cf4cffa06b24aa5629ee0f4df09cd44"
+    },
+    {
+      "path": "be-case-client/src/case_client_mock_repository.py",
+      "sha256": "4d47953df078d532b42dff9e1d22dbbd8f2bb5a6fd6ee3f55056272aa961fe3e"
+    },
+    {
+      "path": "be-case-client/src/case_client_repository.py",
+      "sha256": "709971ea4fa619ef37f11336d4365ca2cfc815eda60fbadbcacca7a2c68ec24f"
+    },
+    {
+      "path": "be-case-client/tests/README.md",
+      "sha256": "a432381fc9c77d2161be4157d877ca64a02194fa35fdccd066d7cb495097cb95"
+    },
+    {
+      "path": "be-case-client/tests/test_case_client_lambda.py",
+      "sha256": "58a506b6dd0306b6870057e9895669e32a234740b09f2346dd32360555f277cb"
+    },
+    {
+      "path": "be-intake/app/README.md",
+      "sha256": "b0d77f4c6e8a6c269f6150e26ae6ae22eabd4c939634ec3a0370babc2a8fcfd2"
+    },
+    {
+      "path": "be-intake/documents-table/README.md",
+      "sha256": "69d9dbfea6905b38a6443441f848fbf01b69f695f4fdbf4d7225071331323c73"
+    },
+    {
+      "path": "design-system/README.md",
+      "sha256": "0f30c64d851e24604ecab0bacd9ae390ae2c99099e213d1eb4a0b10a8774472e"
+    },
+    {
+      "path": "design-system/assets/README.md",
+      "sha256": "d153ecb7351a2caac50b0b1f0f92c3afc35e0ffec37f300d1d5a3cb54bdd529a"
+    },
+    {
+      "path": "design-system/fonts/README.md",
+      "sha256": "d461524b9729971b329da339124c7464a33dac508b802873b493754900c2a453"
+    },
+    {
+      "path": "docs/README.md",
+      "sha256": "fabb07d1363a283f0f15b3898b08aecb9b6acf2e8319b2a4f5649cdc11d052ab"
+    },
+    {
+      "path": "docs/proposals/README.md",
+      "sha256": "4bc11ac241e44f11f8d8bac8a0ff92553c5549ab5442ad832fa88f4ff3e6cf32"
+    },
+    {
+      "path": "docs/quick-connect.md",
+      "sha256": "bc6b78fff4f66559d03fb2c384445c5a5d0ec86d0ba000563d1f83bc436a59f9"
+    },
+    {
+      "path": "learnings/README.md",
+      "sha256": "8e6601d90365719acbda72aba7ee79722edecf40be68730c16f8044fe68e1e18"
+    },
+    {
+      "path": "learnings/architecture/README.md",
+      "sha256": "6dd9df277be3eb45081edf3ed5821064f83b0690ed4c0206b1e6c05e20af4ec6"
+    },
+    {
+      "path": "learnings/runtime-errors/README.md",
+      "sha256": "1a03def508e90bff7f54acce5b50f29d41347cea2f6940b4fe99b6218e94824e"
+    },
+    {
+      "path": "learnings/tooling/README.md",
+      "sha256": "40585c0ccb8a8e90468e00c5c7a64f68751c4510c9cdb21f13e1fb9bcdaf5d33"
+    },
+    {
+      "path": "plans/README.md",
+      "sha256": "e72547f730c2cb68b070f6f39e56bf2243caab6d0d8400809a139e0e27d1feed"
+    },
+    {
+      "path": "plans/case-client-aws.md",
+      "sha256": "8d4acc16163b4195ad14942dad0477a115c7ba059e73355b4e078c476adb217b"
+    },
+    {
+      "path": "plans/checkpoints/README.md",
+      "sha256": "b728834fa4ade6aeadecfa28e56fec8cbfcd68a3a0db4470fec9874aade22456"
+    },
+    {
+      "path": "plans/tasks/README.md",
+      "sha256": "ca5156ad21551c3d30a6d57eaa567ccef092eb3409c73a2b4bc378bae30d865e"
+    }
+  ]
+}
