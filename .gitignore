@@ -1,1 +1,76 @@
+# Root GitHub source repository: local output is rebuilt, not versioned here.
+# Keep nested Wonderful publish policies untouched: their dist bundles may be
+# required by that platform's separate publish workflow.
 apps/backoffice/.git
+/apps/client-intake-fe/.git
+
+# JavaScript dependencies (also match node_modules symlinks).
+node_modules
+.pnpm-store/
+.npm/
+.yarn/cache/
+
+# SAM, frontend and plugin build outputs.
+.aws-sam/
+/apps/backoffice/dist/
+/apps/client-intake-fe/dist/
+/apps/backoffice/app/dist/
+/apps/client-intake-fe/app/dist/
+/apps/backoffice/app/runner-dist/
+/apps/client-intake-fe/app/runner-dist/
+.vite/
+*.tsbuildinfo
+
+# Python runtime, virtual environments and packaging output.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.eggs/
+/be-case-client/build/
+/be-case-client/dist/
+/be-document-processing/build/
+/be-document-processing/dist/
+/be-intake/app/build/
+/be-intake/app/dist/
+
+# Disposable test/cache output. Canonical plans/checkpoints/proofs stay visible.
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.hypothesis/
+.cache/
+.tdd-test-runs/
+.coverage
+.coverage.*
+coverage/
+htmlcov/
+.nyc_output/
+playwright-report/
+test-results/
+/tmp/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environments/data; retain safe configuration examples.
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+.local-data/
+.claude/settings.local.json
+
+# OS/editor scratch files (not shared editor project configuration).
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

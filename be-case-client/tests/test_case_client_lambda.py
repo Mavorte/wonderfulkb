@@ -55,6 +55,16 @@ class CaseClientLambdaTests(unittest.TestCase):
         return self.invoke('POST', '/cases', body=dict(
             case_id=case_id, client_id=client_id, **extra), expected=expected)
 
+    def test_post_generates_new_uuid_and_ignores_supplied_case_id(self):
+        body = {'client_id': ACTIVE, 'case_id': 'caller-controlled', 'metadata': {}}
+        first = self.invoke('POST', '/cases', body=body, expected=201)
+        second = self.invoke('POST', '/cases', body=body, expected=201)
+        self.assertNotEqual(first['case_id'], second['case_id'])
+        for result in (first, second):
+            parsed = UUID(result['case_id'])
+            self.assertEqual(parsed.version, 4)
+            self.assertEqual(result['status'], 'open')
+
     def cases(self, client=ACTIVE, query=None, expected=200):
         return self.invoke(resource='/clients/{client_id}/cases',
                            params={'client_id': client}, query=query, expected=expected)
