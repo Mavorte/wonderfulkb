@@ -1,0 +1,27 @@
+document,page,role,signer,quality,signature_identity
+synteticke_dokumenty/dokumenty/SYN-A01/02_Zajistovaci_prevod.pdf,6,Příjemce financování,Matěj Vřesník,primary_AB,ce57ff816839
+synteticke_dokumenty/dokumenty/SYN-A01/09_Dohoda_o_zaplaceni.pdf,4,Poskytovatel financování,Radovan Veleš,primary_AB,ca130e929442
+synteticke_dokumenty/dokumenty/SYN-A01/09_Dohoda_o_zaplaceni.pdf,4,Kupující,Matěj Vřesník,primary_AB,ce57ff816839
+synteticke_dokumenty/dokumenty/SYN-A02/09_Dohoda_o_zaplaceni.pdf,4,Poskytovatel financování,Radovan Veleš,primary_AB,ca130e929442
+synteticke_dokumenty/dokumenty/SYN-A02/09_Dohoda_o_zaplaceni.pdf,4,Kupující,Karolína Zárubová,primary_AB,157a28e94017
+synteticke_dokumenty/dokumenty/SYN-A03/00_Smlouva_o_uveru.pdf,4,Příjemce financování,Daniel Klevan,primary_AB,0a595e2aee63
+synteticke_dokumenty/dokumenty/SYN-A03/09_Dohoda_o_zaplaceni.pdf,4,Poskytovatel financování,Radovan Veleš,primary_AB,ca130e929442
+synteticke_dokumenty/dokumenty/SYN-A03/09_Dohoda_o_zaplaceni.pdf,4,Kupující,Daniel Klevan,primary_AB,0a595e2aee63
+synteticke_dokumenty/dokumenty/SYN-A03/11_Predavaci_protokol.pdf,4,Zákazník,Daniel Klevan,primary_AB,0a595e2aee63
+synteticke_dokumenty/dokumenty/SYN-A04/00_Smlouva_o_uveru.pdf,3,Příjemce financování,Vanda Plavcová,primary_AB,76afe6ee2607
+synteticke_dokumenty/dokumenty/SYN-A04/00_Smlouva_o_uveru.pdf,4,Příjemce financování,Vanda Plavcová,primary_AB,76afe6ee2607
+synteticke_dokumenty/dokumenty/SYN-A04/01_VOP.pdf,19,Příjemce financování,Vanda Plavcová,primary_AB,76afe6ee2607
+synteticke_dokumenty/dokumenty/SYN-A04/02_Zajistovaci_prevod.pdf,6,Příjemce financování,Vanda Plavcová,primary_AB,76afe6ee2607
+synteticke_dokumenty/dokumenty/SYN-A04/09_Dohoda_o_zaplaceni.pdf,4,Kupující,Vanda Plavcová,primary_AB,76afe6ee2607
+synteticke_dokumenty/dokumenty/SYN-A04/11_Predavaci_protokol.pdf,4,Zákazník,Vanda Plavcová,primary_AB,76afe6ee2607
+synteticke_dokumenty/dokumenty/SYN-A05/00_Smlouva_o_uveru.pdf,4,Příjemce financování,Štěpán Nivora,primary_AB,eb7fd99e83af
+synteticke_dokumenty/dokumenty/SYN-A05/11_Predavaci_protokol.pdf,4,Zákazník,Štěpán Nivora,primary_AB,eb7fd99e83af
+synteticke_dokumenty/dokumenty/SYN-B03/00_Smlouva_o_uveru.pdf,4,Příjemce financování,Vojtěch Závran,primary_AB,9dcb6dee16fc
+synteticke_dokumenty/dokumenty/SYN-B04/03_Vinkulace.pdf,2,Pojistník,Diana Velenová,primary_AB,9db46294acf7
+synteticke_dokumenty_rozsireni/dokumenty/SYN-C04/05_vinkulace.pdf,1,insurer,Viktor Nerez,digital,251e4dc05c97
+synteticke_dokumenty_rozsireni/dokumenty/SYN-C04/06_zajisteni.pdf,2,borrower,Johana Vřesová,mobile,81c8f7bcb018
+synteticke_dokumenty_rozsireni/dokumenty/SYN-C04/07_ruceni.pdf,1,provider,Ilona Křesnová,gray_scan,a185b13e4525
+synteticke_dokumenty_rozsireni/dokumenty/SYN-C06/06_zajisteni.pdf,2,borrower,Pavla Hvozdanová,mobile,bac666e68b0f
+synteticke_dokumenty_rozsireni/dokumenty/SYN-C06/07_ruceni.pdf,1,provider,Ilona Křesnová,digital,a185b13e4525
+synteticke_dokumenty_rozsireni/dokumenty/SYN-C08/06_zajisteni.pdf,2,borrower,Vladana Kopanová,gray_scan,26d3b7e44044
+synteticke_dokumenty_rozsireni/dokumenty/SYN-C10/07_ruceni.pdf,1,provider,Ilona Křesnová,fax,a185b13e4525
