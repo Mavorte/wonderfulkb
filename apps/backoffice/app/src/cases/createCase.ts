@@ -1,11 +1,8 @@
-import type { Client } from "../clients/mockClients";
+import createDocumentApi from "../api/createDocumentApi.ts";
+import type { Client } from "../clients/mockClients.ts";
 
-export type Case = { id: string; clientId: string; createdAt: string };
+export type Case = { case_id: string; client_id: string; status: "open"; created_at: string; metadata?: Record<string, unknown> };
 
-let nextNumber = 1042;
-
-/** Mocked: simulates a network round trip and returns a new case. Nothing is persisted. */
-export default async function createCase(client: Client): Promise<Case> {
-  await new Promise((resolve) => setTimeout(resolve, 700));
-  return { id: `CASE-${nextNumber++}`, clientId: client.id, createdAt: new Date().toISOString() };
+export default function createCase(client: Client, caseId: string, requiredDocumentTypes: string[], api = createDocumentApi()): Promise<Case> {
+  return api.createCase(client.id, caseId, requiredDocumentTypes);
 }
