@@ -32,6 +32,24 @@ info:
     4. `getDocumentSignatures` jen u pravidel na podpisy. Pro srovnání s klientovými podpisy `match_client=true`,
        `include_vectors=false`.
 
+    ## Jak ukázat dokument člověku (UI, ne agent)
+
+    Tři úrovně. Agent sám žádnou z nich nepotřebuje, slouží člověku, který nález kontroluje:
+
+    | Úroveň | Volání | Co člověk vidí | Audit |
+    |---|---|---|---|
+    | Náhled dokumentu | `getDocumentPages` | strany PNG a PDF zamaskované kopie: podpisy **začerněné**, zbytek čitelný | ne |
+    | Náhled podpisu | `preview_url` z `getDocumentSignatures` | **zkreslený** výřez podpisu, nejde přečíst | ne |
+    | Odkrytí podpisu | `revealSignatureImage` (`reveal_path` podpisu) | čitelný výřez jednoho podpisu (PNG) | ano, `signature_reveal` |
+    | Odkrytí originálu | `revealDocumentOriginal` (`reveal_path` z `getDocumentPages`) | celý původní soubor s čitelnými podpisy | ano, `document_reveal` |
+
+    Postup v UI: `getDocumentPages` → zobrazit stranu (`pages[].preview_url`) → přes ni vyznačit `bbox` podpisu nebo
+    regionu (`[x0, y0, x1, y1]`, 0–1, počátek vlevo nahoře, tedy `left = x0·100 %`, `top = y0·100 %`,
+    `width = (x1−x0)·100 %`, `height = (y1−y0)·100 %`) → odkrytí (podpisu nebo originálu) jen na výslovnou akci
+    člověka (tlačítko „odkrýt“). Odkrytí se zapisuje do auditního logu (kdo podle ID nebo otisku klíče, kdy, case,
+    dokument, podpis, výsledek), nikdy obsah, odkaz ani klíč. Předpodepsané odkazy neukládat; po vypršení zavolat znovu.
+    Odkrytý obsah do kontextu LLM nepatří.
+
     ## Co API neslibuje (agent s tím musí počítat)
 
     - **Pravost podpisu se neověřuje.** Výstup je „přítomnost, přiřazená role, podezření na kopii".
@@ -46,7 +64,7 @@ info:
     ## Chyby
 
     Vždy `{"error": "popis"}` (u `/clients` a `/cases` anglicky, u dokumentů česky). `400` neplatný parametr, `401` chybí API klíč (hlavička `x-api-key` chybí nebo je prázdná), `403` špatný API klíč (jako Ingest API), `404` neexistující case,
-    dokument nebo klient, `409` OCR ještě nedoběhlo (v těle `processing_status`; u `revealSignatureImage` výřez není zašifrovaný), `5xx` chyba služby (volání je idempotentní,
+    dokument nebo klient, `409` OCR ještě nedoběhlo (`getDocumentForValidation`, `getDocumentPages`; v těle `processing_status`; u `revealSignatureImage` výřez není zašifrovaný), `405` jiná metoda než `GET` u cest dokumentů, `5xx` chyba služby (volání je idempotentní,
     lze opakovat; `createCase` idempotentní není). `429` při překročení limitu HTTP API (10 req/s, burst 20).
 servers:
   - url: https://{host}/v1
@@ -458,6 +476,8 @@ paths:
         - Odkaz na tuto cestu se nepředpodepisuje; volá se s `x-api-key` jako ostatní cesty. Cesta je v poli
           `reveal_path` podpisu (relativně k adrese serveru).
         - Pro neznámý nebo nezpracovaný dokument, neexistující podpis nebo chybějící výřez je `404`.
+        - Auditní záznam (`event: signature_reveal`) má `outcome`: `revealed` (200), `not_found` (404),
+          `not_encrypted` (409), `denied` (dešifrování odmítnuto, navenek 500), `error` (jiná chyba).
       parameters:
         - $ref: '#/components/parameters/CaseId'
         - $ref: '#/components/parameters/DocumentId'
@@ -506,8 +526,13 @@ paths:
 
         - Dokument zpracovaný před zavedením maskování (`redacted: false`) náhled nemá (`preview_url: null`), protože
           jeho stránky vznikly z čitelného originálu. Zbývá `revealDocumentOriginal`.
-        - Odkazy vyprší; pro nové stačí volání zopakovat.
-        - Čitelný originál se odsud nikdy nevrací, jen cesta `reveal_path`.
+        - I při `redacted: true` může mít jednotlivá strana `preview_url: null` (obrázek strany chybí) a
+          `preview_pdf_url` může být `null` (soubor zamaskované kopie chybí). UI má počítat s oběma případy.
+        - `pages` má vždy `page_count` položek očíslovaných od 1, takže index strany sedí s `page` u podpisů a regionů.
+        - Odkazy vyprší; pro nové stačí volání zopakovat. Volání se neaudituje (nic čitelného nevydává).
+        - Čitelný originál se odsud nikdy nevrací, jen cesta `reveal_path` a příznak `original_available`.
+        - Vyžaduje dokončené zpracování (`completed` nebo `partial`), jinak `409` jako `getDocumentForValidation`;
+          dokument jen nahraný v Ingest API dává `409` s `processing_status: queued`.
       parameters:
         - $ref: '#/components/parameters/CaseId'
         - $ref: '#/components/parameters/DocumentId'
@@ -517,15 +542,45 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/DocumentPages'}
+              examples:
+                redacted:
+                  summary: Zamaskovaná kopie existuje
+                  value:
+                    case_id: 3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47
+                    document_id: 8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10
+                    page_count: 2
+                    redacted: true
+                    preview_pdf_url: https://wonderfulkb-raw-document-storage.s3.eu-central-1.amazonaws.com/cases/…/redacted/….pdf?X-Amz-…
+                    pages:
+                      - {page: 1, preview_url: 'https://…/analysis/…/pages/1.png?X-Amz-…'}
+                      - {page: 2, preview_url: 'https://…/analysis/…/pages/2.png?X-Amz-…'}
+                    original_available: true
+                    reveal_path: /cases/3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47/documents/8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10/original
+                legacy:
+                  summary: Dokument zpracovaný před zavedením maskování (zbývá jen odkrytí originálu)
+                  value:
+                    case_id: 3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47
+                    document_id: 1c7d0e52-9b3a-5e14-8f60-2a4b6c8d0e1f
+                    page_count: 2
+                    redacted: false
+                    preview_pdf_url: null
+                    pages:
+                      - {page: 1, preview_url: null}
+                      - {page: 2, preview_url: null}
+                    original_available: true
+                    reveal_path: /cases/3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47/documents/1c7d0e52-9b3a-5e14-8f60-2a4b6c8d0e1f/original
         '400': {$ref: '#/components/responses/BadRequest'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409':
-          description: Dokument se ještě zpracovává (`processing_status` v těle chyby)
+          description: Dokument se ještě zpracovává nebo zpracování selhalo (`processing_status` v těle chyby); dokument jen nahraný v Ingest API vrací `queued`
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Error'}
+              schema: {$ref: '#/components/schemas/NotReady'}
+              example:
+                error: OCR ještě nedoběhlo
+                processing_status: queued
 
   /cases/{case_id}/documents/{document_id}/original:
     get:
@@ -538,10 +593,12 @@ paths:
         (`<iframe>`, PDF.js, nové okno). Odkaz posílá `Content-Disposition: inline` s původním názvem souboru.
 
         - Každé volání s platným API klíčem (i neúspěšné) se zapíše do auditního logu (`event: document_reveal`):
-          volající (ID nebo otisk klíče), čas, case, dokument, výsledek. Odkaz do logu nejde.
+          volající (ID nebo otisk klíče), čas, case, dokument, `outcome` (`revealed` 200, `not_found` 404, `error`
+          jiná chyba). Odkaz do logu nejde. Audit zaznamená vydání odkazu, ne jeho stažení.
         - Funguje i pro dokument, který se ještě zpracovává (stačí, že byl nahrán).
+        - `content_type` a `filename` jsou z nahrání (Ingest API), takže originál nemusí být PDF (např. `image/jpeg`).
         - `bbox` z podpisů a regionů platí i pro originál (stejná strana, relativní souřadnice).
-        - Cesta je v `reveal_path` z `getDocumentPages`.
+        - Cesta je v `reveal_path` z `getDocumentPages`; `original_available: false` tam předem říká, že tady bude `404`.
       parameters:
         - $ref: '#/components/parameters/CaseId'
         - $ref: '#/components/parameters/DocumentId'
@@ -551,11 +608,25 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/DocumentOriginal'}
+              example:
+                case_id: 3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47
+                document_id: 8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10
+                filename: 0_F_Smlouva.pdf
+                content_type: application/pdf
+                url: https://wonderfulkb-raw-document-storage.s3.eu-central-1.amazonaws.com/cases/…/original/….pdf?response-content-disposition=inline…&X-Amz-Expires=60&X-Amz-…
+                expires_in: 60
         '400': {$ref: '#/components/responses/BadRequest'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404':
           description: Dokument nebo jeho originál neexistuje
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+              example:
+                error: Originál dokumentu neexistuje
+        '500':
+          description: 'Chyba služby (odkaz nejde vydat); v auditu `outcome: error`'
           content:
             application/json:
               schema: {$ref: '#/components/schemas/Error'}
