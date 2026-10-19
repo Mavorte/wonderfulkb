@@ -44,4 +44,4 @@ aws dynamodb get-item --region eu-central-1 --profile "$AWS_PROFILE" \
 
 Pro vlastní dotazy do tabulek je potřeba `dynamodb:GetItem/Query/Scan` na obě tabulky a jejich indexy (případně si vyžádejte roli). **Žádné IP whitelisty**, přepnutí sítě přístup nerozbije.
 
-Související: [openapi-case-client.yaml](../be-case-client/openapi-case-client.yaml), [wonderful-ingest.md](wonderful-ingest.md) (část 2, upload PDF).
+Související: [openapi-case-client.yaml](../be-case-client/openapi-case-client.yaml), [be-intake/README.md](../be-intake/README.md) (část 2, upload PDF).
