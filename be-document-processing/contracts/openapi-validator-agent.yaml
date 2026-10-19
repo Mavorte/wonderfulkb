@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: wonderfulkb Validator Agent API (návrh)
+  version: 0.2.0
+  description: |
+    Čtecí API, kterým Wonderful vyhodnocovací (validační) agent získává vstupy k posouzení case.
+    Návrh, nic není nasazené. Podrobný popis a otevřené otázky: `VALIDATOR-AGENT.md`.
+    Autentizace, formát chyb a identifikátory jsou stejné jako u Case & Client API a Ingest API.
+
+    ## Na co se agent může ptát
+
+    | Otázka agenta | Volání (`operationId`) |
+    |---|---|
+    | Jaké dokumenty case obsahuje a jsou zpracované? | `listCaseDocuments` |
+    | Jaký je typ, popis a celý text dokumentu? | `getDocumentForValidation` |
+    | Je dokument opravdu to, za co se vydává? Jaké ověřené dokumenty se mu podobají? | `getDocumentVectors` (`similar_to_verified`) |
+    | Jsou na dokumentu podpisy, čí jsou, nejsou to kopie? | `getDocumentSignatures` |
+
+    ## Doporučený postup agenta
+
+    1. `listCaseDocuments` → seznam `document_id`; zpracovávat jen `processing_status` = `completed` nebo `partial`.
+    2. Pro každý dokument `getDocumentForValidation`. Text a štítek potřebuje agent vždy.
+    3. `getDocumentVectors` **jen když pravidlo vyžaduje srovnání** (typ dokumentu, podobnost s ověřenými). Vždy s
+       `include_values=false&similar_to_verified=N`, surové vektory (desítky kB) do kontextu LLM nepatří.
+    4. `getDocumentSignatures` jen u pravidel na podpisy. Pro srovnání s klientovými podpisy `match_client=true`,
+       `include_vectors=false`.
+
+    ## Co API neslibuje (agent s tím musí počítat)
+
+    - **Pravost podpisu se neověřuje.** Výstup je „přítomnost, přiřazená role, podezření na kopii".
+    - `detection_score` podpisu **není kalibrovaná pravděpodobnost**, nepoužívat jako práh rozhodnutí;
+      nízké skóre jen zvyšuje prioritu pro člověka.
+    - `label` s `label_status: predicted` je strojový odhad, ne ověřený fakt. `confidence` je jistota klasifikace
+      štítku, ne jistota přepisu textu.
+    - Prázdné pole (`signatures: []`, `text_vectors: []`) je platná odpověď „nic není", ne chyba. U vektorů
+      znamená, že ještě nevznikly; u podpisů, že žádný nebyl nalezen.
+    - Podobnost vektorů je nápověda, ne důkaz. Obecný embedding není model pro ověřování podpisů.
+
+    ## Chyby
+
+    Vždy `{"error": "popis"}`. `400` neplatný parametr, `403` chybí nebo je špatný API klíč, `404` neexistující case
+    nebo dokument, `409` OCR ještě nedoběhlo (v těle `processing_status`), `5xx` chyba služby (volání je idempotentní,
+    lze opakovat).
+servers:
+  - url: https://{host}/v1
+    variables:
+      host:
+        default: REPLACE_WITH_HOST
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: document
+    description: Seznam dokumentů case, jejich text, typ a popis
+  - name: vectors
+    description: Vektory textu a obrazu, nejbližší ověřené dokumenty (S3 Vectors)
+  - name: signatures
+    description: Podpisy nalezené v dokumentu, jejich role a podezření na kopii
+
+paths:
+  /cases/{case_id}/documents:
+    get:
+      tags: [document]
+      operationId: listCaseDocuments
+      summary: Seznam dokumentů case (vstupní bod agenta)
+      description: |
+        Vrací stručný přehled všech dokumentů case bez textu. Slouží ke zjištění `document_id` a stavu zpracování.
+        Dokumenty ve stavu `awaiting_upload`, `queued`, `processing` nebo `failed` zatím nemají text; jejich
+        detailní volání vrací `409`. Řazeno podle `document_id`, stránkované.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+        - name: next_token
+          in: query
+          description: Neprůhlivý token z předchozí odpovědi.
+          schema: {type: string}
+        - name: processing_status
+          in: query
+          description: Vrátí jen dokumenty v daném stavu (např. `completed`).
+          schema: {$ref: '#/components/schemas/ProcessingStatus'}
+      responses:
+        '200':
+          description: Dokumenty case
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CaseDocumentList'}
+              example:
+                case_id: 7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90
+                documents:
+                  - document_id: d2f4a1
+                    title: 0_Form_Smlouva.pdf
+                    label: smlouva_o_uveru
+                    label_status: verified
+                    processing_status: completed
+                    page_count: 4
+                  - document_id: e9b7c2
+                    title: 11_Protokol.pdf
+                    label: null
+                    label_status: null
+                    processing_status: processing
+                    page_count: null
+                next_token: null
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+  /cases/{case_id}/documents/{document_id}:
+    get:
+      tags: [document]
+      operationId: getDocumentForValidation
+      summary: Text, štítek, popis a jistota dokumentu
+      description: |
+        Základní vstup pro každé pravidlo: celý přepis dokumentu, typ (`label`), krátký popis a jistota klasifikace.
+        Volat pro každý dokument case. Pro `partial` vrací text úspěšně přečtených stran a v `pages_failed` seznam
+        stran, které chybí; pravidlo, které potřebuje chybějící stranu, nesmí z mlčení usuzovat, že v ní nic není.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Dokument
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ValidationDocument'}
+              example:
+                case_id: 7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90
+                document_id: d2f4a1
+                title: 0_Form_Smlouva.pdf
+                label: smlouva_o_uveru
+                label_status: predicted
+                description: Smlouva o úvěru č. 170170/25 mezi bankou a Stavby Fišer s.r.o.
+                text: "SMLOUVA O ÚVĚRU …\fStrana 2 …"
+                confidence: 0.93
+                page_count: 4
+                processing_status: completed
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409':
+          description: OCR ještě nedoběhlo (nebo selhalo)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NotReady'}
+              example:
+                error: OCR ještě nedoběhlo
+                processing_status: processing
+
+  /cases/{case_id}/documents/{document_id}/vectors:
+    get:
+      tags: [vectors]
+      operationId: getDocumentVectors
+      summary: Vektory textu a obrazu dokumentu a jeho nejbližší ověřené dokumenty (S3 Vectors)
+      description: |
+        Text je rozdělen na části (jeden vektor na `chunk`), obraz má jeden vektor na stránku. Všechny mají
+        1024 dimenzí, metrika kosinus. Vektory různých modelů a verzí se nemíchají (`model`, `model_version`).
+
+        **Pro agenta:** použít `include_values=false` a `similar_to_verified=N`. Výsledek `neighbors` říká, které
+        ověřené dokumenty se zkoumanému nejvíc podobají (`label` a `score`); to slouží k ověření typu dokumentu
+        (štítek dokumentu vs. štítky sousedů). `score` je kosinová podobnost 0 až 1, vysoká hodnota u sousedů jiného
+        typu je signál ke kontrole člověkem, ne důkaz.
+        Dokument bez vektorů vrací prázdná pole a `200`, ne chybu.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+        - name: include
+          in: query
+          description: Omezí odpověď na jeden typ vektorů. Bez parametru se vrací oba.
+          schema: {type: string, enum: [text, image]}
+        - name: include_values
+          in: query
+          description: Pokud je `false`, vrátí jen metadata vektorů (model, verze, část/strana) bez čísel. Doporučeno pro agenta.
+          schema: {type: boolean, default: true}
+        - name: similar_to_verified
+          in: query
+          description: Vrátí navíc `neighbors`, tj. N nejbližších ověřených dokumentů (filtr `verified = true`).
+          schema: {type: integer, minimum: 1, maximum: 20}
+      responses:
+        '200':
+          description: Vektory dokumentu; chybějící vektory jsou prázdné pole
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentVectors'}
+              example:
+                case_id: 7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90
+                document_id: d2f4a1
+                text_vectors:
+                  - chunk_id: c0
+                    page_from: 1
+                    page_to: 2
+                    model: amazon.titan-embed-text-v2:0
+                    model_version: v2
+                    dimension: 1024
+                image_vectors:
+                  - page: 1
+                    model: amazon.titan-embed-image-v1
+                    model_version: v1
+                    dimension: 1024
+                neighbors:
+                  - {document_id: a17c33, label: smlouva_o_uveru, score: 0.91}
+                  - {document_id: b2e801, label: smlouva_o_uveru, score: 0.88}
+                  - {document_id: 0c5d19, label: zadost_o_uver, score: 0.54}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+  /cases/{case_id}/documents/{document_id}/signatures:
+    get:
+      tags: [signatures]
+      operationId: getDocumentSignatures
+      summary: Nalezené podpisy dokumentu, přiřazená role, podezření na kopii (nepotvrzuje pravost)
+      description: |
+        Každý nález má stranu, polohu (`bbox`), přiřazenou roli (podle nejbližšího textu, např. „Za dlužníka")
+        a výřez `crop_url` pro lidskou kontrolu. Nález se vždy odkazuje na stranu a výřez.
+
+        **Jak číst výsledek:**
+        - `signatures: []` = žádný podpis nenalezen (pravidlo „podpis chybí" ho musí rozlišit od chyby `5xx`).
+        - `role` je `unknown`, nebo `null`, pokud se k podpisu nenašel dostatečně blízký text; pravidlo na roli pak
+          musí nález poslat člověku.
+        - `copy_suspicion.level = suspected` znamená, že v jiném dokumentu je téměř identický podpis (perceptuální
+          hash / pixelové porovnání). Skutečné podpisy se vždy trochu liší; přesná shoda může být vložený obrázek.
+        - `similar_signatures` (jen s `match_client=true`) je nápověda pro člověka, ne ověření pravosti.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+        - name: match_client
+          in: query
+          description: U každého podpisu vrátí `similar_signatures[]`, nejbližší podpisy téhož klienta (podobnost, ne ověření pravosti).
+          schema: {type: boolean, default: false}
+        - name: include_vectors
+          in: query
+          description: Zahrnout samotné hodnoty vektoru. Výchozí je ano; agent má vypnout a použít jen `similar_signatures` a `copy_suspicion`.
+          schema: {type: boolean, default: true}
+      responses:
+        '200':
+          description: Podpisy dokumentu; bez podpisu je `signatures` prázdné pole
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentSignatures'}
+              example:
+                case_id: 7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90
+                document_id: d2f4a1
+                signatures:
+                  - signature_id: sig_01
+                    page: 4
+                    bbox: [0.12, 0.71, 0.38, 0.79]
+                    detector: textract
+                    detection_score: 65.6
+                    role: borrower
+                    role_source: nearest_text
+                    role_evidence: Za dlužníka
+                    crop_url: https://example.invalid/crop/sig_01.png
+                    phash: c3a1e07b5d2f9a44
+                    copy_suspicion:
+                      level: suspected
+                      matches:
+                        - {signature_id: sig_02, document_id: e9b7c2, score: 0.99}
+                    similar_signatures: []
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  parameters:
+    CaseId:
+      name: case_id
+      in: path
+      required: true
+      description: UUID case z `POST /cases` (Case & Client API)
+      schema: {type: string, pattern: '^[A-Za-z0-9._-]{1,128}$'}
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      description: Identifikátor dokumentu, stejný jako `blob_id` z uploadu (Ingest API) a `document_id` ze seznamu
+      schema: {type: string}
+  responses:
+    BadRequest:
+      description: Neplatný parametr (case_id, limit, next_token, hodnota filtru)
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    Forbidden:
+      description: Chybí nebo je špatný API klíč
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    NotFound:
+      description: Case nebo dokument neexistuje
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: {type: string}
+    ProcessingStatus:
+      type: string
+      description: Stav zpracování dokumentu; text, vektory a podpisy jsou k dispozici u `completed` a `partial`
+      enum: [awaiting_upload, queued, processing, completed, partial, failed]
+    NotReady:
+      type: object
+      required: [error, processing_status]
+      properties:
+        error: {type: string}
+        processing_status:
+          type: string
+          enum: [awaiting_upload, queued, processing, failed]
+    CaseDocumentSummary:
+      type: object
+      required: [document_id, title, label, label_status, processing_status]
+      properties:
+        document_id: {type: string}
+        title: {type: string, description: 'Původní název souboru, ke klasifikaci se nepoužívá'}
+        label: {type: string, nullable: true, description: 'Štítek (typ dokumentu), `null`, dokud není klasifikováno'}
+        label_status: {type: string, nullable: true, enum: [predicted, verified]}
+        processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
+        page_count: {type: integer, nullable: true, description: '`null`, dokud OCR nedoběhlo'}
+    CaseDocumentList:
+      type: object
+      required: [case_id, documents, next_token]
+      properties:
+        case_id: {type: string}
+        documents:
+          type: array
+          items: {$ref: '#/components/schemas/CaseDocumentSummary'}
+        next_token:
+          type: string
+          nullable: true
+          description: Neprůhlivý token další stránky; `null` na poslední
+    ValidationDocument:
+      type: object
+      required: [case_id, document_id, title, label, label_status, description, text, confidence, processing_status]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string, description: 'Stejné jako `blob_id` z uploadu'}
+        title: {type: string, description: 'Původní název souboru, ke klasifikaci se nepoužívá'}
+        label:
+          type: string
+          nullable: true
+          description: Štítek (typ dokumentu) z taxonomy.yaml
+        label_status:
+          type: string
+          nullable: true
+          enum: [predicted, verified]
+          description: '`predicted` je strojový odhad, `verified` potvrdil člověk'
+        description: {type: string, nullable: true, description: Krátké shrnutí obsahu}
+        text: {type: string, description: 'Celý text dokumentu, strany oddělené \f'}
+        confidence:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Jistota klasifikace štítku; `null`, pokud ji zdroj neposkytuje
+        page_count: {type: integer}
+        pages_failed:
+          type: array
+          items: {type: integer}
+          description: Strany, které se nepodařilo přečíst (jen u `partial`)
+        processing_status:
+          type: string
+          enum: [completed, partial]
+    Vector:
+      type: object
+      required: [model, model_version, dimension]
+      properties:
+        model: {type: string}
+        model_version: {type: string, description: 'Vektory různých modelů a verzí se nemíchají'}
+        dimension: {type: integer}
+        values:
+          type: array
+          items: {type: number}
+          description: Hodnoty vektoru; vynechané s `include_values=false`
+    TextVector:
+      allOf:
+        - $ref: '#/components/schemas/Vector'
+        - type: object
+          required: [chunk_id, page_from, page_to]
+          properties:
+            chunk_id: {type: string}
+            page_from: {type: integer, minimum: 1}
+            page_to: {type: integer, minimum: 1}
+    ImageVector:
+      allOf:
+        - $ref: '#/components/schemas/Vector'
+        - type: object
+          required: [page]
+          properties:
+            page: {type: integer, minimum: 1}
+    Neighbor:
+      type: object
+      required: [document_id, label, score]
+      properties:
+        document_id: {type: string}
+        label: {type: string}
+        score: {type: number, description: 'Kosinová podobnost'}
+    DocumentVectors:
+      type: object
+      required: [case_id, document_id, text_vectors, image_vectors]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        text_vectors:
+          type: array
+          items: {$ref: '#/components/schemas/TextVector'}
+          description: Jeden vektor na část textu; prázdné pole, pokud ještě nevznikly
+        image_vectors:
+          type: array
+          items: {$ref: '#/components/schemas/ImageVector'}
+          description: Jeden vektor na stránku; prázdné pole, pokud ještě nevznikly
+        neighbors:
+          type: array
+          items: {$ref: '#/components/schemas/Neighbor'}
+          description: Jen s `similar_to_verified`, nejbližší ověřené dokumenty od nejpodobnějšího
+    SimilarSignature:
+      type: object
+      required: [signature_id, document_id, score]
+      properties:
+        signature_id: {type: string}
+        document_id: {type: string}
+        score: {type: number}
+    CopySuspicion:
+      type: object
+      required: [level]
+      properties:
+        level: {type: string, enum: [none, suspected]}
+        matches:
+          type: array
+          description: Podpisy v jiných dokumentech, které jsou téměř identické (perceptuální hash / pixelové porovnání)
+          items: {$ref: '#/components/schemas/SimilarSignature'}
+    Signature:
+      type: object
+      required: [signature_id, page, detector]
+      properties:
+        signature_id: {type: string}
+        page: {type: integer, minimum: 1}
+        bbox:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items: {type: number, minimum: 0, maximum: 1}
+          description: '[x0, y0, x1, y1], relativní souřadnice strany'
+        detector: {type: string, enum: [textract, vision_llm]}
+        detection_score:
+          type: number
+          nullable: true
+          description: Orientační skóre detektoru (Textract 0 až 100), není kalibrovaná pravděpodobnost; `null` u vision LLM
+        role:
+          type: string
+          nullable: true
+          enum: [provider, borrower, buyer, supplier, guarantor, insurer, unknown]
+        role_source: {type: string, nullable: true, enum: [nearest_text, ocr_blocks]}
+        role_evidence:
+          type: string
+          nullable: true
+          description: Text, podle kterého byla role přiřazena (např. „Za dlužníka")
+        crop_url:
+          type: string
+          nullable: true
+          description: Předpodepsané URL výřezu podpisu pro lidskou kontrolu (platnost 300 s)
+        phash: {type: string, nullable: true}
+        copy_suspicion: {$ref: '#/components/schemas/CopySuspicion'}
+        similar_signatures:
+          type: array
+          items: {$ref: '#/components/schemas/SimilarSignature'}
+          description: Jen s `match_client=true`; nápověda pro člověka, ne ověření pravosti
+        vector:
+          allOf: [{$ref: '#/components/schemas/Vector'}]
+          nullable: true
+    DocumentSignatures:
+      type: object
+      required: [case_id, document_id, signatures]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        signatures:
+          type: array
+          items: {$ref: '#/components/schemas/Signature'}
+          description: Prázdné pole znamená „žádný podpis nenalezen", ne chybu

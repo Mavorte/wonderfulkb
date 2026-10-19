@@ -44,7 +44,7 @@ Lokální server používá SQLite, soubory a obnovitelný worker. Poskytuje tak
 
 ## API a kontrakty
 
-Interaktivní dokumentace: `http://127.0.0.1:8010/docs`. Strojové kontrakty jsou v `contracts/`. V API Gateway stage `v1` odpovídá lokálnímu prefixu `/v1`.
+Interaktivní dokumentace: `http://127.0.0.1:8010/docs`. Strojové kontrakty jsou v `contracts/`. Kontrakt čtecího API pro vyhodnocovacího (validačního) agenta Wonderful, tj. dokumenty, vektory a podpisy, je v `contracts/openapi-validator-agent.yaml` a popsaný v [VALIDATOR-AGENT.md](VALIDATOR-AGENT.md) (návrh, zatím neimplementováno). V API Gateway stage `v1` odpovídá lokálnímu prefixu `/v1`.
 
 1. `POST /v1/cases/{case_id}/documents` s `filename`, `content_type`, `size_bytes`, `mode` vrátí dokument a podepsaný upload.
 2. Proveďte `PUT` souboru přes vrácenou URL a hlavičky.
