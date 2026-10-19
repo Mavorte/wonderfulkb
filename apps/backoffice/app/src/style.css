@@ -129,3 +129,12 @@
 .bo-detail__list { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: var(--kb-space-2) var(--kb-space-6); }
 .bo-detail__list dt { color: var(--kb-text-secondary); }
 .bo-detail__list dd { margin: 0; }
+.bo-table__num { text-align: right; white-space: nowrap; }
+.bo-table tbody tr[aria-selected="true"] { background: var(--kb-surface-page); }
+.bo-detail { display: grid; gap: var(--kb-space-4); }
+.bo-detail__cases { margin-top: var(--kb-space-2); }
+.bo-pill {
+  display: inline-block; padding: 0 var(--kb-space-2); border-radius: var(--kb-radius-2xs);
+  font-size: 0.875rem; line-height: 1.5rem; background: var(--kb-surface-muted); color: var(--kb-text-secondary);
+}
+.bo-pill--ok { background: var(--kb-success-surface); color: var(--kb-success); font-weight: var(--kb-weight-semibold); }

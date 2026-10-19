@@ -2,7 +2,7 @@
   "schema_version": 1,
   "name": "Backoffice",
   "slug": "backoffice",
-  "description": "KB back-office tool for listing cases and creating cases for a selected client. Cases and clients come from the AWS case/client API; creating a case registers its Client Intake link.",
+  "description": "KB back-office tool for listing clients and cases and creating cases for a selected client. Cases and clients come from the AWS case/client API; creating a case registers its Client Intake link.",
   "analytics_events": [
     {
       "key": "cases_opened",
@@ -15,6 +15,12 @@
       "feature_key": "new_case",
       "stage": "opened",
       "label": "New case screen opened"
+    },
+    {
+      "key": "clients_opened",
+      "feature_key": "clients_list",
+      "stage": "opened",
+      "label": "Clients screen opened"
     },
     {
       "key": "case_create_started",

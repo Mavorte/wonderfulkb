@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Client Directory",
+  "description": "Lists all clients from the AWS case/client API (GET /clients) with each client's cases (GET /clients/{client_id}/cases), for the Clients page",
+  "method": "GET",
+  "path_slug": "client-directory"
+}
