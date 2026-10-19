@@ -1,0 +1,66 @@
+# Ruční vizuální kontrola podpisů ve vzorových PDF dvou původních případů (docs/vzorove-dokumenty/solom-rec, stavby-fiser).
+# Zdroj pravdy S_REVIEW v truth.yaml. Postup: každá strana každého PDF se vykreslila (pypdfium2) a prohlédla; u skenů
+# a nejasných míst se vyříznutá oblast prohlédla ve větším zvětšení. Zapsáno bez pohledu na výstup detektorů.
+# Co se počítá jako podpis: rukou psaný tah v podpisovém poli, včetně tahu přes razítko (razítko samo bez tahu se
+# nepočítá). Rukou psaná jména a poznámky (např. „VITASIL“, „CC 3100“) a prázdná podpisová pole se nepočítají.
+# Úroveň: `page` = počet podpisů na straně (poloha na straně se nezapisovala, takže se porovnává jen strana a počet).
+# Omezení: jeden posuzovatel (Claude), bez druhé kontroly člověkem; drobné paraf a velmi světlé tahy mohly uniknout.
+# Role jsou informativní (vyhodnocují se jen u podpisů s bbox, tady se nepoužijí).
+reviewed_by: Claude (vizuální kontrola vykreslených stran)
+reviewed_on: "2026-10-19"
+cases:
+  solom-rec:
+    0_Form_Smlouva.pdf:
+      granularity: page
+      items: [{page: 3, role: provider}, {page: 3, role: provider}, {page: 3, role: borrower}]
+    01_Form_VOP.pdf:
+      granularity: page
+      note: 19 stran, podpisy jen na poslední straně
+      items: [{page: 19, role: provider}, {page: 19, role: provider}, {page: 19, role: borrower}]
+    09_Form_Dohoda o zaplacení kupní ceny.pdf:
+      granularity: page
+      note: strana 4 má jen jména a prázdné řádky bez podpisů
+      items: [{page: 3, role: provider}, {page: 3, role: provider}, {page: 3, role: supplier}, {page: 3, role: buyer}]
+    2_Form_Zajišťovací převod vl. práva.pdf:
+      granularity: page
+      items: [{page: 6, role: provider}, {page: 6, role: provider}, {page: 6, role: borrower}]
+    3_Form_Vinkulace_poj.pdf:
+      granularity: page
+      items: [{page: 1, role: insurer}, {page: 1, role: borrower}]
+    4_Form_Ručení.pdf:
+      granularity: page
+      items: [{page: 2, role: guarantor}, {page: 2, role: provider}, {page: 2, role: provider}]
+    10_Podklady k výlatě_objednávka.pdf:
+      granularity: page
+      note: sken; dva podpisy nad jmény a tah přes razítko objednatele; pole dodavatele prázdné
+      items: [{page: 1, role: buyer}, {page: 1, role: buyer}, {page: 1, role: buyer}]
+    11_Podklady k výplatě _ Protokol.pdf:
+      granularity: page
+      note: sken, ručně psaný předávací certifikát; strany 1 a 2 bez podpisů (na straně 1 jsou jen ručně psané poznámky)
+      items: [{page: 3, role: supplier}, {page: 3, role: buyer}, {page: 4, role: supplier}, {page: 4, role: buyer}]
+    99_KK_systAPI.pdf:
+      granularity: page
+      items: []
+  stavby-fiser:
+    0_F_Smlouva.pdf:
+      granularity: page
+      items: [{page: 3, role: provider}, {page: 3, role: provider}, {page: 3, role: borrower}]
+    2_Form_Zajišťovací převod vl. práva.pdf:
+      granularity: page
+      items: [{page: 6, role: provider}, {page: 6, role: provider}, {page: 6, role: borrower}]
+    3_Form_Vinkulace_poj.pdf:
+      granularity: page
+      items: [{page: 1, role: insurer}, {page: 1, role: borrower}]
+    10_Podklady k výplatě _Objednávka + TS.pdf:
+      granularity: page
+      note: strany 4 až 9 jsou skenovaná nabídka; podpis (s razítkem AWP) je na straně 9, objednávka je podepsaná na straně 2
+      items: [{page: 2, role: buyer}, {page: 2, role: supplier}, {page: 9, role: supplier}]
+    11_Protokol_Potvrzení o přechodu vlastnictví.pdf:
+      granularity: page
+      items: [{page: 1, role: supplier}]
+    14_Podklady k výplatě_Úhrada KC.pdf:
+      granularity: page
+      items: []
+    99_KK_systAPI.pdf:
+      granularity: page
+      items: []

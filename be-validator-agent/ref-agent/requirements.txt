@@ -1,0 +1,3 @@
+pyyaml>=6
+boto3>=1.40      # jen pro LLM režim; --no-llm a testy ho nepotřebují
+pytest>=8        # jen testy

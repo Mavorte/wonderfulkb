@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: wonderfulkb Validator Agent API (návrh)
-  version: 0.2.0
+  version: 0.3.0
   description: |
     Čtecí API, kterým Wonderful vyhodnocovací (validační) agent získává vstupy k posouzení case.
     Návrh, nic není nasazené. Podrobný popis a otevřené otázky: `VALIDATOR-AGENT.md`.
@@ -430,7 +430,12 @@ components:
       type: object
       required: [level]
       properties:
-        level: {type: string, enum: [none, suspected]}
+        level:
+          type: string
+          enum: [none, suspected, not_checked]
+          description: |
+            `none` = porovnání proběhlo a kopii nenašlo; `suspected` = nalezen téměř identický podpis v jiném dokumentu;
+            `not_checked` = porovnání napříč dokumenty se (zatím) nepočítalo, hodnotu nelze číst jako „bez kopie".
         matches:
           type: array
           description: Podpisy v jiných dokumentech, které jsou téměř identické (perceptuální hash / pixelové porovnání)
@@ -447,7 +452,7 @@ components:
           maxItems: 4
           items: {type: number, minimum: 0, maximum: 1}
           description: '[x0, y0, x1, y1], relativní souřadnice strany'
-        detector: {type: string, enum: [textract, vision_llm]}
+        detector: {type: string, enum: [textract, vision_llm, page_images, label_anchored, vector_strokes], description: 'textract = AWS Textract SIGNATURES; page_images = záloha podle vložených obrázků velikosti podpisu; label_anchored = inkoust v oblasti nad popiskem Podpis; vector_strokes = vektorové tahy v kresbě stránky (víc falešných nálezů); vision_llm = vision model'}
         detection_score:
           type: number
           nullable: true
@@ -470,16 +475,25 @@ components:
         similar_signatures:
           type: array
           items: {$ref: '#/components/schemas/SimilarSignature'}
-          description: Jen s `match_client=true`; nápověda pro člověka, ne ověření pravosti
+          description: |
+            Jen s `match_client=true`; nápověda pro člověka, ne ověření pravosti. **Zatím nevyplněno:** index podpisů je prázdný,
+            vždy `[]`. Plánovaný význam: podobné podpisy téhož klienta napříč případy (viz docs/validator-agent-audit.md B4).
         vector:
           allOf: [{$ref: '#/components/schemas/Vector'}]
           nullable: true
     DocumentSignatures:
       type: object
-      required: [case_id, document_id, signatures]
+      required: [case_id, document_id, signatures, status]
       properties:
         case_id: {type: string}
         document_id: {type: string}
+        status:
+          type: string
+          enum: [completed, not_run, failed]
+          description: |
+            `completed` = detekce proběhla (prázdné `signatures` pak znamená „nic nenalezeno", ale detekce je neúplná);
+            `not_run` = podpisy se pro dokument ještě nezpracovaly (prázdné pole NENÍ nález);
+            `failed` = detekce selhala. Prázdné pole smí agent chápat jako „nic nenalezeno" jen při `completed`.
         signatures:
           type: array
           items: {$ref: '#/components/schemas/Signature'}

@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: wonderfulkb-uw-document-analysis table (one analysis row per document; text lives in S3 under cases/<case_id>/analysis/<document_id>/).
+
+Resources:
+  DocumentAnalysisTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wonderfulkb-uw-document-analysis
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: case_id, AttributeType: S}
+        - {AttributeName: document_id, AttributeType: S}
+      KeySchema:
+        - {AttributeName: case_id, KeyType: HASH}
+        - {AttributeName: document_id, KeyType: RANGE}
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+Outputs:
+  TableName:
+    Value: !Ref DocumentAnalysisTable

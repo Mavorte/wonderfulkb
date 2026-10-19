@@ -1,0 +1,5 @@
+boto3>=1.40
+moto[dynamodb,s3,secretsmanager]>=5.1
+pyyaml
+jsonschema
+pytest

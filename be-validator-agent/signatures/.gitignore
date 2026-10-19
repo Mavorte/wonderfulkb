@@ -1,0 +1,5 @@
+venv/
+__pycache__/
+.textract-cache/
+crops/
+.pytest_cache/

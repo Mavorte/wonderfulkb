@@ -1,6 +1,6 @@
 # Validační agent: vstupní API
 
-Stav: **návrh kontraktu (verze 0.2.0), nasazené není nic**. Formální popis: [contracts/openapi-validator-agent.yaml](contracts/openapi-validator-agent.yaml).
+Stav: **verze 0.3.0, API je implementované a nasazené** (implementace, předávka a návod pro agenta jsou v [../be-validator-agent](../be-validator-agent/README.md)). Formální popis: [contracts/openapi-validator-agent.yaml](contracts/openapi-validator-agent.yaml).
 
 Wonderful agent, který podle pravidel validuje a rozhoduje, nedostává data v těle požadavku. Bere si je čtyřmi oddělenými voláními (nástroji agenta). Textová data jsou malá a potřebuje je vždy. Vektory jsou velké a agent je potřebuje jen tehdy, když pravidlo vyžaduje srovnání (podobnost dokumentu, kopie podpisu). Proto se **agentovi nedávají surové vektory, ale výsledek hledání** (`neighbors`, `matches`).
 
@@ -137,3 +137,11 @@ Jen aditivní: nové volání `listCaseDocuments`, tag `signatures`, odpověď `
 3. **Modely a dimenze:** indexy mají pevně 1024 dimenzí. Text Titan V2 (1024) sedí. Obraz: Titan Multimodal Embeddings (`amazon.titan-embed-image-v1`) by měl jít s výstupem 1024 (z paměti, ověřit v dokumentaci); Cohere Embed v4 má výchozích 1536 a vyžadoval by výstup 1024 nebo nový index. Že Kryštof doplňuje Titan Multimodal, jsem v kódu nenašel, potvrdit s ním. Podpis zatím bez modelu, index už existuje.
 4. **Textract SIGNATURES:** funguje ve Frankfurtu (ověřeno na 2 PDF), ale zatím není ověřeno, že nalezené bloky jsou podpisy, ani že nic nechybí. Vizuální kontrola výřezů je rozpracovaná.
 5. **Vrstva API:** samostatná Lambda `wonderfulkb-agent-api` (čte jiné tabulky a S3 Vectors) místo rozšíření `wonderfulkb-case-client`. Souhlas?
+
+## Změny od verze 0.2.0 (0.3.0)
+- **Volání 3 má povinné pole `status`** (`completed` / `not_run` / `failed`). Prázdné `signatures` je „nic nenalezeno" jen při `completed`; při `not_run` podpisy ještě nikdo nehledal.
+- **`copy_suspicion.level` má novou hodnotu `not_checked`:** porovnání napříč dokumenty se nepočítalo. `none` znamená, že proběhlo a nic nenašlo.
+- **Enum `detector`** je `textract`, `vision_llm`, `page_images`, `label_anchored`, `vector_strokes`; u každého nálezu je zdroj, který ho našel.
+- **`similar_signatures` je zatím vždy prázdné** (index podpisů je prázdný). Plánovaný význam: podobné podpisy téhož klienta napříč případy.
+- **`neighbors` jsou zatím prázdné:** vznikne až z lidsky ověřených dokumentů (`label_status = verified`).
+- Detekce podpisů je neúplná; viz [be-document-processing/docs/signatures-eval](docs/signatures-eval/README.md) a [předávka](../be-validator-agent/HANDOVER.md).

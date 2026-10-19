@@ -1,0 +1,7 @@
+# Výjimka ze storage kontraktu: tento modul potřebuje PyMuPDF (svislé čáry tabulky pro role, redakce textu
+# pro hash). Instalovat jen z hotového kola, na Pythonu 3.14 se jinak kompiluje a visí:
+#   pip install --only-binary :all: -r requirements.txt
+PyMuPDF>=1.24
+Pillow>=10
+numpy>=1.26
+boto3>=1.34
