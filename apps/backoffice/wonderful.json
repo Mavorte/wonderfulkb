@@ -2,7 +2,7 @@
   "schema_version": 1,
   "name": "Backoffice",
   "slug": "backoffice",
-  "description": "KB back-office tool for creating cases for a selected client. Uses mocked client data.",
+  "description": "KB backoffice pro založení firemních případů s odkazem Client Intake, nahrávání dokumentů, OCR a kontrolu doložených údajů. Podporuje vývoj se syntetickými klientskými daty.",
   "analytics_events": [
     {
       "key": "new_case_opened",

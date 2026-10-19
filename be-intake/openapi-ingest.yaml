@@ -1,0 +1,237 @@
+openapi: 3.0.3
+info:
+  title: wonderfulkb Ingest API (část 2)
+  version: 0.5.0
+  description: |
+    Služba `wonderfulkb-ingest` běží na App Runner; adresu a API klíč dostanete od nás. Navazuje na Case & Client API (openapi-case-client.yaml), API klíč `x-api-key` je s ním společný.
+    Kontrakt navrhl frontend / Wonderful, doplněný o poznámky v ingest-api-navrh.md. Běží jako kontejner
+    (ne Lambda), proto vlastní adresa a API klíč kontrolovaný aplikací (hlavička `x-api-key`).
+    Všechny cesty jsou pod `/v1`, jen `/healthz` je bez prefixu a bez klíče. Limity: 20 souborů,
+    25 MB na soubor, 100 MB souborů na požadavek. Chyby mají tvar `{"error": "popis"}`.
+servers:
+  - url: https://{host}/v1
+    variables:
+      host:
+        default: REPLACE_WITH_HOST_FROM_WONDERFULKB
+        description: Adresa služby na App Runner (tvar `<id>.eu-central-1.awsapprunner.com`), předáme ji my.
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: documents
+  - name: system
+
+paths:
+  /healthz:
+    servers:
+      - url: https://{host}
+        variables:
+          host:
+            default: REPLACE_WITH_HOST_FROM_WONDERFULKB
+    get:
+      tags: [system]
+      operationId: healthz
+      summary: Kontrola dostupnosti (bez API klíče, mimo /v1)
+      security: []
+      responses:
+        '200':
+          description: Služba běží
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Health'}
+
+  /cases/{case_id}/documents:
+    post:
+      tags: [documents]
+      operationId: uploadDocuments
+      summary: Nahraje všechna PDF případu jedním voláním
+      description: |
+        Existence case se ověří před čtením těla. Pak se zkontrolují všechny části (při chybě se nezapíše nic),
+        soubory se uloží do S3 a nové záznamy se zapíšou jednou DynamoDB transakcí (všechny, nebo žádný). Stejný obsah v témže case
+        vrátí stejné `document_id` a `duplicate=true`. Limity: max 20 souborů, 25 MB na soubor
+        a 100 MB souborů celkem. Typ se ověřuje podle hlavičky `%PDF-` (i prázdný soubor je `415`).
+        `400` také při chybějícím `files`, více než 20 souborech, `uploaded_by` nad 255 znaků
+        nebo neplatném `case_id`.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: {$ref: '#/components/schemas/UploadRequest'}
+            encoding:
+              files:
+                contentType: application/pdf
+      responses:
+        '201':
+          description: Dokumenty uloženy
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UploadResponse'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '413':
+          description: Soubor je větší než 25 MB nebo požadavek než 100 MB (odmítnuto i podle `Content-Length`)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '415':
+          description: Soubor není PDF (kontroluje se i hlavička `%PDF-`)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+    get:
+      tags: [documents]
+      operationId: listDocuments
+      summary: Vylistuje dokumenty case (pro zobrazení klientovi po nahrání)
+      description: |
+        Řazeno podle `received_at` (při shodě `document_id`), stránkované. `next_token` je zakódovaný offset
+        další stránky (berte ho jako neprůhlivý), `null` na poslední stránce. Neplatný `next_token`
+        nebo `limit` mimo rozsah je `400`.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+        - name: next_token
+          in: query
+          description: Hodnota `next_token` z předchozí odpovědi.
+          schema: {type: string}
+        - name: with_urls
+          in: query
+          description: Přidá ke každému dokumentu předpodepsanou `download_url` platnou 5 minut (300 s).
+          schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: Dokumenty case
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentList'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  parameters:
+    CaseId:
+      name: case_id
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/CaseId'}
+
+  responses:
+    BadRequest:
+      description: Neplatný požadavek (chybí `files`, moc souborů, neplatné `case_id`, `next_token` nebo `limit`)
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    Unauthorized:
+      description: Chybí API klíč
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    Forbidden:
+      description: Neplatný API klíč
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    NotFound:
+      description: Case neexistuje
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [ok]}
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: {type: string}
+
+    CaseId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[A-Za-z0-9._-]+$'
+      description: ID case přidělené Wonderful. Je zároveň klíčem case v databázi.
+      example: '170170-25'
+
+    UploadRequest:
+      type: object
+      required: [files]
+      properties:
+        files:
+          type: array
+          minItems: 1
+          maxItems: 20
+          description: Jedna část na PDF; `filename` části je původní název souboru. Max 25 MB na soubor, 100 MB celkem.
+          items: {type: string, format: binary}
+        uploaded_by:
+          type: string
+          maxLength: 255
+          description: Kdo nahrál (pro audit trail).
+          example: reviewer@kb.cz
+
+    UploadedDocument:
+      type: object
+      required: [document_id, filename, received_at, content_type, size_bytes, duplicate]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+          description: Zároveň `blob_id`; deterministické z `case_id` a SHA-256 obsahu.
+        filename: {type: string, example: 0_Form_Smlouva.pdf}
+        received_at: {type: string, format: date-time}
+        content_type: {type: string, enum: [application/pdf]}
+        size_bytes: {type: integer}
+        duplicate:
+          type: boolean
+          description: 'true, pokud stejný obsah v case už byl (vrací se původní záznam včetně `received_at`)'
+
+    UploadResponse:
+      type: object
+      required: [case_id, documents]
+      properties:
+        case_id: {$ref: '#/components/schemas/CaseId'}
+        documents:
+          type: array
+          items: {$ref: '#/components/schemas/UploadedDocument'}
+
+    ListedDocument:
+      type: object
+      required: [document_id, filename, received_at, content_type, size_bytes]
+      properties:
+        document_id: {type: string, format: uuid}
+        filename: {type: string}
+        received_at: {type: string, format: date-time}
+        content_type: {type: string, enum: [application/pdf]}
+        size_bytes: {type: integer}
+        uploaded_by: {type: string, description: Jen pokud byl zadán při nahrání.}
+        download_url:
+          type: string
+          format: uri
+          description: Jen s `with_urls=true`. Předpodepsaná S3 URL platná 5 minut (300 s).
+
+    DocumentList:
+      type: object
+      required: [case_id, documents, next_token]
+      properties:
+        case_id: {$ref: '#/components/schemas/CaseId'}
+        documents:
+          type: array
+          items: {$ref: '#/components/schemas/ListedDocument'}
+        next_token: {type: string, nullable: true, description: Neprůhlivý token další stránky; null na poslední.}

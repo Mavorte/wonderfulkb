@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: wonderfulkb document ingestion and Bedrock OCR in Frankfurt
+
+Parameters:
+  CasesTableName:
+    Type: String
+    Default: wonderfulkb-uw-cases
+  ClientsTableName:
+    Type: String
+    Default: wonderfulkb-uw-clients
+  OcrModel:
+    Type: String
+    Default: qwen.qwen3-vl-235b-a22b-instruct
+    AllowedValues: [qwen.qwen3-vl-235b-a22b-instruct, google.gemma-4-31b, mistral.ministral-3-14b-instruct]
+  AllowedOrigin:
+    Type: String
+    Default: http://localhost:3200
+
+Globals:
+  Function:
+    Runtime: python3.13
+    Architectures: [x86_64]
+    CodeUri: .
+    Environment:
+      Variables:
+        STORAGE_BACKEND: aws
+        OCR_PROVIDER: bedrock
+        BEDROCK_API: mantle
+        BEDROCK_REGION: eu-central-1
+        BEDROCK_OCR_MODEL: !Ref OcrModel
+        BEDROCK_EXTRACTION_MODEL: !Ref OcrModel
+        DOCUMENTS_TABLE_NAME: !Ref DocumentsTable
+        DOCUMENTS_BUCKET: !Ref DocumentsBucket
+        CASES_TABLE_NAME: !Ref CasesTableName
+        CLIENTS_TABLE_NAME: !Ref ClientsTableName
+        QUEUE_URL: !Ref DocumentQueue
+        ALLOWED_ORIGIN: !Ref AllowedOrigin
+    Tags:
+      project: wonderfulkb
+
+Resources:
+  DocumentApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: v1
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          Throttle:
+            BurstLimit: 20
+            RateLimit: 10
+
+  DocumentsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: [!Ref AllowedOrigin]
+            AllowedMethods: [PUT, GET]
+            AllowedHeaders: [Content-Type]
+            MaxAge: 300
+
+  DocumentsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+
+  FailedQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+
+  DocumentQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 3600
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt FailedQueue.Arn
+        maxReceiveCount: 5
+
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src.document_processing.aws_handlers.api_handler
+      MemorySize: 1024
+      Timeout: 29
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DocumentsTable
+        - S3CrudPolicy:
+            BucketName: !Ref DocumentsBucket
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt DocumentQueue.QueueName
+        - Statement:
+            - Effect: Allow
+              Action: dynamodb:GetItem
+              Resource:
+                - !Sub arn:${AWS::Partition}:dynamodb:eu-central-1:${AWS::AccountId}:table/${CasesTableName}
+                - !Sub arn:${AWS::Partition}:dynamodb:eu-central-1:${AWS::AccountId}:table/${ClientsTableName}
+      Events:
+        Root:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DocumentApi
+            Path: /{proxy+}
+            Method: ANY
+
+  OcrWorker:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src.document_processing.aws_handlers.worker_handler
+      MemorySize: 2048
+      Timeout: 540
+      ReservedConcurrentExecutions: 2
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DocumentsTable
+        - S3CrudPolicy:
+            BucketName: !Ref DocumentsBucket
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt DocumentQueue.QueueName
+        - Statement:
+            - Effect: Allow
+              Action: dynamodb:GetItem
+              Resource:
+                - !Sub arn:${AWS::Partition}:dynamodb:eu-central-1:${AWS::AccountId}:table/${CasesTableName}
+                - !Sub arn:${AWS::Partition}:dynamodb:eu-central-1:${AWS::AccountId}:table/${ClientsTableName}
+            - Effect: Allow
+              Action: bedrock-mantle:CreateInference
+              Resource: !Sub arn:${AWS::Partition}:bedrock-mantle:eu-central-1:${AWS::AccountId}:project/*
+              Condition:
+                StringEquals:
+                  aws:RequestedRegion: eu-central-1
+                  bedrock-mantle:Model: !Ref OcrModel
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt DocumentQueue.Arn
+            BatchSize: 1
+            FunctionResponseTypes: [ReportBatchItemFailures]
+
+Outputs:
+  ApiUrl:
+    Value: !Sub https://${DocumentApi}.execute-api.eu-central-1.amazonaws.com/v1
+  BucketName:
+    Value: !Ref DocumentsBucket
+  DocumentsTableName:
+    Value: !Ref DocumentsTable

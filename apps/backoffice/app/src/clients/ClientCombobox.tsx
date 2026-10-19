@@ -52,7 +52,7 @@ export default function ClientCombobox({ clients, value, onChange, error, disabl
 
   return (
     <div className="kb-field">
-      <label htmlFor={id}>Client</label>
+      <label htmlFor={id}>Firemní klient</label>
       <div className="bo-combobox">
         <svg className="kb-icon kb-icon--muted bo-combobox__search" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4.45 4.44-1.41 1.42-4.45-4.45A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" />
@@ -64,8 +64,8 @@ export default function ClientCombobox({ clients, value, onChange, error, disabl
           type="text"
           role="combobox"
           autoComplete="off"
-          placeholder={value ? undefined : "Search by name or client ID"}
-          value={open || !value ? query : `${value.name} · ${value.id}`}
+          placeholder={value ? undefined : "Vyhledat podle názvu nebo IČO"}
+          value={open || !value ? query : `${value.name} · IČO ${value.ico}`}
           disabled={disabled}
           aria-expanded={open}
           aria-controls={listId}
@@ -84,16 +84,16 @@ export default function ClientCombobox({ clients, value, onChange, error, disabl
           onKeyDown={onKeyDown}
         />
         {value && !disabled && (
-          <button type="button" className="bo-combobox__clear" aria-label="Clear client" onClick={clear}>
+          <button type="button" className="bo-combobox__clear" aria-label="Zrušit výběr klienta" onClick={clear}>
             <svg className="kb-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="m12 10.59 4.95-4.95 1.41 1.41L13.41 12l4.95 4.95-1.41 1.41L12 13.41l-4.95 4.95-1.41-1.41L10.59 12 5.64 7.05l1.41-1.41L12 10.59Z" />
             </svg>
           </button>
         )}
         {open && (
-          <ul id={listId} role="listbox" aria-label="Clients" className="bo-combobox__list">
+          <ul id={listId} role="listbox" aria-label="Firmy" className="bo-combobox__list">
             {results.length === 0 ? (
-              <li className="bo-combobox__empty">No client matches “{query}”</li>
+              <li className="bo-combobox__empty">Dotazu „{query}“ neodpovídá žádná firma.</li>
             ) : (
               results.map((c, i) => (
                 <li
@@ -108,7 +108,7 @@ export default function ClientCombobox({ clients, value, onChange, error, disabl
                 >
                   <span className="bo-combobox__name">{c.name}</span>
                   <span className="bo-combobox__meta">
-                    {c.id} · born {new Date(c.birthDate).toLocaleDateString("cs-CZ")}
+                    IČO {c.ico}{c.address ? ` · ${c.address}` : ""}
                   </span>
                 </li>
               ))
