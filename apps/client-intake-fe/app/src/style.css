@@ -82,6 +82,10 @@
   display: grid;
   gap: var(--kb-space-6);
 }
+/* Keeps long file names from widening the column; they truncate instead. */
+.app-stack {
+  grid-template-columns: minmax(0, 1fr);
+}
 .app-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -204,6 +208,84 @@
   line-height: 1.5rem;
   color: var(--kb-text-secondary);
 }
+.dropzone--disabled {
+  opacity: 0.6;
+}
+
+.app-files li.is-failed .app-files__name { color: var(--kb-error); }
+.app-files__failed { fill: var(--kb-error); }
+
+/* Upload progress and result, shown at the top of the upload card */
+.app-status {
+  animation: app-status-in var(--kb-duration) var(--kb-ease);
+}
+@keyframes app-status-in {
+  from { opacity: 0; transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-status { animation: none; }
+}
+.app-progress {
+  display: grid;
+  gap: var(--kb-space-2);
+  padding: var(--kb-space-4) var(--kb-space-5);
+  border-radius: var(--kb-radius-sm);
+  background: var(--kb-surface-muted);
+}
+.app-progress__label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--kb-space-3);
+  font-weight: var(--kb-weight-semibold);
+}
+.app-progress__track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--kb-border);
+  overflow: hidden;
+}
+.app-progress__bar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--kb-accent);
+  transition: width var(--kb-duration) var(--kb-ease);
+}
+.app-spinner {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 2px solid var(--kb-accent);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: kb-spin 0.8s linear infinite;
+  transform-origin: center;
+  scale: 0.75;
+}
+
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kb-space-1);
+  padding: var(--kb-space-1) var(--kb-space-3);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: var(--kb-weight-semibold);
+  white-space: nowrap;
+}
+.app-badge--success {
+  background: var(--kb-success-surface);
+  color: var(--kb-success);
+}
+.app-badge--success .kb-icon { fill: var(--kb-success); }
+
+.app-received__title {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  font-weight: var(--kb-weight-semibold);
+  color: var(--kb-text-secondary);
+}
+.app-received.app-stack { gap: var(--kb-space-2); }
 
 .app-actions {
   display: flex;

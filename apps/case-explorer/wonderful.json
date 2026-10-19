@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "name": "Case Explorer",
+  "slug": "case-explorer",
+  "description": "Internal test console: browse AWS clients, cases and documents through the case/client and documents APIs, and start the case-evaluator agent for a case ID via its webhook",
+  "analytics_events": [
+    {
+      "key": "explorer_opened",
+      "feature_key": "case_explorer",
+      "stage": "opened",
+      "label": "Case Explorer opened"
+    },
+    {
+      "key": "evaluator_run_started",
+      "feature_key": "evaluator_run",
+      "stage": "started",
+      "label": "Evaluator run started"
+    },
+    {
+      "key": "evaluator_run_completed",
+      "feature_key": "evaluator_run",
+      "stage": "completed",
+      "label": "Evaluator webhook accepted",
+      "outcome": true
+    },
+    {
+      "key": "evaluator_run_failed",
+      "feature_key": "evaluator_run",
+      "stage": "failed",
+      "label": "Evaluator webhook failed"
+    }
+  ]
+}

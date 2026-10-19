@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Evaluations Delete",
+  "description": "Deletes all of a case's rows in agent_functions.case_evaluation_results and agent_functions.case_evaluations",
+  "method": "POST",
+  "path_slug": "evaluations-delete"
+}

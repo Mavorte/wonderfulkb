@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "name": "CI: pull request",
+  "description": "The critical outcomes, all at once: ready, needs_correction with chained defects, needs_review, a failed run, and the unhappy real bundle.",
+  "scenario_slugs": [
+    "clean_case_ready",
+    "multiple_defects",
+    "signatures_unavailable",
+    "documents_api_down",
+    "unhappy_recipient_ico"
+  ],
+  "max_parallel_evaluations": 5
+}

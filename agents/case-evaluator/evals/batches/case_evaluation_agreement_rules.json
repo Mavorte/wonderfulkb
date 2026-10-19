@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "name": "Case evaluation: agreement rules",
+  "description": "Loan agreement presence, required documents matching and the recipient against the client record.",
+  "scenario_slugs": [
+    "clean_case_ready",
+    "multiple_defects",
+    "no_loan_agreement",
+    "missing_invoice",
+    "missing_security_documents",
+    "recipient_ico_typo",
+    "recipient_name_conflict",
+    "recipient_formatting_differences",
+    "no_client_record",
+    "decoy_documents",
+    "one_document_two_requirements"
+  ],
+  "max_parallel_evaluations": 11
+}

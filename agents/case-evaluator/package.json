@@ -1,0 +1,17 @@
+{
+  "name": "case-evaluator",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "test": "vitest run lib eval-cases",
+    "eval-cases": "node --no-warnings eval-cases/build.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@wonderful/test": "^0.1.12",
+    "@wonderful/types": "^0.1.27",
+    "esbuild": "^0.28.0",
+    "vitest": "^4.1.4"
+  }
+}

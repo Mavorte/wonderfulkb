@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "name": "Agent Functions",
+  "slug": "agent-functions",
+  "description": "Functions used by the case-evaluator backoffice agent: AWS case/client and documents APIs, external registers, with mock modes"
+}

@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "name": "Handover protocol with a blank page",
+  "description": "Page 2 of the handover protocol, with the date, the condition and the signatures, is blank. Generated from eval-cases/cases.ts.",
+  "channel": "backoffice",
+  "eval_type": "backoffice_eval",
+  "instructions": {
+    "mode": "turn_based",
+    "backoffice_task": {
+      "task_type": "case_evaluation",
+      "trigger_type": "manual_chat",
+      "task_input": "{\"case_id\":\"mock-eval-handover-blank-page\"}",
+      "context": {},
+      "passthrough_tools": [
+        "start_evaluation",
+        "get_document",
+        "evaluate_loan_agreement_present",
+        "evaluate_required_documents",
+        "evaluate_recipient_match",
+        "evaluate_invoice_contents",
+        "evaluate_purchase_contract_contents",
+        "evaluate_handover_protocol_contents",
+        "evaluate_technical_specification_contents",
+        "evaluate_payment_proof_contents",
+        "evaluate_security_transfer_contents",
+        "evaluate_insurance_vinculation_contents",
+        "evaluate_guarantee_contents",
+        "evaluate_recipient_consistent",
+        "evaluate_client_status",
+        "evaluate_supplier_consistent",
+        "evaluate_provider_consistent",
+        "evaluate_asset_consistent",
+        "evaluate_amounts_consistent",
+        "evaluate_contract_number_consistent",
+        "evaluate_guarantor_consistent",
+        "finish_evaluation",
+        "fail_evaluation"
+      ],
+      "expected_final_status": "completed",
+      "max_execution_time_seconds": 900,
+      "expected_behavior": "Calls start_evaluation for mock-eval-handover-blank-page. Page 2 of the handover protocol has empty text and is not in pages_failed, so it is blank. Records handover_protocol_contents as missing, not cannot_verify: the handover date, the condition and both signatures are absent. The other rules pass. finish_evaluation is accepted with the verdict needs_correction.",
+      "table_assertions": [
+        {
+          "table": "agent_functions.case_evaluations",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page"
+          },
+          "values": {
+            "status": "completed",
+            "verdict": "needs_correction"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "recipient_consistent"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "client_status_valid"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "supplier_consistent"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "provider_consistent"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "asset_consistent"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "amounts_consistent"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "contract_number_consistent"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "guarantor_consistent"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "loan_agreement_present"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "required_documents_present"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "recipient_matches_client"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "invoice_contents"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "purchase_contract_contents"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "handover_protocol_contents"
+          },
+          "values": {
+            "status": "missing"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "technical_specification_contents"
+          },
+          "values": {
+            "status": "not_applicable"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "payment_proof_contents"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "security_transfer_contents"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "insurance_vinculation_contents"
+          },
+          "values": {
+            "status": "passed"
+          }
+        },
+        {
+          "table": "agent_functions.case_evaluation_results",
+          "where": {
+            "case_id": "mock-eval-handover-blank-page",
+            "rule_id": "guarantee_contents"
+          },
+          "values": {
+            "status": "passed"
+          }
+        }
+      ]
+    },
+    "turns": [],
+    "table_fixtures": {
+      "agent_functions.case_evaluations": [
+        {
+          "evaluation_id": "ev-fixture-seed",
+          "case_id": "fixture-seed",
+          "status": "completed",
+          "verdict": "ready",
+          "summary": "Seed row so the eval table copy knows its columns.",
+          "rules_total": 3,
+          "is_mock": true,
+          "started_at": "2026-10-19T00:00:00Z",
+          "finished_at": "2026-10-19T00:00:01Z"
+        }
+      ],
+      "agent_functions.case_evaluation_results": [
+        {
+          "evaluation_id": "ev-fixture-seed",
+          "rule_id": "loan_agreement_present",
+          "case_id": "fixture-seed",
+          "status": "passed",
+          "expected": "Smlouva o úvěru",
+          "found": "seed.pdf",
+          "sources": "[]",
+          "details": null,
+          "reasoning": "Seed row.",
+          "recorded_at": "2026-10-19T00:00:00Z"
+        }
+      ]
+    }
+  }
+}

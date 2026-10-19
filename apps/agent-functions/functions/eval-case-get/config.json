@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Eval Case Get",
+  "description": "Returns a case and its client for the case-evaluator agent (body: case_id)",
+  "method": "POST",
+  "path_slug": "eval-case-get"
+}
