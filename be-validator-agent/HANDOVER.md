@@ -7,12 +7,13 @@ Stav k 19. 10. 2026 (večer). Skutečné adresy služeb a klíč **nejsou v tomt
 ## Adresy
 | Služba | Adresa | K čemu |
 |---|---|---|
-| Agent API | `<AGENT_API_BASE_URL>` | text, štítek, vektory, podpisy dokumentu; kontrola dostupnosti `GET /v1/healthz` |
-| Ingest API | `<INGEST_API_BASE_URL>` | autoritativní seznam dokumentů případu `GET /cases/{case_id}/documents`, nahrání dokumentů |
-| Case & Client API | `<CASE_API_BASE_URL>` | případ (číslo smlouvy, předmět), klienti vč. podepisujících |
+| Agent API | `<AGENT_API_BASE_URL>` | klienti a případy (`/clients`, `/cases`), seznam dokumentů případu, text, štítek, vektory, podpisy dokumentu; kontrola dostupnosti `GET /v1/healthz` |
+| Ingest API | `<INGEST_API_BASE_URL>` | nahrání dokumentů |
+
+Od 19. 10. 2026 (večer) je Case & Client API součástí Agent API (stejná adresa a klíč); samostatné Case & Client API je smazané.
 
 ## Klíč
-Wonderful klíč **už má**, nic se nepředává. Agent API a Ingest API používají stejnou hlavičku `x-api-key` a stejný klíč (ověřeno 19. 10. 2026: klíč z Ingestu projde na Agent API, špatný klíč dává 403). Case & Client API má vlastní klíč (usage plán `wonderfulkb-demo-plan`), klíč z Ingestu tam dává 403.
+Wonderful klíč **už má**, nic se nepředává. Agent API (včetně `/clients` a `/cases`) a Ingest API používají stejnou hlavičku `x-api-key` a stejný klíč (ověřeno 19. 10. 2026: chybějící klíč 401, špatný klíč 403).
 
 ## Pošlete agentovi jen zpracované případy
 Agent API vrací data jen pro dokumenty, které prošly pipeline. Stav k předání (z tabulky analýzy):
@@ -25,15 +26,15 @@ Agent API vrací data jen pro dokumenty, které prošly pipeline. Stav k předá
 | `SYN-C01` | 4 dokumenty | zhoršené skeny |
 | `SYN-A02` | 1 z 9 | zbytek vrací `409` (`queued`) |
 
-Ostatní případy (`SYN-A03` až `SYN-C10`, `unhappy_scenario`, `solom-rec`, `stavby-fiser`) zatím zpracované nejsou: dokument bez analýzy vrací `404`, případ bez řádku `404 Case neexistuje`, rozpracovaný dokument `409`. Zbytek se zpracuje dávkou a seznam se pak aktualizuje. Případy `pipeline-sample-*` jsou naše zkušební, nepoužívejte je.
+Ostatní případy (`SYN-A03` až `SYN-C10`, `unhappy_scenario`, `solom-rec`, `stavby-fiser`) zatím zpracované nejsou: nahraný, ale nezpracovaný dokument je v seznamu jako `queued` a jeho detail vrací `409`; `404` jen u neexistujícího případu nebo dokumentu. Zbytek se zpracuje dávkou a seznam se pak aktualizuje. Případy `pipeline-sample-*` jsou naše zkušební, nepoužívejte je.
 
 ## Co agent potřebuje a odkud to bere
-1. **Seznam dokumentů případu:** Ingest `GET /cases/{case_id}/documents`. Agent API seznam nevrací; nezpracovaný dokument z ingestu bere agent jako „nezpracováno".
-2. **Případ:** Case & Client API `GET /cases/{case_id}`.
-3. **Klient a podepisující:** Case & Client API `GET /clients`. **Neexistuje `GET /clients/{client_id}`**; z případu se zjistí `client_id`, ale hledat jde jen přes `ico`, `name` nebo `status`, případně projít všech 21 klientů. `signatories` mají `name` a `function`, bez `authorized`.
+1. **Seznam dokumentů případu:** Agent API `GET /cases/{case_id}/documents`; zahrnuje i nahrané dokumenty, které pipeline ještě nezpracovala (`processing_status: queued`). Zpracovávat jen `completed` a `partial`.
+2. **Případ:** Agent API `GET /cases/{case_id}`.
+3. **Klient a podepisující:** Agent API `GET /clients`. **Neexistuje `GET /clients/{client_id}`**; z případu se zjistí `client_id`, ale hledat jde jen přes `ico`, `name` nebo `status`, případně projít všech 21 klientů. `signatories` mají `name` a `function`, bez `authorized`.
 4. **Obsah:** Agent API `GET /cases/{case_id}/documents/{document_id}` (text, `label`, `label_status`, `description`, `confidence`), `…/vectors`, `…/signatures`.
 
-Podpisy v dokumentu mají roli (`borrower`, `guarantor`, …), ne jméno osoby. Srovnání s oprávněnými podepisujícími z Case API proto přímo nejde.
+Podpisy v dokumentu mají roli (`borrower`, `guarantor`, …), ne jméno osoby. Srovnání s oprávněnými podepisujícími z `/clients` proto přímo nejde.
 
 ## Co si hlídat (ověřené limity)
 - **Podpisy, pole `status`:** `completed` = detekce proběhla, prázdné `signatures` pak znamená „nic nenalezeno" (ne „podpis chybí"); `not_run` = nezpracováno; `failed` = detekce selhala. Detekce je neúplná: generické podpisy asi 92 až 94 % úplnost, rukopis asi 59 až 89 % podle kombinace detektorů (měřeno na vzorku, rukopis na ladicích datech). Neúplnost je důvod posílat případ „ke kontrole", ne „podpis chybí".

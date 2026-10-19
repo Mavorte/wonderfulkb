@@ -136,7 +136,7 @@ Jen aditivní: nové volání `listCaseDocuments`, tag `signatures`, odpověď `
 2. **Kdo a kdy plní S3 Vectors** (indexy dokumentů a podpisů): Kryštofova pipeline po OCR, nebo samostatný krok? Do té doby vrací volání 2 a 3 prázdná pole.
 3. **Modely a dimenze:** indexy mají pevně 1024 dimenzí. Text Titan V2 (1024) sedí. Obraz: Titan Multimodal Embeddings (`amazon.titan-embed-image-v1`) by měl jít s výstupem 1024 (z paměti, ověřit v dokumentaci); Cohere Embed v4 má výchozích 1536 a vyžadoval by výstup 1024 nebo nový index. Že Kryštof doplňuje Titan Multimodal, jsem v kódu nenašel, potvrdit s ním. Podpis zatím bez modelu, index už existuje.
 4. **Textract SIGNATURES:** funguje ve Frankfurtu (ověřeno na 2 PDF), ale zatím není ověřeno, že nalezené bloky jsou podpisy, ani že nic nechybí. Vizuální kontrola výřezů je rozpracovaná.
-5. **Vrstva API:** samostatná Lambda `wonderfulkb-agent-api` (čte jiné tabulky a S3 Vectors) místo rozšíření `wonderfulkb-case-client`. Souhlas?
+5. **Vrstva API:** samostatná Lambda `wonderfulkb-agent-api` (čte jiné tabulky a S3 Vectors) místo rozšíření `wonderfulkb-case-client`. Souhlas? *(Vyřešeno 19. 10. 2026 opačně: `/clients` a `/cases` se přesunuly do `wonderfulkb-agent-api`, `wonderfulkb-case-client` je smazaná.)*
 
 ## Změny od verze 0.2.0 (0.3.0)
 - **Volání 3 má povinné pole `status`** (`completed` / `not_run` / `failed`). Prázdné `signatures` je „nic nenalezeno" jen při `completed`; při `not_run` podpisy ještě nikdo nehledal.

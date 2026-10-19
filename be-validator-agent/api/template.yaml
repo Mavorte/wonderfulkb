@@ -1,21 +1,37 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-# NENASAZENO. Nasazení schvaluje uživatel (be-validator-agent/docs/validator-agent-storage.md, pravidla pro všechny části).
+# Nasazení schvaluje uživatel (be-validator-agent/docs/validator-agent-storage.md, pravidla pro všechny části).
 #   sam build && sam deploy --guided --profile hackathon --region eu-central-1 --stack-name wonderfulkb-agent-api
 # Pozor: sam build zabalí celý adresář; testy, fixtury a server.py se do Lambdy dostanou také (nejsou použité).
-Description: wonderfulkb validator agent API (read-only, document / vectors / signatures)
+Description: wonderfulkb validator agent API (document / vectors / signatures; odkrytí podpisu = jen KMS Decrypt)
 
 Parameters:
   AnalysisTable: {Type: String, Default: wonderfulkb-uw-document-analysis}
-  # Volitelné: tabulka případů jen pro rozlišení "case existuje, ale nemá zpracované dokumenty" (200 []) od 404.
-  # Výchozí prázdné = Lambda k ní nemá přístup a case bez řádků v analýze vrací 404.
-  CasesTable: {Type: String, Default: ""}
+  # Tabulky Case & Client API (stejná Lambda obsluhuje /cases a /clients; tabulky vlastní část 1, jen data, ne životní cyklus).
+  # CasesTable zároveň rozlišuje "case existuje, ale nemá dokumenty" (200 []) od 404.
+  CasesTable: {Type: String, Default: wonderfulkb-uw-cases}
+  ClientsTable: {Type: String, Default: wonderfulkb-uw-clients}
+  ClientsIcoIndex: {Type: String, Default: ico-index}
+  CasesClientCreatedIndex: {Type: String, Default: client-created-index}
   RawBucket: {Type: String, Default: wonderfulkb-raw-document-storage}
   VectorBucket: {Type: String, Default: wonderfulkb-vectors}
   ApiKeySecretName: {Type: String, Default: wonderfulkb/ingest-api-key}
+  # Duplicity napříč případy (dedup/): index hashů a tabulka dokumentů ingestu (čte se jen atribut sha256).
+  # Prázdný ContentHashesTable funkci vypne (pole duplicate_of a duplicate_relevant se pak nevracejí).
+  ContentHashesTable: {Type: String, Default: wonderfulkb-uw-content-hashes}
+  DocumentsTable: {Type: String, Default: wonderfulkb-uw-documents}
+  # KMS klíč pro odkrytí podpisů (alias/wonderfulkb-signatures); jen Decrypt, jen s kontextem case/document/signature.
+  # ID klíče za aliasem SignatureKmsAlias (v repu není; deploy.sh ho zjistí kms:DescribeKey a předá).
+  SignatureKmsKeyId: {Type: String, AllowedPattern: '[0-9a-f-]{36}'}
+  SignatureKmsAlias: {Type: String, Default: alias/wonderfulkb-signatures}
+  # Přechod z `crop_url` (viz README). DOČASNĚ true do migrace starých čitelných výřezů (rozhodnutí uživatele, audit V3):
+  # nezmigrované sig_NN.png (např. SYN-A01) dál vracejí crop_url, šifrované .png.enc jdou jen přes /image.
+  # Po migraci vrátit na "false". CropUrlCompat výchozí false = žádný klíč `crop_url` u šifrovaných výřezů.
+  LegacyPlainCropUrl: {Type: String, Default: "true", AllowedValues: ["false", "true"]}
+  CropUrlCompat: {Type: String, Default: "false", AllowedValues: ["false", "true"]}
 
 Conditions:
-  HasCasesTable: !Not [!Equals [!Ref CasesTable, ""]]
+  HasContentHashes: !Not [!Equals [!Ref ContentHashesTable, ""]]
 
 Resources:
   # Vlastní role místo AWSLambdaBasicExecutionRole (ta dává logs:* na všechny skupiny).
@@ -38,17 +54,59 @@ Resources:
                 Effect: Allow
                 Action: [dynamodb:GetItem, dynamodb:Query]
                 Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+              # Case & Client API (dříve role wonderfulkb-lambda-role Lambdy wonderfulkb-case-client): čtení klientů a případů,
+              # založení případu = transakce ConditionCheck na aktivního klienta + Put s attribute_not_exists.
+              - Sid: CaseClientClients
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Scan, dynamodb:ConditionCheckItem]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ClientsTable}"
+              - Sid: CaseClientCases
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Scan]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
+              - Sid: CaseClientIndexes
+                Effect: Allow
+                Action: dynamodb:Query
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ClientsTable}/index/${ClientsIcoIndex}"
+                  - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}/index/${CasesClientCreatedIndex}"
+              # Seznam dokumentů případu zahrnuje i nahrané a dosud nezpracované dokumenty z tabulky ingestu.
+              - Sid: ListIngestDocuments
+                Effect: Allow
+                Action: dynamodb:Query
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DocumentsTable}"
               - !If
-                - HasCasesTable
-                - Sid: ReadCasesTable
+                - HasContentHashes
+                - Sid: ReadContentHashes
+                  Effect: Allow
+                  Action: dynamodb:Query
+                  Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ContentHashesTable}"
+                - !Ref AWS::NoValue
+              - !If
+                - HasContentHashes
+                - Sid: ReadDocumentHash
+                  # jen GetItem; kód si žádá výhradně atribut sha256 (ProjectionExpression)
                   Effect: Allow
                   Action: dynamodb:GetItem
-                  Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
+                  Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DocumentsTable}"
                 - !Ref AWS::NoValue
               - Sid: ReadAnalysisObjects
+                # pokrývá i cases/*/analysis/*/signatures/* (šifrované výřezy a náhledy pro odkrytí); nic dalšího
                 Effect: Allow
                 Action: s3:GetObject
                 Resource: !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
+              - Sid: RevealSignatureCrops
+                # Odkrytí (dešifrování) smí jen toto API, ne pipeline. Jen Decrypt, jen tento klíč a jen volání s kontextem,
+                # který obsahuje právě case_id, document_id, signature_id (Null chrání před voláním bez kontextu, kdy by
+                # ForAllValues vyšlo vždy pravdivě). Žádné GenerateDataKey, Encrypt ani ReEncrypt.
+                Effect: Allow
+                Action: kms:Decrypt
+                Resource: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SignatureKmsKeyId}"
+                Condition:
+                  "ForAllValues:StringEquals":
+                    "kms:EncryptionContextKeys": [case_id, document_id, signature_id]
+                  "Null":
+                    "kms:EncryptionContextKeys": "false"
               - Sid: ListAnalysisPrefix
                 # jen kvůli rozlišení "objekt neexistuje" od "zamítnuto" (signatures.json); jen předpona analysis
                 Effect: Allow
@@ -88,7 +146,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: wonderfulkb-agent-api
-      Description: Čtecí API pro validačního agenta (GET dokument, vektory, podpisy)
+      Description: wonderfulkb API (případy a klienti, dokumenty, vektory, podpisy, odkrytí podpisu)
       CodeUri: .
       Handler: app.handler
       Runtime: python3.14
@@ -105,9 +163,21 @@ Resources:
         Variables:
           ANALYSIS_TABLE: !Ref AnalysisTable
           CASES_TABLE: !Ref CasesTable
+          # Case & Client API (case_client_handler)
+          DATA_BACKEND: dynamodb
+          ALLOW_EPHEMERAL_MOCK: "false"
+          CLIENTS_TABLE_NAME: !Ref ClientsTable
+          CASES_TABLE_NAME: !Ref CasesTable
+          CLIENTS_ICO_INDEX_NAME: !Ref ClientsIcoIndex
+          CASES_CLIENT_CREATED_INDEX_NAME: !Ref CasesClientCreatedIndex
+          HASHES_TABLE: !Ref ContentHashesTable
+          DOCUMENTS_TABLE: !Ref DocumentsTable
           RAW_BUCKET: !Ref RawBucket
           VECTOR_BUCKET: !Ref VectorBucket
           API_KEY_SECRET: !Ref ApiKeySecretName
+          PRIVACY_KMS_KEY_ID: !Ref SignatureKmsAlias
+          LEGACY_PLAIN_CROP_URL: !Ref LegacyPlainCropUrl
+          CROP_URL_COMPAT: !Ref CropUrlCompat
           # API_KEY se v AWS nenastavuje; klíč se čte ze Secrets Manageru.
       Events:
         Any:
@@ -116,6 +186,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /{proxy+}
             Method: GET
+        CreateCase:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /cases
+            Method: POST
         Health:
           Type: HttpApi
           Properties:

@@ -1,0 +1,20 @@
+{
+ "default": "flag",
+ "policies": {
+  "data_ze_systemu": "flag",
+  "dodatek_ke_smlouve": "flag",
+  "dohoda_o_zaplaceni_kupni_ceny": "flag",
+  "faktura": "flag",
+  "jine": "flag",
+  "objednavka": "flag",
+  "predavaci_protokol": "flag",
+  "ruceni": "flag",
+  "smlouva_o_uveru": "flag",
+  "technicka_specifikace": "flag",
+  "uhrada_kupni_ceny": "flag",
+  "vinkulace_pojisteni": "flag",
+  "vop": "ignore",
+  "zajistovaci_prevod_vlastnickeho_prava": "flag"
+ },
+ "template_threshold": 3
+}

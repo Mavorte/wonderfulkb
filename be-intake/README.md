@@ -1,9 +1,9 @@
 # Ingest API (`wonderfulkb-ingest`): nahrávání dokumentů, pro Wonderful
 
-Stav: **služba běží na App Runner; adresu a API klíč dostanete od nás.** Formální popis: [openapi-ingest.yaml](openapi-ingest.yaml). Navazuje na [Case & Client API](../be-case-client/openapi-case-client.yaml): case musí existovat (zakládá se přes `POST /cases`).
+Stav: **služba běží na App Runner; adresu a API klíč dostanete od nás.** Formální popis: [openapi-ingest.yaml](openapi-ingest.yaml). Navazuje na API případů ([openapi-validator-agent.yaml](../be-document-processing/contracts/openapi-validator-agent.yaml), `POST /cases`): case musí existovat (zakládá se přes `POST /cases`).
 
-- Base URL: `<UPLOAD_URL>` (tvar `https://<id>.<region>.awsapprunner.com/v1`, všechny cesty níže jsou pod `/v1`). **Je to jiná adresa než u Case & Client API.** Upload běží jako samostatný kontejner, protože API Gateway a Lambda by 4–5 MB soubory nezvládly s rezervou.
-- Autentizace: hlavička `x-api-key: <klíč>` u každého volání pod `/v1`. **Je to stejný klíč jako u Case & Client API**, jeden klíč pro obě služby. Klíč kontroluje sama služba, ne API Gateway. Klíč nikam nezapisujte do repozitáře ani do kódu prohlížeče, volejte ho z backendu.
+- Base URL: `<UPLOAD_URL>` (tvar `https://<id>.<region>.awsapprunner.com/v1`, všechny cesty níže jsou pod `/v1`). **Je to jiná adresa než u API případů a dokumentů (`wonderfulkb-agent-api`).** Upload běží jako samostatný kontejner, protože API Gateway a Lambda by 4–5 MB soubory nezvládly s rezervou.
+- Autentizace: hlavička `x-api-key: <klíč>` u každého volání pod `/v1`. **Je to stejný klíč jako u API případů a dokumentů (`wonderfulkb-agent-api`)**, jeden klíč pro obě služby. Klíč kontroluje sama služba, ne API Gateway. Klíč nikam nezapisujte do repozitáře ani do kódu prohlížeče, volejte ho z backendu.
 - Kontrola dostupnosti: `GET /healthz` (bez `/v1`, bez klíče) vrací `200 {"status": "ok"}`.
 - Formát: nahrání je `multipart/form-data`, ostatní odpovědi jsou JSON (UTF-8), časy v ISO 8601 (UTC).
 - Chyby: `{"error": "popis"}` s kódem 400 (špatný požadavek, např. chybí `files`, neplatné `case_id`, parametr mimo rozsah), 401 (chybí klíč), 403 (špatný klíč), 404 (case neexistuje), 413 (moc velké), 415 (není PDF), 5xx (zkuste znovu). Kód 429 tu není, služba nemá usage plán. Klíč se kontroluje před čtením těla, takže bez platného klíče se nic nenahraje.
@@ -55,7 +55,7 @@ Všechny parametry jsou volitelné. Řazeno podle času přijetí (`received_at`
 `download_url` nikam neukládejte, po 5 minutách přestane platit. Další odkaz získáte novým voláním s `with_urls=true`.
 
 ## Doporučený postup
-1. Založit case (Case & Client API, `POST /cases`) a zapamatovat si `case_id`.
+1. Založit case (`wonderfulkb-agent-api`, `POST /cases`) a zapamatovat si `case_id`.
 2. Nahrát všechna PDF případu jedním voláním `POST /cases/{case_id}/documents`.
 3. Při chybě sítě nebo 5xx zopakovat stejné volání, duplicity se nezapíšou dvakrát.
 4. Nahrané dokumenty zobrazit uživateli přes `GET /cases/{case_id}/documents`.

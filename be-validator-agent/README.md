@@ -25,7 +25,7 @@ Stav k 19. 10. 2026: moduly jsou napsané a otestované samostatně (255 testů 
 
 ## Co v repu není a proč
 - **Vzorové dokumenty z hackathonového balíku** (PDF a jejich textové výpisy) a **ukázkové výstupy z nich**. Repozitář je veřejný. Skripty, které je potřebují (`classify/evaluate.py`, `embed/benchmark.py`, `eval/build_truth.py`, mock), čtou složku z proměnné `WONDERFULKB_SAMPLES_DIR`. Bez nich nefungují jen tyto skripty a mock s texty; testy jedou na fixturách.
-- **Skutečné adresy API, číslo AWS účtu a klíče.** V textu jsou zástupné symboly (`<AGENT_API_BASE_URL>`, `<INGEST_API_BASE_URL>`, `<CASE_API_BASE_URL>`, `<ACCOUNT_ID>`, `<KMS_KEY_ID>`). Skutečné hodnoty se předávají mimo repozitář.
+- **Skutečné adresy API, číslo AWS účtu a klíče.** V textu jsou zástupné symboly (`<AGENT_API_BASE_URL>`, `<INGEST_API_BASE_URL>`, `<ACCOUNT_ID>`, `<KMS_KEY_ID>`). Skutečné hodnoty se předávají mimo repozitář.
 - **Trigger zpracování po uploadu** je rozpracovaný a není součástí (viz „Co není hotové" v [HANDOVER.md](HANDOVER.md)).
 
 ## Spuštění testů

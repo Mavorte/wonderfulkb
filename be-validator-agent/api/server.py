@@ -23,15 +23,22 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urlparse(self.path)
         if INDEX is not None and u.path == "/v1/_mock/cases":
-            if not API.keys.check(self.headers.get("x-api-key")):
-                status, body = 403, {"error": "Chybí nebo je špatný API klíč"}
+            if not self.headers.get("x-api-key"):
+                status, body = 401, {"error": "Chybí API klíč"}
+            elif not API.keys.check(self.headers.get("x-api-key")):
+                status, body = 403, {"error": "Špatný API klíč"}
             else:
                 status, body = 200, INDEX
         else:
             status, body = core.handle(self.command, u.path, parse_qs(u.query), dict(self.headers), api=API)
-        raw = core.dumps(body)
+        if isinstance(body, core.Binary):
+            raw, ctype, extra = body.data, body.content_type, body.headers
+        else:
+            raw, ctype, extra = core.dumps(body), "application/json; charset=utf-8", {}
         self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Type", ctype)
+        for k, v in extra.items():
+            self.send_header(k, v)
         self.send_header("Content-Length", str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)

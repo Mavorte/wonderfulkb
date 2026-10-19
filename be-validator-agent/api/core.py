@@ -6,6 +6,7 @@ Závislosti jen boto3 (v Lambda runtime je). API klíč se nikdy nevypisuje ani 
 """
 import base64
 import binascii
+import hashlib
 import hmac
 import json
 import logging
@@ -17,6 +18,8 @@ from decimal import Decimal
 from urllib.parse import unquote
 
 log = logging.getLogger("wonderfulkb.agent_api")
+audit_log = logging.getLogger("wonderfulkb.agent_api.audit")
+audit_log.setLevel(logging.INFO)  # Lambda má kořenový logger na WARNING; auditní řádek musí projít vždy
 
 REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "eu-central-1"))
 BASE = "/v1"
@@ -25,12 +28,26 @@ READY = ("completed", "partial")
 STATUSES = ("awaiting_upload", "queued", "processing", "completed", "partial", "failed")
 CROP_TTL = 300
 GET_BATCH = 100  # limit S3 Vectors GetVectors na počet klíčů
+MAX_CROP_BLOB = 10 * 1024 * 1024
 
 
 class ApiError(Exception):
     def __init__(self, status, msg, extra=None):
         super().__init__(msg)
         self.status, self.msg, self.extra = status, msg, extra or {}
+
+
+class Binary:
+    """Odpověď, která není JSON (odkrytý výřez). Adaptéry ji pošlou jako tělo s danou hlavičkou Content-Type."""
+
+    def __init__(self, data, content_type="image/png"):
+        self.data, self.content_type = data, content_type
+        self.headers = {"Cache-Control": "no-store", "Pragma": "no-cache", "Content-Disposition": "inline",
+                        "X-Content-Type-Options": "nosniff"}
+
+
+def _flag(v):
+    return str(v or "").strip().lower() in ("1", "true", "yes")
 
 
 class Config:
@@ -47,15 +64,24 @@ class Config:
         self.sig_index = e.get("SIGNATURES_INDEX", "wonderfulkb-signatures")
         self.dimension = int(e.get("VECTOR_DIMENSION", "1024"))
         self.secret_id = e.get("API_KEY_SECRET", "wonderfulkb/ingest-api-key")
+        # duplicity napříč případy (dedup/): index hashů a tabulka dokumentů (kvůli sha256); prázdný název funkci vypne
+        self.hashes_table = e.get("HASHES_TABLE", "wonderfulkb-uw-content-hashes")
+        self.documents_table = e.get("DOCUMENTS_TABLE", "wonderfulkb-uw-documents")
         self.api_key = e.get("API_KEY")  # jen lokální vývoj a testy; v AWS se čte ze Secrets Manageru
+        # odkrytí podpisu: KMS klíč (alias nebo ARN) a přechodové přepínače, oba ve výchozím stavu vypnuté
+        self.kms_key_id = e.get("PRIVACY_KMS_KEY_ID") or "alias/wonderfulkb-signatures"
+        self.legacy_plain_crop_url = _flag(e.get("LEGACY_PLAIN_CROP_URL"))  # čitelný odkaz u nezmigrovaných výřezů
+        self.crop_url_compat = _flag(e.get("CROP_URL_COMPAT"))  # ponechá klíč `crop_url` (vždy null) pro starší klienty
 
 
 class Clients:
     """Líné klienty boto3; v testech se dosadí fake."""
 
-    def __init__(self, cfg, ddb=None, s3=None, s3_presign=None, vectors=None, secrets=None):
+    def __init__(self, cfg, ddb=None, s3=None, s3_presign=None, vectors=None, secrets=None, kms=None,
+                 key_provider=None):
         self.cfg = cfg
         self._ddb, self._s3, self._presign, self._vec, self._sec = ddb, s3, s3_presign, vectors, secrets
+        self._kms, self._provider = kms, key_provider
 
     @property
     def ddb(self):
@@ -95,6 +121,17 @@ class Clients:
             import boto3
             self._sec = boto3.client("secretsmanager", region_name=REGION)
         return self._sec
+
+    @property
+    def key_provider(self):
+        """Dešifrování datových klíčů výřezů (jen Decrypt). V testech se dosadí LocalKeyProvider."""
+        if self._provider is None:
+            from crop_reveal import KmsDecryptor
+            if self._kms is None:
+                import boto3
+                self._kms = boto3.client("kms", region_name=REGION)
+            self._provider = KmsDecryptor(self._kms, self.cfg.kms_key_id)
+        return self._provider
 
 
 # ---- autentizace ---------------------------------------------------------
@@ -221,6 +258,51 @@ class Repo:
                 return rows, False
             kw["ExclusiveStartKey"] = r["LastEvaluatedKey"]
 
+    def ingest_rows(self, case_id):
+        """Dokumenty nahrané přes ingest (tabulka dokumentů) jako řádky seznamu se stavem "queued"."""
+        if not self.cfg.documents_table:
+            return []
+        kw = dict(TableName=self.cfg.documents_table, KeyConditionExpression="case_id = :c",
+                  ExpressionAttributeValues={":c": {"S": case_id}}, ProjectionExpression="document_id, filename")
+        rows = []
+        while True:
+            r = self.c.ddb.query(**kw)
+            rows += [{"document_id": i["document_id"], "title": i.get("filename", ""), "processing_status": "queued"}
+                     for i in map(_item, r.get("Items", []))]
+            if "LastEvaluatedKey" not in r:
+                return rows
+            kw["ExclusiveStartKey"] = r["LastEvaluatedKey"]
+
+    def document_sha256(self, case_id, document_id):
+        """SHA-256 obsahu z tabulky dokumentů ingestu (jen tento atribut), nebo None."""
+        r = self.c.ddb.get_item(TableName=self.cfg.documents_table, ProjectionExpression="sha256",
+                                Key={"case_id": {"S": case_id}, "document_id": {"S": document_id}})
+        value = r.get("Item", {}).get("sha256", {}).get("S")
+        return value.lower() if value else None
+
+    def hash_matches(self, sha256):
+        """[{case_id, document_id, label}] z indexu hashů (všechny případy, i vlastní)."""
+        kw = dict(TableName=self.cfg.hashes_table, ConsistentRead=True, KeyConditionExpression="sha256 = :h",
+                  ExpressionAttributeValues={":h": {"S": sha256}})
+        items = []
+        while True:
+            r = self.c.ddb.query(**kw)
+            items += [_item(i) for i in r.get("Items", [])]
+            if "LastEvaluatedKey" not in r:
+                break
+            kw["ExclusiveStartKey"] = r["LastEvaluatedKey"]
+        out = []
+        for i in items:
+            case, doc = i.get("case_id"), i.get("document_id")
+            if not (isinstance(case, str) and isinstance(doc, str) and case and doc):
+                composite = i.get("case_document")
+                if not (isinstance(composite, str) and "#" in composite):
+                    continue  # poškozená položka indexu se přeskočí
+                case, doc = composite.split("#", 1)
+            label = i.get("label")
+            out.append({"case_id": case, "document_id": doc, "label": label if isinstance(label, str) and label else None})
+        return sorted(out, key=lambda m: (m["case_id"], m["document_id"]))
+
     def case_exists(self, case_id):
         r = self.c.ddb.query(TableName=self.cfg.analysis_table, Limit=1, Select="COUNT",
                              KeyConditionExpression="case_id = :c", ExpressionAttributeValues={":c": {"S": case_id}})
@@ -243,7 +325,31 @@ class Repo:
         r = self.c.s3.list_objects_v2(Bucket=self.cfg.bucket, Prefix=key, MaxKeys=1)
         return any(o["Key"] == key for o in r.get("Contents", []))
 
-    def crop_url(self, key):
+    def list_keys(self, prefix):
+        """Všechny klíče pod předponou (s3:ListBucket je omezené na cases/*/analysis/*); jedno volání na dokument
+        místo jednoho dotazu na každý výřez a náhled."""
+        keys, token = set(), None
+        while True:
+            kw = dict(Bucket=self.cfg.bucket, Prefix=prefix)
+            if token:
+                kw["ContinuationToken"] = token
+            r = self.c.s3.list_objects_v2(**kw)
+            keys.update(o["Key"] for o in r.get("Contents", []))
+            if not r.get("IsTruncated"):
+                return keys
+            token = r["NextContinuationToken"]
+
+    def read_blob(self, key):
+        """Bajty objektu, nebo None, když neexistuje. Příliš velký objekt je chyba, ne odpověď."""
+        try:
+            r = self.c.s3.get_object(Bucket=self.cfg.bucket, Key=key)
+        except self.c.s3.exceptions.NoSuchKey:
+            return None
+        if r.get("ContentLength", 0) > MAX_CROP_BLOB:
+            raise ApiError(500, "Výstup zpracování je neplatný")
+        return r["Body"].read()
+
+    def presign(self, key):
         return self.c.s3_presign.generate_presigned_url(
             "get_object", Params={"Bucket": self.cfg.bucket, "Key": key}, ExpiresIn=CROP_TTL)
 
@@ -324,9 +430,14 @@ class Api:
                     raise ValueError
             except (ValueError, KeyError, TypeError, binascii.Error):
                 raise ApiError(400, "Neplatný next_token") from None
-        rows, more = self.repo.query_rows(case_id, status, limit, start)
-        if not rows and not start and not self.repo.case_exists(case_id):
+        # Analýza (zpracované) + ingest (nahrané, pipeline je ještě nezpracovala = "queued").
+        merged = {r["document_id"]: r for r in self.repo.ingest_rows(case_id)}
+        merged.update({r["document_id"]: r for r in self.repo.query_rows(case_id, None, 10**6, None)[0]})
+        if not merged and not self.repo.case_exists(case_id):
             raise ApiError(404, "Case neexistuje")
+        rows = [merged[d] for d in sorted(merged) if (start is None or d > start)
+                and (status is None or merged[d]["processing_status"] == status)]
+        rows, more = rows[:limit], len(rows) > limit
         docs = [{"document_id": r["document_id"], "title": r.get("title", ""), "label": r.get("label"),
                  "label_status": r.get("label_status", "predicted") if r.get("label") else None,
                  "processing_status": r["processing_status"],
@@ -338,6 +449,8 @@ class Api:
         _ids(case_id, document_id)
         row = self.repo.get_row(case_id, document_id)
         if not row:
+            if self.cfg.documents_table and self.repo.document_sha256(case_id, document_id):
+                raise ApiError(409, "OCR ještě nedoběhlo", {"processing_status": "queued"})  # jen v ingestu
             raise ApiError(404, "Dokument neexistuje")
         return row
 
@@ -361,7 +474,30 @@ class Api:
             del out["page_count"]
         if st == "partial":
             out["pages_failed"] = [int(p) for p in sorted(row.get("pages_failed", []))]
+        out.update(self._duplicates(case_id, document_id, label))
         return out
+
+    def _duplicates(self, case_id, document_id, label):
+        """`duplicate_of` (stejný obsah v jiných případech) a `duplicate_relevant`. Chyba čtení indexu, tabulky
+        dokumentů nebo politiky pole jen vynechá: dokument se vrátí i bez nich, nikdy 5xx a bez detailu v odpovědi."""
+        if not self.cfg.hashes_table:
+            return {}
+        try:
+            sha = self.repo.document_sha256(case_id, document_id)
+            if not sha:
+                return {}
+            matches = self.repo.hash_matches(sha)
+            policy = _duplicate_policy()
+        except Exception as error:  # noqa: BLE001 - hash index je doplněk, ne podmínka odpovědi
+            log.warning("Duplicity nejdou zjistit: %s", type(error).__name__)
+            return {}
+        others = [m for m in matches if m["case_id"] != case_id]
+        cases = {m["case_id"] for m in matches} | {case_id}
+        relevant = (bool(others) and policy["policies"].get(label or "", policy["default"]) == "flag"
+                    and len(cases) < policy["template_threshold"])
+        return {"duplicate_of": [{"case_id": m["case_id"], "document_id": m["document_id"], "label": m["label"]}
+                                 for m in others],
+                "duplicate_relevant": relevant}
 
     # 2. vektory
     def get_vectors(self, case_id, document_id, query):
@@ -444,8 +580,7 @@ class Api:
         out = {"case_id": case_id, "document_id": document_id, "status": "not_run", "signatures": []}
         if not _ok_status(row):
             return out
-        # atribut tabulky je jen zkratka; pipeline ho nemusí zapsat, proto konvenční klíč z kontraktu
-        key = row.get("signatures_s3_key") or f"cases/{case_id}/analysis/{document_id}/signatures.json"
+        key = self._signatures_key(row, case_id, document_id)
         if not self.repo.object_exists(key):
             return out
         sigs = self._read_signatures(key)
@@ -458,12 +593,12 @@ class Api:
         vecs = {}
         if sigs and (match_client or include_vectors):
             vecs = {v["key"]: v for v in self.repo.get_vectors(self.cfg.sig_index, list(vkeys.values()), True)}
+        present = self.repo.list_keys(f"{base}/signatures/") if sigs else set()
         res = []
         for s in sigs:
             s = dict(s)
             sid = s["signature_id"]
-            s["crop_url"] = self.repo.crop_url(s.get("crop_s3_key") or f"{base}/signatures/{sid}.png")
-            s.pop("crop_s3_key", None)
+            s.update(self._crop_fields(s, case_id, document_id, base, present))
             v = vecs.get(vkeys[sid])
             if include_vectors:
                 if v and not s.get("vector"):
@@ -478,6 +613,43 @@ class Api:
                 s.pop("similar_signatures", None)
             res.append(s)
         out["signatures"] = res
+        return out
+
+    @staticmethod
+    def _signatures_key(row, case_id, document_id):
+        # atribut tabulky je jen zkratka; pipeline ho nemusí zapsat, proto konvenční klíč z kontraktu
+        return row.get("signatures_s3_key") or f"cases/{case_id}/analysis/{document_id}/signatures.json"
+
+    @staticmethod
+    def _crop_ref(s, base, present):
+        """(klíč výřezu, je šifrovaný) podle `signatures.json` a podle toho, co leží v S3. Klíč mimo
+        `<base>/signatures/` se nepoužije (soubor nesmí odkázat na cizí objekt). Bez `crop_s3_key` je to
+        `<sig>.png.enc`, pokud existuje, jinak starý čitelný `<sig>.png`."""
+        sid, sigdir = s["signature_id"], f"{base}/signatures/"
+        key = s.get("crop_s3_key")
+        if isinstance(key, str) and key.startswith(sigdir) and ".." not in key:
+            return key, s.get("crop_encrypted") is True or key.endswith(".enc")
+        enc = f"{sigdir}{sid}.png.enc"
+        if enc in present or s.get("crop_encrypted") is True:
+            return enc, True
+        return f"{sigdir}{sid}.png", False
+
+    def _crop_fields(self, s, case_id, document_id, base, present):
+        """Pole výřezu v odpovědi. Čitelný odkaz se nevrací nikdy, kromě nezmigrovaných výřezů při
+        `LEGACY_PLAIN_CROP_URL` (výchozí vypnuto). Interní pole (`crop_s3_key`, `crop_encrypted`, `crop_source`,
+        `preview_s3_key`) se z odpovědi odstraní."""
+        sid, sigdir = s["signature_id"], f"{base}/signatures/"
+        key, encrypted = self._crop_ref(s, base, present)
+        pkey = s.get("preview_s3_key")
+        pkey = pkey if isinstance(pkey, str) and pkey.startswith(sigdir) and ".." not in pkey else f"{sigdir}{sid}.preview.png"
+        for k in ("crop_s3_key", "crop_encrypted", "crop_source", "preview_s3_key", "crop_url"):
+            s.pop(k, None)
+        out = {"reveal_path": f"/cases/{case_id}/documents/{document_id}/signatures/{sid}/image",
+               "crop_available": bool(encrypted and key in present),
+               "preview_url": self.repo.presign(pkey) if pkey in present else None}
+        if self.cfg.legacy_plain_crop_url or self.cfg.crop_url_compat:
+            legacy = not encrypted and key in present and self.cfg.legacy_plain_crop_url
+            out["crop_url"] = self.repo.presign(key) if legacy else None
         return out
 
     def _read_signatures(self, key):
@@ -515,13 +687,103 @@ class Api:
                         "document_id": did, "score": _score(hit.get("distance", 1.0))})
         return out
 
+    # 3b. odkrytí podpisu
+    def reveal_signature_image(self, case_id, document_id, signature_id, query, meta=None):
+        """Dešifrovaný výřez podpisu (PNG) pro lidskou kontrolu. Čitelný fallback neexistuje: výřez, který není
+        šifrovaný, se nevrací (409). Každé volání s platným API klíčem se zapíše do logu jako jeden JSON řádek."""
+        _ids(case_id, document_id)
+        if not ID_RE.match(signature_id) or set(signature_id) == {"."}:
+            raise ApiError(400, "Neplatné signature_id")
+        meta = meta or {}
+        outcome = "error"
+        try:
+            png = self._reveal(case_id, document_id, signature_id)
+            outcome = "revealed"
+            return Binary(png)
+        except _Denied:
+            outcome = "denied"
+            raise ApiError(500, "Odkrytí výřezu selhalo") from None
+        except ApiError as e:
+            outcome = {404: "not_found", 409: "not_encrypted"}.get(e.status, "error")
+            raise
+        finally:
+            _audit(meta, case_id, document_id, signature_id, outcome)
+
+    def _reveal(self, case_id, document_id, signature_id):
+        from crop_reveal import DecryptionError, PNG_MAGIC, context_dict, decrypt_blob, is_encrypted_blob
+        row = self._row(case_id, document_id)
+        if not _ok_status(row):
+            raise ApiError(404, "Podpis neexistuje")
+        skey = self._signatures_key(row, case_id, document_id)
+        if not self.repo.object_exists(skey):
+            raise ApiError(404, "Podpis neexistuje")
+        sigs = self._read_signatures(skey)
+        if sigs is None:
+            raise ApiError(500, "Výstup zpracování je neplatný")
+        s = next((x for x in sigs if x["signature_id"] == signature_id), None)
+        if s is None:
+            raise ApiError(404, "Podpis neexistuje")
+        base = skey.rsplit("/", 1)[0]
+        present = self.repo.list_keys(f"{base}/signatures/")
+        key, encrypted = self._crop_ref(s, base, present)
+        if key not in present:
+            raise ApiError(404, "Výřez podpisu neexistuje")
+        if not encrypted:
+            raise ApiError(409, "Výřez ještě není zašifrovaný, odkrytí není možné")
+        # kontext z cesty požadavku; `crop_source` jen u výřezu, který byl zašifrován pod jiným podpisem
+        # (přesun, migrace). Klíč objektu musí být pod předponou tohoto dokumentu (hlídá _crop_ref).
+        ctx = context_dict(case_id, document_id, signature_id)
+        src = s.get("crop_source")
+        if src is not None:
+            if not isinstance(src, dict) or set(src) != set(ctx):
+                raise ApiError(500, "Výstup zpracování je neplatný")
+            try:
+                ctx = context_dict(**src)
+            except DecryptionError:
+                raise ApiError(500, "Výstup zpracování je neplatný") from None
+        blob = self.repo.read_blob(key)
+        if blob is None:
+            raise ApiError(404, "Výřez podpisu neexistuje")
+        if not is_encrypted_blob(blob):
+            raise ApiError(409, "Výřez ještě není zašifrovaný, odkrytí není možné")  # nikdy čitelný fallback
+        try:
+            png = decrypt_blob(blob, ctx, self.c.key_provider)
+        except DecryptionError:
+            raise _Denied() from None
+        if not png.startswith(PNG_MAGIC):
+            raise _Denied()
+        return png
+
     # směrování
     ROUTES = [
         (re.compile(r"^/cases/([^/]+)/documents$"), "list_documents"),
         (re.compile(r"^/cases/([^/]+)/documents/([^/]+)$"), "get_document"),
         (re.compile(r"^/cases/([^/]+)/documents/([^/]+)/vectors$"), "get_vectors"),
         (re.compile(r"^/cases/([^/]+)/documents/([^/]+)/signatures$"), "get_signatures"),
+        (re.compile(r"^/cases/([^/]+)/documents/([^/]+)/signatures/([^/]+)/image$"), "reveal_signature_image"),
     ]
+
+
+class _Denied(Exception):
+    """Dešifrování selhalo (zamítnutí KMS, jiný kontext, poškozený blok). Navenek obecné 500, v auditu `denied`."""
+
+
+def _caller(meta, api_key):
+    """Kdo volal, aniž by se prozradil klíč: `apiKeyId` z API Gateway, jinak otisk (SHA-256, 12 znaků) klíče."""
+    if meta.get("api_key_id"):
+        return str(meta["api_key_id"])
+    if api_key:
+        return "fp:" + hashlib.sha256(api_key.encode()).hexdigest()[:12]
+    return "unknown"
+
+
+def _audit(meta, case_id, document_id, signature_id, outcome):
+    """Jeden JSON řádek: kdo, kdy, který podpis, výsledek. Bez obsahu obrázku, klíče i datového klíče."""
+    audit_log.info(json.dumps({
+        "event": "signature_reveal", "caller": meta.get("caller", "unknown"),
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "case_id": case_id, "document_id": document_id,
+        "signature_id": signature_id, "outcome": outcome, "request_id": meta.get("request_id")},
+        ensure_ascii=False))
 
 
 def _chunk_no(key):
@@ -544,11 +806,63 @@ def _sig_no(sig, pos):
     return int(m.group(1)) - 1 if m and int(m.group(1)) >= 1 else pos
 
 
+_policy_cache = None
+
+
+def _duplicate_policy():
+    """Politika duplicit podle štítku a práh šablony ze snapshotu `duplicate_policy.json` (vyrábí
+    `dedup/policy.py` z classify/taxonomy.yaml; Lambda se balí jen z tohoto adresáře). `DEDUP_TEMPLATE_THRESHOLD`
+    práh přepíše."""
+    global _policy_cache
+    if _policy_cache is None:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "duplicate_policy.json")
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+        if not isinstance(data.get("policies"), dict) or data.get("default") not in ("flag", "ignore"):
+            raise ValueError("duplicate_policy.json má špatný tvar")
+        if os.environ.get("DEDUP_TEMPLATE_THRESHOLD"):
+            data["template_threshold"] = int(os.environ["DEDUP_TEMPLATE_THRESHOLD"])
+        data["template_threshold"] = int(data["template_threshold"])
+        _policy_cache = data
+    return _policy_cache
+
+
 _default = None
 
 
-def handle(method, path, query=None, headers=None, api=None):
-    """(status, body). `path` smí mít prefix /v1; `query` je {název: hodnota | [hodnoty]}; `headers` bez ohledu na velikost písmen."""
+def _check_key(api, hdr):
+    if not hdr.get("x-api-key"):  # jako ingest: chybějící klíč 401, špatný 403
+        raise ApiError(401, "Chybí API klíč")
+    if not api.keys.check(hdr.get("x-api-key")):
+        raise ApiError(403, "Špatný API klíč")
+
+
+def strip_base(path):
+    path = unquote(path)
+    return path[len(BASE):] if path.startswith(BASE + "/") else path
+
+
+def authorize(headers, api=None):
+    """Stejná kontrola klíče jako v `handle` pro cesty obsluhované jinde (případy a klienti).
+    None = povoleno, jinak (status, body)."""
+    global _default
+    if api is None:
+        if _default is None:
+            _default = Api()
+        api = _default
+    try:
+        _check_key(api, {k.lower(): v for k, v in (headers or {}).items()})
+        return None
+    except ApiError as e:
+        return e.status, {"error": e.msg}
+    except Exception:  # noqa: BLE001
+        log.exception("Neošetřená chyba")
+        return 500, {"error": "Interní chyba služby"}
+
+
+def handle(method, path, query=None, headers=None, api=None, request=None):
+    """(status, body). `path` smí mít prefix /v1; `query` je {název: hodnota | [hodnoty]}; `headers` bez ohledu na velikost písmen.
+    `body` je dict (JSON) nebo `Binary` (odkrytý výřez). `request`: {request_id, api_key_id} z Lambdy pro audit."""
     global _default
     if api is None:
         if _default is None:
@@ -562,13 +876,15 @@ def handle(method, path, query=None, headers=None, api=None):
             path = path[len(BASE):]
         if path == "/healthz":
             return 200, {"status": "ok"}
-        if not api.keys.check(hdr.get("x-api-key")):
-            raise ApiError(403, "Chybí nebo je špatný API klíč")
+        _check_key(api, hdr)
         for rx, name in Api.ROUTES:
             m = rx.match(path)
             if m:
                 if method.upper() != "GET":
                     raise ApiError(405, "Povolena je jen metoda GET")
+                if name == "reveal_signature_image":
+                    meta = dict(request or {}, caller=_caller(request or {}, hdr.get("x-api-key")))
+                    return 200, api.reveal_signature_image(*m.groups(), query, meta=meta)
                 return 200, getattr(api, name)(*m.groups(), query)
         raise ApiError(404, "Neznámá cesta")
     except ApiError as e:

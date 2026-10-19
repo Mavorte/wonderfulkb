@@ -3,7 +3,7 @@ info:
   title: wonderfulkb Ingest API (část 2)
   version: 0.5.0
   description: |
-    Služba `wonderfulkb-ingest` běží na App Runner; adresu a API klíč dostanete od nás. Navazuje na Case & Client API (openapi-case-client.yaml), API klíč `x-api-key` je s ním společný.
+    Služba `wonderfulkb-ingest` běží na App Runner; adresu a API klíč dostanete od nás. Navazuje na API případů a dokumentů (`wonderfulkb-agent-api`, be-document-processing/contracts/openapi-validator-agent.yaml), API klíč `x-api-key` je s ním společný.
     Kontrakt navrhl frontend / Wonderful, doplněný o poznámky v ingest-api-navrh.md. Běží jako kontejner
     (ne Lambda), proto vlastní adresa a API klíč kontrolovaný aplikací (hlavička `x-api-key`).
     Všechny cesty jsou pod `/v1`, jen `/healthz` je bez prefixu a bez klíče. Limity: 20 souborů,

@@ -10,7 +10,7 @@ import unittest
 from uuid import UUID
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 ACTIVE = '11111111-1111-4111-8111-111111111111'
 OTHER = '22222222-2222-4222-8222-222222222222'
@@ -253,7 +253,7 @@ class CaseClientLambdaTests(unittest.TestCase):
                       side_effect=AssertionError('credentials forbidden in mock')):
             self.module.create_handler()({'httpMethod': 'GET', 'path': '/clients'}, None)
         for name in ('case_client_repository.py', 'case_client_mock_repository.py'):
-            path = Path(__file__).resolve().parents[1] / 'src' / name
+            path = Path(__file__).resolve().parents[1] / name
             tree = ast.parse(path.read_text())
             for node in ast.walk(tree):
                 names = [n.name for n in node.names] if isinstance(node, ast.Import) else (
@@ -288,7 +288,7 @@ class CaseClientLambdaTests(unittest.TestCase):
                 self.assertEqual(sorted(pool.map(call, owners)), statuses)
 
     def test_packaged_events_and_case_public_shape(self):
-        directory = Path(__file__).resolve().parents[1] / 'events'
+        directory = Path(__file__).resolve().parent / 'events'
         for name in ('list-clients', 'create-case', 'get-case', 'list-client-cases'):
             response = self.handler(json.loads((directory / (name + '.json')).read_text()), None)
             self.assertEqual(response['statusCode'], 201 if name == 'create-case' else 200)

@@ -2,7 +2,7 @@
 // shows: case details, client details, and whether documents can be uploaded.
 //
 // Configuration (tenant-level):
-// - global `kb_aws_documents_api_url`: base URL of the case/client API (openapi-case-client.yaml).
+// - global `kb_aws_documents_api_url`: base URL of the case/client API (be-document-processing/contracts/openapi-validator-agent.yaml).
 //   When empty, mock data is returned so the UI can be demoed before AWS is live.
 // - global `kb_aws_ingest_url`: base URL of the ingest service. Empty → upload disabled.
 // - secret `kb-aws-ingest-api-key` (type "API Key", header x-api-key): key for the case/client API.

@@ -1,5 +1,9 @@
 boto3>=1.40
-moto[dynamodb,s3,secretsmanager]>=5.1
+moto[dynamodb,s3,secretsmanager,kms]>=5.1
 pyyaml
 jsonschema
 pytest
+# fixtury šifrují výřezy knihovnou signature_privacy (../privacy)
+cryptography>=43
+Pillow>=10
+numpy>=1.26

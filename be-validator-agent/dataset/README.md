@@ -22,6 +22,7 @@ Názvy souborů: A `00_Smlouva_o_uveru, 01_VOP, 02_Zajistovaci_prevod, 03_Vinkul
 Pole `scenario` v `mapping.json` jsem proto odvodil z balíku: u A/B rodina a varianta s předlohou, u C kategorie, sektor a stav stroje.
 
 ## Jak se případy zakládají a co jsem zjistil
+- *Pozdější změna (19. 10. 2026 večer): `/clients` a `/cases` obsluhuje `wonderfulkb-agent-api` s klíčem `wonderfulkb/ingest-api-key`; REST API a Lambda `wonderfulkb-case-client` jsou smazané. Následující dva body popisují stav v době nahrávání.*
 - **Case API je nasazené**: REST API `wonderfulkb-case-client` (id `<CASE_API_ID>`, stage `v1`, `<CASE_API_BASE_URL>`), Lambda `wonderfulkb-case-client` je `Active`.
 - **Náš klíč v něm ale nefunguje.** Klíč ze Secrets Manageru `wonderfulkb/ingest-api-key` dostal na `GET /clients` odpověď `403 Forbidden`. API Gateway má jen dva klíče `wonderfulkb-demo-key` a `wonderfulkb-demo-key-2` v usage plánu `wonderfulkb-demo-plan`; návrh říká, že tam má být klíč se stejnou hodnotou jako ingest, a není. Hodnotu cizích demo klíčů jsem nečetl ani nezaváděl nový. Řešení patří jejich vlastníkovi (zaregistrovat klíč ingestu v API Gateway).
 - **Case zakládat nebylo potřeba.** V `wonderfulkb-uw-cases` už je všech 20 `SYN-A01` až `SYN-C10` (stejná `client_id` jako v `seed/cases.json`, `created_at` v minulosti, bohatá `metadata`) a v `wonderfulkb-uw-clients` je 21 klientů. Bez dokumentů. Proto jsem `POST /cases` nevolal (vytvořil by další UUID case navíc, ne tyto) a nahrál přímo do `SYN-*`. Do obou tabulek jsem nezapisoval, jen četl.
