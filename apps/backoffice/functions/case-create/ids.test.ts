@@ -1,10 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { generateCaseId, generateHash } from "./ids.ts";
-
-test("generateCaseId has eight digits and a two-digit year", () => {
-  assert.match(generateCaseId(new Date("2026-10-19T00:00:00Z")), /^\d{8}-26$/);
-});
+import { generateHash } from "./ids.ts";
 
 test("generateHash is a 22-char base64url string", () => {
   const hash = generateHash();

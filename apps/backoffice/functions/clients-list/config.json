@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Clients List",
+  "description": "Searches clients in the AWS case/client API (GET /clients) by IČO or name for the new-case client autocomplete",
+  "method": "POST",
+  "path_slug": "clients-list"
+}
