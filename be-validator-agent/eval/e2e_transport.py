@@ -15,9 +15,12 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
-API_DIR = os.path.join(REPO, "infra", "validator-agent", "api")
-MOCK_DIR = os.path.join(REPO, "infra", "validator-agent-mock")
+_BASE = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))  # validator-agent / be-validator-agent
+REPO = os.path.abspath(os.path.join(_BASE, "..", ".."))
+API_DIR = os.path.join(_BASE, "api")
+# repo: be-validator-agent/mock; pracovní kopie: infra/validator-agent-mock
+MOCK_DIR = next((p for p in (os.path.join(_BASE, "mock"), os.path.join(_BASE, "..", "validator-agent-mock")) if os.path.isdir(p)),
+                os.path.join(_BASE, "mock"))
 
 
 @dataclass

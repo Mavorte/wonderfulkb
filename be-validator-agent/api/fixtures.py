@@ -20,7 +20,10 @@ from signature_privacy import LocalKeyProvider, SignatureContext, distorted_prev
 
 API_KEY = "test-api-key-not-a-secret"
 HERE = os.path.dirname(os.path.abspath(__file__))
-SEED_PATH = os.path.join(HERE, "..", "..", "validator-agent-mock", "seed.py")
+# repo: be-validator-agent/mock; pracovní kopie: infra/validator-agent-mock
+SEED_PATH = next((p for p in (os.path.join(HERE, "..", "mock", "seed.py"),
+                              os.path.join(HERE, "..", "..", "validator-agent-mock", "seed.py")) if os.path.exists(p)),
+                 os.path.join(HERE, "..", "mock", "seed.py"))
 REGION = "eu-central-1"
 _ser = TypeSerializer()
 
