@@ -1,0 +1,116 @@
+{
+  "_comment": "Sample responses of openapi-validator-agent.yaml (v0.2.0) for 0_Form_Smlouva.pdf (Smlouva o úvěru č. 170170/25). IDs, vectors, neighbors and crop URLs are illustrative; text, label and signatures are taken from the actual document.",
+
+  "listCaseDocuments": {
+    "request": "GET /v1/cases/7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90/documents",
+    "response": {
+      "case_id": "7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90",
+      "documents": [
+        {
+          "document_id": "d2f4a1",
+          "title": "0_Form_Smlouva.pdf",
+          "label": "smlouva_o_uveru",
+          "label_status": "predicted",
+          "processing_status": "completed",
+          "page_count": 4
+        }
+      ],
+      "next_token": null
+    }
+  },
+
+  "getDocumentForValidation": {
+    "request": "GET /v1/cases/7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90/documents/d2f4a1",
+    "response": {
+      "case_id": "7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90",
+      "document_id": "d2f4a1",
+      "title": "0_Form_Smlouva.pdf",
+      "label": "smlouva_o_uveru",
+      "label_status": "predicted",
+      "description": "Smlouva o úvěru č. 170170/25 mezi SG Equipment Finance Czech Republic s.r.o. (poskytovatel) a SOLOM Rec s.r.o. (příjemce, IČ 04606812) na financování demoličních nůžek Epiroc CC 3100 (dodavatel Epirock s.r.o.). Úvěr 1 620 000,00 CZK, 60 měsíčních splátek 30 515,98 CZK, ručitel SOLOM a.s. (IČ 04086400). Podepsáno 12.9.2025.",
+      "text": "R000096444_Z25_00024\nSOCIETE GENERALE Equipment Finance\nKB\nSMLOUVA O ÚVĚRU Č. 170170/25\nuzavřená v souladu s ustanovením § 2395 a násl. zákona č. 89/2012 Sb., občanský zákoník, ve znění pozdějších předpisů (dále jen „občanský zákoník“) mezi níže identifikovaným poskytovatelem financování jako úvěrujícím a příjemcem financování jako úvěrovaným (dále jen „smlouva o úvěru“)\nIdentifikace poskytovatele financování:\nSG Equipment Finance Czech Republic s.r.o.\nnáměstí Junkových 2772/1\n155 00 Praha 5\ne-mail pro sdělení data zahájení pojištění: POVonline@sgef.cz\nBankovní spojení: 0162710187/0100\nKomerční banka, a.s., Praha 1, Na Příkopě 33\nMěna: CZK\nIČ: 61061344\nDIČ: CZ61061344\nZápis v OR: Městský soud v Praze, C 43038\n- dále jen poskytovatel financování -\nIdentifikace příjemce financování:\nSOLOM Rec s.r.o.\nnám. Svobody 527 739\n61 Třinec - Lyžbice\nBankovní spojení: 115-2001130287/0100\nKomerční banka, a.s.\nMěna: CZK\nIČ: 04606812\nDIČ: CZ04606812\nZápis v OR: Krajský soud v Ostravě, C 64371\n- dále jen příjemce financování -\nSoučástí smlouvy o úvěru jsou Všeobecné obchodní podmínky ke smlouvě o úvěru (dále jen „VOP“) platné od 01.01.2024, verze 017/1000182663/20240101.\nPodpisem smlouvy o úvěru žádá příjemce financování poskytovatele financování o čerpání úvěru ve výši stanovené níže. Poskytovatel financování se zavazuje, že za podmínek stanovených touto smlouvou o úvěru a VOP poskytne příjemci financování finanční prostředky do výše uvedené v této smlouvě o úvěru s parametry úvěru specifikovanými v této smlouvě o úvěru a příjemce financování se zavazuje poskytnuté finanční prostředky vrátit a zaplatit úroky a další platby v souladu s podmínkami této smlouvy a VOP.\nPŘEDMĚT FINANCOVÁNÍ:\nDemoliční nůžky Epiroc CC 3100 vč. příslušenství\nDODAVATEL:\nEpirock s.r.o.\nAntala Staška 510/38\n140 00 Praha 4\nIČ: 06493399\nDIČ: CZ06493399\nZápis v OR: Městský soud v Praze, C 283051\nPředběžná kupní cena bez DPH (dále jen PKC): 1 620 000,00 CZK\nVýrobní číslo: DGR240020\nVýrobce: Rok výroby: EPIROC 2024\nStav: nový\nVýše poskytnutého úvěru: 100,0000% z PKC, maximálně však 1 620 000,00 CZK\nMěna poskytnutého úvěru: CZK\nÚvěr bude čerpán z účtu poskytovatele financování jednorázově/postupně poté, co budou splněny níže uvedené podmínky a podmínky stanovené VOP:\f1 / 3 CZ_SDA_017_100_001_c1\nFCZ01EAFB8\nR000096444_Z25_00024\nSPLÁTKY A OSTATNÍ PARAMETRY SMLOUVY O ÚVĚRU:\nMěna smlouvy o úvěru: CZK\nDruh financování: Fixní (na dobu 5 let)\nDoba splácení (v měsících) ve smyslu čl. 1 odst. 1.1 VOP: 60\nVýše úvěru (jistina): 1 620 000,00 CZK\nPředběžná výše úroku: 210 958,80 CZK\nVýše úvěrových splátek celkem: 1 830 958,80 CZK\n(konečná výše jistiny úvěru a úroku bude stanovena v souladu s článkem 1 a článkem 4 VOP)\nPoplatek za sjednání úvěru: 0,00\nPředběžná výše splátek | Frekvence splácení | Předběžná splatnost splátek | Počet splátek\n30 515,98 CZK | měsíční | k 15. v daném měsíci | 60\nSmlouva je zařazena do dotačního finančního programu Evropské investiční banky (dále jen „EIB“) finanční zvýhodnění: 0,25 % p.a. na úrokové sazbě\nPojištění předmětu financování:\nPojištění dle článku 2 odst. 2.1 VOP (povinné zákonné pojištění) sjednává: nesjednává se\nPojištění dle článku 2 odst. 2.2 VOP (škodní pojištění) sjednává: příjemce financování\nPříjemce financování je povinen před čerpáním úvěru předložit poskytovateli financování níže uvedené podklady vztahující se ke smlouvě o úvěru:\nPoskytovatel financování poskytne úvěr výplatou na registrovaný účet dodavatele uvedený na daňovém dokladu dodavatele/faktuře/zálohové faktuře. Příjemce financování je povinen před čerpáním úvěru předložit poskytovateli financování následující podklady:\na) kopii daňového dokladu dodavatele obsahujícího detailní specifikaci předmětu financování (včetně výrobního čísla),\nb) kopii kupní smlouvy uzavřené mezi dodavatelem a příjemcem financování, popř. dodavatelem potvrzené objednávky či jiného dokladu o uzavření příslušné smlouvy s dodavatelem,\nc) kopii oboustranně podepsaného dokladu o předání a převzetí předmětu financování (dodací list, předávací protokol),\nd) předložení kopie výpisu z účtu příjemce financování nebo dodavatele prokazující úhradu DPH ve výši 340 200,00 CZK na účet dodavatele,\ne) podepsané/podepsaná prohlášení o ručení osoby/osob uvedených níže,\nf) smlouvu/smlouvy o zajišťovacím převodu vlastnického práva specifikovanou/specifikované níže\nPoskytnutí úvěru je dále vázáno na podmínku, že příjemce financování, popř. dodavatel před čerpáním úvěru nebo příslušné dílčí platby průkazně potvrdí, že příjemce financování s výjimkou částky rovnající se výši úvěru či příslušné dílčí platby uhradil dodavateli všechny dluhy vyplývající z příslušné smlouvy s dodavatelem.\nDalší podmínky úvěru:\fZajištění úvěru:\n- Smlouva o zajišťovacím převodu vlastnického práva/Zástavní smlouva: dle pododst. 6.1.1 VOP k předmětu/předmětům financování, u něhož/nichž je uzavření této smlouvy poskytovatelem financování vyžadováno.\n- ručitelské prohlášení SOLOM a.s. IČ: 04086400, adr.: nám. Svobody 527, Lyžbice, Třinec 73961\nSmlouva č. 170170/25 2 / 3 CZ_SDA_017_100_001_c1\nR000096444_Z25_00024\nFinanční prostředky získané z poskytnutého úvěru je příjemce financování oprávněn použít výlučně na pořízení předmětu specifikovaného ve smlouvě o úvěru.\nPříjemce financování je povinen splácet úvěr a úroky z poskytnutých plateb v souladu s podmínkami uvedenými ve smlouvě o úvěru a VOP a konečným předpisem splátek.\nTato smlouva je platná a účinná dnem jejího podpisu. Je-li tato smlouva podepisována poskytovatelem financování elektronicky, nabývá platnosti a účinnosti nejdříve podpisem druhé z osob, které ji podepisují za poskytovatele financování. Ustanovení o nabytí platnosti, případně i účinnosti nejdříve okamžikem podpisu druhé z osob podepisujících za poskytovatele financování v případě elektronického podepisování se uplatní rovněž na VOP a veškeré případné dodatky či přílohy této smlouvy. Je-li příjemce financování povinnou osobou dle zákona č. 340/2015 Sb., o registru smluv, v účinném znění (dále jen „povinná osoba“), nabývá smlouva o úvěru účinnosti nejdříve dnem zveřejnění smlouvy a související dokumentace v registru smluv, není-li sjednáno pozdější datum účinnosti.\nZměny této smlouvy vyžadují písemnou formu (tj. buď oboustranně rukopisně nebo oboustranně elektronicky podepsaný dokument, není-li uvedeno jinak). Za písemnou formu nebude pro tento účel považována pouhá výměna e-mailových či jiných elektronických zpráv.\nPříjemce financování může návrh této smlouvy přijmout pouze ve znění navrhovaném poskytovatelem financování s vyloučením možného přijetí návrhu smlouvy s dodatkem nebo odchylkou.\nPříjemce financování prohlašuje, že při jednání o uzavření této smlouvy mu byly sděleny všechny pro něj relevantní skutkové a právní okolnosti k posouzení možnosti uzavřít tuto smlouvu a že neočekává ani nepožaduje od poskytovatele financování žádné další informace v této věci.\nVšechny spory vznikající z této smlouvy o úvěru a v souvislosti s ní budou rozhodovány s konečnou platností u Rozhodčího soudu při Hospodářské komoře České republiky a Agrární komoře České republiky podle jeho řádu třemi rozhodci.\n..........12.9.2025..........\nDatum\nTřinec - Lyžbice, 12-9.2025\nMísto, datum\nPoskytovatel financování: SG Equipment Finance Czech Republic s.r.o.\nPříjemce financování: SOLOM Rec s.r.o.\nPodpis Podpis Podpis\nJan Kovák Jméno | Josef Jonák Jméno | Petr Fiala\nzmocněnec Funkce | zmocněnec Funkce | Funkce\fV případě elektronického podepisování mohou být podpisy připojeny namísto ve shora uvedené podpisové tabulce v podpisovém archu, jenž je v takovém případě nedílnou součástí tohoto dokumentu.\nSmlouva č. 170170/25 3 / 3 CZ_SDA_017_100_001_c1",
+      "confidence": 0.97,
+      "page_count": 4,
+      "pages_failed": [],
+      "processing_status": "completed"
+    }
+  },
+
+  "getDocumentVectors": {
+    "request": "GET /v1/cases/7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90/documents/d2f4a1/vectors?include_values=false&similar_to_verified=3",
+    "response": {
+      "case_id": "7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90",
+      "document_id": "d2f4a1",
+      "text_vectors": [
+        {"chunk_id": "c0", "page_from": 1, "page_to": 1, "model": "amazon.titan-embed-text-v2:0", "model_version": "v2", "dimension": 1024},
+        {"chunk_id": "c1", "page_from": 2, "page_to": 2, "model": "amazon.titan-embed-text-v2:0", "model_version": "v2", "dimension": 1024},
+        {"chunk_id": "c2", "page_from": 3, "page_to": 4, "model": "amazon.titan-embed-text-v2:0", "model_version": "v2", "dimension": 1024}
+      ],
+      "image_vectors": [
+        {"page": 1, "model": "amazon.titan-embed-image-v1", "model_version": "v1", "dimension": 1024},
+        {"page": 2, "model": "amazon.titan-embed-image-v1", "model_version": "v1", "dimension": 1024},
+        {"page": 3, "model": "amazon.titan-embed-image-v1", "model_version": "v1", "dimension": 1024},
+        {"page": 4, "model": "amazon.titan-embed-image-v1", "model_version": "v1", "dimension": 1024}
+      ],
+      "neighbors": [
+        {"document_id": "a17c33", "label": "smlouva_o_uveru", "score": 0.94},
+        {"document_id": "b2e801", "label": "smlouva_o_uveru", "score": 0.9},
+        {"document_id": "0c5d19", "label": "zadost_o_uver", "score": 0.57}
+      ]
+    }
+  },
+
+  "getDocumentSignatures": {
+    "request": "GET /v1/cases/7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90/documents/d2f4a1/signatures?match_client=true&include_vectors=false",
+    "response": {
+      "case_id": "7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90",
+      "document_id": "d2f4a1",
+      "signatures": [
+        {
+          "signature_id": "sig_01",
+          "page": 3,
+          "bbox": [0.14, 0.785, 0.23, 0.815],
+          "detector": "textract",
+          "detection_score": 71.2,
+          "role": "provider",
+          "role_source": "nearest_text",
+          "role_evidence": "Poskytovatel financování: SG Equipment Finance Czech Republic s.r.o. / Jan Kovák, zmocněnec",
+          "crop_url": "https://example.invalid/crop/d2f4a1/sig_01.png",
+          "phash": "9b3e61c4a07f2d58",
+          "copy_suspicion": {"level": "none", "matches": []},
+          "similar_signatures": []
+        },
+        {
+          "signature_id": "sig_02",
+          "page": 3,
+          "bbox": [0.25, 0.785, 0.33, 0.815],
+          "detector": "textract",
+          "detection_score": 68.4,
+          "role": "provider",
+          "role_source": "nearest_text",
+          "role_evidence": "Poskytovatel financování: SG Equipment Finance Czech Republic s.r.o. / Josef Jonák, zmocněnec",
+          "crop_url": "https://example.invalid/crop/d2f4a1/sig_02.png",
+          "phash": "e4c08a3f71b25d96",
+          "copy_suspicion": {"level": "none", "matches": []},
+          "similar_signatures": []
+        },
+        {
+          "signature_id": "sig_03",
+          "page": 3,
+          "bbox": [0.64, 0.775, 0.73, 0.815],
+          "detector": "textract",
+          "detection_score": 74.9,
+          "role": "borrower",
+          "role_source": "nearest_text",
+          "role_evidence": "Příjemce financování: SOLOM Rec s.r.o. / Petr Fiala",
+          "crop_url": "https://example.invalid/crop/d2f4a1/sig_03.png",
+          "phash": "5a7d93e0c61f48b2",
+          "copy_suspicion": {"level": "none", "matches": []},
+          "similar_signatures": [
+            {"signature_id": "sig_07", "document_id": "f31a0e", "score": 0.83}
+          ]
+        }
+      ]
+    }
+  }
+}
