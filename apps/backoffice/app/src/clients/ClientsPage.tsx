@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
+import CaseStatusPill from "../cases/CaseStatusPill";
 import formatDate from "../cases/formatDate";
 import listClientDirectory, { type DirectoryClient } from "./listClientDirectory";
-
-const czk = new Intl.NumberFormat("cs-CZ", { style: "currency", currency: "CZK", maximumFractionDigits: 0 });
-
-function getTotalPrincipal(client: DirectoryClient): number {
-  return client.cases.reduce((sum, c) => sum + (c.principal ?? 0), 0);
-}
 
 function normalize(text: string): string {
   return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
@@ -101,7 +96,6 @@ export default function ClientsPage() {
                     <th scope="col">Address</th>
                     <th scope="col">KYC</th>
                     <th scope="col" className="bo-table__num">Cases</th>
-                    <th scope="col" className="bo-table__num">Financed</th>
                     <th scope="col">Latest case</th>
                   </tr>
                 </thead>
@@ -119,8 +113,16 @@ export default function ClientsPage() {
                         <KycStatus status={c.kycStatus} />
                       </td>
                       <td className="bo-table__num">{c.cases.length}</td>
-                      <td className="bo-table__num">{c.cases.length ? czk.format(getTotalPrincipal(c)) : "—"}</td>
-                      <td>{c.cases[0] ? formatDate(c.cases[0].createdAt) : "—"}</td>
+                      <td>
+                        {c.cases[0] ? (
+                          <>
+                            <CaseStatusPill status={c.cases[0].status} />
+                            <span className="bo-table__meta">opened {formatDate(c.cases[0].createdAt)}</span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -172,20 +174,16 @@ function ClientDetail({ client, onClose }: { client: DirectoryClient; onClose: (
         <table className="bo-table bo-detail__cases">
           <thead>
             <tr>
-              <th scope="col">Case</th>
-              <th scope="col">Asset</th>
-              <th scope="col" className="bo-table__num">Principal</th>
               <th scope="col">Status</th>
-              <th scope="col">Created</th>
+              <th scope="col">Opened</th>
             </tr>
           </thead>
           <tbody>
             {client.cases.map((c) => (
               <tr key={c.id}>
-                <td className="bo-table__strong">{c.id}</td>
-                <td>{c.asset ?? "—"}</td>
-                <td className="bo-table__num">{c.principal == null ? "—" : czk.format(c.principal)}</td>
-                <td>{c.status}</td>
+                <td>
+                  <CaseStatusPill status={c.status} />
+                </td>
                 <td>{formatDate(c.createdAt)}</td>
               </tr>
             ))}

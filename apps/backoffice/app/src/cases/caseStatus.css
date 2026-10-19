@@ -1,0 +1,8 @@
+.bo-status {
+  display: inline-block; padding: 0 8px; border-radius: var(--kb-radius-full);
+  font-size: 0.75rem; line-height: 1.25rem; font-weight: var(--kb-weight-semibold);
+  background: var(--kb-surface-muted); color: var(--kb-text-secondary); white-space: nowrap;
+}
+.bo-status--awaiting_decision { background: var(--kb-red-5); color: var(--kb-error); }
+.bo-status--awaiting_clarification, .bo-status--open { background: var(--kb-notice-surface); color: #8a5300; }
+.bo-status--approved, .bo-status--completed { background: var(--kb-success-surface); color: var(--kb-success); }

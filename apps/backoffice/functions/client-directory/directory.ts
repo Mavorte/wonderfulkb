@@ -18,8 +18,6 @@ export type DirectoryCase = {
   case_id: string;
   status: string;
   created_at: string;
-  asset: string | null;
-  principal: number | null;
 };
 
 export type DirectoryClient = {
@@ -41,11 +39,6 @@ function getString(value: unknown): string | null {
   return typeof value === "string" && value ? value : null;
 }
 
-function getNumber(value: unknown): number | null {
-  const n = typeof value === "number" ? value : typeof value === "string" && value ? Number(value) : NaN;
-  return Number.isFinite(n) ? n : null;
-}
-
 // Timestamps arrive as `...Z` or `...+00:00`, with or without milliseconds, so
 // order by the parsed instant; an unparsable one sorts last.
 function getTime(iso: string): number {
@@ -54,16 +47,7 @@ function getTime(iso: string): number {
 }
 
 function toDirectoryCase(awsCase: AwsCase): DirectoryCase {
-  const metadata = awsCase.metadata ?? {};
-  const asset =
-    [getString(metadata.brand), getString(metadata.model)].filter(Boolean).join(" ") || getString(metadata.asset_name);
-  return {
-    case_id: awsCase.case_id,
-    status: awsCase.status,
-    created_at: awsCase.created_at,
-    asset,
-    principal: getNumber(metadata.principal),
-  };
+  return { case_id: awsCase.case_id, status: awsCase.status, created_at: awsCase.created_at };
 }
 
 /** Joins cases to their clients, clients by name and each client's cases newest first. */
