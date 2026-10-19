@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: WonderfulKB Document Processing Monitor API — návrh
-  version: 0.3.0
+  version: 0.3.2
   description: |
     Návrh čtecího rozhraní, nikoli implementované nebo nasazené API.
     Autoritou business struktury je aktuální AWS, nikoli starší pk/sk/payload adapter.
@@ -9,7 +9,7 @@ info:
     schéma a upravit mapování. Kontrakt je uspořádán podle entit, ne podle DynamoDB itemů.
     Existující business data se tímto kontraktem nemění. Audit je interní package stejné služby.
     Žádný upload, retry, cancel, reprocess nebo business zápis není součástí tohoto API.
-    Revize 0.3: primární auditní zápis je runtime Event navázaný na existující business ID.
+    Revize 0.3.2: historický run_context schválen 19. 10. 20:30; primární auditní zápis je runtime Event navázaný na existující business ID.
     Document/Upload/Analysis jsou read-through business pohledy, nikoli znovu ukládané auditní entity.
     Run/Attempt/Step/Page/AuditSnapshot jsou čtecí projekce událostí, nikoli požadavek
     paralelně ukládat plné snapshoty. Pouze doložené bounded dotazy mohou vyžádat malý
@@ -17,7 +17,47 @@ info:
     Historické vstupní/výstupní reference a minimální tehdejší runtime kontext patří jednou
     k příslušné události, ne do každé události ani do nového business manifestu.
     Historie vyžaduje nové auditní zápisy; existující snapshot ji nedokazuje.
+    Potvrzený scope zahrnuje také FileReceived (Soubor přijat) navázaný na case/document před runem.
+    Potvrzená hranice FileReceived je úspěšné uložení souboru do S3 a zároveň potvrzený zápis
+    dokumentových metadat; samotný request/upload ani S3 bez metadat událost nevyvolá.
+    Duplicita vracející existující dokument bez nového přijetí ani neúspěšný příjem bez
+    potvrzeného nového dokumentu další FileReceived nevyvolají. Neomezuje to failure/retry eventy.
+    Schváleno 19. 10. 20:17: dokumentová časová osa /{document_id}/events, FileReceived bez
+    run_id; události zpracování run_id vyžadují. Run endpoint je výřez téhož deníku.
+    Ukládá se pouze occurred_at, čas vzniku akce na hooku, nikoli čas zápisu/doručení auditu.
+    Sequence je technické pořadí, ne čas nebo kauzální záruka. Bounded cursor/refresh musí
+    ještě doložit práci s pozdními zápisy bez trvalého přeskočení. Nevytvářet umělé run ID.
+    Živý průběh uploadu, jeho začátek, procenta a doba přenosu nejsou součástí návrhu.
+    Bez nové uploadové korelace nebo čtení rozpracovaných uploadů; FileReceived zůstává.
     Bez usage, ceny, původního run/attempt cache, queue wait a periodického heartbeat.
+    Všechny auditní zápisy jsou nekritické best-effort/fail-open. Chyba auditu nesmí ovlivnit
+    business upload, odpověď, zpracování, publish, retry ani lease; izoluje ji auditní rozhraní.
+    Bez durable outboxu, auditní retry/recovery fronty, replay a garance pozdějšího doručení.
+    Zápis má konečný krátký timeout bez auditní retry smyčky; nečeká na obnovu sinku.
+    Ztráta eventů je přijatelná a nemusí být zjistitelná; absence není důkaz neprovedení akce.
+    RunQueued (potvrzeno 19. 10.) znamená úspěšné předání frontě, ne samotné vytvoření jobu
+    ani začátek práce workeru; odkazuje na existující case/document/run bez kopie business dat.
+    AttemptStarted (potvrzeno 19. 10.) vzniká až po úspěšném claimu a zvýšení čísla pokusu;
+    pouhé doručení, odmítnutý claim ani vyčerpání limitu bez inkrementu nový pokus nezakládají.
+    source_validation (potvrzeno 19. 10.) je jeden krok ověření konfigurace, konkrétní verze vstupu,
+    hashe a otevření PDF; StepStarted a StepFinished nebo zachycený StepFailed s bezpečným kódem.
+    Bez eventu pro každou kontrolu a bez obsahu dokumentu; nezachycený konec zůstává unknown.
+    PageCacheReused (potvrzeno 19. 10.) až po úspěšném načtení a validaci výsledku stránky;
+    číslo stránky a reference výsledku, stav z validovaného Page, ne z pouhé existence cache.
+    Není nová inference ani další započítání stránky; původní run/attempt cache nejsou doložené.
+    Nové page_transcription (potvrzeno 19. 10.) má stránkový StepStarted a pozorovaný
+    PageCompleted nebo PageFailed, číslo stránky, měřené trvání kroku, skutečně doloženou
+    metodu a bezpečný error. Selhání neprokazuje model call; text není v auditu.
+    Reference jen na potvrzený výstup; žádné dvojí započítání, nepozorovaný konec unknown.
+    Uživatel 19. 10. 2026 ve 20:02 schválil celou sadu 13 typů a jejich popsané hranice:
+    FileReceived/RunQueued/AttemptStarted/StepStarted/StepFinished/StepFailed/PageCacheReused/
+    PageCompleted/PageFailed/ResultPublished/RetryEnqueued/AttemptFinished/RunFinished.
+    Zahrnuje extraction, result_publishing, retry, konec pokusu/běhu i signature_detection
+    přes společné Step typy. Podpisový krok pouze při zapnutém detectoru, outcome ze statusu
+    sekce, ne z pouhé absence výjimky; bez podpisových hodnot/citací a bez změny OCR stavu.
+    Schválení návrhu není implementace/deploy. Historický run_context a jeho omezení byly schváleny 20:30;
+    document-scope obálka/čtení a historické reference jsou schválené 20:17. Upload progress mimo scope.
+    Page outcome uzavírá stránkový krok bez duplicitního finish; zdrojová mapa je v proposalu.
 
     Úplná cesta = server /v1 + path /cases/...; nekombinovat dva prefixy /v1.
     Neexistující case/document/run vrací 404; nepřístupná identita 403 nebo konzistentně
@@ -53,10 +93,6 @@ security:
 tags:
   - name: documents
     description: Sjednocená identita dokumentu v případu.
-  - name: uploads
-    description: Existující metadata přijetí, bez změny ingest workflow.
-  - name: analyses
-    description: Existující business snapshot analýzy.
   - name: audit
     description: Vedlejší pozorování, běhy, pokusy a mezivýsledky; nová instrumentace.
   - name: artifacts
@@ -127,7 +163,7 @@ paths:
     get:
       tags: [documents]
       operationId: getProcessingDocument
-      summary: Identita, business snapshoty a dostupnost auditu
+      summary: Identita, současná business data a dostupnost auditu
       description: |
         Funguje i před dokončením zpracování a pro analysis_only/upload_only/audit_only.
         upload nebo analysis je null jen při potvrzené absenci, nikoli chybě čtení.
@@ -141,68 +177,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/DocumentDetail'}
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/upload:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-    get:
-      tags: [uploads]
-      operationId: getProcessingUpload
-      summary: Metadata existujícího uploadu
-      description: |
-        Obálka state=absent a data=null je platná pro analysis_only dokument.
-        Pro neexistující dokument 404, pro chybu zdroje 503. s3_key se nevystavuje,
-        nahrazuje jej opaque source_artifact_id pro autorizovaný přístup.
-      responses:
-        '200':
-          description: Dostupnost a metadata uploadu.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/UploadResponse'}
-              example:
-                observed_at: '2026-10-19T15:30:00Z'
-                case_id: case-demo
-                document_id: analysis-only-demo
-                state: absent
-                reason: not_created
-                data: null
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/analysis:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-    get:
-      tags: [analyses]
-      operationId: getProcessingAnalysis
-      summary: Aktuální business analýza
-      description: |
-        Současný flat AWS snapshot, nikoli source DocumentResult a nikoli historie.
-        Vrací dostupná pole i při queued/processing/partial/failed; absence textu
-        neblokuje čtení metadat. text_s3_key mapuje na text_artifact_id, ne raw URL.
-        Bez znalosti provenance nelze current analysis přiřadit zvolenému historickému runu.
-      responses:
-        '200':
-          description: Analýza nebo potvrzená absence.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/AnalysisResponse'}
-              example:
-                observed_at: '2026-10-19T15:30:00Z'
-                case_id: case-demo
-                document_id: doc-demo
-                state: available
-                reason: null
-                data:
-                  case_id: case-demo
-                  document_id: doc-demo
-                  title: smlouva.pdf
-                  label: smlouva
-                  label_status: predicted
-                  confidence: 0.9
-                  processing_status: completed
-                  page_count: 4
-                  text_artifact_id: artifact-text-demo
         default: {$ref: '#/components/responses/Failure'}
   /cases/{case_id}/processing/documents/{document_id}/audit:
     parameters:
@@ -286,7 +260,7 @@ paths:
     get:
       tags: [audit]
       operationId: getProcessingRun
-      summary: Jeden doložený běh a jeho konfigurace
+      summary: Běh odvozený z událostí a minimální historický runtime kontext
       description: Nevrací všechny stránky ani události v jednom JSON. Neznámý run nebo cizí příslušnost vrací 404 dle auth politiky.
       responses:
         '200':
@@ -382,6 +356,32 @@ paths:
                     error: {code: provider_timeout, message_safe: Přepis stránky překročil časový limit., retryable: true}
                 next_token: null
         default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/events:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [audit]
+      operationId: listDocumentProcessingEvents
+      summary: Dokumentová časová osa včetně přijetí před runem
+      description: |
+        Jeden deník zahrnuje FileReceived bez run_id a události všech doložených běhů.
+        Oprávnění se ověřuje na case/document stejně jako u run výřezu.
+        Časová osa podle occurred_at,event_id; pouze čas vzniku akce, ne čas zápisu.
+        Sequence a next_token jsou technické čtecí údaje, nikoli causalita nebo úplnost.
+        Bounded cursor/refresh musí doložit opožděné zápisy bez trvalého přeskočení;
+        nejde o garantované doručení auditu ani nový replay/recovery mechanismus.
+        Historie bez eventů se nevyrábí ze současných business dat.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka dokumentových událostí a coverage.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EventList'}
+        default: {$ref: '#/components/responses/Failure'}
   /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/events:
     parameters:
       - $ref: '#/components/parameters/CaseId'
@@ -392,8 +392,11 @@ paths:
       operationId: listProcessingEvents
       summary: Časová osa významných událostí
       description: |
-        Řazení sequence,event_id vzestupně; occurred_at a recorded_at rozlišují
-        čas události a doručení. Pořadí je pozorované v rámci runu, ne globální causalita.
+        Výřez dokumentové časové osy podle run_id, stejná data bez kopie deníku.
+        Časová osa podle occurred_at,event_id; sequence je jen technické čtecí pořadí.
+        Čas zápisu/doručení auditu se neukládá. Pozdní zápisy nesmějí být trvale přeskočeny
+        stránkováním/refresh; konkrétní bounded cursor kontrakt ověřit před implementací.
+        Pořadí ani chybějící sequence nedokazují causalitu, ztrátu nebo business chybu.
         Primární auditní fakta jsou události; ostatní runtime GET jsou jejich projekce.
         Chybějící události se nevyrábějí z aktuálního business snapshotu; periodický heartbeat není MVP.
       parameters:
@@ -419,7 +422,6 @@ paths:
                     sequence: 7
                     type: PageCacheReused
                     occurred_at: '2026-10-19T15:00:00Z'
-                    recorded_at: '2026-10-19T15:00:00.020Z'
                     attempt_no: 2
                     stage: page_transcription
                     page_number: 1
@@ -612,11 +614,11 @@ components:
         z existence uploadu. Budoucí neznámé hodnoty musí klient bezpečně zobrazit.
       example: completed
     Upload:
-      description: Read-through existujících ingest metadata. Tento DTO se do auditního deníku neukládá.
       type: object
       nullable: true
       required: [case_id, document_id]
       description: |
+        Read-through existujících ingest metadata, ne nový auditní zápis.
         Dnešní AWS atributy, nikoli povinná budoucí DB struktura. Pole kromě identity
         jsou volitelná a nullable; absence/null se zachová. Interní s3_key je záměrně
         nahrazen autorizovaným artifact ID. Další DB pole se nevystavují automaticky.
@@ -631,12 +633,11 @@ components:
         uploaded_by: {type: string, nullable: true, description: Jen role oprávněná vidět identitu; sdílený API klient není ověřená osoba.}
         source_artifact_id: {type: string, nullable: true}
     Analysis:
-      description: Read-through současného business výsledku. Tento DTO se do auditního deníku neukládá.
       type: object
       nullable: true
       required: [case_id, document_id]
       description: |
-        Projekce současné AWS analýzy. Nevyžaduje source DocumentResult, OCR blocks,
+        Read-through současné AWS analýzy, ne nový auditní zápis. Nevyžaduje source DocumentResult, OCR blocks,
         fields nebo run_id. Nové atributy pouze po explicitním safe mappingu, žádný
         otevřený raw DB dump. confidence znamená klasifikaci, ne přesnost OCR.
       properties:
@@ -675,13 +676,16 @@ components:
       description: |
         Počty vzájemně disjunktních aktuálních stavů ve zvoleném pokusu, nikoli součet
         historických pokusů. cache_hit je příznak completed, ne další kategorie.
-        Když nejsou počty úplné, coverage není complete; nedopočítávat pending z mezery.
+        Počty jsou jen pozorované; neúplnou sadu nelze vydávat za skutečný počet všech stavů.
+        total jen ze zdroje doloženého pro tento run, ne z libovolné současné analysis.
+        pending vyplnit pouze při známém total, úplné coverage a explicitně doložené
+        množině čekajících stránek; nikdy jako rozdíl total minus pozorované outcome.
       properties:
         total: {type: integer, minimum: 0, nullable: true}
         completed: {type: integer, minimum: 0, nullable: true}
         failed: {type: integer, minimum: 0, nullable: true}
         running: {type: integer, minimum: 0, nullable: true}
-        pending: {type: integer, minimum: 0, nullable: true}
+        pending: {type: integer, minimum: 0, nullable: true, description: 'Bez explicitní evidence čekajících stránek a úplné coverage null/vynecháno.'}
     DocumentSummary:
       type: object
       required: [case_id, document_id, display_name, relationship, processing_status, audit]
@@ -713,26 +717,6 @@ components:
           properties:
             upload: {$ref: '#/components/schemas/Upload'}
             analysis: {$ref: '#/components/schemas/Analysis'}
-    UploadResponse:
-      allOf:
-        - $ref: '#/components/schemas/Observation'
-        - $ref: '#/components/schemas/Availability'
-        - type: object
-          required: [case_id, document_id, data]
-          properties:
-            case_id: {type: string}
-            document_id: {type: string}
-            data: {$ref: '#/components/schemas/Upload'}
-    AnalysisResponse:
-      allOf:
-        - $ref: '#/components/schemas/Observation'
-        - $ref: '#/components/schemas/Availability'
-        - type: object
-          required: [case_id, document_id, data]
-          properties:
-            case_id: {type: string}
-            document_id: {type: string}
-            data: {$ref: '#/components/schemas/Analysis'}
     AuditResponse:
       allOf:
         - $ref: '#/components/schemas/Observation'
@@ -758,7 +742,7 @@ components:
         message_safe: {type: string}
         retryable: {type: boolean, nullable: true}
     Run:
-      description: Čtecí projekce událostí běhu a jednou zachyceného runtime kontextu, nikoli plná kopie jobu/config ani nový business záznam.
+      description: Čtecí projekce událostí běhu; pole historického runtime kontextu jsou schválené 20:30, nikoli kopie celého jobu/config nebo nový business záznam.
       allOf:
         - $ref: '#/components/schemas/Timing'
         - type: object
@@ -789,7 +773,7 @@ components:
           properties:
             run_id: {type: string}
             attempt_no: {type: integer, minimum: 1}
-            status: {type: string, description: Např. queued/running/succeeded/partial/failed/lease_lost; otevřená množina.}
+            status: {type: string, description: Např. queued/running/succeeded/partial/failed; otevřená množina.}
             retry_reason: {type: string, nullable: true, description: 'Jen zachycený error code při rozhodnutí/requeue předchozího pokusu; lease expiry bez známé příčiny není provider chyba.'}
             last_activity_at: {type: string, format: date-time, nullable: true, description: 'Poslední zachycená hranice existujícího toku; žádný pravidelný heartbeat nebo důkaz živosti.'}
             error: {$ref: '#/components/schemas/SafeFailure'}
@@ -843,18 +827,27 @@ components:
         Jediná primární zapisovaná auditní entita, zde její bezpečná veřejná projekce.
         Neměnná fakta runtime přechodu, ne kopie dokumentu/uploadu/analýzy.
         details je allowlist podle type, nikoli obecný business payload. Pole mimo typ se nevyplňují.
-        Historický runtime kontext jen v RunQueued; artefaktové vazby jsou opaque.
-      required: [schema_version, case_id, document_id, run_id, event_id, sequence, type, occurred_at, recorded_at]
+        Dokumentový scope, FileReceived bez run_id; ostatní schválené typy run_id vyžadují.
+        Pouze čas vzniku occurred_at, žádný ukládaný čas zápisu/doručení auditu.
+        Historický runtime kontext jen návrh v RunQueued; artefaktové vazby jsou opaque.
+      required: [schema_version, case_id, document_id, event_id, sequence, type, occurred_at]
+      oneOf:
+        - properties:
+            type: {enum: [FileReceived]}
+          not: {required: [run_id]}
+        - required: [run_id]
+          properties:
+            type:
+              enum: [RunQueued, AttemptStarted, StepStarted, StepFinished, StepFailed, PageCacheReused, PageCompleted, PageFailed, ResultPublished, RetryEnqueued, AttemptFinished, RunFinished]
       properties:
         schema_version: {type: string, enum: ['1.0']}
         case_id: {type: string}
         document_id: {type: string}
         run_id: {type: string}
         event_id: {type: string}
-        sequence: {type: integer, minimum: 0}
+        sequence: {type: integer, minimum: 0, description: Technické pořadí čtení; nikoli čas zápisu nebo kauzální důkaz.}
         type: {type: string, description: Sémantická runtime událost např. PageCacheReused/PageCompleted/RetryEnqueued/ResultPublished.}
-        occurred_at: {type: string, format: date-time}
-        recorded_at: {type: string, format: date-time}
+        occurred_at: {type: string, format: date-time, description: Čas vzniku akce zachycený producentem na hooku; ne čas zápisu listenerem.}
         attempt_no: {type: integer, minimum: 1, nullable: true}
         stage: {type: string, nullable: true}
         page_number: {type: integer, minimum: 1, nullable: true}
@@ -882,7 +875,7 @@ components:
             run_context:
               type: object
               additionalProperties: false
-              description: Minimální historický kontext pouze pro RunQueued; skutečná source verze/hash přes autorizovanou source artifact referenci.
+              description: Parametry a omezení schválené uživatelem 19. 10. 2026 ve 20:30. Pouze jednou pro RunQueued ze známých hodnot uloženého jobu, ne aktuálního prostředí workeru; mode/pipeline_version/prompt_version/ocr_model/extraction_model tvoří minimum pokud známé, provider/api/region jsou schválené, job_id/config_hash volitelná diagnostika. Neměnná reference má přednost před kopií. Konkrétní vstup přes autorizovanou source artifact referenci v artifact_ids, interně známá verze/hash jen podle potřeby. Konfigurace nedokazuje volání modelu ani úplnou reprodukovatelnost; signature config v dnešním job.config není.
               properties:
                 job_id: {type: string}
                 config_hash: {type: string}
@@ -902,7 +895,7 @@ components:
         case_id: {type: string}
         document_id: {type: string}
         artifact_id: {type: string}
-        kind: {type: string, description: source/preview/page_text/analysis_text/structured_result/extraction/manifest a budoucí typy.}
+        kind: {type: string, description: 'source/preview/page_text/analysis_text/structured_result/extraction pouze nad potvrzeným existujícím artefaktem. Budoucí typy jsou kompatibilita klienta, ne slíbená persistence. Žádný nový auditní manifest.'}
         state: {type: string, enum: [ready, pending, missing, unavailable]}
         reason: {type: string, nullable: true}
         run_id: {type: string, nullable: true}
@@ -910,8 +903,8 @@ components:
         page_number: {type: integer, minimum: 1, nullable: true}
         content_type: {type: string, nullable: true}
         size_bytes: {type: integer, minimum: 0, nullable: true}
-        sha256: {type: string, nullable: true, description: 'Jen existující měřený hash nebo hash skutečně serializovaného auditního manifestu; ETag není SHA-256.'}
-        version_id: {type: string, nullable: true, description: Jen skutečně známá verze; bez ní nelze slibovat neměnný historický obsah.}
+        sha256: {type: string, nullable: true, description: 'Jen skutečně známý hash odkazovaného business artefaktu; ETag není SHA-256. Žádný manifest se kvůli hashi nevytváří.'}
+        version_id: {type: string, nullable: true, description: Jen skutečně známá verze; historický obsah nabídnout pouze s doloženou nezaměnitelnou referencí. Samotná cesta ani dnešní obsah nejsou důkaz tehdejšího výstupu; jinak unavailable.}
         created_at: {type: string, format: date-time, nullable: true}
     Collection:
       allOf:

@@ -263,6 +263,38 @@ class DynamoDBCaseClientRepository:
     def list_client_cases(self, client_id, filters, limit, token=None):
         return dict(self._list('cases', client_id, filters, limit, token), client_id=client_id)
 
+    def list_cases(self, filters, limit, token=None):
+        filters = dict(filters)
+        fingerprint = self._fingerprint('global-cases', None, filters, limit)
+        fields = {'case_id'}
+        start = self._cursor(token, fingerprint, fields)
+        deadline = self.clock() + min(7.0, max(0.0, self.time_remaining()))
+        params = {'TableName': self.cases_table}
+        if start:
+            params['ExclusiveStartKey'] = start
+        selected, continuation = [], start
+        pages = iter(self.sdk.get_paginator('scan').paginate(
+            **params, PaginationConfig={'PageSize': min(limit, 25)}))
+        for _ in range(8):
+            if self.clock() + 3 > deadline:
+                if continuation is None:
+                    raise RuntimeError('Insufficient request budget')
+                break
+            page = next(pages)
+            items = page.get('Items', [])
+            continuation = page.get('LastEvaluatedKey') or None
+            for index, item in enumerate(items):
+                value = _decode(item, 'cases')
+                if all(value[k] == v for k, v in filters.items()):
+                    selected.append(value)
+                if len(selected) == limit:
+                    if index < len(items) - 1:
+                        continuation = {k: item[k] for k in fields}
+                    break
+            if len(selected) == limit or continuation is None:
+                break
+        return {'cases': selected, 'next_token': self._token(continuation, fingerprint, fields)}
+
     def create_case(self, client_id, metadata):
         metadata = _metadata(metadata)
         if not _uuid(client_id):

@@ -67,6 +67,16 @@ class CaseClientLambdaTests(unittest.TestCase):
         omitted = self.invoke('POST', '/cases', body={'client_id': ACTIVE}, expected=201)
         self.assertEqual(UUID(omitted['case_id']).version, 4)
 
+    def test_global_cases_route_returns_shared_public_list(self):
+        response = self.handler({
+            'httpMethod': 'GET', 'resource': '/cases', 'path': '/cases',
+            'queryStringParameters': None,
+        }, None)
+        self.assertEqual(response['statusCode'], 200)
+        data = json.loads(response['body'])
+        self.assertEqual(set(data), {'cases', 'next_token'})
+        self.assertGreaterEqual({case['client_id'] for case in data['cases']}, {ACTIVE, OTHER})
+
     def cases(self, client=ACTIVE, query=None, expected=200):
         return self.invoke(resource='/clients/{client_id}/cases',
                            params={'client_id': client}, query=query, expected=expected)

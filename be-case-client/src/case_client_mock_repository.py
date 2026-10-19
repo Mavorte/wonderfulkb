@@ -87,6 +87,13 @@ class MockCaseClientRepository:
                 raise NotFound('Case not found')
             return deepcopy(self._cases[case_id])
 
+    def list_cases(self, filters, limit, token=None):
+        with self._lock:
+            items = [c for c in self._cases.values() if all(c[k] == v for k, v in filters.items())]
+            items.sort(key=lambda c: c['case_id'])
+            cases, next_token = _page(items, 'case_id', 'global-cases', filters, limit, token)
+            return {'cases': cases, 'next_token': next_token}
+
     def list_client_cases(self, client_id, filters, limit, token=None):
         with self._lock:
             if client_id not in self._clients:

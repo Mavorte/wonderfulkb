@@ -1,0 +1,2318 @@
+{
+  "account": "609394381050",
+  "api_id": "bgm7k1ggqi",
+  "api_preflight": "PASS: 5 protected AWS_PROXY methods",
+  "api_url": "https://bgm7k1ggqi.execute-api.eu-central-1.amazonaws.com/v1",
+  "artifact_bytes": 1505963,
+  "artifact_code_sha256": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+  "artifact_sha256": "b524361d00ff400a2feab61b674fff200e9675a2913b2c4a01250e12c5e02a03",
+  "attempts": [
+    {
+      "action": "deploy",
+      "artifact": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+      "at": 1792433840.645047,
+      "cycle": 1,
+      "state": "deployed-and-read-back"
+    }
+  ],
+  "authorization_source": "user instruction 2026-10-19 19:09:45 Prague",
+  "blocked_action": "http-integration",
+  "blocker": "Operation blocked (ValueError)",
+  "case_ids": [
+    "934cf433-91df-4edc-bfa1-53c8fc9bfaea",
+    "09cecc71-a1b2-48b5-837b-e97ecdcfe2b3",
+    "be5dce37-faf5-48f7-90ed-1f417a8f1422",
+    "fa7412d0-522f-4da3-bd03-3bc01e4806a9",
+    "0ea8f64f-5c8f-468c-81ed-eb1d719d6afd",
+    "f3afa426-12cb-4504-9ac7-8497cb73b443"
+  ],
+  "client_continuation": {
+    "inventory_counts": {
+      "8c52c6c2-179b-4338-ac4f-05d9ce0730c3": 4,
+      "b0da7ff5-d21d-4962-a876-b7697351881d": 7
+    },
+    "limit1_prefix": true,
+    "newest_first": true,
+    "query_bound": true
+  },
+  "continuation_evidence": {
+    "binding": {
+      "code": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+      "gateway": "k794w9",
+      "runner": "da0c7d51ffb209bd62d1ea8716b3501f7742b7ae484c6b59e3ddc2a6e7fe974d"
+    },
+    "http_end": 147,
+    "scenarios": [
+      "auth",
+      "caller-id-ignored-cross-client",
+      "clients-search-normalization-and-pagination",
+      "concurrent-posts-and-immediate-get",
+      "create-detail-decimal-repeat",
+      "unknown-inactive-blocked-no-write",
+      "validation-and-missing"
+    ],
+    "unchanged_revision": "f2ff152f-3e38-4571-be2b-8e7f7587515c"
+  },
+  "continuation_id": "case-global-72fa-20261019-1909",
+  "delivery_history": [
+    {
+      "code_sha256": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+      "deploy_attempts": 1,
+      "gateway_deployment": "k794w9",
+      "http_requests": 199,
+      "post_attempts": 9,
+      "result": "PASS",
+      "revision": "f2ff152f-3e38-4571-be2b-8e7f7587515c",
+      "suite_binding": {
+        "code": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+        "gateway": "k794w9",
+        "runner": "6c2b020efed41502f9b0b0d583a4d6b0c5bd14834419d479afef5fecc0c708d2"
+      },
+      "task_id": "task-28c88643-682f-4fa4-873f-aeebc8701a1b",
+      "verified_at": "2026-10-19T18:25:06.598013+00:00"
+    }
+  ],
+  "deploy_attempts": 1,
+  "fixture_case_ids": [
+    "9fbe90e5-c36d-4986-8b52-d6b53ccf5a6f",
+    "80bfafac-7906-4a3a-81fa-a1c2fd51a9a1"
+  ],
+  "fixture_inventory": {
+    "8c52c6c2-179b-4338-ac4f-05d9ce0730c3": [
+      "9cf3ae5a-b159-4a42-98bd-61be31e3fb3d",
+      "3a85dcb1-ece5-47e6-810d-582383f87707",
+      "bc6426c7-3efe-4223-b2fd-009d61a020a8",
+      "fa7412d0-522f-4da3-bd03-3bc01e4806a9"
+    ],
+    "b0da7ff5-d21d-4962-a876-b7697351881d": [
+      "9fbe90e5-c36d-4986-8b52-d6b53ccf5a6f",
+      "80bfafac-7906-4a3a-81fa-a1c2fd51a9a1",
+      "934cf433-91df-4edc-bfa1-53c8fc9bfaea",
+      "09cecc71-a1b2-48b5-837b-e97ecdcfe2b3",
+      "be5dce37-faf5-48f7-90ed-1f417a8f1422",
+      "0ea8f64f-5c8f-468c-81ed-eb1d719d6afd",
+      "f3afa426-12cb-4504-9ac7-8497cb73b443"
+    ]
+  },
+  "fixture_run_id": "host-case-live-20261019-1820",
+  "fixture_source": "plans/checkpoints/case-client-live-integration/host-case-live-20261019-1820/manifest.json",
+  "fixtures": [
+    {
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "ico": "99783416",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "active"
+    },
+    {
+      "client_id": "8c52c6c2-179b-4338-ac4f-05d9ce0730c3",
+      "ico": "99573725",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "active"
+    },
+    {
+      "client_id": "0c810d37-c26f-4fe5-ba6a-ef814353561e",
+      "ico": "94544265",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "inactive"
+    },
+    {
+      "client_id": "955a80e3-9712-4437-bfba-5fe9b7796fea",
+      "ico": "96119536",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "blocked"
+    }
+  ],
+  "followups": [
+    "task-28c88643-682f-4fa4-873f-aeebc8701a1b"
+  ],
+  "function": "arn:aws:lambda:eu-central-1:609394381050:function:wonderfulkb-case-client",
+  "gateway_deployment_id": "k794w9",
+  "gateway_post_http": {
+    "deployment_id": "k794w9",
+    "methods": [
+      [
+        "/clients",
+        "GET"
+      ],
+      [
+        "/cases",
+        "POST"
+      ],
+      [
+        "/cases",
+        "GET"
+      ],
+      [
+        "/cases/{case_id}",
+        "GET"
+      ],
+      [
+        "/clients/{client_id}/cases",
+        "GET"
+      ]
+    ],
+    "preserved_settings": true
+  },
+  "gateway_readback": {
+    "deployment_id": "k794w9",
+    "methods": [
+      [
+        "/clients",
+        "GET"
+      ],
+      [
+        "/cases",
+        "POST"
+      ],
+      [
+        "/cases",
+        "GET"
+      ],
+      [
+        "/cases/{case_id}",
+        "GET"
+      ],
+      [
+        "/clients/{client_id}/cases",
+        "GET"
+      ]
+    ],
+    "preserved_settings": true
+  },
+  "global_traversal": {
+    "auth_missing_wrong": [
+      403,
+      403
+    ],
+    "both_active_clients": true,
+    "changed_limit": 400,
+    "cross_route_tokens": [
+      400,
+      400,
+      400
+    ],
+    "fixture_case_ids": [
+      "09cecc71-a1b2-48b5-837b-e97ecdcfe2b3",
+      "0ea8f64f-5c8f-468c-81ed-eb1d719d6afd",
+      "3a85dcb1-ece5-47e6-810d-582383f87707",
+      "80bfafac-7906-4a3a-81fa-a1c2fd51a9a1",
+      "934cf433-91df-4edc-bfa1-53c8fc9bfaea",
+      "9cf3ae5a-b159-4a42-98bd-61be31e3fb3d",
+      "9fbe90e5-c36d-4986-8b52-d6b53ccf5a6f",
+      "bc6426c7-3efe-4223-b2fd-009d61a020a8",
+      "be5dce37-faf5-48f7-90ed-1f417a8f1422",
+      "f3afa426-12cb-4504-9ac7-8497cb73b443",
+      "fa7412d0-522f-4da3-bd03-3bc01e4806a9"
+    ],
+    "limit": 1,
+    "malformed_token": 400,
+    "metadata_match": true,
+    "object_count": 36,
+    "public_fields": true,
+    "terminal_token": null,
+    "unique": true
+  },
+  "http_attempts": [
+    {
+      "at": 1792433818.806653,
+      "auth": "missing",
+      "label": "/clients",
+      "method": "GET",
+      "number": 1,
+      "state": "response",
+      "status": 403
+    },
+    {
+      "at": 1792433819.3588889,
+      "auth": "wrong",
+      "label": "/clients",
+      "method": "GET",
+      "number": 2,
+      "state": "response",
+      "status": 403
+    },
+    {
+      "at": 1792433819.9166021,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 3,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433856.965718,
+      "auth": "missing",
+      "label": "/clients",
+      "method": "GET",
+      "number": 4,
+      "state": "response",
+      "status": 403
+    },
+    {
+      "at": 1792433857.525752,
+      "auth": "wrong",
+      "label": "/clients",
+      "method": "GET",
+      "number": 5,
+      "state": "response",
+      "status": 403
+    },
+    {
+      "at": 1792433858.0825548,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 6,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433868.397515,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 7,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433868.957545,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 8,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433869.517566,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 9,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433870.077593,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 10,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433870.637627,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 11,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433871.197692,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 12,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433871.757774,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 13,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433872.3178189,
+      "auth": "valid",
+      "label": "/cases/synthetic-missing-e6f82797-4f80-49b0-a28d-7513c6151187",
+      "method": "GET",
+      "number": 14,
+      "state": "response",
+      "status": 404
+    },
+    {
+      "at": 1792433872.876603,
+      "auth": "valid",
+      "label": "/clients/6bd0f4ed-d84d-4488-9d78-609245c0aed1/cases",
+      "method": "GET",
+      "number": 15,
+      "state": "response",
+      "status": 404
+    },
+    {
+      "at": 1792433873.4337852,
+      "auth": "valid",
+      "label": "/clients/6bd0f4ed-d84d-4488-9d78-609245c0aed1/cases",
+      "method": "GET",
+      "number": 16,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433873.9927979,
+      "auth": "valid",
+      "label": "/clients/6bd0f4ed-d84d-4488-9d78-609245c0aed1/cases",
+      "method": "GET",
+      "number": 17,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433874.545402,
+      "auth": "valid",
+      "label": "/clients/6bd0f4ed-d84d-4488-9d78-609245c0aed1/cases",
+      "method": "GET",
+      "number": 18,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433875.105459,
+      "auth": "valid",
+      "label": "/clients/6bd0f4ed-d84d-4488-9d78-609245c0aed1/cases",
+      "method": "GET",
+      "number": 19,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433875.6654751,
+      "auth": "valid",
+      "label": "/clients/6bd0f4ed-d84d-4488-9d78-609245c0aed1/cases",
+      "method": "GET",
+      "number": 20,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433876.217199,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 21,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433876.772011,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 22,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433877.3240871,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 23,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433877.8819451,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 24,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433878.439759,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 25,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433878.999787,
+      "auth": "valid",
+      "label": "/cases/9fbe90e5-c36d-4986-8b52-d6b53ccf5a6f",
+      "method": "GET",
+      "number": 26,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433879.55057,
+      "auth": "valid",
+      "label": "/cases/80bfafac-7906-4a3a-81fa-a1c2fd51a9a1",
+      "method": "GET",
+      "number": 27,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433880.100978,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 28,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433880.661004,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 29,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433881.221023,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 30,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433881.7810528,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 31,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433882.333931,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 32,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433882.8939562,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 33,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433883.453977,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 34,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433884.009581,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 35,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433884.566591,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 36,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433885.1266181,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 37,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433885.683966,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 38,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433886.234495,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 39,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433886.7875378,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 40,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433887.347568,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 41,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433887.907597,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 42,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792433888.4673338,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-without-id-1",
+      "method": "POST",
+      "number": 43,
+      "state": "response",
+      "status": 201
+    },
+    {
+      "at": 1792433889.018655,
+      "auth": "valid",
+      "label": "/cases/934cf433-91df-4edc-bfa1-53c8fc9bfaea",
+      "method": "GET",
+      "number": 44,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433889.568835,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-without-id-2",
+      "method": "POST",
+      "number": 45,
+      "state": "response",
+      "status": 201
+    },
+    {
+      "at": 1792433890.118882,
+      "auth": "valid",
+      "label": "/cases/09cecc71-a1b2-48b5-837b-e97ecdcfe2b3",
+      "method": "GET",
+      "number": 46,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433890.673459,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-caller-active-1",
+      "method": "POST",
+      "number": 47,
+      "state": "response",
+      "status": 201
+    },
+    {
+      "at": 1792433891.230336,
+      "auth": "valid",
+      "label": "/cases/be5dce37-faf5-48f7-90ed-1f417a8f1422",
+      "method": "GET",
+      "number": 48,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433891.79036,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-caller-active-2",
+      "method": "POST",
+      "number": 49,
+      "state": "response",
+      "status": 201
+    },
+    {
+      "at": 1792433892.3411782,
+      "auth": "valid",
+      "label": "/cases/fa7412d0-522f-4da3-bd03-3bc01e4806a9",
+      "method": "GET",
+      "number": 50,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433892.900706,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-concurrent-1",
+      "method": "POST",
+      "number": 51,
+      "state": "response",
+      "status": 201
+    },
+    {
+      "at": 1792433893.455182,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-concurrent-2",
+      "method": "POST",
+      "number": 52,
+      "state": "response",
+      "status": 201
+    },
+    {
+      "at": 1792433894.010106,
+      "auth": "valid",
+      "label": "/cases/0ea8f64f-5c8f-468c-81ed-eb1d719d6afd",
+      "method": "GET",
+      "number": 53,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433894.5673978,
+      "auth": "valid",
+      "label": "/cases/f3afa426-12cb-4504-9ac7-8497cb73b443",
+      "method": "GET",
+      "number": 54,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433896.8588212,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-reject-unknown",
+      "method": "POST",
+      "number": 55,
+      "state": "response",
+      "status": 404
+    },
+    {
+      "at": 1792433897.416149,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-reject-inactive",
+      "method": "POST",
+      "number": 56,
+      "state": "response",
+      "status": 409
+    },
+    {
+      "at": 1792433897.9754791,
+      "auth": "valid",
+      "label": "case-global-72fa-20261019-1909-reject-blocked",
+      "method": "POST",
+      "number": 57,
+      "state": "response",
+      "status": 409
+    },
+    {
+      "at": 1792433904.362561,
+      "auth": "valid",
+      "label": "/clients/0c810d37-c26f-4fe5-ba6a-ef814353561e/cases",
+      "method": "GET",
+      "number": 58,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433904.915309,
+      "auth": "valid",
+      "label": "/clients/955a80e3-9712-4437-bfba-5fe9b7796fea/cases",
+      "method": "GET",
+      "number": 59,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433905.467511,
+      "auth": "valid",
+      "label": "/clients/1c27614a-cd25-4361-a29b-d0a549c3f20f/cases",
+      "method": "GET",
+      "number": 60,
+      "state": "response",
+      "status": 404
+    },
+    {
+      "at": 1792433906.0275211,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 61,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433906.578433,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 62,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433907.134194,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 63,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433908.299295,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 64,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433908.8508742,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 65,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433909.409548,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 66,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433909.962486,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 67,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433910.522507,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 68,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433911.080388,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 69,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433911.640415,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 70,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433912.198802,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 71,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433913.3222542,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 72,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433913.882277,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 73,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433914.442313,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 74,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433914.998768,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 75,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433916.147868,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 76,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433916.700969,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 77,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433917.260989,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 78,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433917.817655,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 79,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433918.9210932,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 80,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433919.4718878,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 81,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433920.031913,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 82,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433920.58407,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 83,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433921.716875,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 84,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433922.855419,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 85,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433923.407108,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 86,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433923.967128,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 87,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433925.0988522,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 88,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433925.658886,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 89,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433926.217728,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 90,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433926.777754,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 91,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433927.904653,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 92,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433928.4621902,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 93,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433929.017813,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 94,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433929.5750132,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 95,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433930.727396,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 96,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433931.284201,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 97,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433931.841304,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 98,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433932.401132,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 99,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433933.534275,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 100,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433934.094309,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 101,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433934.6511738,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 102,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433935.2062469,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 103,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433936.446435,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 104,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433936.999995,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 105,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433937.5535119,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 106,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433938.109393,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 107,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433939.265034,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 108,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433939.817867,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 109,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433940.36995,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 110,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433940.929983,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 111,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433942.154948,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 112,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433942.714977,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 113,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433943.267903,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 114,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433943.827949,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 115,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433944.9636512,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 116,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433945.52368,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 117,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433946.083725,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 118,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433946.643755,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 119,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433947.767974,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 120,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433948.328043,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 121,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433948.8846772,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 122,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433949.441349,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 123,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433950.583331,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 124,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433951.137939,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 125,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433951.692992,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 126,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433952.253058,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 127,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433953.426741,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 128,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433953.986778,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 129,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433954.546806,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 130,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433955.1709492,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 131,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433956.400289,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 132,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433956.956058,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 133,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433957.516094,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 134,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433958.0724108,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 135,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433959.248929,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 136,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433959.801453,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 137,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433960.3615098,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 138,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433960.9130182,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 139,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433962.1062999,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 140,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433962.662685,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 141,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433963.2150521,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 142,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433963.775081,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 143,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433964.9334059,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 144,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433965.489126,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 145,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433966.04117,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 146,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792433966.5916731,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 147,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434159.059149,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 148,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434159.619179,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 149,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434160.178869,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 150,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434160.735595,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 151,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434161.2887402,
+      "auth": "valid",
+      "label": "/clients/8c52c6c2-179b-4338-ac4f-05d9ce0730c3/cases",
+      "method": "GET",
+      "number": 152,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792434161.847711,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 153,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792434162.4016588,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 154,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792434162.958613,
+      "auth": "missing",
+      "label": "/cases",
+      "method": "GET",
+      "number": 155,
+      "state": "response",
+      "status": 403
+    },
+    {
+      "at": 1792434163.508853,
+      "auth": "wrong",
+      "label": "/cases",
+      "method": "GET",
+      "number": 156,
+      "state": "response",
+      "status": 403
+    },
+    {
+      "at": 1792434164.059856,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 157,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792434164.614262,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 158,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434165.170302,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 159,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434165.722292,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 160,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434166.2754402,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 161,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434166.831617,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 162,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434167.391649,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 163,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434167.946744,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 164,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434168.50288,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 165,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434169.05917,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 166,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434169.612774,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 167,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434170.1728032,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 168,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434170.72324,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 169,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434171.27425,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 170,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434171.8292181,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 171,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434172.3863301,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 172,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434172.9375591,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 173,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434173.497578,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 174,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434174.052682,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 175,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434174.6056771,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 176,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434175.157378,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 177,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434175.7107031,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 178,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434176.27039,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 179,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434176.825917,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 180,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434177.378643,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 181,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434178.4957151,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 182,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434179.046805,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 183,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434179.605553,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 184,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434180.157707,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 185,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434180.7093241,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 186,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434181.25953,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 187,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434182.664057,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 188,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434183.217236,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 189,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434183.76996,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 190,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434184.329987,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 191,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434184.8852391,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 192,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434185.4452622,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 193,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434186.0053189,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 194,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434186.5607,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 195,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792434187.112113,
+      "auth": "valid",
+      "label": "/clients/b0da7ff5-d21d-4962-a876-b7697351881d/cases",
+      "method": "GET",
+      "number": 196,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792434187.664377,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 197,
+      "state": "response",
+      "status": 400
+    },
+    {
+      "at": 1792434188.2187798,
+      "auth": "valid",
+      "label": "/clients",
+      "method": "GET",
+      "number": 198,
+      "state": "response",
+      "status": 200
+    },
+    {
+      "at": 1792434188.770297,
+      "auth": "valid",
+      "label": "/cases",
+      "method": "GET",
+      "number": 199,
+      "state": "response",
+      "status": 400
+    }
+  ],
+  "http_post_config": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "http_post_revision": "f2ff152f-3e38-4571-be2b-8e7f7587515c",
+  "http_requests": 199,
+  "live_matrix": "PASS: cumulative bound original-operation evidence plus read-only continuation",
+  "live_started_at": 1792433840.6443598,
+  "missing_client_id": "1c27614a-cd25-4361-a29b-d0a549c3f20f",
+  "observed": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "offline_verification": {
+    "backoffice_test_build": "9 tests passed; build passed",
+    "compileall": "passed",
+    "focused_tdd": "accepted RED and GREEN for fresh continuation deployment-cycle reservation",
+    "sam_validate_lint": "passed",
+    "unittest_discovery": "72 passed"
+  },
+  "original": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "6obGwm2G6bohQWeRvcDsVcH1sPJKqMYWk/euh3HQ2sA=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "original_http_baseline": "PASS: auth 403/403 and protected GET 200",
+  "post_attempts": 9,
+  "post_live": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "post_live_revision": "f2ff152f-3e38-4571-be2b-8e7f7587515c",
+  "posts": {
+    "case-global-72fa-20261019-1909-caller-active-1": {
+      "case_id": "be5dce37-faf5-48f7-90ed-1f417a8f1422",
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "state": "201"
+    },
+    "case-global-72fa-20261019-1909-caller-active-2": {
+      "case_id": "fa7412d0-522f-4da3-bd03-3bc01e4806a9",
+      "client_id": "8c52c6c2-179b-4338-ac4f-05d9ce0730c3",
+      "state": "201"
+    },
+    "case-global-72fa-20261019-1909-concurrent-1": {
+      "case_id": "0ea8f64f-5c8f-468c-81ed-eb1d719d6afd",
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "state": "201"
+    },
+    "case-global-72fa-20261019-1909-concurrent-2": {
+      "case_id": "f3afa426-12cb-4504-9ac7-8497cb73b443",
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "state": "201"
+    },
+    "case-global-72fa-20261019-1909-without-id-1": {
+      "case_id": "934cf433-91df-4edc-bfa1-53c8fc9bfaea",
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "state": "201"
+    },
+    "case-global-72fa-20261019-1909-without-id-2": {
+      "case_id": "09cecc71-a1b2-48b5-837b-e97ecdcfe2b3",
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "state": "201"
+    }
+  },
+  "pre_live": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "pre_live_revision": "f2ff152f-3e38-4571-be2b-8e7f7587515c",
+  "preflight_history": [
+    {
+      "at": 1792433814.5048041,
+      "methods": [
+        [
+          "/clients",
+          "GET"
+        ],
+        [
+          "/cases",
+          "POST"
+        ],
+        [
+          "/cases/{case_id}",
+          "GET"
+        ],
+        [
+          "/clients/{client_id}/cases",
+          "GET"
+        ]
+      ]
+    },
+    {
+      "at": 1792433839.085248,
+      "methods": [
+        [
+          "/clients",
+          "GET"
+        ],
+        [
+          "/cases",
+          "POST"
+        ],
+        [
+          "/cases/{case_id}",
+          "GET"
+        ],
+        [
+          "/clients/{client_id}/cases",
+          "GET"
+        ]
+      ]
+    },
+    {
+      "at": 1792434196.0994,
+      "methods": [
+        [
+          "/clients",
+          "GET"
+        ],
+        [
+          "/cases",
+          "POST"
+        ],
+        [
+          "/cases",
+          "GET"
+        ],
+        [
+          "/cases/{case_id}",
+          "GET"
+        ],
+        [
+          "/clients/{client_id}/cases",
+          "GET"
+        ]
+      ]
+    },
+    {
+      "at": 1792434306.593598,
+      "methods": [
+        [
+          "/clients",
+          "GET"
+        ],
+        [
+          "/cases",
+          "POST"
+        ],
+        [
+          "/cases",
+          "GET"
+        ],
+        [
+          "/cases/{case_id}",
+          "GET"
+        ],
+        [
+          "/clients/{client_id}/cases",
+          "GET"
+        ]
+      ]
+    }
+  ],
+  "region": "eu-central-1",
+  "rejections": {
+    "case-global-72fa-20261019-1909-reject-blocked": 409,
+    "case-global-72fa-20261019-1909-reject-inactive": 409,
+    "case-global-72fa-20261019-1909-reject-unknown": 404
+  },
+  "scenario_history": [
+    {
+      "artifact": null,
+      "at": 1792433840.007211,
+      "scenarios": {}
+    },
+    {
+      "at": 1792433856.965162,
+      "binding": null,
+      "scenarios": {}
+    },
+    {
+      "at": 1792434159.059131,
+      "binding": {
+        "code": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+        "gateway": "k794w9",
+        "runner": "6c2b020efed41502f9b0b0d583a4d6b0c5bd14834419d479afef5fecc0c708d2"
+      },
+      "name": "case-pages-newest-first-query-bound",
+      "result": "BLOCKED: Operation blocked (ValueError)"
+    }
+  ],
+  "scenarios": {
+    "auth": "PASS",
+    "caller-id-ignored-cross-client": "PASS",
+    "case-pages-newest-first-query-bound": "PASS",
+    "clients-search-normalization-and-pagination": "PASS",
+    "concurrent-posts-and-immediate-get": "PASS",
+    "create-detail-decimal-repeat": "PASS",
+    "global-pagination-and-tokens": "PASS",
+    "unknown-inactive-blocked-no-write": "PASS",
+    "validation-and-missing": "PASS"
+  },
+  "stage": "v1",
+  "status": "BLOCKED",
+  "suite_binding": {
+    "code": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+    "gateway": "k794w9",
+    "runner": "6c2b020efed41502f9b0b0d583a4d6b0c5bd14834419d479afef5fecc0c708d2"
+  },
+  "suite_code_sha256": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+  "suite_runs": [
+    {
+      "at": 1792434158.824533,
+      "binding": {
+        "code": "tSQ2HQD/QAov6rYbZ0//IA6WdaKROyxKASUOEsXgKgM=",
+        "gateway": "k794w9",
+        "runner": "da0c7d51ffb209bd62d1ea8716b3501f7742b7ae484c6b59e3ddc2a6e7fe974d"
+      },
+      "http_end": 147,
+      "result": "BLOCKED fixture inventory incomplete",
+      "scenarios": {
+        "auth": "PASS",
+        "caller-id-ignored-cross-client": "PASS",
+        "case-pages-newest-first-query-bound": "BLOCKED: Operation blocked (ValueError)",
+        "clients-search-normalization-and-pagination": "PASS",
+        "concurrent-posts-and-immediate-get": "PASS",
+        "create-detail-decimal-repeat": "PASS",
+        "unknown-inactive-blocked-no-write": "PASS",
+        "validation-and-missing": "PASS"
+      }
+    }
+  ],
+  "task_id": "task-72fa674d-3c01-4e53-b5f7-cc12a1be4615"
+}

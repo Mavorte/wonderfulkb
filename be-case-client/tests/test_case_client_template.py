@@ -76,9 +76,10 @@ class CaseClientTemplateTests(unittest.TestCase):
             self.assertEqual(properties['RestApiId'], {'Ref': 'CaseClientApi'})
             self.assertNotEqual(properties.get('Auth', {}).get('ApiKeyRequired'), False)
             routes.add((properties['Method'].upper(), properties['Path']))
-        self.assertEqual(len(function['Events']), 4)
+        self.assertEqual(len(function['Events']), 5)
         self.assertEqual(routes, {('GET', '/clients'), ('POST', '/cases'),
-                                  ('GET', '/cases/{case_id}'), ('GET', '/clients/{client_id}/cases')})
+                                  ('GET', '/cases'), ('GET', '/cases/{case_id}'),
+                                  ('GET', '/clients/{client_id}/cases')})
 
     def test_key_stage_binding_and_json_gateway_errors(self):
         plan = self.resources['CaseClientUsagePlan']['Properties']

@@ -260,3 +260,275 @@ class LiveToolGuards(unittest.TestCase):
             selected = None
         self.assertEqual(selected, 'fake-memory-only-key')
         client.get_api_key.assert_called_once_with(apiKey='16u2jtkay6', includeValue=True)
+
+    def test_authorized_continuation_uses_fresh_exact_limits(self):
+        manifest = {'continuation_id': 'case-global-72fa-20261019-1909'}
+        self.assertEqual(deploy.CONTINUATIONS[manifest['continuation_id']], (4, 12, 3600))
+        with patch.object(deploy, 'save_manifest'):
+            for _ in range(3):
+                deploy.reserve(manifest, 'deploy_attempts', 4)
+            with self.assertRaises(ValueError):
+                deploy.reserve(manifest, 'deploy_attempts', 4)
+            deploy.reserve(manifest, 'deploy_attempts', 4, recovery=True)
+        self.assertEqual(manifest['deploy_attempts'], 4)
+
+    def test_authorized_continuation_uses_current_task_ledger(self):
+        self.assertEqual(deploy.TASK, 'task-7700299e-f977-4acd-a1fe-b7409c3bca5d')
+
+    def test_preflight_accepts_missing_get_only_before_deploy(self):
+        self.assertTrue(callable(getattr(deploy, 'require_routes', None)), 'missing route validator')
+        gateway = self.gateway()
+        gateway.get_method.side_effect = self.method_missing_global
+        deploy.require_routes(gateway, deployed=False)
+        with self.assertRaises(ValueError):
+            deploy.require_routes(gateway, deployed=True)
+
+    def test_route_checks_preserve_both_cases_methods(self):
+        self.assertTrue(callable(getattr(deploy, 'required_routes', None)), 'missing ordered five-route contract')
+        routes = deploy.required_routes()
+        self.assertEqual(routes, [('/clients', 'GET'), ('/cases', 'POST'), ('/cases', 'GET'),
+                                 ('/cases/{case_id}', 'GET'), ('/clients/{client_id}/cases', 'GET')])
+
+    def test_every_http_attempt_reserves_shared_ledger_before_send(self):
+        import inspect
+        self.assertIn('manifest', inspect.signature(api.Transport).parameters)
+        http = api.Transport('fake-key', manifest={'continuation_id': 'case-global-72fa-20261019-1909',
+                                                   'http_requests': 0})
+        opener = Mock()
+        opener.open.side_effect = URLError('offline')
+        with patch.object(api, 'save_manifest'), patch.object(api, 'build_opener', return_value=opener):
+            with self.assertRaises(URLError):
+                http.request('GET', '/cases')
+        self.assertEqual(http.manifest['http_requests'], 1)
+
+    def test_http_budget_exhaustion_prevents_send(self):
+        import inspect
+        self.assertIn('manifest', inspect.signature(api.Transport).parameters)
+        http = api.Transport('fake-key', manifest={'continuation_id': 'case-global-72fa-20261019-1909',
+                                                   'http_requests': 200})
+        opener = Mock()
+        with patch.object(api, 'build_opener', return_value=opener), self.assertRaises(ValueError):
+            http.request('GET', '/cases')
+        opener.open.assert_not_called()
+
+    def method(self, **kwargs):
+        return {'httpMethod': kwargs['httpMethod'], 'apiKeyRequired': True, 'authorizationType': 'NONE',
+                'methodIntegration': {'type': 'AWS_PROXY', 'httpMethod': 'POST',
+                'uri': f'arn:aws:apigateway:{deploy.REGION}:lambda:path/2015-03-31/functions/{deploy.FUNCTION}/invocations'}}
+
+    def method_missing_global(self, **kwargs):
+        if kwargs['resourceId'] == '/cases' and kwargs['httpMethod'] == 'GET':
+            raise ClientError({'Error': {'Code': 'NotFoundException'}}, 'GetMethod')
+        return self.method(**kwargs)
+
+    def gateway(self):
+        gateway = Mock()
+        gateway.get_paginator.return_value.paginate.return_value = [{'items': [
+            {'path': p, 'id': p} for p in ('/clients', '/cases', '/cases/{case_id}', '/clients/{client_id}/cases')]}]
+        gateway.get_method.side_effect = self.method
+        gateway.get_integration.side_effect = lambda **kw: self.method(**kw)['methodIntegration']
+        gateway.get_stage.return_value = {'deploymentId': 'before', 'methodSettings': {'*/*': {'throttlingRateLimit': 2}}}
+        return gateway
+
+    def test_route_validation_rejects_missing_post_bad_auth_and_access_denied(self):
+        self.assertTrue(callable(getattr(deploy, 'require_routes', None)))
+        for broken in ('post', 'auth', 'denied', 'uri'):
+            gateway = self.gateway()
+            def detail(**kw):
+                if kw['resourceId'] == '/cases' and kw['httpMethod'] == 'POST':
+                    if broken in ('post', 'denied'):
+                        raise ClientError({'Error': {'Code': 'NotFoundException' if broken == 'post' else 'AccessDeniedException'}}, 'GetMethod')
+                    value = self.method(**kw)
+                    if broken == 'auth':
+                        value['apiKeyRequired'] = False
+                    else:
+                        value['methodIntegration']['uri'] = 'foreign'
+                    return value
+                return self.method(**kw)
+            gateway.get_method.side_effect = detail
+            with self.subTest(broken=broken), self.assertRaises((ValueError, ClientError)):
+                deploy.require_routes(gateway, deployed=False)
+
+    def test_gateway_additive_publication_and_owned_recovery(self):
+        self.assertTrue(callable(getattr(deploy, 'publish_gateway', None)), 'missing guarded publication')
+        self.assertTrue(callable(getattr(deploy, 'recover_gateway', None)), 'missing owned recovery')
+        gateway = self.gateway()
+        gateway.get_method.side_effect = self.method_missing_global
+        snapshot = deploy.require_routes(gateway, deployed=False)
+        state = {'api': snapshot, 'revision': 'ours'}
+        gateway.put_method.side_effect = lambda **kw: setattr(gateway.get_method, 'side_effect', self.method)
+        s = Mock()
+        s.client.side_effect = lambda name, **kw: gateway if name == 'apigateway' else Mock(
+            get_function_configuration=Mock(return_value={'RevisionId': 'ours'}))
+        def put(**kw):
+            gateway.get_method.side_effect = self.method
+        gateway.put_integration.side_effect = put
+        gateway.create_deployment.return_value = {'id': 'owned'}
+        gateway.create_deployment.side_effect = lambda **kw: (setattr(gateway.get_stage, 'return_value',
+            {'deploymentId': 'owned', 'methodSettings': {'*/*': {'throttlingRateLimit': 2}}}) or {'id': 'owned'})
+        gateway.update_stage.side_effect = lambda **kw: setattr(gateway.get_stage, 'return_value', snapshot['stage'])
+        with patch.object(deploy, 'store_state') as saved:
+            deploy.publish_gateway(s, Path('/unused'), state)
+            self.assertGreater(saved.call_count, 2)
+            gateway.put_method.assert_called_once_with(restApiId=deploy.API, resourceId='/cases',
+                httpMethod='GET', authorizationType='NONE', apiKeyRequired=True)
+            gateway.put_integration.assert_called_once_with(restApiId=deploy.API, resourceId='/cases',
+                httpMethod='GET', type='AWS_PROXY', integrationHttpMethod='POST',
+                uri=self.method(httpMethod='POST')['methodIntegration']['uri'])
+            gateway.create_deployment.assert_called_once_with(restApiId=deploy.API, stageName='v1')
+            deploy.recover_gateway(s, Path('/unused'), state)
+        gateway.update_stage.assert_called_once()
+        gateway.delete_method.assert_called_once()
+
+    def test_gateway_foreign_stage_stops_before_mutation(self):
+        self.assertTrue(callable(getattr(deploy, 'publish_gateway', None)))
+        gateway = self.gateway()
+        snapshot = deploy.require_routes(gateway, deployed=False)
+        gateway.get_stage.return_value = {'deploymentId': 'foreign'}
+        s = Mock()
+        s.client.return_value = gateway
+        with patch.object(deploy, 'store_state'), self.assertRaises(ValueError):
+            deploy.publish_gateway(s, Path('/unused'), {'api': snapshot, 'revision': 'ours'})
+        gateway.put_method.assert_not_called()
+        gateway.create_deployment.assert_not_called()
+
+    def test_gateway_partial_failure_retains_intent_and_refuses_foreign_recovery(self):
+        self.assertTrue(callable(getattr(deploy, 'publish_gateway', None)))
+        for boundary in ('put_method', 'put_integration', 'create_deployment'):
+            gateway = self.gateway()
+            gateway.get_method.side_effect = self.method_missing_global
+            state = {'api': deploy.require_routes(gateway, deployed=False), 'revision': 'ours'}
+            gateway.put_method.side_effect = lambda **kw: setattr(gateway.get_method, 'side_effect', self.method)
+            s = Mock()
+            s.client.side_effect = lambda name, **kw: gateway if name == 'apigateway' else Mock(
+                get_function_configuration=Mock(return_value={'RevisionId': 'ours'}))
+            def integrate(**kw):
+                gateway.get_method.side_effect = self.method
+            gateway.put_integration.side_effect = integrate
+            getattr(gateway, boundary).side_effect = RuntimeError('operation failed')
+            with patch.object(deploy, 'store_state'), self.subTest(boundary=boundary):
+                with self.assertRaises(RuntimeError):
+                    deploy.publish_gateway(s, Path('/unused'), state)
+                self.assertIn('gateway_intent', state)
+                gateway.get_stage.return_value = {'deploymentId': 'foreign'}
+                with self.assertRaises(ValueError):
+                    deploy.recover_gateway(s, Path('/unused'), state)
+            gateway.delete_method.assert_not_called()
+
+    def test_last_http_slot_cannot_be_spent_twice_by_threads(self):
+        import inspect
+        from concurrent.futures import ThreadPoolExecutor
+        self.assertIn('manifest', inspect.signature(api.Transport).parameters)
+        m = {'http_requests': 199}
+        http = api.Transport('fake-key', manifest=m, sleep=Mock())
+        opener = Mock()
+        opener.open.side_effect = URLError('offline')
+        def request(_):
+            try:
+                http.request('GET', '/cases')
+            except (ValueError, URLError):
+                pass
+        with patch.object(api, 'save_manifest'), patch.object(api, 'build_opener', return_value=opener), ThreadPoolExecutor(2) as pool:
+            list(pool.map(request, range(2)))
+        self.assertEqual(m['http_requests'], 200)
+        opener.open.assert_called_once()
+
+    def test_post_reservation_is_saved_before_ambiguous_send_and_not_replayed(self):
+        import inspect
+        self.assertIn('manifest', inspect.signature(api.Transport).parameters)
+        m = {'http_requests': 0, 'post_attempts': 0}
+        http = api.Transport('fake-key', manifest=m)
+        opener = Mock()
+        with patch.object(api, 'save_manifest') as saved, patch.object(api, 'build_opener', return_value=opener):
+            def send(*a, **kw):
+                self.assertEqual((m['http_requests'], m['post_attempts']), (1, 1))
+                self.assertTrue(saved.called)
+                raise URLError('ambiguous')
+            opener.open.side_effect = send
+            with self.assertRaises(URLError):
+                http.request('POST', '/cases', body={}, label='stable')
+            with self.assertRaises(ValueError):
+                http.request('POST', '/cases', body={}, label='stable')
+        opener.open.assert_called_once()
+
+    def test_http_baseline_does_not_start_mutation_clock(self):
+        import inspect
+        self.assertIn('manifest', inspect.signature(api.Transport).parameters)
+        m = {}
+        http = api.Transport('fake-key', manifest=m)
+        with patch.object(api, 'save_manifest'), patch.object(api, 'build_opener') as opener:
+            opener.return_value.open.side_effect = URLError('offline')
+            with self.assertRaises(URLError):
+                http.request('GET', '/clients', auth='missing')
+        self.assertNotIn('live_started_at', m)
+
+    def test_global_traversal_rejects_missing_duplicate_and_cycles(self):
+        self.assertTrue(callable(getattr(api, 'global_matrix', None)), 'missing global HTTP scenarios')
+        fs = [{'client_id': 'a', 'status': 'active'}, {'client_id': 'b', 'status': 'active'}]
+        cases = [{'case_id': str(i), 'client_id': c, 'status': 'open', 'created_at': 'now', 'metadata': {}}
+                 for i, c in enumerate(('a', 'b'))]
+        for mode in ('good', 'missing', 'duplicate', 'cycle'):
+            http = Mock()
+            def request(method, path, query=None, auth='valid', **kw):
+                if auth != 'valid':
+                    return 403, {}, None
+                q = query or {}
+                if q.get('limit') in ('0', '101', 'bad') or q.get('next_token') == 'bad!' or (q.get('next_token') in ('foreign', 'global') and
+                        (path != '/cases' or q.get('limit') != '1' or q['next_token'] == 'foreign')):
+                    return 400, {}, 'dynamodb'
+                if path != '/cases':
+                    return 200, {'cases': cases[:1], 'clients': [], 'next_token': 'foreign'}, 'dynamodb'
+                if q.get('next_token') == 'global':
+                    return 200, {'cases': cases[:1] if mode == 'duplicate' else cases[1:] if mode != 'missing' else [],
+                                 'next_token': 'global' if mode == 'cycle' else None}, 'dynamodb'
+                return 200, {'cases': cases[:1], 'next_token': 'global'}, 'dynamodb'
+            http.request.side_effect = request
+            m = {'scenarios': {}, 'fixtures': fs, 'fixture_cases': cases}
+            with patch.object(api, 'save_manifest'), self.subTest(mode=mode):
+                if mode == 'good':
+                    api.global_matrix(http, m, cases)
+                    self.assertIn('global-pagination-and-tokens', m['scenarios'])
+                else:
+                    with self.assertRaises((AssertionError, ValueError)):
+                        api.global_matrix(http, m, cases)
+
+    def test_fixture_inventory_includes_preexisting_cases_for_both_clients(self):
+        self.assertTrue(callable(getattr(api, 'fixture_inventory', None)), 'missing complete reused-fixture inventory')
+        m = {'fixtures': [{'client_id': 'a', 'status': 'active'}, {'client_id': 'b', 'status': 'active'}],
+             'fixture_case_ids': ['old-a'], 'case_ids': ['new-b']}
+        with patch.object(api, 'case_partition', side_effect=[['old-a'], ['old-b', 'new-b']]), \
+                patch.object(api, 'save_manifest'):
+            inventory = api.fixture_inventory(Mock(), m)
+        self.assertEqual(inventory, {'a': ['old-a'], 'b': ['old-b', 'new-b']})
+        self.assertIn('old-b', m['fixture_inventory']['b'])
+
+    def test_read_only_continuation_requires_bound_successful_prior_evidence(self):
+        self.assertTrue(callable(getattr(api, 'continue_read_only', None)), 'missing bounded read-only continuation')
+        http = Mock()
+        for broken in ({}, {'suite_binding': {'code': 'foreign'}, 'scenarios': {'auth': 'PASS'}}):
+            with self.assertRaises(ValueError):
+                api.continue_read_only(Mock(), http, broken, {'CodeSha256': 'ours'}, 'deployment')
+        http.request.assert_not_called()
+
+    def test_busy_execution_lock_cannot_write_another_invocations_ledger(self):
+        import io
+        for module, argv in ((deploy, ['tool', 'preflight']), (api, ['tool', '--baseline'])):
+            with self.subTest(module=module.__name__), \
+                    patch.object(module, 'exclusive_run', side_effect=BlockingIOError('busy')), \
+                    patch.object(module, 'save_manifest') as saved, \
+                    patch.object(module, 'load_manifest', return_value={}), \
+                    patch.object(sys, 'argv', argv), patch('sys.stdout', io.StringIO()):
+                self.assertEqual(module.main(), 1)
+                saved.assert_not_called()
+
+    def test_preexisting_get_fingerprint_drift_prevents_publication(self):
+        gateway = self.gateway()
+        state = {'api': deploy.require_routes(gateway, deployed=True)}
+        def changed(**kw):
+            value = self.method(**kw)
+            if kw['resourceId'] == '/cases' and kw['httpMethod'] == 'GET':
+                value['requestParameters'] = {'method.request.header.Foreign': True}
+            return value
+        gateway.get_method.side_effect = changed
+        with self.assertRaises(ValueError):
+            deploy.guard_gateway(gateway, state)

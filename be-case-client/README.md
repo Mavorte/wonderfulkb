@@ -1,6 +1,6 @@
 # wonderfulkb Case & Client
 
-Jedna Python Lambda, čtyři operace a OpenAPI 1.4.0. Repository
+Jedna Python Lambda, pět operací a OpenAPI 1.5.0. Repository
 hranice má dva explicitní režimy: ephemeral mock a externí DynamoDB adaptér.
 Žádný fallback. Komponenta obsahuje deploy nástroj
 `tools/case_client_test_deploy.py` a HTTP runner
@@ -80,6 +80,9 @@ API key kontroluje API Gateway, ne Python handler; není DB credential.
 - Každý POST `/cases` generuje nové UUIDv4 na serveru, ignoruje jakékoli
   dodané `case_id` a při úspěchu vrací 201. Aktivní klient → `status=open`, UTC čas;
   neexistující klient →404, inactive/blocked →409.
+- GET `/cases` vrací veřejné case napříč všemi klienty stránkovaným Scanem tabulky
+  cases. Neověřuje ani nečte klienty; globální pořadí není garantováno. Cursor je
+  route/query/limit/backend vázaný. Klientské listování zůstává newest-first GSI Query.
 - DB nejprve konzistentně ověří klienta. Zápis je `TransactWriteItems`:
   existence a active status klienta + `attribute_not_exists(case_id)` při Put.
   Condition konflikt se klasifikuje podle přesné pozice cancellation reasonů.

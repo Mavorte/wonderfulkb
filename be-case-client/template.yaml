@@ -92,6 +92,7 @@
         }},
         "Events": {
           "ListClients": {"Type": "Api", "Properties": {"RestApiId": {"Ref": "CaseClientApi"}, "Path": "/clients", "Method": "get"}},
+          "ListCases": {"Type": "Api", "Properties": {"RestApiId": {"Ref": "CaseClientApi"}, "Path": "/cases", "Method": "get"}},
           "CreateCase": {"Type": "Api", "Properties": {"RestApiId": {"Ref": "CaseClientApi"}, "Path": "/cases", "Method": "post"}},
           "GetCase": {"Type": "Api", "Properties": {"RestApiId": {"Ref": "CaseClientApi"}, "Path": "/cases/{case_id}", "Method": "get"}},
           "ListClientCases": {"Type": "Api", "Properties": {"RestApiId": {"Ref": "CaseClientApi"}, "Path": "/clients/{client_id}/cases", "Method": "get"}}

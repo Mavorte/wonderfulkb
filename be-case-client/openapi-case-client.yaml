@@ -57,6 +57,32 @@ paths:
         '429': {$ref: '#/components/responses/TooManyRequests'}
 
   /cases:
+    get:
+      tags: [cases]
+      operationId: listCases
+      summary: Vylistuje case napříč klienty
+      description: Globální stránkovaný Scan; pořadí není garantováno a klienti se neověřují.
+      parameters:
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+        - name: next_token
+          in: query
+          schema: {type: string}
+      responses:
+        '200':
+          description: Stránka případů
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [cases, next_token]
+                properties:
+                  cases: {type: array, items: {$ref: '#/components/schemas/Case'}}
+                  next_token: {type: string, nullable: true}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
     post:
       tags: [cases]
       operationId: createCase

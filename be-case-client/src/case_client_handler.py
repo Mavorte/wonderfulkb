@@ -173,15 +173,19 @@ def create_handler(repository: CaseClientRepository = None):
             route, params = _route(event)
             if route is None:
                 return response(404, {'error': 'Route not found'})
-            method = 'POST' if route == '/cases' else 'GET'
-            if event.get('httpMethod') != method:
+            method = event.get('httpMethod')
+            if method != ('POST' if route == '/cases' else 'GET') and not (
+                    route == '/cases' and method == 'GET'):
                 return response(405, {'error': 'Method not allowed'})
             if route == '/clients':
                 data = repository.list_clients(*_query(event, clients=True))
                 data['clients'] = [_public_client(c) for c in data['clients']]
             elif route == '/cases':
-                case = repository.create_case(*_request(event))
-                return response(201, _public_case(case))
+                if event.get('httpMethod') == 'POST':
+                    case = repository.create_case(*_request(event))
+                    return response(201, _public_case(case))
+                data = repository.list_cases(*_query(event))
+                data['cases'] = [_public_case(c) for c in data['cases']]
             elif route == '/cases/{case_id}':
                 data = _public_case(repository.get_case(_case_id(params.get('case_id'))))
             else:
