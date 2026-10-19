@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: wonderfulkb Case & Client API (část 1)
-  version: 1.3.0-final
+  version: 1.4.0
   description: |
     Návrh (zatím nenasazeno). Část 1: klienti (jen čtení, syntetická data) a case.
     Jedna Lambda `wonderfulkb-case-client`, tabulky wonderfulkb-uw-clients a wonderfulkb-uw-cases.
@@ -62,8 +62,8 @@ paths:
       operationId: createCase
       summary: Založí case pro klienta
       description: |
-        Wonderful posílá vlastní `case_id`. Idempotentní: opakované volání se stejným `case_id`
-        a stejným `client_id` vrátí existující case (200). Stejné `case_id` s jiným `client_id` je 409.
+        Prostý create: `case_id` přidělí služba (UUID v4) a vrátí ho v odpovědi, v požadavku se neposílá
+        (případné se ignoruje). Volání není idempotentní, každé založí nový case.
       requestBody:
         required: true
         content:
@@ -75,11 +75,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/Case'}
-        '200':
-          description: Case se stejným `case_id` a `client_id` už existuje
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/Case'}
         '400': {$ref: '#/components/responses/BadRequest'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404':
@@ -88,7 +83,7 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/Error'}
         '409':
-          description: Klient je `inactive`/`blocked`, nebo `case_id` už patří jinému klientovi
+          description: Klient je `inactive`/`blocked`
           content:
             application/json:
               schema: {$ref: '#/components/schemas/Error'}
@@ -245,8 +240,8 @@ components:
       minLength: 1
       maxLength: 128
       pattern: '^[A-Za-z0-9._-]+$'
-      description: ID case přidělené Wonderful. Je zároveň klíčem case v databázi.
-      example: case-2026-000123
+      description: ID case přidělené službou při založení (UUID). Je zároveň klíčem case v databázi.
+      example: 7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90
 
     CaseStatus:
       type: string
@@ -254,9 +249,8 @@ components:
 
     CreateCaseRequest:
       type: object
-      required: [case_id, client_id]
+      required: [client_id]
       properties:
-        case_id: {$ref: '#/components/schemas/CaseId'}
         client_id: {type: string, format: uuid}
         metadata:
           type: object

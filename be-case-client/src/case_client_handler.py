@@ -100,7 +100,6 @@ def _request(event):
         body = json.loads(raw, parse_constant=_reject_constant)
         if not isinstance(body, dict):
             raise ValueError()
-        _case_id(body.get('case_id'))
         client_id = _client_id(body.get('client_id'))
         metadata = body.get('metadata', {})
         if not isinstance(metadata, dict):
@@ -109,7 +108,7 @@ def _request(event):
                               allow_nan=False).encode('utf-8'))
         if size > 16384:
             raise InvalidRequest('metadata exceeds demo limit of 16 KiB')
-        return body['case_id'], client_id, metadata
+        return client_id, metadata
     except (ValueError, TypeError, UnicodeError, binascii.Error, RecursionError):
         raise InvalidRequest('Invalid JSON request or fields (metadata limit: 16 KiB)') from None
 
@@ -144,8 +143,8 @@ def create_handler(repository: CaseClientRepository = None):
                 data = repository.list_clients(*_query(event, clients=True))
                 data['clients'] = [_public_client(c) for c in data['clients']]
             elif route == '/cases':
-                case, created = repository.create_case(*_request(event))
-                return _response(201 if created else 200, _public_case(case))
+                case = repository.create_case(*_request(event))
+                return _response(201, _public_case(case))
             elif route == '/cases/{case_id}':
                 data = _public_case(repository.get_case(_case_id(params.get('case_id'))))
             else:

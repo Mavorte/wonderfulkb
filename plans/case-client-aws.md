@@ -67,28 +67,16 @@ OpenAPI vyžaduje i cases; jejich fyzické schéma nebylo dodáno, proto je toto
 | Endpoint | Plán |
 |---|---|
 | `GET /clients` | S `ico` použít `Query` na `ico-index`, jinak `Scan`; `name` a `status` kombinovat AND. |
-| `POST /cases` | Validace vstupu, idempotence, existence a aktivní stav klienta, podmíněné vytvoření case. |
+| `POST /cases` | Validace vstupu, existence a aktivní stav klienta, vygenerování `case_id` (UUID v4) a podmíněné vytvoření case. Prostý create, bez idempotence. |
 | `GET /cases/{case_id}` | `GetItem` podle klíče, 200 nebo 404. |
 | `GET /clients/{client_id}/cases` | Nejdříve existence klienta (404), potom `Query` na GSI, nejnovější první, případně filtr status. |
 
-### Idempotence a souběh
+### Vytvoření a souběh
 
-1. Nejprve konzistentně přečíst existující case: stejný klient → 200 s původním case, jiný klient → 409. Změna `metadata` při opakování nepřepisuje existující case.
-2. Pokud case neexistuje, ověřit klienta: neexistující → 404, `inactive`/`blocked` → 409.
-3. Vytvoření řešit transakcí s kontrolou aktivního klienta a `Put` s `attribute_not_exists(case_id)`. Tím se ošetří závod o stejné ID i změna stavu klienta mezi čtením a zápisem.
-4. Při konfliktu znovu načíst case/klienta a převést známý důvod na 200/404/409; provozní chyby nezaměňovat za konflikt.
-5. Úspěšný nový zápis vrací 201. Idempotentní opakování zůstává 200 i při pozdější změně stavu klienta — odpovídá příslibu vrácení existujícího case.
-
-### Filtrování a stránkování
-
-- `name` vyhledává podřetězec v `name_normalized`; bez indexu názvu je pro malý syntetický dataset přijatelný scan.
-- DynamoDB `Limit` omezuje počet vyhodnocených položek před filtrem, nikoli počet shod. Pro první verzi API určit `limit` jako horní mez počtu vrácených položek, nikoli příslib naplněné stránky; použít jednu databázovou stránku s daným limitem. Prázdná stránka může mít `next_token` a klient musí pokračovat. Doplnit toto vysvětlení do dokumentace API při implementaci.
-- Token obsahuje verzovaný kurzor `LastEvaluatedKey` a vazbu na endpoint, klienta a filtry; base64url JSON, validace tvaru a kontextu. Token není šifrování a neukládá citlivý obsah. Poškozený token nebo použití s jinými filtry → 400.
-- Bez pokračování vrátit `next_token: null`. Seznam klientů nemá garantované pořadí ani snapshot při souběžných změnách dat.
-- Validovat UUID, IČO jako string (včetně nul na začátku), délky, enumy, `case_id`, JSON a `limit` 1–100 (výchozí 50). Ošetřit i název, který je po normalizaci prázdný.
-- Velikost `metadata` omezit s ohledem na limit položky DynamoDB 400 KB; příliš velký vstup odmítnout jako 400 před zápisem.
-- Chyby mají JSON `{"error":"..."}`. Gateway responses pro 403 a 429 nastavit do stejného tvaru; validace v handleru, aby nevznikaly různé formáty chyb.
-- Kontrakt u `GET /cases/{case_id}` neuvádí 400. Při implementaci sjednotit dokumentaci neplatného `case_id` s ostatními endpointy; nyní původní YAML neměnit.
+1. `case_id` generuje služba (UUID v4); případné `case_id` v požadavku se ignoruje. Každé volání založí nový case, create není idempotentní.
+2. Ověřit klienta: neexistující → 404, `inactive`/`blocked` → 409.
+3. Zapsat `Put` s `attribute_not_exists(case_id)`; kolize UUID prakticky nenastává, případná provozní chyba je 5xx.
+4. Úspěšný zápis vrací vždy 201.
 
 ## 5. Budoucí struktura komponenty
 
@@ -114,7 +102,7 @@ Zdrojový OpenAPI ponechat čitelný; deployment definice jej rozšíří o Lamb
 ### A. Rychlý cyklus bez AWS
 
 1. Doplnit Python 3.13 a SAM CLI; vytvořit virtualenv, nainstalovat aplikační a testovací závislosti. Spustit Docker daemon.
-2. Unit testy volají služby/handler přímo, s izolovanou databázovou vrstvou: validace, normalizace názvů, idempotence a převod chyb. Docker není potřeba.
+2. Unit testy volají služby/handler přímo, s izolovanou databázovou vrstvou: validace, normalizace názvů, generování `case_id` a převod chyb. Docker není potřeba.
 3. Integrační testy použijí DynamoDB Local v Dockeru; vytvoří obě tabulky i GSI a vloží syntetické fixtures. Endpoint je konfigurovatelný, použijí se pouze fiktivní lokální credentials.
 4. `sam build --use-container` připraví balíček v prostředí odpovídajícím Lambdě.
 5. `sam local start-api` spustí lokální HTTP endpointy; `sam local invoke` poslouží pro jednotlivé uložené API Gateway eventy.
@@ -172,15 +160,15 @@ Příklad volání po deployi (proměnné vyplněné z výstupů a testovacích 
 ```bash
 curl -H "x-api-key: $API_KEY" "$API_URL/clients?limit=10"
 curl -X POST -H "x-api-key: $API_KEY" -H 'Content-Type: application/json' \
-  -d "{\"case_id\":\"case-smoke-001\",\"client_id\":\"$CLIENT_ID\"}" "$API_URL/cases"
+  -d "{\"client_id\":\"$CLIENT_ID\"}" "$API_URL/cases"
 ```
 
 ## 8. Ověření funkčnosti při implementaci
 
 - Kontrakt: všechny čtyři operace a tvar odpovědí vůči OpenAPI, včetně absence interních atributů klienta.
 - Filtry: IČO s nulou na začátku, diakritika, právní forma, kombinace AND, prázdné výsledky a vícestránkové výsledky včetně prázdné stránky s tokenem.
-- Cases: 201 pro nový, 200 pro stejné ID/klienta, 409 pro jiného klienta, neaktivního a blokovaného klienta, 404 pro neexistujícího klienta/case.
-- Souběžné vytvoření stejného case: právě jeden nový zápis, ostatní požadavky idempotentní nebo konfliktní podle klienta.
+- Cases: 201 pro nový (vždy s novým `case_id`), 409 pro neaktivního a blokovaného klienta, 404 pro neexistujícího klienta/case.
+- Souběžné vytvoření pro stejného klienta: každé volání dostane vlastní `case_id` a 201.
 - Seznam cases: nejnovější první, stránkování, filtr stavu, existující klient bez cases → prázdný seznam, neexistující klient → 404.
 - Reálné AWS: 403 bez klíče i se špatným klíčem, správný JSON error, funkční IAM a indexy; řízeně ověřit 429 přes nízký testovací limit usage planu (omezení je best effort).
 - Smoke testy používat vlastní rozpoznatelná ID a neodstraňovat seed/ostatní cases. Indexovou eventual consistency řešit omezeným opakováním čtení, nikoli náhodnými dlouhými prodlevami.

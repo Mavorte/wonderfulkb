@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 from threading import Lock
 import unicodedata
+from uuid import uuid4
 
 from case_client_repository import Conflict, InvalidRequest, NotFound
 
@@ -77,22 +78,18 @@ class MockCaseClientRepository:
             clients, next_token = _page(items, 'client_id', 'clients', filters, limit, token)
             return {'clients': clients, 'next_token': next_token}
 
-    def create_case(self, case_id, client_id, metadata):
+    def create_case(self, client_id, metadata):
         with self._lock:
-            if case_id in self._cases:
-                case = self._cases[case_id]
-                if case['client_id'] != client_id:
-                    raise Conflict('Case belongs to another client')
-                return deepcopy(case), False
             if client_id not in self._clients:
                 raise NotFound('Client not found')
             if self._clients[client_id]['status'] != 'active':
                 raise Conflict('Client is not active')
+            case_id = str(uuid4())
             case = {'case_id': case_id, 'client_id': client_id, 'status': 'open',
                     'created_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                     'metadata': deepcopy(metadata)}
             self._cases[case_id] = case
-            return deepcopy(case), True
+            return deepcopy(case)
 
     def get_case(self, case_id):
         with self._lock:

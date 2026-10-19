@@ -13,10 +13,11 @@ nezměněného `openapi-case-client.yaml` 1.3.0-final. **Není to produkční da
 - Stav vytvořených cases žije pouze v jednom execution environmentu. Cold start
   obnoví fixtures, jiné instance mají nezávislá data. **Žádná trvalá, globální ani
   meziinstanční idempotence a žádná záruka HTTP POST → další GET.**
-- Uvnitř jedné repository je rozhodnutí create/repeat/conflict atomické pod
-  zámkem. Stejné ID a klient vrací 200 s původními metadata/časem, i když klient
-  už není aktivní; jiný vlastník 409. Nový aktivní klient →201/open/UTC;
-  neexistující →404, inactive/blocked →409. Nová repository má hlubokou kopii dat.
+- `POST /cases` je prostý create: `case_id` generuje služba (UUID v4), v požadavku
+  se neposílá a případné se ignoruje. Každé volání založí nový case (není
+  idempotentní). Nový aktivní klient →201/open/UTC; neexistující →404,
+  inactive/blocked →409. Create je atomický pod zámkem, nová repository má
+  hlubokou kopii dat.
 - `GET /clients`: AND filtry `ico`, `name`, `status`. Názvy ignorují velikost,
   diakritiku a celé právní formy s.r.o., a.s., v.o.s., k.s., společnost s ručením
   omezeným a akciová společnost (včetně mezer/teček). Řazení podle client_id.
@@ -105,8 +106,8 @@ API_KEY=$(aws apigateway get-api-key --api-key "$API_KEY_ID" --include-value --p
 Následující shell helper posílá klíč přes stdin konfigurace curl, ne přes argv.
 `-i` ukáže HTTP status a response hlavičky; úspěchy musí mít
 `X-Data-Backend: mock`. Po vytvoření/vazbě klíče může gateway potřebovat krátkou
-dobu na propagaci. Žádné POST → další GET ani opakované HTTP POST →200 jako
-důkaz persistence/idempotence; ta je ověřena pouze offline v jedné repository.
+dobu na propagaci. Žádné POST → další GET jako
+důkaz persistence; ta je ověřena pouze offline v jedné repository.
 
 ```sh
 mock_request() {
@@ -116,11 +117,11 @@ mock_request "$API_URL/clients"                                                #
 mock_request "$API_URL/cases/fixture-old"                                      # 200, packaged fixture
 mock_request "$API_URL/clients/11111111-1111-4111-8111-111111111111/cases"         # 200
 mock_request -H 'Content-Type: application/json' -X POST "$API_URL/cases" \
-  --data "{\"case_id\":\"smoke-$(date +%s)\",\"client_id\":\"11111111-1111-4111-8111-111111111111\",\"metadata\":{\"demo\":true}}" # 201
+  --data "{\"client_id\":\"11111111-1111-4111-8111-111111111111\",\"metadata\":{\"demo\":true}}" # 201
 mock_request -H 'Content-Type: application/json' -X POST "$API_URL/cases" \
-  --data '{"case_id":"smoke-inactive","client_id":"33333333-3333-4333-8333-333333333333"}' # 409
+  --data '{"client_id":"33333333-3333-4333-8333-333333333333"}' # 409
 mock_request -H 'Content-Type: application/json' -X POST "$API_URL/cases" \
-  --data '{"case_id":"smoke-missing","client_id":"99999999-9999-4999-8999-999999999999"}' # 404
+  --data '{"client_id":"99999999-9999-4999-8999-999999999999"}' # 404
 curl --silent --show-error -i "$API_URL/clients"                                # 403
 curl --silent --show-error -i -H 'x-api-key: deliberately-invalid' "$API_URL/clients" # 403
 unset API_KEY API_KEY_ID

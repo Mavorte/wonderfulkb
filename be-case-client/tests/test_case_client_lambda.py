@@ -51,9 +51,9 @@ class CaseClientLambdaTests(unittest.TestCase):
             self.assertIsInstance(data['error'], str)
         return data
 
-    def post(self, case_id='offline-case', client_id=ACTIVE, expected=201, **extra):
+    def post(self, client_id=ACTIVE, expected=201, **extra):
         return self.invoke('POST', '/cases', body=dict(
-            case_id=case_id, client_id=client_id, **extra), expected=expected)
+            client_id=client_id, **extra), expected=expected)
 
     def cases(self, client=ACTIVE, query=None, expected=200):
         return self.invoke(resource='/clients/{client_id}/cases',
@@ -81,28 +81,27 @@ class CaseClientLambdaTests(unittest.TestCase):
                 for item in items if isinstance(items, list) else [items]:
                     self.assertLessEqual(set(item), fields)
 
-    def test_repeat_preserves_original_case_and_new_repository_resets(self):
+    def test_create_generates_case_id_and_new_repository_resets(self):
         first = self.post(metadata={'note': 'první'})
-        repeat = self.post(expected=200, metadata={'note': 'jiné'})
-        self.assertEqual(first, repeat)
+        self.assertEqual(str(UUID(first['case_id'])), first['case_id'])
         self.assertEqual(first['status'], 'open')
         self.assertTrue(first['created_at'].endswith('Z'))
+        # Plain create: a repeated call is a new case, never a 200 replay.
+        second = self.post(metadata={'note': 'první'})
+        self.assertNotEqual(first['case_id'], second['case_id'])
         self.assertEqual(self.invoke(resource='/cases/{case_id}',
-                         params={'case_id': 'offline-case'}), first)
+                         params={'case_id': first['case_id']}), first)
+        # A caller-supplied case_id is ignored.
+        ignored = self.post(case_id='mine')
+        self.assertNotEqual(ignored['case_id'], 'mine')
         self.handler = self.module.create_handler(self.adapter.MockCaseClientRepository())
         self.invoke(resource='/cases/{case_id}',
-                    params={'case_id': 'offline-case'}, expected=404)
+                    params={'case_id': first['case_id']}, expected=404)
 
     def test_business_errors_and_existing_inactive_precedence(self):
-        self.post()
-        for client in (OTHER, MISSING):
-            self.post(client_id=client, expected=409)
         for client in (INACTIVE, BLOCKED):
-            self.post('new-' + client, client, expected=409)
-        self.post('missing-client', MISSING, expected=404)
-        original = self.invoke(resource='/cases/{case_id}', params={'case_id': 'fixture-inactive'})
-        self.assertEqual(self.post('fixture-inactive', INACTIVE, expected=200,
-                                  metadata={'changed': True}), original)
+            self.post(client, expected=409)
+        self.post(MISSING, expected=404)
         self.assertEqual(self.cases(EMPTY)['cases'], [])
         self.cases(MISSING, expected=404)
         self.invoke(resource='/cases/{case_id}', params={'case_id': 'absent'}, expected=404)
@@ -174,18 +173,13 @@ class CaseClientLambdaTests(unittest.TestCase):
         self.cases(query={'status': 'closed'}, expected=400)
 
     def test_request_validation_and_base64(self):
-        for body in ([], None, {}, {'case_id': 'a'}, {'case_id': 'a', 'client_id': 'wrong'},
-                     {'case_id': 'a/b', 'client_id': ACTIVE}, {'case_id': '', 'client_id': ACTIVE},
-                     {'case_id': 'x' * 129, 'client_id': ACTIVE},
-                     {'case_id': True, 'client_id': ACTIVE},
-                     {'case_id': 'a', 'client_id': ACTIVE, 'metadata': []}):
+        for body in ([], None, {}, {'client_id': 'wrong'}, {'client_id': 5},
+                     {'client_id': ACTIVE, 'metadata': []}):
             self.invoke('POST', '/cases', body=body, expected=400)
-        for raw in ('', '{', 'null', '{"case_id":"a","client_id":"' + ACTIVE + '","metadata":{"v":NaN}}',
-                    '{"case_id":"a","client_id":"' + ACTIVE + '","metadata":{"v":Infinity}}'):
+        for raw in ('', '{', 'null', '{"client_id":"' + ACTIVE + '","metadata":{"v":NaN}}',
+                    '{"client_id":"' + ACTIVE + '","metadata":{"v":Infinity}}'):
             self.invoke('POST', '/cases', raw=raw, expected=400)
-        self.post('x' * 128)
-        self.post('a')
-        raw = base64.b64encode(json.dumps({'case_id': 'base64', 'client_id': ACTIVE}).encode()).decode()
+        raw = base64.b64encode(json.dumps({'client_id': ACTIVE}).encode()).decode()
         self.invoke('POST', '/cases', raw=raw, encoded=True, expected=201)
         self.invoke('POST', '/cases', raw='!', encoded=True, expected=400)
         for bad in ('bad', '', None):
@@ -195,9 +189,9 @@ class CaseClientLambdaTests(unittest.TestCase):
     def test_metadata_utf8_limit(self):
         # {"x":""} is 8 bytes; Czech character is 2 bytes in UTF-8.
         metadata = {'x': 'á' * ((16384 - 8) // 2)}
-        self.post('exact-limit', metadata=metadata)
+        self.post(metadata=metadata)
         metadata['x'] += 'a'
-        self.post('over-limit', metadata=metadata, expected=400)
+        self.post(metadata=metadata, expected=400)
 
     def test_fail_closed_configuration_and_operational_errors(self):
         for key, value in (('DATA_BACKEND', None), ('DATA_BACKEND', 'db'),
@@ -231,7 +225,7 @@ class CaseClientLambdaTests(unittest.TestCase):
             importlib.reload(self.module)
             self.handler = self.module.create_handler(self.adapter.MockCaseClientRepository())
             self.invoke()
-            self.post('offline-network')
+            self.post()
         for path in (Path(__file__).resolve().parents[1] / 'src').glob('*.py'):
             tree = ast.parse(path.read_text())
             for node in ast.walk(tree):
@@ -245,27 +239,26 @@ class CaseClientLambdaTests(unittest.TestCase):
         from concurrent.futures import ThreadPoolExecutor
         from threading import Barrier
         metadata = {'nested': {'items': [1]}}
-        first, created = self.repository.create_case('copy', ACTIVE, metadata)
-        self.assertTrue(created)
+        first = self.repository.create_case(ACTIVE, metadata)
         metadata['nested']['items'].append(2)
         first['metadata']['nested']['items'].append(3)
-        self.assertEqual(self.repository.get_case('copy')['metadata']['nested']['items'], [1])
+        self.assertEqual(self.repository.get_case(first['case_id'])['metadata']['nested']['items'], [1])
         clients = self.repository.list_clients({}, 50)['clients']
         clients[0]['contacts'][0]['email'] = 'changed@demo.example'
         self.assertEqual(self.repository.list_clients({}, 50)['clients'][0]['contacts'][0]['email'],
                          'kontakt@zlutoucka.example')
         self.assertEqual(self.adapter.MockCaseClientRepository().list_clients({}, 50)['clients'][0]['contacts'][0]['email'],
                          'kontakt@zlutoucka.example')
-        for case_id, owners, statuses in (
-                ('concurrent-same', [ACTIVE, ACTIVE], [200, 201]),
-                ('concurrent-different', [ACTIVE, OTHER], [201, 409])):
-            barrier = Barrier(2)
-            def call(owner):
-                barrier.wait()
-                return self.handler({'httpMethod': 'POST', 'path': '/cases',
-                                     'body': json.dumps({'case_id': case_id, 'client_id': owner})}, None)['statusCode']
-            with ThreadPoolExecutor(max_workers=2) as pool:
-                self.assertEqual(sorted(pool.map(call, owners)), statuses)
+        barrier = Barrier(2)
+        def call(owner):
+            barrier.wait()
+            response = self.handler({'httpMethod': 'POST', 'path': '/cases',
+                                     'body': json.dumps({'client_id': owner})}, None)
+            return response['statusCode'], json.loads(response['body'])['case_id']
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(call, [ACTIVE, ACTIVE]))
+        self.assertEqual([r[0] for r in results], [201, 201])
+        self.assertNotEqual(results[0][1], results[1][1])
 
     def test_packaged_events_and_case_public_shape(self):
         directory = Path(__file__).resolve().parents[1] / 'events'
