@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Intake Stage",
+  "description": "Stores one PDF the client uploads on an intake link in Custom Storage under the case's folder, ready for intake-submit",
+  "method": "POST",
+  "path_slug": "intake-stage"
+}

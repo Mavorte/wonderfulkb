@@ -1,7 +1,8 @@
 import { useWonderful } from "@wonderful/app-sdk";
 import { type DragEvent, useRef, useState } from "react";
-import createUploadRequest from "../createUploadRequest";
+import getIntakeHash from "../getIntakeHash";
 import type { IntakeData, UploadedDocument } from "../types";
+import uploadDocuments, { MAX_FILE_BYTES } from "../uploadDocuments";
 import KbIcon from "./KbIcon";
 import Notice from "./Notice";
 
@@ -14,12 +15,13 @@ function formatSize(bytes: number) {
 }
 
 export default function UploadPanel({ data }: { data: IntakeData }) {
-  const { track } = useWonderful();
+  const { api, track } = useWonderful();
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [rejected, setRejected] = useState<string[]>([]);
+  const [tooLarge, setTooLarge] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploaded, setUploaded] = useState<UploadedDocument[]>([]);
 
@@ -27,10 +29,11 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
     if (!incoming) return;
     const list = Array.from(incoming);
     setRejected(list.filter((f) => !isPdf(f)).map((f) => f.name));
+    setTooLarge(list.filter((f) => isPdf(f) && f.size > MAX_FILE_BYTES).map((f) => f.name));
     setError(null);
     setFiles((current) => {
       const names = new Set(current.map((f) => f.name));
-      return [...current, ...list.filter((f) => isPdf(f) && !names.has(f.name))];
+      return [...current, ...list.filter((f) => isPdf(f) && f.size <= MAX_FILE_BYTES && !names.has(f.name))];
     });
   };
 
@@ -41,11 +44,11 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
   };
 
   const onUpload = async () => {
-    if (!data.upload || files.length === 0) return;
+    if (!data.can_upload || files.length === 0) return;
     setIsUploading(true);
     setError(null);
     track("upload_started", { file_count: files.length });
-    const result = await createUploadRequest(data.upload, files, data.client?.email);
+    const result = await uploadDocuments(api, getIntakeHash(), files, data.client?.email);
     setIsUploading(false);
     if (result.ok) {
       track("upload_completed", { file_count: result.documents.length });
@@ -57,7 +60,7 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
     }
   };
 
-  const canUpload = Boolean(data.upload) && files.length > 0;
+  const canUpload = data.can_upload && files.length > 0;
 
   return (
     <section className="app-card">
@@ -65,7 +68,7 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
         <h2 className="app-card__title">Upload documents</h2>
       </div>
       <div className="app-stack">
-        {!data.upload && (
+        {!data.can_upload && (
           <Notice
             variant="warning"
             title="Uploads are not available yet"
@@ -104,6 +107,14 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
 
         {rejected.length > 0 && (
           <Notice variant="warning" title="Only PDF files can be uploaded" description={`Skipped: ${rejected.join(", ")}`} />
+        )}
+
+        {tooLarge.length > 0 && (
+          <Notice
+            variant="warning"
+            title={`Files must be ${formatSize(MAX_FILE_BYTES)} or smaller`}
+            description={`Skipped: ${tooLarge.join(", ")}`}
+          />
         )}
 
         {files.length > 0 && (

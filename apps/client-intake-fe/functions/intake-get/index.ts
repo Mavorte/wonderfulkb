@@ -1,18 +1,26 @@
 // Resolves an intake link hash to its case and returns what the intake screen
-// shows: case details, client details, and where to upload documents.
+// shows: case details, client details, and whether documents can be uploaded.
 //
 // Configuration (tenant-level):
 // - global `kb_aws_case_api_url`: base URL of the case/client API (openapi-case-client.yaml).
 //   When empty, mock data is returned so the UI can be demoed before AWS is live.
-// - global `kb_aws_ingest_url`: base URL of the ingest service (POST /cases/{case_id}/documents).
-// - secret `kb-aws-api-key` (type "API Key", header x-api-key): key for both services.
+// - global `kb_aws_ingest_url`: base URL of the ingest service. Empty → upload disabled.
+// - secret `kb-aws-api-key` (type "API Key", header x-api-key): key for the case/client API.
+//   It is attached by the runtime (`secretName`) and never returned to the browser.
 
 import type { FunctionContext } from "@wonderful/types";
 import type { IntakeCase, IntakeClient, IntakeData } from "../../app/src/types";
+import { CASE_API_SECRET, getCaseIdForHash, getErrorMessage, getGlobalUrl } from "../shared/intakeLinks";
 
-const LINKS_TABLE = "client_intake.intake_links";
-const SECRET_NAME = "kb-aws-api-key";
 const TIMEOUT_MS = 8000;
+
+// Case as returned by the case/client API. Synthetic cases carry the loan
+// details as top-level fields; newer ones may put them in `metadata`.
+type UpstreamCase = IntakeCase & {
+  loan_agreement_no?: string;
+  asset_name?: string;
+  serial_number?: string;
+};
 
 // Client as returned by the case/client API, before it is trimmed for the UI.
 type UpstreamClient = {
@@ -65,19 +73,11 @@ function getMockClient(clientId: string): UpstreamClient {
   };
 }
 
-// Missing globals/secrets throw at runtime instead of returning null.
-function getOptional<T>(read: () => T | null | undefined): T | null {
-  try {
-    return read() ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function getJson<T>(url: string, apiKey: string): Promise<JsonResponse<T>> {
+async function getJson<T>(url: string): Promise<JsonResponse<T>> {
   const response = await fetch(url, {
     method: "GET",
-    headers: { "x-api-key": apiKey, accept: "application/json" },
+    headers: { accept: "application/json" },
+    secretName: CASE_API_SECRET,
     timeoutMs: TIMEOUT_MS,
   });
   const text = await response.text();
@@ -90,22 +90,37 @@ async function getJson<T>(url: string, apiKey: string): Promise<JsonResponse<T>>
   return { status: response.status, ok: response.ok, body };
 }
 
+// Maps the upstream case onto the `metadata` fields the intake screen reads.
+function getPublicCase(caseData: UpstreamCase): IntakeCase {
+  const metadata = caseData.metadata ?? {};
+  return {
+    case_id: caseData.case_id,
+    client_id: caseData.client_id,
+    status: caseData.status,
+    created_at: caseData.created_at,
+    metadata: {
+      ...metadata,
+      loan_number: metadata.loan_number ?? caseData.loan_agreement_no,
+      asset: metadata.asset ?? caseData.asset_name,
+      serial_number: metadata.serial_number ?? caseData.serial_number,
+    },
+  };
+}
+
 // The client is optional on the intake screen, so a failed lookup returns null
 // instead of failing the whole request.
-async function getClient(baseUrl: string, apiKey: string, caseData: IntakeCase): Promise<UpstreamClient | null> {
+async function getClient(baseUrl: string, caseData: IntakeCase): Promise<UpstreamClient | null> {
   try {
-    const byId = await getJson<UpstreamClient>(`${baseUrl}/clients/${encodeURIComponent(caseData.client_id)}`, apiKey);
+    const byId = await getJson<UpstreamClient>(`${baseUrl}/clients/${encodeURIComponent(caseData.client_id)}`);
     if (byId.ok && byId.body) return byId.body;
 
-    // Fallback while GET /clients/{client_id} does not exist: look the client up by IČO
-    // stored in the case metadata.
+    // Fallback while GET /clients/{client_id} does not exist: look the client up
+    // by IČO when the case has one, else scan the (small, synthetic) client list.
     const ico = caseData.metadata?.ico;
-    if (typeof ico !== "string" || !ico) return null;
-    const byIco = await getJson<{ clients?: UpstreamClient[] }>(
-      `${baseUrl}/clients?ico=${encodeURIComponent(ico)}`,
-      apiKey,
-    );
-    return byIco.ok ? (byIco.body?.clients?.[0] ?? null) : null;
+    const query = typeof ico === "string" && ico ? `ico=${encodeURIComponent(ico)}` : "limit=100";
+    const list = await getJson<{ clients?: UpstreamClient[] }>(`${baseUrl}/clients?${query}`);
+    if (!list.ok) return null;
+    return list.body?.clients?.find((c) => c.client_id === caseData.client_id) ?? null;
   } catch (error) {
     console.log(`client API request failed: ${getErrorMessage(error)}`);
     return null;
@@ -124,10 +139,6 @@ function getPublicClient(client: UpstreamClient | null): IntakeClient | null {
   };
 }
 
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 async function userFunction(context: FunctionContext): Promise<IntakeData | IntakeError> {
   const hash = String(context.data?.hash || "").trim();
   if (!hash) {
@@ -135,26 +146,14 @@ async function userFunction(context: FunctionContext): Promise<IntakeData | Inta
     return { error: "missing_hash" };
   }
 
-  const { rows } = await context.tables.filter(
-    LINKS_TABLE,
-    [{ column: "hash", operator: "eq", value: hash }],
-    1,
-    0,
-  );
-  const caseId: unknown = rows[0]?.data?.case_id;
-  if (typeof caseId !== "string" || !caseId) {
+  const caseId = await getCaseIdForHash(context, hash);
+  if (!caseId) {
     context.response.setStatus(404);
     return { error: "invalid_link" };
   }
 
-  const caseApiUrl = String(getOptional(() => context.globals.get("kb_aws_case_api_url")) || "").replace(/\/+$/, "");
-  const ingestUrl = String(getOptional(() => context.globals.get("kb_aws_ingest_url")) || "").replace(/\/+$/, "");
-  const secret = getOptional<{ api_key?: string }>(() => context.secrets.get(SECRET_NAME));
-  const apiKey = secret?.api_key ?? "";
-
-  const upload: IntakeData["upload"] = ingestUrl
-    ? { url: `${ingestUrl}/cases/${encodeURIComponent(caseId)}/documents`, api_key: apiKey }
-    : null;
+  const caseApiUrl = getGlobalUrl(context, "kb_aws_case_api_url");
+  const canUpload = Boolean(getGlobalUrl(context, "kb_aws_ingest_url"));
 
   if (!caseApiUrl) {
     const mockCase = getMockCase(caseId);
@@ -163,12 +162,12 @@ async function userFunction(context: FunctionContext): Promise<IntakeData | Inta
       is_mock: true,
       case: mockCase,
       client: getPublicClient(getMockClient(mockCase.client_id)),
-      upload,
+      can_upload: canUpload,
     };
   }
 
   try {
-    const caseResponse = await getJson<IntakeCase>(`${caseApiUrl}/cases/${encodeURIComponent(caseId)}`, apiKey);
+    const caseResponse = await getJson<UpstreamCase>(`${caseApiUrl}/cases/${encodeURIComponent(caseId)}`);
     if (caseResponse.status === 404) {
       context.response.setStatus(404);
       return { error: "case_not_found" };
@@ -178,13 +177,14 @@ async function userFunction(context: FunctionContext): Promise<IntakeData | Inta
       context.response.setStatus(502);
       return { error: "upstream" };
     }
-    const client = await getClient(caseApiUrl, apiKey, caseResponse.body);
+    const caseData = getPublicCase(caseResponse.body);
+    const client = await getClient(caseApiUrl, caseData);
     return {
       case_id: caseId,
       is_mock: false,
-      case: caseResponse.body,
+      case: caseData,
       client: getPublicClient(client),
-      upload,
+      can_upload: canUpload,
     };
   } catch (error) {
     console.log(`case API request failed: ${getErrorMessage(error)}`);

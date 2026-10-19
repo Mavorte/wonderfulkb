@@ -20,7 +20,7 @@ export type IntakeData = {
   is_mock: boolean;
   case: IntakeCase;
   client: IntakeClient | null;
-  upload: { url: string; api_key: string } | null;
+  can_upload: boolean;
 };
 
 export type UploadedDocument = {

@@ -10,7 +10,7 @@
     "typecheck": "tsc -p functions"
   },
   "devDependencies": {
-    "@wonderful/types": "^0.1.36",
+    "@wonderful/types": "^0.1.27",
     "esbuild": "0.28.1",
     "typescript": "~5.9.3"
   }
