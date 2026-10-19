@@ -53,9 +53,9 @@ export default function ClientsPage() {
       <div className="bo-heading">
         <h1 className="bo-title">Clients</h1>
       </div>
-      <div className="bo-card bo-card--wide">
-        <div className="bo-lookup">
-          <div className="kb-field">
+      <div className="bo-card bo-card--full bo-clients">
+        <div className="bo-clients__toolbar">
+          <div className="kb-field bo-clients__filter">
             <label htmlFor="bo-client-filter">Filter by name or IČO</label>
             <input
               id="bo-client-filter"
@@ -67,6 +67,13 @@ export default function ClientsPage() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
+          {clients && clients.length > 0 && (
+            <p className="bo-clients__count" aria-live="polite">
+              {clients.length} {clients.length === 1 ? "client" : "clients"}
+              {query.trim() && allClients && ` of ${allClients.length}`}
+              {truncated && " (list cut short, not every client is shown)"}
+            </p>
+          )}
         </div>
 
         {selected && <ClientDetail client={selected} onClose={() => setSelectedId(undefined)} />}
@@ -85,40 +92,37 @@ export default function ClientsPage() {
             <p className="bo-empty">{query.trim() ? `No client matches “${query.trim()}”.` : "No clients yet."}</p>
           ) : (
             <div className="bo-table-wrap">
-              <table className="bo-table">
-                <caption className="bo-table__caption">
-                  {clients.length} {clients.length === 1 ? "client" : "clients"}, by name
-                  {truncated && " (list cut short, not every client is shown)"}
-                </caption>
+              <table className="bo-table bo-table--clients">
+                <caption className="bo-sr-only">Clients, by name</caption>
                 <thead>
                   <tr>
                     <th scope="col">Client</th>
                     <th scope="col">Address</th>
                     <th scope="col">KYC</th>
                     <th scope="col" className="bo-table__num">Cases</th>
-                    <th scope="col">Latest case</th>
+                    <th scope="col">Latest case · opened</th>
                   </tr>
                 </thead>
                 <tbody>
                   {clients.map((c) => (
                     <tr key={c.id} aria-selected={c.id === selectedId}>
                       <td>
-                        <button type="button" className="bo-link bo-table__strong" onClick={() => setSelectedId(c.id)}>
+                        <button type="button" className="bo-clients__name" onClick={() => setSelectedId(c.id)}>
                           {c.name}
                         </button>
                         <span className="bo-table__meta">IČO {c.ico}</span>
                       </td>
-                      <td>{c.address ?? "—"}</td>
+                      <td className="bo-clients__address">{c.address ?? "—"}</td>
                       <td>
                         <KycStatus status={c.kycStatus} />
                       </td>
                       <td className="bo-table__num">{c.cases.length}</td>
                       <td>
                         {c.cases[0] ? (
-                          <>
+                          <div className="bo-clients__case">
                             <CaseStatusPill status={c.cases[0].status} />
-                            <span className="bo-table__meta">opened {formatDate(c.cases[0].createdAt)}</span>
-                          </>
+                            <span className="bo-clients__date">{formatDate(c.cases[0].createdAt)}</span>
+                          </div>
                         ) : (
                           "—"
                         )}
