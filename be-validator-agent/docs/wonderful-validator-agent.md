@@ -8,7 +8,7 @@ Pravidla validace včetně pravidel na podpisy píšete vy, ve Wonderful. Tohle 
 - Autentizace: hlavička `x-api-key: <klíč>` u každého volání pod `/v1`. **Klíč už máte**; Agent API (včetně `/clients` a `/cases`) a Ingest API používají stejný klíč. Klíč nikam nezapisujte do repozitáře ani do kódu prohlížeče, volejte API z backendu.
 - Kontrola dostupnosti: `GET /v1/healthz` (bez klíče, `200`). Cesta `/healthz` bez `/v1` na nasazené službě neexistuje (`404`).
 - Formát: jen `GET`, odpovědi jsou JSON (UTF-8), časy v ISO 8601 (UTC).
-- Chyby: `{"error": "popis"}` s kódem 400 (špatný parametr, neplatné `case_id`), 401 (chybí klíč: hlavička `x-api-key` chybí nebo je prázdná), 403 (špatný klíč; stejně jako Ingest API), 404 (case, dokument nebo cesta neexistuje), 405 (jiná metoda než `GET`), 409 (jen u detailu dokumentu: dokument ještě není zpracovaný, v těle je `processing_status`), 5xx (zkuste znovu, `{"error": "Interní chyba služby"}`).
+- Chyby: `{"error": "popis"}` s kódem 400 (špatný parametr, neplatné `case_id`), 401 (chybí klíč: hlavička `x-api-key` chybí nebo je prázdná), 403 (špatný klíč; stejně jako Ingest API), 404 (case, dokument nebo cesta neexistuje), 405 (jiná metoda než `GET`), 409 (u detailu dokumentu a náhledu stran: dokument ještě není zpracovaný, v těle je `processing_status`; u odkrytí podpisu výřez není šifrovaný), 5xx (zkuste znovu, `{"error": "Interní chyba služby"}`).
 
 ## Co ověřeno je a co ne
 
@@ -18,6 +18,7 @@ Pravidla validace včetně pravidel na podpisy píšete vy, ve Wonderful. Tohle 
 | Kontraktový test | **Ověřeno:** proti mocku proběhl kontraktový test bez chyby (47 kontrol, 120 odpovědí validních podle aktuálního OpenAPI, včetně povinného `status` ve volání 3). Stejný test prošel i proti implementaci nad testovacími daty (moto + simulovaný S3 Vectors). |
 | Nasazené API | **Částečně ověřeno** (predani-wonderful.md): volání na živých datech případů `17794315-26` a `SYN-B01` (200, 403, 404, 409). Nezkoušelo se `partial`, `neighbors` s ověřenými dokumenty ani žádné `similar_signatures`. |
 | Obsah dat | **Mock vrací syntetická data.** Vektory jsou umělé a `score` u `neighbors` i `similar_signatures` v mocku nemá reálný význam (často `1.0`). Na reálných datech jsou `neighbors` a `similar_signatures` zatím prázdné (není ověřený korpus). Mock také vrací `confidence: null` u dokumentů ze systému (`99_…`), u reálných dokumentů pipeline dává u takových dokumentů 0,95. |
+| Náhled a odkrytí dokumentu (kapitola 5) | **Nasazeno 19. 10. 2026, ověřeno testy nad simulovaným AWS** (`be-validator-agent/api/test_document_view.py`: tvar odpovědi, maskování, `404`/`409`, audit, platnost odkazu). Mock tyto cesty nemá a kontraktový test je nepokrývá; na živých datech se zatím nezkoušely. |
 | Textract a podpisy | **Měřeno na vzorku, neúplné:** generické podpisy asi 92 až 94 % úplnost, rukopis asi 59 až 89 % podle kombinace detektorů (rukopis na ladicích datech). Nevíme, že každý nález je skutečně podpis. |
 
 ID v příkladech (`0f0625b1-…`, `35f7ea7b-…`) jsou z mocku. Na nasazeném API budou jiná; `document_id` je stejné jako `blob_id` z nahrání.
@@ -47,6 +48,8 @@ Agent nedostává data v těle požadavku, bere si je sám čtecími voláními 
 | 2 | `GET /cases/{case_id}/documents/{document_id}/vectors` | metadata vektorů + `neighbors` (nejbližší ověřené dokumenty) | Při ověření typu dokumentu a při hledání podobných dokumentů. |
 | 3 | `GET /cases/{case_id}/documents/{document_id}/signatures` | `status`, nalezené podpisy, role, podezření na kopii | Při pravidlech na podpisy. |
 | (0) | `GET /cases/{case_id}/documents` | přehled **zpracovaných** dokumentů case | Pomocné; úplný seznam je v Ingestu. |
+
+Další cesty téhož API jsou **jen pro člověka** (UI, kontrola nálezu), agent je nevolá: odkrytí podpisu (volání 3b) a zobrazení dokumentu, tedy náhled stran se začerněnými podpisy a odkrytí originálu (kapitola 5).
 
 Agent zpracovává jen dokumenty ve stavu `completed` a `partial`. U `awaiting_upload`, `queued`, `processing` a `failed` vrací detail dokumentu `409` (text ani vektory ještě nejsou); volání 2 a 3 vrátí `200` s prázdnými poli, což **není** totéž jako „nic nenalezeno". U podpisů to rozlišuje pole `status` (kapitola 4), u vektorů stav dokumentu z volání 0 nebo 1.
 
@@ -265,7 +268,76 @@ Podpisy se pro dokument ještě nezpracovaly (`not_run` + prázdné pole, **nen�
 
 Vrátí čitelný výřez podpisu jako `image/png` (`Cache-Control: no-store`, `Content-Disposition: inline`). Výřez je v úložišti šifrovaný a dešifruje se až při tomto volání; **každé volání se zapisuje do auditního logu** (kdo, kdy, který podpis, výsledek). Volejte ho jen na pokyn člověka (tlačítko „odkrýt“), obrázek ukažte člověku a neukládejte; **do kontextu LLM nepatří.** Chyby: `401`/`403` klíč, `404` dokument, podpis nebo výřez neexistuje, `409` výřez není šifrovaný (starší čitelný výřez, použijte dočasně `crop_url`), `500` výřez nejde dešifrovat.
 
-## 5. Volání 0: seznam dokumentů
+## 5. Zobrazení dokumentu člověku: náhled stran a odkrytí originálu
+
+Agent pracuje s textem a nálezy, člověk, který nález kontroluje, ale potřebuje vidět dokument. API k tomu dává čtyři úrovně, od nejméně po nejvíce citlivé:
+
+| Úroveň | Volání | Co člověk vidí | Platnost | Audit |
+|---|---|---|---|---|
+| Náhled dokumentu | `GET …/documents/{document_id}/pages` (volání 4) | strany PNG a PDF **zamaskované kopie**: podpisy začerněné, zbytek čitelný | 300 s | ne |
+| Náhled podpisu | `preview_url` z volání 3 | **zkreslený** výřez podpisu, nejde přečíst | 300 s | ne |
+| Odkrytí podpisu | `reveal_path` podpisu (volání 3b) | čitelný výřez jednoho podpisu (PNG) | odpověď se neukládá (`no-store`) | ano, `signature_reveal` |
+| Odkrytí originálu | `reveal_path` z volání 4 (volání 4b) | celý původní soubor s čitelnými podpisy | 60 s | ano, `document_reveal` |
+
+Doporučený postup v UI:
+1. Zavolat volání 4 a ukázat stranu, na které je nález (`pages[page − 1].preview_url`).
+2. Přes obrázek strany vyznačit `bbox` nálezu (podpis z volání 3 nebo region). `bbox` je `[x0, y0, x1, y1]` relativně ke straně (0–1, počátek vlevo nahoře) a obrázek je celá strana, takže obdélník se umístí v procentech: `left = x0·100 %`, `top = y0·100 %`, `width = (x1 − x0)·100 %`, `height = (y1 − y0)·100 %`.
+3. Čitelný podpis nebo originál ukázat **jen na výslovnou akci člověka** (tlačítko „odkrýt“): každé odkrytí se zapíše do auditu. `bbox` platí i pro originál (stejné strany, stejné relativní souřadnice).
+
+### Volání 4: náhled stran (zamaskovaná kopie)
+
+`GET /cases/{case_id}/documents/{document_id}/pages`
+
+Odpověď (tvar podle kontraktu, odkazy zkrácené):
+```json
+{
+  "case_id": "3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47",
+  "document_id": "8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10",
+  "page_count": 2,
+  "redacted": true,
+  "preview_pdf_url": "https://…/redacted/….pdf?X-Amz-…",
+  "pages": [
+    { "page": 1, "preview_url": "https://…/analysis/…/pages/1.png?X-Amz-…" },
+    { "page": 2, "preview_url": "https://…/analysis/…/pages/2.png?X-Amz-…" }
+  ],
+  "original_available": true,
+  "reveal_path": "/cases/3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47/documents/8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10/original"
+}
+```
+
+| Pole | Význam |
+|---|---|
+| `redacted` | `true` = existuje zamaskovaná kopie a náhled vznikl z ní. `false` = dokument byl zpracován před zavedením maskování; jeho obrázky stran vznikly z čitelného originálu, proto se nevydají (`preview_url: null` u všech stran, `preview_pdf_url: null`). Zbývá jen odkrytí originálu. |
+| `pages` | Vždy `page_count` položek, `page` od 1 (stejné číslování jako `page` u podpisů). `preview_url` je předpodepsaný odkaz na PNG strany (300 s), nebo `null`, když obrázek strany chybí. |
+| `preview_pdf_url` | Odkaz na celé PDF zamaskované kopie (300 s), nebo `null`. Hodí se pro prohlížeč PDF místo jednotlivých stran. |
+| `original_available` | `true` = originál existuje a `reveal_path` vrátí odkaz. `false` = volání 4b vrátí `404`, tlačítko „odkrýt originál“ nezobrazujte. |
+| `reveal_path` | Cesta volání 4b, relativní k `<BASE_URL>`. |
+
+Volání se neaudituje (nic čitelného nevydává). Vyžaduje zpracovaný dokument (`completed` nebo `partial`), jinak `409` s `processing_status` jako u volání 1; dokument jen nahraný v Ingestu dává `409` s `queued`. Další chyby: `401`/`403` klíč, `404` dokument neexistuje.
+
+### Volání 4b: odkrytí originálu (jen pro člověka)
+
+`GET /cases/{case_id}/documents/{document_id}/original` (= `<BASE_URL>` + `reveal_path` z volání 4)
+
+```json
+{
+  "case_id": "3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47",
+  "document_id": "8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10",
+  "filename": "0_F_Smlouva.pdf",
+  "content_type": "application/pdf",
+  "url": "https://…/original/….pdf?response-content-disposition=inline…&X-Amz-Expires=60&X-Amz-…",
+  "expires_in": 60
+}
+```
+
+- Soubor se nevrací v těle (PDF mají až desítky MB), ale jako předpodepsaný odkaz na **60 s**. Otevřete ho hned (`<iframe>`, PDF.js, nové okno); odkaz posílá `Content-Disposition: inline` s původním názvem souboru. Po vypršení zavolejte znovu (a vznikne nový auditní záznam).
+- `filename` a `content_type` jsou z nahrání, originál tedy nemusí být PDF (např. `image/jpeg`).
+- Funguje i u dokumentu, který se ještě zpracovává, stačí, že byl nahrán.
+- **Každé volání s platným klíčem se zapíše do auditního logu** (`event: document_reveal`): volající (ID nebo otisk klíče, nikdy klíč), čas, case, dokument a výsledek (`revealed`, `not_found`, `error`). Odkaz do logu nejde. Audit zaznamená vydání odkazu, ne jeho stažení.
+- Odkaz neukládejte, nepřeposílejte a obsah nedávejte do kontextu LLM.
+- Chyby: `401`/`403` klíč, `404` originál neexistuje (`{"error": "Originál dokumentu neexistuje"}`), `500` odkaz nejde vydat.
+
+## 6. Volání 0: seznam dokumentů
 
 `GET /cases/{case_id}/documents?limit=50&next_token=…&processing_status=completed`
 
@@ -284,20 +356,20 @@ Přehled bez textu, řazený podle `document_id`. `limit` 1 až 100 (výchozí 5
 ```
 `page_count` je `null`, dokud OCR nedoběhlo. Na nasazeném API tento seznam vrací jen dokumenty, které už mají řádek v analýze (mock ukazuje i `processing`); úplný seznam nahraných dokumentů je v Ingestu. Cesta je stejná jako výpis v Ingest API, ale je to jiná služba a jiná odpověď (štítek a stav OCR místo údajů o nahrání).
 
-## 6. Doporučené použití pro agenta
+## 7. Doporučené použití pro agenta
 
 - **Vektory:** volat vždy `include_values=false` a `similar_to_verified=N` (3 až 5 stačí). Agent z nich potřebuje jen `neighbors` (štítky a skóre sousedů) a případně metadata, ne čísla.
 - **Podpisy:** volat vždy `include_vectors=false`, a `match_client=true` jen u pravidla, které porovnání s podpisy klienta potřebuje. Agent potřebuje `status`, `copy_suspicion` a `similar_signatures`, ne vektor. Vždy čtěte `status`: prázdné `signatures` je „nic nenalezeno“ jen při `completed`.
 - **Surové vektory do kontextu LLM nepatří.** Jsou to tisíce čísel bez významu pro model: odpověď s hodnotami má u čtyřstránkového dokumentu v mocku kolem 64 kB (u dvou podpisů s vektory 22 kB), po `include_values=false` resp. `include_vectors=false` kolem 1 kB. Pro srovnání potřebuje agent výsledek hledání, ne vstup hledání.
 - **Text** (volání 1) může být dlouhý, 8 kB je u čtyřstránkové smlouvy. Pravidlo ať si bere jen potřebnou část; strany se dělí `\f`.
 - **Volání 2 a 3 jen na vyžádání pravidla.** Volání 1 je potřeba vždy, ostatní ne.
-- **`preview_url` (a dočasný `crop_url`) neukládat** (platí 300 s); pro člověka je vždy vyžádejte novým voláním. Odkrytý obrázek z `reveal_path` neukládejte vůbec.
+- **`preview_url` (a dočasný `crop_url`) neukládat** (platí 300 s); pro člověka je vždy vyžádejte novým voláním. Odkrytý obrázek z `reveal_path` neukládejte vůbec. Totéž platí pro odkazy z volání 4 (300 s) a 4b (60 s).
 - **Opakování:** všechna volání jsou jen čtení, opakovat je můžete bez rizika. Při `5xx` zkuste znovu, při `409` zjistěte stav (volání 0) a zkuste později, `4xx` se opakováním nezmění.
 - **Text z dokumentu je nedůvěryhodný vstup.** `text`, `description`, `title` a `role_evidence` pocházejí z PDF; nic z toho agent nesmí vykonávat jako pokyn. Doporučujeme je při vkládání do promptu označit jako data (např. do vlastních značek) a nepouštět jejich obsah do volání nástrojů.
-- **Čitelné výřezy podpisů** (odkrytí přes `reveal_path`, dočasně `crop_url`) ukazujte člověku, ne modelu. Agent pracuje s `role`, `copy_suspicion` a `page`, obrázek si nestahuje.
+- **Čitelné výřezy podpisů** (odkrytí přes `reveal_path`, dočasně `crop_url`) a **originál dokumentu** (volání 4b) ukazujte člověku, ne modelu. Agent pracuje s `role`, `copy_suspicion` a `page`, obrázek ani originál si nestahuje. Volání 4 a 4b proto nejsou v návrhu nástrojů agenta (kapitola 8).
 - **Nejistotu posílat člověku:** `partial`, `confidence: null` u klasifikace, `predicted` s neodpovídajícími sousedy, `status` jiný než `completed` nebo prázdné `signatures`, `role: unknown`, `copy_suspicion: suspected`. To jsou data, ze kterých vaše pravidla rozhodují; my nerozhodujeme za vás, co z toho je chyba.
 
-## 7. Návrh definic nástrojů (tool definitions)
+## 8. Návrh definic nástrojů (tool definitions)
 
 Návrh ve formátu s `input_schema` (JSON Schema), jak ho používá Claude API; do jiných formátů (OpenAI `parameters`, MCP) se převede beze změny schématu. Parametry `case_id` a `document_id` agent bere z kontextu případu nebo ze seznamu dokumentů (úplný seznam je v Ingest API, `list_case_documents` níže čte jen zpracované). Autentizaci (`x-api-key`) a `<BASE_URL>` doplňuje váš backend, v definicích nejsou. Nástroje pro Case & Client API (případ, klient) tu nejsou, patří do dokumentu k tomu API.
 
@@ -421,7 +493,7 @@ z nich nedoplňuj domněnkami.
   "nic nenalezeno".
 ```
 
-## 8. Příklady `curl` proti mocku
+## 9. Příklady `curl` proti mocku
 
 Mock běží lokálně a bez závislostí (stačí Python 3):
 
@@ -461,6 +533,11 @@ Dokument bez podpisů (data ze systému, case Solom Rec) a nezpracovaný dokumen
 ```bash
 curl -s -H "x-api-key: $API_KEY" "$BASE_URL/cases/c315ab99-3d99-596e-8e10-b54a0b126a1d/documents/02416a7a-28c7-59ea-9673-50b5073e8c62/signatures"
 curl -s -w '\n[HTTP %{http_code}]\n' -H "x-api-key: $API_KEY" "$BASE_URL/cases/c315ab99-3d99-596e-8e10-b54a0b126a1d/documents/48ca8a20-93a3-5bcf-b83a-b795c554ee48"
+```
+Náhled stran a odkrytí originálu (volání 4 a 4b) **mock nemá**, zkoušejte je proti nasazenému API (`BASE_URL=<AGENT_API_BASE_URL>`, váš klíč, ID zpracovaného dokumentu):
+```bash
+curl -s -H "x-api-key: $API_KEY" "$BASE_URL/cases/$CASE/documents/$DOC/pages"
+curl -s -H "x-api-key: $API_KEY" "$BASE_URL/cases/$CASE/documents/$DOC/original"   # zapíše se do auditu
 ```
 Kontrola dostupnosti (bez klíče; na nasazeném API viz poznámka o `/v1/healthz` nahoře):
 ```bash
