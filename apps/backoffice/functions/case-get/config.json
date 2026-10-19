@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Case Get",
+  "description": "Looks up one case by case_id in the AWS case/client API (GET /cases/{case_id}) and adds its Client Intake link hash",
+  "method": "GET",
+  "path_slug": "case-get"
+}

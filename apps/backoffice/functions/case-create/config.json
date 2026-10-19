@@ -1,7 +1,7 @@
 {
   "kind": "http",
   "name": "Case Create",
-  "description": "Registers a Client Intake link for an existing case; without case_id, preserves standalone mocked case creation",
+  "description": "Creates a case for a client in the AWS case/client API (POST /cases) and registers its intake link in client_intake.intake_links",
   "method": "POST",
   "path_slug": "case-create"
 }
