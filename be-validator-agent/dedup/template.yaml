@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  wonderfulkb - index obsahovych hashu dokumentu (dedup napric pripady). Jen tabulka, nic jineho.
+  Soucasti README.md v adresari dedup/. NENASAZENO; nasazeni schvaluje uzivatel.
+
+Resources:
+  ContentHashesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wonderfulkb-uw-content-hashes
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: sha256, AttributeType: S}
+        - {AttributeName: case_document, AttributeType: S}   # "<case_id>#<document_id>"
+      KeySchema:
+        - {AttributeName: sha256, KeyType: HASH}
+        - {AttributeName: case_document, KeyType: RANGE}
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+Outputs:
+  TableName:
+    Value: !Ref ContentHashesTable
+  TableArn:
+    Value: !GetAtt ContentHashesTable.Arn

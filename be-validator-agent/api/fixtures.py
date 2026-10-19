@@ -3,14 +3,20 @@
 Data převezme z mocku (infra/validator-agent-mock/seed.py: skutečné texty vzorových dokumentů, deterministické
 vektory a podpisy) a zapíše je ve tvaru z be-validator-agent/docs/validator-agent-storage.md. Mock se tím nemění, jen se čte.
 """
+import hashlib
 import importlib.util
 import json
 import os
+import sys
 
 from boto3.dynamodb.types import TypeSerializer
 
 from core import Api, Clients, Config
 from fakes import FakeVectors
+
+# Výřezy se do fixtur zapisují stejně jako je zapisuje signature pipeline: šifrovaně (.png.enc) + zkreslený náhled.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "privacy"))
+from signature_privacy import LocalKeyProvider, SignatureContext, distorted_preview, encrypt_image  # noqa: E402
 
 API_KEY = "test-api-key-not-a-secret"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,6 +34,15 @@ def _seed_module():
 
 def _put(ddb, table, item):
     ddb.put_item(TableName=table, Item={k: _ser.serialize(v) for k, v in item.items() if v is not None})
+
+
+def add_document_hash(ddb, cfg, case_id, document_id, sha256, label=None, register=True):
+    """Řádek v tabulce dokumentů ingestu (jen sha256 a klíč) a záznam v indexu hashů."""
+    _put(ddb, cfg.documents_table, {"case_id": case_id, "document_id": document_id, "sha256": sha256})
+    if register:
+        _put(ddb, cfg.hashes_table, {"sha256": sha256, "case_document": f"{case_id}#{document_id}",
+                                     "case_id": case_id, "document_id": document_id, "label": label,
+                                     "registered_at": "2026-10-19T12:00:00Z"})
 
 
 def build(api_key=API_KEY):
@@ -48,8 +63,20 @@ def build(api_key=API_KEY):
             keys.append({"AttributeName": "document_id", "KeyType": "RANGE"})
             attrs.append({"AttributeName": "document_id", "AttributeType": "S"})
         ddb.create_table(TableName=t, KeySchema=keys, AttributeDefinitions=attrs, BillingMode="PAY_PER_REQUEST")
+    # duplicity napříč případy: tabulka dokumentů ingestu (jen sha256) a index hashů
+    ddb.create_table(TableName=cfg.documents_table, BillingMode="PAY_PER_REQUEST",
+                     KeySchema=[{"AttributeName": "case_id", "KeyType": "HASH"},
+                                {"AttributeName": "document_id", "KeyType": "RANGE"}],
+                     AttributeDefinitions=[{"AttributeName": "case_id", "AttributeType": "S"},
+                                           {"AttributeName": "document_id", "AttributeType": "S"}])
+    ddb.create_table(TableName=cfg.hashes_table, BillingMode="PAY_PER_REQUEST",
+                     KeySchema=[{"AttributeName": "sha256", "KeyType": "HASH"},
+                                {"AttributeName": "case_document", "KeyType": "RANGE"}],
+                     AttributeDefinitions=[{"AttributeName": "sha256", "AttributeType": "S"},
+                                           {"AttributeName": "case_document", "AttributeType": "S"}])
     s3.create_bucket(Bucket=cfg.bucket, CreateBucketConfiguration={"LocationConstraint": REGION})
     vec = FakeVectors(cfg.dimension)
+    provider = LocalKeyProvider.generate()  # hlavní klíč jen v paměti procesu; v AWS je to KMS
 
     for cid, c in store.cases.items():
         _put(ddb, cfg.cases_table, {"case_id": cid, "client": c["client"]})
@@ -70,11 +97,16 @@ def build(api_key=API_KEY):
             for s in d.get("_sigs", []):
                 matches = [dict(signature_id=o["signature_id"], document_id=o["_doc"][1], score=1.0)
                            for o in store.sigs.values() if o["phash"] == s["phash"] and o["_doc"] != s["_doc"]]
+                sid = s["signature_id"]
                 sigs.append({k: s[k] for k in ("signature_id", "page", "bbox", "detector", "detection_score",
                                                "role", "role_source", "role_evidence", "phash")}
-                            | {"copy_suspicion": {"level": "suspected" if matches else "none", "matches": matches}})
-                s3.put_object(Bucket=cfg.bucket, Key=f"{prefix}signatures/{s['signature_id']}.png",
-                              Body=seed.signature_png(s["_seed"]))
+                            | {"copy_suspicion": {"level": "suspected" if matches else "none", "matches": matches},
+                               "crop_s3_key": f"{prefix}signatures/{sid}.png.enc", "crop_encrypted": True})
+                png = seed.signature_png(s["_seed"])
+                s3.put_object(Bucket=cfg.bucket, Key=f"{prefix}signatures/{sid}.png.enc",
+                              Body=encrypt_image(png, SignatureContext(cid, did, sid), provider))
+                s3.put_object(Bucket=cfg.bucket, Key=f"{prefix}signatures/{sid}.preview.png",
+                              Body=distorted_preview(png))
                 n = int(s["signature_id"].split("_")[1]) - 1  # embed číslují od 0
                 vec.put(cfg.vector_bucket, cfg.sig_index, f"{did}#s{n}", s["_vec"],
                         dict(case_id=cid, document_id=did, page=s["page"],
@@ -93,8 +125,10 @@ def build(api_key=API_KEY):
                 vec.put(cfg.vector_bucket, cfg.image_index, f"{did}#p{p}", v,
                         dict(common, page=p, model=seed.IMAGE_MODEL[0], model_version=seed.IMAGE_MODEL[1]))
         _put(ddb, cfg.analysis_table, row)
+        sha = hashlib.sha256(f"fixture:{cid}:{did}".encode()).hexdigest()  # v datech fixtur žádné duplicity nejsou
+        add_document_hash(ddb, cfg, cid, did, sha, d["label"])
 
-    clients = Clients(cfg, ddb=ddb, s3=s3, vectors=vec)
+    clients = Clients(cfg, ddb=ddb, s3=s3, vectors=vec, key_provider=provider)
     index = {"cases": [
         {"case_id": cid, "client": c["client"], "documents": [
             {"document_id": did, "title": store.docs[(cid, did)]["title"], "label": store.docs[(cid, did)]["label"],

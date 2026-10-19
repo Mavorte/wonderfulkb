@@ -1,0 +1,12 @@
+-r requirements.txt
+pytest>=8
+moto[s3,dynamodb,secretsmanager]>=5.1
+# pipeline (testy znovupoužití) a API (kontraktový test)
+httpx>=0.27
+pypdf>=5
+pypdfium2>=4.30
+Pillow>=10
+jsonschema
+# ingest (testy také jeho kódu: viz infra/ingest/app/requirements.txt)
+fastapi>=0.115
+python-multipart>=0.0.20

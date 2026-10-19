@@ -15,6 +15,8 @@ ANALYSIS_TABLE=wonderfulkb-uw-document-analysis
 RAW_BUCKET=wonderfulkb-raw-document-storage
 VECTOR_BUCKET=wonderfulkb-vectors
 SECRET=wonderfulkb/ingest-api-key
+KMS_ALIAS=alias/wonderfulkb-signatures
+KMS_KEY_ID=<KMS_KEY_ID>   # musí odpovídat parametru SignatureKmsKeyId v template.yaml
 
 command -v sam >/dev/null || { echo "Chybí SAM CLI (pip install aws-sam-cli)." >&2; exit 1; }
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
@@ -30,6 +32,11 @@ for i in text image signatures; do
   chk "S3 Vectors index wonderfulkb-$i" aws s3vectors get-index --vector-bucket-name "$VECTOR_BUCKET" --index-name "wonderfulkb-$i"
 done
 chk "Secrets Manager $SECRET" aws secretsmanager describe-secret --secret-id "$SECRET"
+chk "KMS klíč $KMS_ALIAS (odkrytí podpisů)" aws kms describe-key --key-id "$KMS_ALIAS"
+if ACTUAL_KEY_ID=$(aws kms describe-key --key-id "$KMS_ALIAS" --query KeyMetadata.KeyId --output text 2>/dev/null); then
+  [ "$ACTUAL_KEY_ID" = "$KMS_KEY_ID" ] && echo "  ok      alias $KMS_ALIAS míří na klíč $KMS_KEY_ID (podle šablony)" \
+    || { echo "  CHYBÍ   alias $KMS_ALIAS míří na jiný klíč než SignatureKmsKeyId v šabloně ($KMS_KEY_ID)"; ok=0; }
+fi
 [ -z "$CASES_TABLE" ] || chk "DynamoDB $CASES_TABLE" aws dynamodb describe-table --table-name "$CASES_TABLE"
 [ "$ok" = 1 ] || { echo "Chybí závislosti, nasazení by selhalo za běhu. Končím." >&2; exit 1; }
 
@@ -44,6 +51,14 @@ Vytvoří / změní:
   - IAM role wonderfulkb-agent-api-lambda (jen čtení: $ANALYSIS_TABLE GetItem/Query;
     s3:GetObject na $RAW_BUCKET/cases/*/analysis/*; s3vectors GetVectors/QueryVectors na 3 indexy v $VECTOR_BUCKET;
     GetSecretValue na $SECRET; zápis do vlastní log skupiny)${CASES_TABLE:+; GetItem na $CASES_TABLE}
+    + odkrytí podpisů: kms:Decrypt jen na klíč $KMS_KEY_ID ($KMS_ALIAS) a jen s kontextem právě case_id, document_id,
+      signature_id (žádné GenerateDataKey/Encrypt; zápis šifrovaných výřezů zůstává u pipeline). s3:GetObject se nemění
+      (cases/*/analysis/* už pokrývá signatures/*)
+  - proměnné Lambdy: PRIVACY_KMS_KEY_ID=$KMS_ALIAS, LEGACY_PLAIN_CROP_URL=false, CROP_URL_COMPAT=false
+  - Odpověď volání 3 se mění NEKOMPATIBILNĚ: pole crop_url zmizí, přibude preview_url, reveal_path, crop_available;
+    nová cesta GET …/signatures/{signature_id}/image (odkrytí, audit do logu Lambdy). Viz README, "Přechod z crop_url".
+  - dedup: role navíc smí dynamodb:Query na wonderfulkb-uw-content-hashes a dynamodb:GetItem na wonderfulkb-uw-documents (jen sha256);
+    tabulka hashů nemusí existovat, API pak pole duplicate_of a duplicate_relevant vynechá (parametr ContentHashesTable="" funkci vypne)
   - CloudWatch log skupina /aws/lambda/wonderfulkb-agent-api (14 dní)
   - API Gateway HTTP API, stage v1, trasy GET /{proxy+} a GET /healthz, limit 10 req/s (burst 20)
   - balíček kódu: $ARTIFACT_DESC

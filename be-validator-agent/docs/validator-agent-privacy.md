@@ -118,7 +118,7 @@ Zapomenutý podpis má ještě jednu stinnou stranu: pokud originál po migraci 
 - **Embedding stránek**: počítat ze stránek vykreslených ze zamaskované kopie. Dva dokumenty se stejně umístěnými černými obdélníky budou mírně podobnější; je to drobný šum. Dnešní 2 vektory v indexu `wonderfulkb-image` (počítané z čitelných stránek) po migraci přepočítat (klíč `#p<n>` je idempotentní, přepíše se). Embedding výřezu se počítá z čitelného výřezu v paměti a u zapomenutých podpisů nevznikne.
 - **Lidská kontrola**: strana se ukáže zamaskovaná; podpis přes `GET …/signatures/{id}/image` po odkrytí. Pro zapomenutý podpis žádný odkrytý výřez neexistuje.
 
-## 5. Návrh odkrytí v API (patch pro `be-document-processing/contracts/openapi-validator-agent.yaml`, neaplikováno)
+## 5. Návrh odkrytí v API (patch pro `docs/openapi-validator-agent.yaml`, neaplikováno)
 
 Nová verze kontraktu 0.3.0, aditivní: `crop_url` zůstane do přechodu v odpovědi s hodnotou `null` (nikdy nevrací čitelný odkaz).
 
@@ -252,6 +252,27 @@ Bucket je verzovaný: `delete-object` bez `VersionId` jen přidá delete marker 
 8. **Zabránit návratu**: nové nahrávky přistávají čitelně, protože ingest zapisuje originál do S3 hned při uploadu. Je potřeba krok po uploadu (S3 událost → pipeline), který originál zamaskuje a čitelnou verzi odstraní, nebo úprava ingestu. Dokud neexistuje, vzniká okno, kdy je originál čitelný; mezitím omezit čtení bucketu bucket policy.
 9. Stávající odkazy: `wonderfulkb-uw-documents.s3_key` a případní další čtenáři `original/…` (ingest, `be-document-processing`) se musí přepnout na `redacted/…`; **zkontrolovat před krokem 7**.
 
+## 8a. Záloha čitelných dat před smazáním (postup, nic se nespustilo)
+
+Rozhodnutí uživatele (19. 10. 2026): **čitelná data se před smazáním zálohují.** Smazání samo je pozdější samostatný krok a tady se neprovádí. Skript: [measure/backup_readable.sh](../privacy/measure/backup_readable.sh) (režimy `--plan`, `--run`, `--verify`; **nespuštěno**, ani `--plan`).
+
+Co se zálohuje (všechny verze, ne jen poslední; bucket je verzovaný):
+- čitelné originály `cases/*/original/*.pdf`,
+- čitelné stránky `cases/*/analysis/*/pages/*.png`,
+- čitelné výřezy `cases/*/analysis/*/signatures/sig_*.png` (ne `.png.enc` ani `.preview.png`),
+- volitelně ZIP balíky `cases/*.zip` (`INCLUDE_ZIPS=1`; `codex-tmp.zip` má 446 MB).
+
+Pravidla:
+1. **Cíl mimo prefix `cases/`** (skript odmítne `BACKUP_PREFIX` pod `cases/`). Bezpečnější než jiný prefix téhož bucketu je **samostatný bucket** (jiná politika, žádné čtení z role API); jeho založení schvaluje uživatel.
+2. **Jiný šifrovací klíč než klíč podpisů.** Záloha je SSE-KMS klíčem `alias/wonderfulkb-backup` (navržený název, **neexistuje**; klíč ani bucket skript nevytváří). Důvod: kdo smí odkrývat podpisy (`kms:Decrypt` na `alias/wonderfulkb-signatures`, role API), nesmí tím získat i zálohu čitelných originálů. Skript před kopírováním ověří, že oba klíče nejsou totožné. Právo `kms:Decrypt` na klíč zálohy má jen správce (obnova), nikoli API ani pipeline.
+3. **Seznam klíčů a VersionId** (`--plan`, jen čtení): `backup-plan/versions.tsv` (klíč, VersionId, velikost, ETag, IsLatest, skupina) a `all-versions.json`. Uložit **mimo repozitář**; je to jediný důkaz, co zálohováno bylo, a podle něj se pak maže (část 8, krok 7). Plán obsahuje i počty a velikosti po skupinách a počet starších verzí.
+4. **Kopie** (`--run`, vyžaduje `BACKUP_CONFIRM=yes`): `copy-object` každé verze přímo na straně S3 (`?versionId=`) do `<BACKUP_PREFIX>/<klíč>.v-<VersionId>` se SSE-KMS klíčem zálohy; metadata nesou zdrojový klíč a verzi. Idempotentní (existující kopie se přeskočí). Nic se nemaže ani nepřepisuje.
+5. **Kontrola** (`--verify`, volitelně `--deep`): pro každý řádek seznamu existuje kopie, má stejnou velikost a je zašifrovaná klíčem zálohy; `--deep` navíc porovná SHA-256 obsahu zdrojové verze a kopie. Mazat se smí až po `--verify` bez chyby (a výslovném souhlasu).
+6. **Obnova**: `aws s3api copy-object` z kopie zpět pod původní klíč (vznikne nová verze); jen správce s `kms:Decrypt` na klíč zálohy.
+7. Záloha je čitelná data pod jinou ochranou, ne smazání rizika: stále platí zbytkové riziko zálohy v rukou správců klíče. Po skončení hackathonu se záloha smaže (nebo se naplánuje smazání klíče, 7 až 30 dní).
+
+Pořadí s migrací (část 8): zamražení rozsahu (`--plan`) → **záloha (`--run`, `--verify`)** → zamaskování a šifrování (`measure/migrate.py`) → ruční kontrola → teprve pak případné smazání čitelných verzí po skupinách.
+
 ## 9. Co je a není ověřeno
 
 Ověřeno bez AWS (63 testů): šifrování a dešifrování, vazba na kontext (každé ze tří polí), odolnost proti poškození (každý bajt bloku), formát s verzí, zkreslení náhledu (ztráta detailu, dva různé podpisy se stejným hrubým rozložením dávají shodný náhled), shoda `phash` se stávajícím kódem, `KmsKeyProvider` a odkrytí proti mocku (moto), audit, redakce PDF a PNG včetně ověření, že pod oblastí nic nezbylo (a že ověření umí selhat).
@@ -263,3 +284,14 @@ Neověřeno: napojení do Lambdy, `store.py` a pipeline (jen návrh); IAM politi
 2. Kdo zamaskuje nové nahrávky po uploadu (S3 událost, ingest, pipeline)? Do té doby je originál po nahrání čitelný.
 3. Přijmout zbytkové riziko neúplné detekce: ukládá se jen zamaskovaná kopie, tvrzení je „odstraněno, kde jsme podpis našli nebo čekali“. Chceme před migrací změřit úplnost zamaskování na 20 případech?
 4. Má `preview` zůstat jako samostatný předpodepsaný objekt (návrh), nebo inline base64 v odpovědi?
+
+## 11. Krok 3: odkrytí v Agent API (implementováno v `infra/validator-agent/api/`, v AWS NENASAZENO)
+
+Doplněk k částem 5 a 7; kde se liší, platí tato část. Podrobnosti a konfigurace: `infra/validator-agent/api/README.md`, sekce „Podpisy: náhled a odkrytí“.
+
+- **Volání 3**: `crop_url` se nevrací (pole není vůbec, přechodově může být `null`). Místo něj `preview_url` (předpodepsaný odkaz 300 s na samostatný zkreslený objekt `<sig>.preview.png`, `null` když neexistuje), `reveal_path` a `crop_available`. Starý `signatures.json` bez `crop_s3_key`/`crop_encrypted` (čitelné výřezy před migrací): žádný čitelný odkaz, `crop_available: false`. Přepínač `LEGACY_PLAIN_CROP_URL` (výchozí `false`) je nouzový únik, který obchází rozhodnutí z části 3; zapínat jen na výslovné rozhodnutí.
+- **Endpoint** `GET /cases/{case_id}/documents/{document_id}/signatures/{signature_id}/image` (`revealSignatureImage`). Odchylky od návrhu v části 5: místo `409` pro chybějící výřez je `404` (`409` jen pro výřez, který není šifrovaný, a nikdy se nevrací čitelně); selhání dešifrování je obecné `500`, ne `403`; `signature_id` se hledá v `signatures.json`, takže neexistující podpis je `404`; kontext dešifrování je z cesty požadavku, jedinou výjimkou je `crop_source` (`{case_id, document_id, signature_id}` původního kontextu u výřezu zašifrovaného pod jiným podpisem), který mění kontext, ne klíč objektu (ten musí ležet pod `signatures/` téhož dokumentu).
+- **Audit**: jeden JSON řádek na volání s platným API klíčem (`signature_reveal`, `caller`, `ts`, `case_id`, `document_id`, `signature_id`, `outcome` = `revealed|not_found|not_encrypted|denied|error`, `request_id`). `caller` je `apiKeyId` (jen REST API s usage plan) nebo otisk `fp:` + 12 hex znaků SHA-256 klíče. Ani klíč, ani obraz v logu nejsou. Neplatný API klíč se jako odkrytí nezapisuje (zamítne se dřív).
+- **Kód**: dešifrování je v `api/crop_reveal.py` (formát `WKBS` v1 ze `signature_privacy/blob.py`), protože celá knihovna vyžaduje Pillow, numpy a PyMuPDF. Změna formátu v `blob.py` se tedy musí promítnout i tam; test `test_reveal.py` kontroluje, že blok zašifrovaný knihovnou (lokální provider i mock KMS) API odkryje a že špatný `case_id`, `document_id`, `signature_id`, jiný klíč nebo poškozený bajt selžou.
+- **IAM Lambdy**: přibývá jen `kms:Decrypt` na klíč `<KMS_KEY_ID>` s podmínkami `ForAllValues:StringEquals` nad `kms:EncryptionContextKeys` = `case_id`, `document_id`, `signature_id` a `Null: false` (bez `Null` by `ForAllValues` u volání bez kontextu vyšlo vždy pravdivě). `s3:GetObject` na `cases/*/analysis/*/signatures/*` už role má přes `cases/*/analysis/*`, nic navíc se nepřidává. Pipeline `Decrypt` nedostává (část 7 beze změny).
+- **Co se nezměnilo a zbývá**: jeden sdílený API klíč znamená v auditu jeden `caller`; čitelné staré výřezy `signatures/<sig>.png` zůstanou čitelné i pro roli API, dokud se nesmažou (část 8); skutečné KMS `Decrypt` z Lambdy ani IAM podmínky nebyly vyzkoušeny, protože nic není nasazené.

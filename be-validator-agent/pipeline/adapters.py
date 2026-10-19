@@ -17,7 +17,8 @@ class StepUnavailable(RuntimeError):
 def _ensure_path():
     # classify/ and embed/ live next to pipeline/; make them importable even without the .pth from setup.sh
     # signatures/ holds the package signature_pipeline, so that directory goes on the path too
-    for folder in (VALIDATOR_AGENT, VALIDATOR_AGENT / "signatures"):
+    # privacy/ holds the package signature_privacy (encryption, redaction)
+    for folder in (VALIDATOR_AGENT, VALIDATOR_AGENT / "signatures", VALIDATOR_AGENT / "privacy"):
         if str(folder) not in sys.path:
             sys.path.append(str(folder))
 
@@ -58,6 +59,63 @@ def detect_signatures(pdf_path, case_id, document_id, s3, bucket):
     if os.environ.get("PIPELINE_ENCRYPT_CROPS") == "1":
         store = _load("signature_pipeline.store", "S3CropStore")(s3, bucket, encrypt=True)
     return detect(str(pdf_path), None, case_id=case_id, document_id=document_id, crop_store=store)
+
+
+def privacy():
+    """The `signature_privacy` package (redaction, encryption, preview); needs PyMuPDF and cryptography."""
+    _ensure_path()
+    try:
+        import signature_privacy
+    except ImportError as error:
+        raise StepUnavailable(f"signature_privacy is not importable ({error}); "
+                              f"see infra/validator-agent/privacy/requirements-redact.txt") from error
+    return signature_privacy
+
+
+def signature_detector():
+    """Default chain of the signature module: Textract -> embedded images -> ink above the 'Podpis' label."""
+    return _load("signature_pipeline.detect", "default_detector")(_load("signature_pipeline.detect", "TextractDetector")())
+
+
+def detect_boxes(pdf_bytes, detector=None):
+    """Findings on the PDF held in memory (no file, no crop): [{page, bbox, detector, detection_score, role,
+    role_evidence}] in the order the module numbers them (sig_01, ...). `detector` is anything with detect(doc)."""
+    try:
+        import pymupdf
+    except ImportError as error:
+        raise StepUnavailable(f"PyMuPDF is not importable ({error})") from error
+    detector = detector or signature_detector()
+    doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+    try:
+        found = detector.detect(doc)
+    finally:
+        doc.close()
+    return [{"page": d.page, "bbox": list(d.bbox), "detector": d.detector, "detection_score": d.score,
+             "role": (d.hint or {}).get("role"), "role_evidence": (d.hint or {}).get("role_evidence")} for d in found]
+
+
+def crop_store(s3, bucket, provider, on_plain):
+    """The module's S3CropStore in its only allowed form here: encrypted crop + distorted preview; `on_plain`
+    receives the readable crop in memory (for the embedding) and nothing readable reaches S3."""
+    return _load("signature_pipeline.store", "S3CropStore")(s3, bucket, encrypt=True, provider=provider, on_plain=on_plain)
+
+
+def sign_crops(pdf_bytes, items, case_id, document_id, store):
+    """Role, crop (from `pdf_bytes`, in memory), phash for the given findings; the crop goes through `store`.
+    Returns dicts of the OpenAPI `Signature` without crop_url."""
+    process_pdf = _load("signature_pipeline.pipeline", "process_pdf")
+    precomputed = _load("signature_pipeline.detect", "PrecomputedDetector")
+    return [s.to_api(with_crop_url=False) for s in process_pdf(pdf_bytes, precomputed(items), case_id, document_id, store)]
+
+
+def write_signature_vectors(case_id, document_id, crops, label=None):
+    return _load("embed", "write_signature_vectors")(case_id, document_id, crops, label=label)
+
+
+def dedup(attribute):
+    """Funkce z modulu `dedup/` (index hashů a znovupoužití analýzy); modul chybí = StepUnavailable, zpracuje se normálně."""
+    module = {"find_source": "dedup.reuse", "reuse_analysis": "dedup.reuse", "register": "dedup.hashindex"}[attribute]
+    return _load(module, attribute)
 
 
 def signature_tools():

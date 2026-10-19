@@ -121,7 +121,11 @@ def get_signatures(case_id, doc_id, qs, host):
     include_vectors = parse_bool(qs, "include_vectors", True)
     sigs = []
     for item, s in STORE.signatures(d, match_client, include_vectors):
-        item["crop_url"] = f"{host}{BASE}/_mock/crops/{doc_id}/{s['signature_id']}.png"
+        # podle spec 0.3.0: náhled a cesta odkrytí místo crop_url (mock vrací v obou případech syntetický PNG)
+        item.pop("crop_url", None)
+        item["preview_url"] = f"{host}{BASE}/_mock/crops/{doc_id}/{s['signature_id']}.png"
+        item["reveal_path"] = f"/cases/{case_id}/documents/{doc_id}/signatures/{s['signature_id']}/image"
+        item["crop_available"] = True
         if not include_vectors:
             item.pop("vector")
         sigs.append(item)
@@ -174,7 +178,8 @@ class Handler(BaseHTTPRequestHandler):
             qs = parse_qs(u.query)
             if path == "/_mock/cases":
                 return self._send(200, list_cases())
-            m = re.match(r"^/_mock/crops/([^/]+)/(sig_\d+)\.png$", path)
+            m = re.match(r"^/_mock/crops/([^/]+)/(sig_\d+)\.png$", path) \
+                or re.match(r"^/cases/[^/]+/documents/([^/]+)/signatures/(sig_\d+)/image$", path)
             if m:
                 s = STORE.sigs.get(f"{m.group(1)}/{m.group(2)}")
                 if not s:

@@ -29,9 +29,14 @@ class Handler(BaseHTTPRequestHandler):
                 status, body = 200, INDEX
         else:
             status, body = core.handle(self.command, u.path, parse_qs(u.query), dict(self.headers), api=API)
-        raw = core.dumps(body)
+        if isinstance(body, core.Binary):
+            raw, ctype, extra = body.data, body.content_type, body.headers
+        else:
+            raw, ctype, extra = core.dumps(body), "application/json; charset=utf-8", {}
         self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Type", ctype)
+        for k, v in extra.items():
+            self.send_header(k, v)
         self.send_header("Content-Length", str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)

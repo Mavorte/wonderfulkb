@@ -33,6 +33,7 @@ if os.environ.get("FIXTURES") == "1":  # API v tomto procesu: moto + fake S3 Vec
     BASE = f"http://127.0.0.1:{srv.server_address[1]}/v1"
 else:
     BASE = os.environ.get("BASE_URL", "http://localhost:8080/v1")
+PNG = b"\x89PNG\r\n\x1a\n"
 SPEC = yaml.safe_load(open(os.path.join(HERE, "..", "..", "be-document-processing", "contracts", "openapi-validator-agent.yaml")))
 fails = 0
 
@@ -127,6 +128,24 @@ expect(f"/cases/{C}/documents/{smlouva['document_id']}", 403, "Error", key="spat
 expect(f"/cases/{C}/documents/{smlouva['document_id']}", 403, "Error", key="")
 expect(f"/cases/bad%20id/documents/x", 400, "Error")
 
+# 1b. duplicity napříč případy: pole jsou volitelná, schéma je musí přijmout v obou podobách
+b = expect(f"/cases/{C}/documents/{smlouva['document_id']}", 200, "ValidationDocument")
+check("bez duplicity: duplicate_of je prázdné pole a duplicate_relevant false (nebo pole chybí)",
+      b.get("duplicate_of", []) == [] and b.get("duplicate_relevant", False) is False)
+if CLIENTS:  # jen nad fixturami; živé API a mock se nezapisují
+    import fixtures
+    sha = "ab" * 32
+    fixtures.add_document_hash(CLIENTS.ddb, CLIENTS.cfg, C, smlouva["document_id"], sha, "faktura")
+    CLIENTS.ddb.update_item(TableName=CLIENTS.cfg.analysis_table,
+                            Key={"case_id": {"S": C}, "document_id": {"S": smlouva["document_id"]}},
+                            UpdateExpression="SET #l = :l", ExpressionAttributeNames={"#l": "label"},
+                            ExpressionAttributeValues={":l": {"S": "faktura"}})
+    fixtures.add_document_hash(CLIENTS.ddb, CLIENTS.cfg, "jine-financovani", "orig-1", sha, None)
+    b = expect(f"/cases/{C}/documents/{smlouva['document_id']}", 200, "ValidationDocument")
+    check("duplicita: duplicate_of bez vlastního případu, individuální doklad je relevantní",
+          b["duplicate_of"] == [{"case_id": "jine-financovani", "document_id": "orig-1", "label": None}]
+          and b["duplicate_relevant"] is True)
+
 # 2. vektory
 D = smlouva["document_id"]
 b = expect(f"/cases/{C}/documents/{D}/vectors", 200, "DocumentVectors")
@@ -151,21 +170,53 @@ b = expect(f"/cases/{C}/documents/{protokol['document_id']}/signatures?match_cli
 check("kopie podpisu v protokolu + similar_signatures bez vektoru",
       b["signatures"][0]["copy_suspicion"]["matches"] and "vector" not in b["signatures"][0]
       and "similar_signatures" in b["signatures"][0])
-crop = b["signatures"][0]["crop_url"]
-if crop.startswith(BASE.split("/v1")[0]):  # mock servíruje výřez sám
-    with urllib.request.urlopen(urllib.request.Request(crop, headers={"x-api-key": KEY})) as r:
-        check("crop_url vrací PNG", r.read(8) == b"\x89PNG\r\n\x1a\n")
+sg = b["signatures"][0]
+check("podpis nemá čitelný odkaz: žádný crop_url (nebo null), je preview_url, reveal_path a crop_available",
+      sg.get("crop_url") is None and sg["crop_available"] is True and sg["reveal_path"]
+      == f"/cases/{C}/documents/{protokol['document_id']}/signatures/{sg['signature_id']}/image", sg.get("crop_url"))
+preview = sg["preview_url"]
+if preview.startswith(BASE.split("/v1")[0]):  # mock servíruje výřez sám
+    with urllib.request.urlopen(urllib.request.Request(preview, headers={"x-api-key": KEY})) as r:
+        check("preview_url vrací PNG", r.read(8) == PNG)
 else:  # skutečné API: předpodepsaná adresa S3 (300 s, regionální endpoint, SigV4)
-    u = urllib.parse.urlparse(crop)
+    u = urllib.parse.urlparse(preview)
     q = urllib.parse.parse_qs(u.query)
     host_ok = u.netloc == f"{CLIENTS.cfg.bucket}.s3.eu-central-1.amazonaws.com" if CLIENTS \
         else u.netloc.endswith(".s3.eu-central-1.amazonaws.com")
-    check("crop_url je předpodepsaná adresa S3 na 300 s v regionálním endpointu",
+    check("preview_url je předpodepsaná adresa S3 na 300 s v regionálním endpointu a míří na náhled, ne na výřez",
           u.scheme == "https" and host_ok and q.get("X-Amz-Expires") == ["300"]
-          and q.get("X-Amz-Algorithm") == ["AWS4-HMAC-SHA256"], crop.split("?")[0])
-    if CLIENTS:  # objekt výřezu opravdu existuje
-        body = CLIENTS.s3.get_object(Bucket=CLIENTS.cfg.bucket, Key=urllib.parse.unquote(u.path.lstrip("/")))["Body"].read(8)
-        check("výřez v S3 je PNG", body == b"\x89PNG\r\n\x1a\n")
+          and q.get("X-Amz-Algorithm") == ["AWS4-HMAC-SHA256"] and u.path.endswith(".preview.png"), preview.split("?")[0])
+    if CLIENTS:  # objekt náhledu opravdu existuje a není to výřez
+        body = CLIENTS.s3.get_object(Bucket=CLIENTS.cfg.bucket, Key=urllib.parse.unquote(u.path.lstrip("/")))["Body"].read()
+        check("náhled v S3 je PNG", body[:8] == PNG)
+
+
+def raw(path, key=KEY):
+    req = urllib.request.Request(BASE + path, headers={"x-api-key": key} if key else {})
+    try:
+        with urllib.request.urlopen(req) as r:
+            return r.status, dict(r.headers), r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, dict(e.headers), e.read()
+
+
+st, hdr, data = raw(sg["reveal_path"])
+check("odkrytí: 200, image/png, no-store, inline, PNG", st == 200 and hdr.get("Content-Type") == "image/png"
+      and hdr.get("Cache-Control") == "no-store" and hdr.get("Content-Disposition") == "inline" and data[:8] == PNG,
+      (st, hdr.get("Content-Type"), hdr.get("Cache-Control")))
+check("odkrytý výřez není tentýž objekt jako náhled", data != body if CLIENTS and not preview.startswith(BASE.split("/v1")[0]) else True)
+for label, path, key, want in (("špatný klíč", sg["reveal_path"], "spatny", 403), ("bez klíče", sg["reveal_path"], "", 403),
+                               ("neexistující podpis", sg["reveal_path"].replace(sg["signature_id"], "sig_99"), KEY, 404),
+                               ("neexistující dokument", sg["reveal_path"].replace(protokol["document_id"], "neexistuje"), KEY, 404),
+                               ("neplatné id", f"/cases/{C}/documents/{protokol['document_id']}/signatures/%2E%2E/image", KEY, 400)):
+    st, hdr, data = raw(path, key)
+    ok = st == want
+    if ok and st != 200:
+        try:
+            validate("Error", json.loads(data))
+        except (jsonschema.ValidationError, ValueError) as e:
+            ok = False
+    check(f"odkrytí: {label} dává {want} s chybou podle schématu", ok, st)
 b = expect(f"/cases/{C}/documents/{by_title(fiser, '99_')['document_id']}/signatures", 200, "DocumentSignatures")
 check("dokument bez podpisů: prázdné pole", b["signatures"] == [])
 check("status podpisů: completed u zpracovaného dokumentu (i s prázdným polem)", b.get("status") == "completed")

@@ -31,6 +31,8 @@ def parse_args(argv):
         p.add_argument("--no-vision", action="store_true", help="do not call Bedrock; scanned pages become pages_failed")
         p.add_argument("--force-vision", action="store_true", help="transcribe every page visually")
         p.add_argument("--json", action="store_true", help="print rows as JSON")
+        p.add_argument("--no-reuse", action="store_true", help="never reuse the finished analysis of the same content from another case (PIPELINE_NO_REUSE=1)")
+        p.add_argument("--no-redact", action="store_true", help="DEBUGGING ONLY: do not mask signatures, pages/text/vectors are built from the readable original (PIPELINE_REDACT=0)")
         p.add_argument("--resume", action="store_true", help="skip documents already completed by this pipeline version")
         p.add_argument("--report", metavar="FILE", help="write per-document time, status and call counts (JSON), updated after every document")
     copy = sub.add_parser("copy_case", help="recompute copy_suspicion across the documents of a case (signatures.json)")
@@ -78,8 +80,13 @@ def main(argv=None):
     if unknown:
         sys.exit(f"unknown step(s): {', '.join(sorted(unknown))}")
     settings = Settings()
-    settings = dataclasses.replace(settings, skip=frozenset(settings.skip | skip))
-    options = Options(settings=settings, no_vision=args.no_vision, force_vision=args.force_vision, resume=args.resume)
+    settings = dataclasses.replace(settings, skip=frozenset(settings.skip | skip),
+                                   redact=settings.redact and not args.no_redact)
+    if not settings.redact:
+        print("!" * 78 + "\n!! REDACTION IS OFF: pages, text and vectors are built from the READABLE original,\n"
+              "!! including readable signatures. For debugging with synthetic data only.\n" + "!" * 78, file=sys.stderr)
+    options = Options(settings=settings, no_vision=args.no_vision, force_vision=args.force_vision, resume=args.resume,
+                      reuse=not args.no_reuse and Options().reuse)
     meter = None
     if args.report:
         from .measure import Meter

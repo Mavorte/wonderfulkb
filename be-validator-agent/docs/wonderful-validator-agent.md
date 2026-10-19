@@ -1,6 +1,6 @@
 # Validační agent: vstupní API (čtení dokumentu, vektorů a podpisů), pro Wonderful
 
-Stav: **Agent API je nasazené** (adresy a klíče viz [predani-wonderful.md](../HANDOVER.md); kde se tenhle dokument liší od předávacího listu, platí předávací list). Formální popis: [openapi-validator-agent.yaml](../../be-document-processing/contracts/openapi-validator-agent.yaml), podrobnější rozbor v [validator-agent-api.md](../../be-document-processing/VALIDATOR-AGENT.md). Data pro agenta se berou ze **tří služeb**, tohle API je jen jedna z nich (viz kapitola 1).
+Stav: **Agent API je nasazené** (adresy a klíče viz predani-wonderful.md; kde se tenhle dokument liší od předávacího listu, platí předávací list). Formální popis: [openapi-validator-agent.yaml](../../be-document-processing/contracts/openapi-validator-agent.yaml), podrobnější rozbor v [validator-agent-api.md](../../be-document-processing/VALIDATOR-AGENT.md). Data pro agenta se berou ze **tří služeb**, tohle API je jen jedna z nich (viz kapitola 1).
 
 Pravidla validace včetně pravidel na podpisy píšete vy, ve Wonderful. Tohle API je jen zdroj dat: říká, **co v dokumentech je**, ne co s tím. Nic z něj není rozhodnutí.
 
@@ -16,7 +16,7 @@ Pravidla validace včetně pravidel na podpisy píšete vy, ve Wonderful. Tohle 
 |---|---|
 | Tvar všech odpovědí, chybové kódy, příklady níže | **Ověřeno na mocku** (infra/validator-agent-mock). Příklady v tomto dokumentu jsou odpovědi mocku spuštěného 19. 10. 2026, **jsou to příklady tvaru, ne skutečná data**. |
 | Kontraktový test | **Ověřeno:** proti mocku proběhl kontraktový test bez chyby (47 kontrol, 120 odpovědí validních podle aktuálního OpenAPI, včetně povinného `status` ve volání 3). Stejný test prošel i proti implementaci nad testovacími daty (moto + simulovaný S3 Vectors). |
-| Nasazené API | **Částečně ověřeno** ([predani-wonderful.md](../HANDOVER.md)): volání na živých datech případů `17794315-26` a `SYN-B01` (200, 403, 404, 409). Nezkoušelo se `partial`, `neighbors` s ověřenými dokumenty ani žádné `similar_signatures`. |
+| Nasazené API | **Částečně ověřeno** (predani-wonderful.md): volání na živých datech případů `17794315-26` a `SYN-B01` (200, 403, 404, 409). Nezkoušelo se `partial`, `neighbors` s ověřenými dokumenty ani žádné `similar_signatures`. |
 | Obsah dat | **Mock vrací syntetická data.** Vektory jsou umělé a `score` u `neighbors` i `similar_signatures` v mocku nemá reálný význam (často `1.0`). Na reálných datech jsou `neighbors` a `similar_signatures` zatím prázdné (není ověřený korpus). Mock také vrací `confidence: null` u dokumentů ze systému (`99_…`), u reálných dokumentů pipeline dává u takových dokumentů 0,95. |
 | Textract a podpisy | **Měřeno na vzorku, neúplné:** generické podpisy asi 92 až 94 % úplnost, rukopis asi 59 až 89 % podle kombinace detektorů (rukopis na ladicích datech). Nevíme, že každý nález je skutečně podpis. |
 
@@ -51,7 +51,7 @@ Agent nedostává data v těle požadavku, bere si je sám čtecími voláními 
 
 Agent zpracovává jen dokumenty ve stavu `completed` a `partial`. U `awaiting_upload`, `queued`, `processing` a `failed` vrací detail dokumentu `409` (text ani vektory ještě nejsou); volání 2 a 3 vrátí `200` s prázdnými poli, což **není** totéž jako „nic nenalezeno". U podpisů to rozlišuje pole `status` (kapitola 4), u vektorů stav dokumentu z volání 0 nebo 1.
 
-**Nasazená data (k předání):** zpracované jsou případy `17794315-26`, `SYN-A01`, `SYN-B01`, `SYN-C01` a z `SYN-A02` jeden dokument z devíti (zbytek `409`). Ostatní případy zatím zpracované nejsou. Aktuální stav viz [predani-wonderful.md](../HANDOVER.md).
+**Nasazená data (k předání):** zpracované jsou případy `17794315-26`, `SYN-A01`, `SYN-B01`, `SYN-C01` a z `SYN-A02` jeden dokument z devíti (zbytek `409`). Ostatní případy zatím zpracované nejsou. Aktuální stav viz predani-wonderful.md.
 
 Doporučený postup: seznam z Ingestu → pro každý zpracovaný dokument detail (1) → vektory (2) a podpisy (3) jen u pravidel, která je potřebují.
 
@@ -459,10 +459,10 @@ curl -s -w '\n[HTTP %{http_code}]\n' -H "x-api-key: spatny" "$BASE_URL/cases/$CA
 curl -s -w '\n[HTTP %{http_code}]\n' -H "x-api-key: $API_KEY" "$BASE_URL/cases/$CASE/documents/$DOC/vectors?include=audio"
 ```
 
-U nasazeného API platí totéž s `BASE_URL=<AGENT_API_BASE_URL>` a vaším klíčem (klíč vezměte z vlastního úložiště, do příkazů ani do repozitáře ho nepište); ID dokumentů pak vezměte z Ingestu a ze zpracovaných případů v [predani-wonderful.md](../HANDOVER.md). Pomocný `/_mock/cases` na nasazeném API není. Mock a nasazené API sdílí kontraktový test (`infra/validator-agent-mock/contract_test.py`, spustitelný i proti běžícímu API přes `BASE_URL` a `API_KEY`), takže tvar odpovědí by se neměl lišit; hodnoty ano. Nasazené API jsme tímto testem proti živým datům neprošli, ověřeno je jen ručně (viz tabulka na začátku).
+U nasazeného API platí totéž s `BASE_URL=<AGENT_API_BASE_URL>` a vaším klíčem (klíč vezměte z vlastního úložiště, do příkazů ani do repozitáře ho nepište); ID dokumentů pak vezměte z Ingestu a ze zpracovaných případů v predani-wonderful.md. Pomocný `/_mock/cases` na nasazeném API není. Mock a nasazené API sdílí kontraktový test (`infra/validator-agent-mock/contract_test.py`, spustitelný i proti běžícímu API přes `BASE_URL` a `API_KEY`), takže tvar odpovědí by se neměl lišit; hodnoty ano. Nasazené API jsme tímto testem proti živým datům neprošli, ověřeno je jen ručně (viz tabulka na začátku).
 
 ## Co zatím neplatí
-- **Nezpracované případy:** Agent API vrací data jen pro dokumenty, které prošly pipeline; zpracování po nahrání se zatím spouští ručně, nikdo ho automaticky nespouští. Aktuální stav viz [predani-wonderful.md](../HANDOVER.md).
+- **Nezpracované případy:** Agent API vrací data jen pro dokumenty, které prošly pipeline; zpracování po nahrání se zatím spouští ručně, nikdo ho automaticky nespouští. Aktuální stav viz predani-wonderful.md.
 - **`neighbors` a `similar_signatures` jsou zatím prázdné** (neexistuje ověřený korpus); `copy_suspicion: none` nemusí znamenat „zkontrolováno“.
 - **Úplnost detekce podpisů** je měřená jen na vzorku (viz tabulka na začátku), role podle okolního textu není ověřená na větším vzorku.
 - **`crop_url`:** šifrované odkrytí podpisů je ve vývoji a může změnit odpověď volání 3 (verze 0.3.0). Počítejte s tím, že `crop_url` může být `null`.

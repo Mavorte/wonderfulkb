@@ -1,2 +1,4 @@
 # Lambda runtime má boto3 zabudované, ale S3 Vectors klient (s3vectors) potřebuje novější verzi než starší runtimy.
 boto3>=1.40
+# odkrytí výřezu podpisu (AES-256-GCM); v Lambda runtime není
+cryptography>=43

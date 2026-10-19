@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: "2010-09-09"
+# NEZÁVISLÁ KOPIE infra/documents-table/template.yaml s jedinou změnou: zapnutý DynamoDB Stream (NEW_IMAGE).
+# Původní šablonu jsem nezměnil; rozhodne uživatel, zda ji přepíše touto, nebo zapne stream přímo (viz README).
+# Změna: přibyl `StreamSpecification` a výstup `StreamArn`. CloudFormation to dělá bez přerušení a bez
+# nahrazení tabulky (StreamSpecification: "Update requires: No interruption"); data i klíče zůstávají.
+Description: wonderfulkb-uw-documents table (uploaded documents per case). Clients and cases tables are managed separately (part 1).
+
+Resources:
+  DocumentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wonderfulkb-uw-documents
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: case_id, AttributeType: S}
+        - {AttributeName: document_id, AttributeType: S}
+      KeySchema:
+        - {AttributeName: case_id, KeyType: HASH}
+        - {AttributeName: document_id, KeyType: RANGE}
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+Outputs:
+  StreamArn:
+    Value: !GetAtt DocumentsTable.StreamArn

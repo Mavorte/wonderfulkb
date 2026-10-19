@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from . import adapters, pdf as pdfmod
+from . import adapters, pdf as pdfmod, redaction_step
 from .aws import Aws
 from .config import PIPELINE_VERSION, STEPS, Settings
 from .vision import MantleVision, VisionError, split_label_reply
@@ -32,7 +32,11 @@ class Options:
     force_vision: bool = False     # transcribe every page visually (comparison, bad text layers)
     defer_copy_check: bool = False  # batches run the copy check once per case instead of after each document
     resume: bool = False           # leave documents alone whose row is completed by this pipeline version
+    reuse: bool = field(default_factory=lambda: os.environ.get("PIPELINE_NO_REUSE", "") not in ("1", "true"))
+    # reuse: take the finished analysis of the same content (SHA-256) from another case instead of calling models again
     aws: Aws = None
+    key_provider: object = None    # signature_privacy KeyProvider for the crops; default: PRIVACY_KMS_KEY_ID / WKB_LOCAL_MASTER_KEY
+    signature_detector: object = None  # anything with detect(pymupdf doc) -> [Detection]; default: Textract chain
 
     def get_aws(self):
         if self.aws is None:
@@ -92,8 +96,11 @@ def fallback_description(text, limit=240):
     return flat[:limit] if flat else "(dokument bez čitelného textu)"
 
 
-def is_done(row):
-    return bool(row) and row.get("processing_status") == "completed" and row.get("pipeline_version") == PIPELINE_VERSION
+def is_done(row, settings=None):
+    """Completed by this pipeline version; with redaction on (`settings.redact`) also only when the row has the
+    masked copy: a document processed before the redaction step existed is not done."""
+    done = bool(row) and row.get("processing_status") == "completed" and row.get("pipeline_version") == PIPELINE_VERSION
+    return done and not (settings is not None and settings.redact and not row.get("redacted_s3_key"))
 
 
 def _resolve(aws, case_id, document_id):
@@ -140,7 +147,9 @@ def transcribe_scans(pages, pdf, options, report, label_tools=None):
         ask_label = page.number == labelled
         try:
             suffix = "labeled.txt" if ask_label else "txt"
-            cache_key = f"{report['prefix']}vision/{settings.vision_model}/{page.number}.{suffix}"
+            # a transcript cached from a readable render must not stand in for the masked one: separate folder
+            masked = "redacted/" if report.get("redacted") else ""
+            cache_key = f"{report['prefix']}vision/{settings.vision_model}/{masked}{page.number}.{suffix}"
             raw = aws.get_bytes_or_none(cache_key)
             if raw is not None:
                 raw = raw.decode("utf-8")
@@ -203,7 +212,7 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
 
     def begin(document_id):
         previous = aws.analysis.get_item(Key={"case_id": case_id, "document_id": document_id}).get("Item")
-        if options.resume and is_done(previous):
+        if options.resume and is_done(previous, settings):
             return previous, True
         _mark(aws, case_id, document_id, "processing", title=title)
         return previous, False
@@ -227,6 +236,24 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
     report = {"case_id": case_id, "document_id": document_id, "source_key": key, "prefix": prefix,
               "pipeline_version": PIPELINE_VERSION, "model": settings.vision_model, "started_at": now(),
               "vision_calls": 0, "pages": [], "steps": {}}
+    sha256 = hashlib.sha256(data).hexdigest()
+    reused = _try_reuse(options, report, case_id, document_id, title, sha256, previous)
+    if reused is not None:
+        return _finish_reused(options, report, reused, started, source is None, sha256)
+    redaction = None
+    if settings.redact:
+        # the readable original goes no further than this step: everything below reads the masked copy
+        try:
+            redaction = redaction_step.run(options, case_id, document_id, key, data)
+        except redaction_step.RedactionError as error:
+            return _fail(aws, case_id, document_id, title, error.code)
+        data = redaction.redacted
+        report["redaction"] = redaction.info
+        report["redacted"] = True
+    else:
+        log.warning("%s/%s: PIPELINE_REDACT is off, the readable original feeds pages, text and vectors "
+                    "(debugging only, never for real data)", case_id, document_id)
+        report["redaction"] = {"status": "disabled"}
     try:
         pdf = pdfmod.open_pdf(data)
     except pdfmod.InvalidPdf as error:
@@ -260,7 +287,11 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
         row["pages_failed"] = set(failed)
     _classify(options, report, row, previous, text, title, len(pages), vision_label)
     _embed(options, report, row, text, pngs)
-    _signatures(options, report, row, case_id, document_id, data, prefix)
+    if redaction is None:
+        _signatures(options, report, row, case_id, document_id, data, prefix)
+    else:
+        redaction.apply_to_row(row)
+        _embed_signature_crops(options, report, row, redaction)
 
     # Signature detection and the copy check never change the document status (an empty finding is valid as well).
     degraded = bool(failed) or any(s["status"] in ("failed", "unavailable")
@@ -276,7 +307,75 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
                   processing_status=row["processing_status"], pages_failed=sorted(failed))
     aws.put_bytes(prefix + "run.json", json.dumps(report, ensure_ascii=False, indent=1).encode(), "application/json")
     _put_row(aws, row)
+    if source is None:
+        _register_hash(report, case_id, document_id, sha256, row.get("label"))
     return row
+
+
+def _try_reuse(options, report, case_id, document_id, title, sha256, previous):
+    """(row, info) from the finished analysis of the same content in another case, or None: process normally.
+    Never raises: a missing index, a missing/partial original or any copy error only means no reuse."""
+    if not options.reuse:
+        report["reuse"] = {"status": "disabled"}
+        return None
+    aws = options.get_aws()
+    try:
+        find_source, reuse_analysis = adapters.dedup("find_source"), adapters.dedup("reuse_analysis")
+    except adapters.StepUnavailable as error:
+        report["reuse"] = {"status": "unavailable", "error": str(error)}
+        return None
+    try:
+        origin = find_source(aws, sha256, case_id)
+    except Exception as error:  # noqa: BLE001 - table not deployed, no permission, outage ...
+        log.warning("%s/%s: content hash index unavailable (%s), processing normally", case_id, document_id, type(error).__name__)
+        report["reuse"] = {"status": "index_unavailable", "error": type(error).__name__}
+        return None
+    if origin is None:
+        report["reuse"] = {"status": "no_source"}
+        return None
+    if options.settings.redact and not origin.get("redacted_s3_key"):
+        # an analysis made from the readable original (pages, crops) is not copied into a masked pipeline
+        report["reuse"] = {"status": "source_not_redacted",
+                           "from": {"case_id": origin["case_id"], "document_id": origin["document_id"]}}
+        return None
+    try:
+        row, info = reuse_analysis(aws, origin, case_id, document_id, title, skip=options.settings.skip,
+                                   previous=previous, pipeline_version=PIPELINE_VERSION, now=now)
+        if options.settings.redact:  # own masked copy, hash of the original, crops tied to the source's context
+            redaction_step.finish_reuse(aws, row, origin, sha256)
+    except Exception as error:  # noqa: BLE001 - NotReusable (incomplete original) or an AWS error: reprocess
+        log.warning("%s/%s: cannot reuse %s/%s (%s: %s), processing normally", case_id, document_id,
+                    origin["case_id"], origin["document_id"], type(error).__name__, error)
+        report["reuse"] = {"status": "fallback", "from": {"case_id": origin["case_id"], "document_id": origin["document_id"]},
+                           "reason": f"{type(error).__name__}: {error}"}
+        return None
+    report["reuse"] = {"status": "reused", **info}
+    return row, info
+
+
+def _finish_reused(options, report, reused, started, register, sha256):
+    row, info = reused
+    aws = options.get_aws()
+    case_id, document_id = row["case_id"], row["document_id"]
+    report["steps"]["reuse"] = {"status": "ok", "reused_from": info["reused_from"]}
+    if not options.defer_copy_check:
+        _copy_check(options, report, case_id)  # copy_suspicion of the copied signatures is recomputed within this case
+    report.update(finished_at=row["updated_at"], seconds=round(time.monotonic() - started, 1),
+                  processing_status=row["processing_status"], pages_failed=[])
+    aws.put_bytes(analysis_prefix(case_id, document_id) + "run.json",
+                  json.dumps(report, ensure_ascii=False, indent=1, default=str).encode(), "application/json")
+    _put_row(aws, row)
+    if register:
+        _register_hash(report, case_id, document_id, sha256, row.get("label"))
+    return row
+
+
+def _register_hash(report, case_id, document_id, sha256, label):
+    """Record the document in the content hash index (with its label). Never changes the document's result."""
+    try:
+        adapters.dedup("register")(sha256, case_id, document_id, label)
+    except Exception as error:  # noqa: BLE001 - index missing or not allowed: the document itself is fine
+        log.warning("%s/%s: not registered in the content hash index (%s)", case_id, document_id, type(error).__name__)
 
 
 def _classify(options, report, row, previous, text, title, page_count, vision_label=None):
@@ -312,6 +411,20 @@ def _embed(options, report, row, text, pngs):
         return
     _step(report, "embed", lambda: adapters.write_vectors(row["case_id"], row["document_id"], text, pngs,
                                                          label=row.get("label")))
+
+
+def _embed_signature_crops(options, report, row, redaction):
+    """Embedding of the signature crops, from the readable bytes still held in memory (never read back from S3);
+    they are dropped right after, whatever the outcome."""
+    try:
+        if "embed" in options.settings.skip or not redaction.crops:
+            if "embed" in options.settings.skip:
+                report["steps"]["signature_embed"] = {"status": "skipped"}
+            return
+        _step(report, "signature_embed", lambda: adapters.write_signature_vectors(
+            row["case_id"], row["document_id"], redaction.crops, label=row.get("label")))
+    finally:
+        redaction.drop_crops()
 
 
 def _signatures(options, report, row, case_id, document_id, data, prefix):
@@ -383,7 +496,8 @@ def run_case(case_id, options=None):
     aws = options.get_aws()
     documents = aws.list_documents(case_id)
     for item in documents:  # the whole case is visible as queued before the slow work starts
-        if options.resume and is_done(aws.analysis.get_item(Key={"case_id": case_id, "document_id": item["document_id"]}).get("Item")):
+        if options.resume and is_done(aws.analysis.get_item(Key={"case_id": case_id, "document_id": item["document_id"]}).get("Item"),
+                                      options.settings):
             continue
         _mark(aws, case_id, item["document_id"], "queued", title=item.get("filename", item["document_id"]))
     rows = []

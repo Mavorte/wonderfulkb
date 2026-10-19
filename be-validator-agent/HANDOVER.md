@@ -50,8 +50,13 @@ Podpisy v dokumentu mají roli (`borrower`, `guarantor`, …), ne jméno osoby. 
 Volání jsme ověřili na živých datech z případů `17794315-26` a `SYN-B01` (200, 403, 404, 409); partial a `neighbors` s ověřenými dokumenty se nezkoušely. Zpracování nových nahrávek po uploadu nikdo automaticky nespouští (pipeline běží ručně).
 
 ## Co není hotové
-- **Zpracování po uploadu:** pipeline se spouští ručně (`pipeline/`); automatický trigger z ingestu je rozpracovaný a v repu není. Do té doby nově nahraný dokument nemá analýzu (404 / 409).
+- **Zpracování po uploadu:** pipeline se spouští ručně (`pipeline/`). Automatický trigger z ingestu je napsaný a otestovaný (`trigger/`), nasazuje se; do té doby nově nahraný dokument nemá analýzu (404 / 409).
 - **Zbytek datasetu:** zpracované jsou jen případy v tabulce výše; zbytek čeká na dávku (`pipeline/run_rest.sh`, zatím jen zkontrolovaný syntakticky).
-- **Soukromí podpisů:** knihovna a návrh jsou v [privacy/](privacy/README.md) a [docs/validator-agent-privacy.md](docs/validator-agent-privacy.md), v pipeline ani v API zapojené nejsou; 42 čitelných výřezů a čitelné originály zůstávají v bucketu do rozhodnutí o migraci.
+- **Soukromí podpisů:** redakce a šifrování výřezů jsou zapojené v pipeline ([privacy/](privacy/README.md), [pipeline/](pipeline/README.md)) a odkrytí podpisu je v API; na stávající data se zatím nepoužilo. Čitelné výřezy (asi 90), originály a stránky z dřívějších zpracování zůstávají v bucketu do rozhodnutí o migraci a zálohování.
 - **Ověřené dokumenty a podpisy klienta:** `neighbors` a `similar_signatures` zatím nemají z čeho vracet.
 - **Audit:** nezávislý audit modulů a jeho nálezy jsou v [docs/validator-agent-audit.md](docs/validator-agent-audit.md); část nálezů (např. `copy_suspicion`) je od té doby opravená nebo v opravě.
+
+## Co se mění v nové verzi (kontrakt 0.4.0)
+- **Volání 3 (podpisy):** `crop_url` zmizí. Místo něj `preview_url` (zkreslený náhled, 300 s), `reveal_path` a `crop_available`. Čitelný podpis jde jen přes `GET …/signatures/{signature_id}/image` s auditem a `Cache-Control: no-store`. Starší výřezy, které ještě nejsou zašifrované, čitelně nevrací a odkrytí vrací 409.
+- **Volání 1 (dokument):** nové `duplicate_of` a `duplicate_relevant`. U šablon (VOP) se duplicita neoznačuje; u individuálních dokumentů (faktura, protokol, objednávka) je to signál „stejný doklad ve dvou financováních".
+- **Ingest:** odpověď uploadu má volitelné `also_in`. Zpětně kompatibilní.

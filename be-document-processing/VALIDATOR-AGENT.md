@@ -1,6 +1,6 @@
 # Validační agent: vstupní API
 
-Stav: **verze 0.3.0, API je implementované a nasazené** (implementace, předávka a návod pro agenta jsou v [../be-validator-agent](../be-validator-agent/README.md)). Formální popis: [contracts/openapi-validator-agent.yaml](contracts/openapi-validator-agent.yaml).
+Stav: **verze 0.4.0, API je implementované a nasazené** (implementace, předávka a návod pro agenta jsou v [../be-validator-agent](../be-validator-agent/README.md)). Formální popis: [contracts/openapi-validator-agent.yaml](contracts/openapi-validator-agent.yaml).
 
 Wonderful agent, který podle pravidel validuje a rozhoduje, nedostává data v těle požadavku. Bere si je čtyřmi oddělenými voláními (nástroji agenta). Textová data jsou malá a potřebuje je vždy. Vektory jsou velké a agent je potřebuje jen tehdy, když pravidlo vyžaduje srovnání (podobnost dokumentu, kopie podpisu). Proto se **agentovi nedávají surové vektory, ale výsledek hledání** (`neighbors`, `matches`).
 
@@ -145,3 +145,8 @@ Jen aditivní: nové volání `listCaseDocuments`, tag `signatures`, odpověď `
 - **`similar_signatures` je zatím vždy prázdné** (index podpisů je prázdný). Plánovaný význam: podobné podpisy téhož klienta napříč případy.
 - **`neighbors` jsou zatím prázdné:** vznikne až z lidsky ověřených dokumentů (`label_status = verified`).
 - Detekce podpisů je neúplná; viz [be-document-processing/docs/signatures-eval](docs/signatures-eval/README.md) a [předávka](../be-validator-agent/HANDOVER.md).
+
+## Změny od verze 0.3.0 (0.4.0)
+- **Volání 1 (dokument):** nové `duplicate_of` (jiné případy se stejným obsahem, `[{case_id, document_id, label}]`) a `duplicate_relevant` (true jen u individuálních dokumentů; šablony jako VOP se neoznačují). Chyba čtení indexu hashů pole vynechá, nikdy nevrací 5xx.
+- **Volání 3 (podpisy):** `crop_url` už se nevrací. U každého podpisu je `preview_url` (zkreslený náhled, 300 s), `reveal_path` a `crop_available`. Čitelný podpis dává jen `GET …/signatures/{signature_id}/image` (dešifruje výřez, `Cache-Control: no-store`, s auditem).
+- **Ingest:** odpověď uploadu má volitelné `also_in` (stejný obsah v jiných případech); viz `be-intake/openapi-ingest.yaml`.
