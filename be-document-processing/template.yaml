@@ -37,6 +37,8 @@ Globals:
         QUEUE_URL: !Ref DocumentQueue
         ALLOWED_ORIGIN: !Ref AllowedOrigin
         SIGNATURES_ENABLED: 'true'
+        # API Gateway (ApiKeyRequired) enforces x-api-key; the app itself runs without a key.
+        DOCUMENT_API_ALLOW_NO_AUTH: '1'
     Tags:
       project: wonderfulkb
 
