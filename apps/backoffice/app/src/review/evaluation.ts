@@ -1,6 +1,8 @@
 // Case-evaluator data for the review screen: rows from agent_functions.case_evaluations
 // and agent_functions.case_evaluation_results, mapped into what the page renders.
 
+import { ruleLabels } from "./ruleLabels";
+
 export type CheckStatus = "pass" | "fail" | "warn" | "na";
 
 export interface EvaluationRow {
@@ -124,29 +126,6 @@ const statusMap: Record<string, CheckStatus> = {
   failed: "fail",
   cannot_verify: "warn",
   not_applicable: "na",
-};
-
-export const rawStatusLabel: Record<string, string> = {
-  passed: "Passed",
-  missing: "Missing",
-  conflict: "Conflict",
-  failed: "Failed",
-  cannot_verify: "Can't verify",
-  not_applicable: "Not applicable",
-};
-
-const ruleLabels: Record<string, string> = {
-  loan_agreement_present: "Loan agreement present",
-  required_documents_present: "Required documents present",
-  recipient_matches_client: "Recipient matches client record",
-  purchase_contract_contents: "Purchase order / contract",
-  invoice_contents: "Invoice",
-  handover_protocol_contents: "Handover protocol",
-  insurance_vinculation_contents: "Insurance vinculation",
-  security_transfer_contents: "Security transfer of ownership",
-  guarantee_contents: "Guarantee declaration",
-  payment_proof_contents: "Proof of payment",
-  technical_specification_contents: "Technical specification",
 };
 
 // The business-rules checklist; evaluator rules are filed under the item they serve.

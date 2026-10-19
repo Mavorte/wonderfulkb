@@ -9,13 +9,13 @@ import {
   groupSources,
   formatDuration,
   formatTime,
-  rawStatusLabel,
   type CaseView,
   type CheckStatus,
   type EvaluationRow,
   type RuleGroup,
   type RuleView,
 } from "./evaluation";
+import { rawStatusLabel } from "./ruleLabels";
 import useEvaluation from "./useEvaluation";
 
 type Tab = "rules" | "activity";
@@ -380,8 +380,8 @@ function Review({ view, evaluations, onPick }: { view: CaseView; evaluations: Ev
   );
 }
 
-export default function CaseReviewPage() {
-  const [evaluationId, setEvaluationId] = useState<string | null>(readEvaluationId);
+export default function CaseReviewPage({ initialEvaluationId }: { initialEvaluationId?: string | null }) {
+  const [evaluationId, setEvaluationId] = useState<string | null>(() => initialEvaluationId ?? readEvaluationId());
   const state = useEvaluation(evaluationId);
 
   const view = useMemo(

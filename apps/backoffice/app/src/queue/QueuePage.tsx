@@ -1,13 +1,10 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useWonderful } from "@wonderful/app-sdk";
 import CaseStatusPill from "../cases/CaseStatusPill";
+import type { CaseStatus } from "../cases/caseStatus";
 import formatDate from "../cases/formatDate";
-import mockStatuses from "./mockStatuses";
-import snapshot from "./uwCases.snapshot.json";
-import triage, { tiers, type CaseStatus, type QueueCase, type Tier, type TriagedCase } from "./triage";
-
-// Local mock: a snapshot of the wonderfulkb-uw-cases table joined with its
-// clients, documents and document-analysis rows, taken on 19 Oct 2026.
-const snapshotDate = "19 Oct 2026";
+import listQueue, { type QueuePayload } from "./listQueue";
+import triage, { tiers, type Tier, type TriagedCase } from "./triage";
 
 const tierInfo: Record<Tier, { title: string; description: string }> = {
   decision: { title: "Needs your decision", description: "Checks are done. Blocking findings first." },
@@ -28,7 +25,9 @@ const statusAction: Record<CaseStatus, string> = {
 
 const nextAction = (c: TriagedCase) => c.findings[0]?.action ?? statusAction[c.status];
 
-function QueueTable({ cases, rank }: { cases: TriagedCase[]; rank: Map<string, number> }) {
+type OpenReview = (evaluationId: string) => void;
+
+function QueueTable({ cases, rank, onOpenReview }: { cases: TriagedCase[]; rank: Map<string, number>; onOpenReview: OpenReview }) {
   return (
     <div className="bo-table-wrap">
       <table className="bo-table bo-table--queue">
@@ -46,12 +45,15 @@ function QueueTable({ cases, rank }: { cases: TriagedCase[]; rank: Map<string, n
               <td className="bo-queue__rank">{rank.get(c.case_id)}</td>
               <td>
                 <span className="bo-table__strong">{c.client?.name ?? "Unknown client"}</span>
-                <span className="bo-table__meta">{c.client ? `IČO ${c.client.ico}` : "Not in the client registry"}</span>
+                <span className="bo-table__meta">{c.client ? `IČO ${c.client.ico}` : c.case_found ? "Not in the client registry" : "Case not in the case registry"}</span>
                 <CaseStatusPill status={c.status} />
                 <span className="bo-table__meta">
-                  {c.documents.length}
-                  {c.expected_documents.length > 0 ? ` / ${c.expected_documents.length}` : ""} docs · opened{" "}
-                  {formatDate(c.created_at)}
+                  {[
+                    c.created_at && `opened ${formatDate(c.created_at)}`,
+                    c.evaluation.started_at && `checked ${formatDate(c.evaluation.started_at)}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </span>
               </td>
               <td>
@@ -71,7 +73,16 @@ function QueueTable({ cases, rank }: { cases: TriagedCase[]; rank: Map<string, n
                   </ul>
                 )}
               </td>
-              <td className="bo-queue__action">{nextAction(c) || "—"}</td>
+              <td className="bo-queue__action">
+                {nextAction(c) || "—"}
+                <button
+                  type="button"
+                  className="bo-link bo-queue__review"
+                  onClick={() => onOpenReview(c.evaluation.evaluation_id)}
+                >
+                  Open case review
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -80,14 +91,63 @@ function QueueTable({ cases, rank }: { cases: TriagedCase[]; rank: Map<string, n
   );
 }
 
-export default function QueuePage() {
-  const queue = useMemo(
-    () =>
-      triage(
-        (snapshot as QueueCase[]).map((c) => ({ ...c, status: mockStatuses[c.case_id] ?? c.status })),
-      ),
-    [],
-  );
+export default function QueuePage({ onOpenReview }: { onOpenReview: OpenReview }) {
+  const { api, track } = useWonderful();
+  const apiRef = useRef(api);
+  apiRef.current = api;
+  const trackRef = useRef(track);
+  trackRef.current = track;
+  const opened = useRef(false);
+  const [payload, setPayload] = useState<QueuePayload>();
+  const [error, setError] = useState(false);
+
+  const request = useRef(0);
+
+  // Only the latest load shows, even when an earlier one answers later.
+  const load = useCallback(() => {
+    const current = ++request.current;
+    setError(false);
+    setPayload(undefined);
+    listQueue(apiRef.current).then(
+      (result) => current === request.current && setPayload(result),
+      () => current === request.current && setError(true),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!opened.current) {
+      opened.current = true;
+      trackRef.current("queue_opened");
+    }
+    load();
+  }, [load]);
+
+  const queue = useMemo(() => (payload ? triage(payload.cases) : undefined), [payload]);
+
+  if (error) {
+    return (
+      <>
+        <h1 className="bo-title">Work queue</h1>
+        <div className="bo-card bo-empty" role="alert">
+          <p>The work queue could not be loaded.</p>
+          <button type="button" className="kb-btn kb-btn--secondary kb-btn--small" onClick={load}>
+            Try again
+          </button>
+        </div>
+      </>
+    );
+  }
+  if (!payload || !queue) {
+    return (
+      <>
+        <h1 className="bo-title">Work queue</h1>
+        <p className="bo-empty" aria-busy="true">
+          Loading cases…
+        </p>
+      </>
+    );
+  }
+
   const byTier = tiers.map((tier) => ({ tier, cases: queue.filter((c) => c.tier === tier) }));
   const rank = new Map(queue.map((c, i) => [c.case_id, i + 1]));
   const active = queue.filter((c) => c.tier !== "done").length;
@@ -96,10 +156,13 @@ export default function QueuePage() {
     <>
       <div className="bo-heading bo-heading--compact">
         <h1 className="bo-title">Work queue</h1>
+        <button type="button" className="kb-btn kb-btn--secondary kb-btn--small" onClick={load}>
+          Refresh
+        </button>
       </div>
       <p className="bo-queue__lead">
-        {active} active cases, most acute first. Mock data from <code>wonderfulkb-uw-cases</code>, snapshot of{" "}
-        {snapshotDate}.
+        {active} active {active === 1 ? "case" : "cases"} with a check run, most acute first.
+        {payload.truncated && " The list was cut short, so not every case is shown."}
       </p>
 
       <ul className="bo-queue__summary" aria-label="Queue summary">
@@ -124,7 +187,7 @@ export default function QueuePage() {
           </header>
         );
         const body =
-          cases.length === 0 ? <p className="bo-empty">Nothing here.</p> : <QueueTable cases={cases} rank={rank} />;
+          cases.length === 0 ? <p className="bo-empty">Nothing here.</p> : <QueueTable cases={cases} rank={rank} onOpenReview={onOpenReview} />;
         return (
           <section key={tier} id={`queue-${tier}`} className="bo-card bo-card--queue" aria-labelledby={`queue-${tier}-title`}>
             {tier === "done" ? (

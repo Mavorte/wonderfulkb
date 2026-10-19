@@ -1,7 +1,8 @@
 import type { Focus } from "./DocumentPanel";
 import EvidenceChip from "./EvidenceChip";
 import StatusIcon from "./StatusIcon";
-import { groupSources, rawStatusLabel, type CaseView, type CheckStatus, type SourceRef } from "./evaluation";
+import { groupSources, type CaseView, type CheckStatus, type SourceRef } from "./evaluation";
+import { rawStatusLabel } from "./ruleLabels";
 
 interface Event {
   at: string;
