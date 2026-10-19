@@ -7,6 +7,7 @@ BASE_URL="${BASE_URL%/}"
 export PATH=/usr/local/bin:$PATH AWS_PROFILE=hackathon AWS_REGION=eu-central-1 AWS_DEFAULT_REGION=eu-central-1
 BUCKET=wonderfulkb-raw-document-storage
 CASE_ID="wonderfulkb-smoketest-$(date +%s)"
+CASE2="$CASE_ID-b"   # druhy case pro duplicitu napric pripady (also_in)
 SAMPLES=/Users/kuku/Desktop/hackaton_kb/docs/vzorove-dokumenty/solom-rec
 PDFS=("$SAMPLES/0_Form_Smlouva.pdf" "$SAMPLES/01_Form_VOP.pdf" "$SAMPLES/3_Form_Vinkulace_poj.pdf")
 URL="$BASE_URL/v1/cases/$CASE_ID/documents"
@@ -18,14 +19,14 @@ cleanup() {
   local rc=$?
   trap - EXIT
   echo "--- uklid"
-  if [ "$CREATED" = 1 ]; then
+  [ "$CREATED" = 1 ] && for C in "$CASE_ID" "$CASE2"; do
     aws dynamodb query --table-name wonderfulkb-uw-documents --key-condition-expression 'case_id = :c' \
-      --expression-attribute-values "{\":c\":{\"S\":\"$CASE_ID\"}}" --projection-expression document_id \
+      --expression-attribute-values "{\":c\":{\"S\":\"$C\"}}" --projection-expression document_id \
       --query 'Items[].document_id.S' --output text | tr '\t' '\n' | grep . | while read -r id; do
         aws dynamodb delete-item --table-name wonderfulkb-uw-documents \
-          --key "{\"case_id\":{\"S\":\"$CASE_ID\"},\"document_id\":{\"S\":\"$id\"}}"
+          --key "{\"case_id\":{\"S\":\"$C\"},\"document_id\":{\"S\":\"$id\"}}"
       done
-    aws s3api list-object-versions --bucket "$BUCKET" --prefix "cases/$CASE_ID/" --output json > "$TMP/versions.json"
+    aws s3api list-object-versions --bucket "$BUCKET" --prefix "cases/$C/" --output json > "$TMP/versions.json"
     python3 - "$TMP/versions.json" > "$TMP/delete.json" <<'EOF'
 import json, sys
 d = json.load(open(sys.argv[1]))
@@ -33,15 +34,25 @@ objs = [{"Key": v["Key"], "VersionId": v["VersionId"]} for k in ("Versions", "De
 print(json.dumps({"Objects": objs, "Quiet": True}))
 EOF
     grep -q '"Key"' "$TMP/delete.json" && aws s3api delete-objects --bucket "$BUCKET" --delete "file://$TMP/delete.json" >/dev/null
-    aws dynamodb delete-item --table-name wonderfulkb-uw-cases --key "{\"case_id\":{\"S\":\"$CASE_ID\"}}"
-    echo "smazano: dokumenty, S3 verze, testovaci case"
-  fi
+    aws dynamodb delete-item --table-name wonderfulkb-uw-cases --key "{\"case_id\":{\"S\":\"$C\"}}"
+    echo "smazano ($C): dokumenty, S3 verze, testovaci case"
+  done
+  for sha in $(cat "$TMP/shas" 2>/dev/null); do for C in "$CASE_ID" "$CASE2"; do   # index hashu: jen radky testovacich case
+    aws dynamodb query --table-name wonderfulkb-uw-content-hashes --key-condition-expression 'sha256 = :s' \
+      --expression-attribute-values "{\":s\":{\"S\":\"$sha\"}}" --query 'Items[].case_document.S' --output text \
+      | tr '\t' '\n' | grep "^$C#" | while read -r cd; do
+        aws dynamodb delete-item --table-name wonderfulkb-uw-content-hashes \
+          --key "{\"sha256\":{\"S\":\"$sha\"},\"case_document\":{\"S\":\"$cd\"}}"
+      done
+  done; done
   rm -rf "$TMP"
   echo "=== PASS: $PASS, FAIL: $FAILS"
   [ "$FAILS" -gt 0 ] && rc=1
   exit "$rc"
 }
 trap cleanup EXIT
+# hashe vsech nahravanych vzorku: ingest je zapisuje do indexu wonderfulkb-uw-content-hashes, uklid maze jen radky testovacich case
+shasum -a 256 "${PDFS[@]}" "$SAMPLES/4_Form_Ručení.pdf" | cut -d' ' -f1 > "$TMP/shas"
 
 # --- pomocne funkce ---
 check() { if [ "$2" = 1 ]; then echo "PASS $1"; PASS=$((PASS+1)); else echo "FAIL $1 ${3:-}"; FAILS=$((FAILS+1)); fi; }
@@ -56,6 +67,9 @@ code_is() { check "$1" "$([ "$CODE" = "$2" ] && echo 1 || echo 0)" "(HTTP $CODE,
 aws dynamodb put-item --table-name wonderfulkb-uw-cases --item \
   "{\"case_id\":{\"S\":\"$CASE_ID\"},\"client_id\":{\"S\":\"smoketest\"},\"status\":{\"S\":\"open\"},\"created_at\":{\"S\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}" \
   && CREATED=1 || { echo "FAIL nelze vytvorit testovaci case"; exit 1; }
+aws dynamodb put-item --table-name wonderfulkb-uw-cases --item \
+  "{\"case_id\":{\"S\":\"$CASE2\"},\"client_id\":{\"S\":\"smoketest\"},\"status\":{\"S\":\"open\"},\"created_at\":{\"S\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}" \
+  || { echo "FAIL nelze vytvorit druhy testovaci case"; exit 1; }
 
 # --- 1. autentizace a chyby ---
 req GET "$BASE_URL/healthz";                              code_is "healthz bez klice -> 200" 200
@@ -80,7 +94,7 @@ check "opakovany upload: stejna document_id" "$([ -n "$IDS1" ] && [ "$IDS1" = "$
 # --- 3. nevalidni vstupy (nic se nesmi zapsat) ---
 printf 'toto neni pdf\n' > "$TMP/fake.pdf"; : > "$TMP/empty.pdf"
 authed POST "$URL" -F "files=@$TMP/fake.pdf;type=application/pdf";   code_is "text jako .pdf -> 415" 415
-authed POST "$URL" -F "files=@$TMP/empty.pdf;type=application/pdf";  code_is "prazdny soubor -> 400" 400
+authed POST "$URL" -F "files=@$TMP/empty.pdf;type=application/pdf";  code_is "prazdny soubor -> 415" 415
 
 # --- 4. seznam, strankovani, odkazy ---
 authed GET "$URL"; code_is "GET seznam -> 200" 200
@@ -113,3 +127,20 @@ START=$(date +%s)
 authed POST "$BASE_URL/v1/cases/wonderfulkb-neexistuje-$$/documents" -F "files=@$TMP/big.bin;type=application/pdf"
 ELAPSED=$(( $(date +%s) - START ))
 check "neexistujici case + 30 MB telo -> 404 hned (${ELAPSED}s)" "$([ "$CODE" = 404 ] && [ "$ELAPSED" -le 3 ] && echo 1 || echo 0)" "(HTTP $CODE)"
+
+# --- 6. limity tela, neplatne case_id ---
+head -c 110000000 /dev/zero > "$TMP/huge.bin"   # 104,9 MiB; limit je 100 MiB = 104 857 600 B
+authed POST "$URL" -H "Transfer-Encoding: chunked" -F "files=@$TMP/huge.bin;type=application/pdf"
+code_is "chunked telo nad 100 MB (bez Content-Length) -> 413" 413
+authed POST "$URL" -F "files=@$TMP/huge.bin;type=application/pdf"; code_is "Content-Length nad 100 MB -> 413" 413
+authed GET "$BASE_URL/v1/cases/../documents" --path-as-is; code_is "case_id '..' -> 400" 400
+authed GET "$BASE_URL/v1/cases/./documents" --path-as-is;  code_is "case_id '.' -> 400" 400
+
+# --- 7. stejny obsah v jinem case: also_in (index obsahovych hashu wonderfulkb-uw-content-hashes) ---
+authed POST "$BASE_URL/v1/cases/$CASE2/documents" -F "files=@${PDFS[0]};type=application/pdf"
+code_is "stejne PDF do druheho case -> 201" 201
+check "bez ?include_also_in pole also_in chybi (ID cizich case se nevraci)" "$(py "'also_in' not in d['documents'][0]")"
+authed POST "$BASE_URL/v1/cases/$CASE2/documents?include_also_in=true" -F "files=@${PDFS[0]};type=application/pdf"
+code_is "opakovane s ?include_also_in=true -> 201" 201
+check "druhy case: also_in obsahuje prvni case" "$(py "'$CASE_ID' in [x['case_id'] for x in d['documents'][0]['also_in']]")"
+check "also_in neobsahuje vlastni case" "$(py "'$CASE2' not in [x['case_id'] for x in d['documents'][0]['also_in']]")"

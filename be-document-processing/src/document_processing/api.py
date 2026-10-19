@@ -43,9 +43,13 @@ def create_app(settings=None, service=None):
     async def authenticate(request, call_next):
         # Local PUT uses an expiring, document-scoped upload token. In AWS the
         # gateway enforces its API key; the presigned S3 request bypasses this app.
-        if (settings.api_key and request.url.path.startswith("/v1/") and not request.url.path.startswith("/v1/uploads/")
-                and not hmac.compare_digest(request.headers.get("x-api-key", ""), settings.api_key)):
-            return JSONResponse({"error": "API_KEY_REQUIRED"}, status_code=403)
+        # Fail closed: without DOCUMENT_API_KEY only DOCUMENT_API_ALLOW_NO_AUTH=1 opens the API.
+        if request.url.path.startswith("/v1/") and not request.url.path.startswith("/v1/uploads/"):
+            if not settings.api_key:
+                if not settings.allow_no_auth:
+                    return JSONResponse({"error": "API_AUTH_NOT_CONFIGURED"}, status_code=503)
+            elif not hmac.compare_digest(request.headers.get("x-api-key", ""), settings.api_key):
+                return JSONResponse({"error": "API_KEY_REQUIRED"}, status_code=403)
         return await call_next(request)
 
     @app.exception_handler(ServiceError)

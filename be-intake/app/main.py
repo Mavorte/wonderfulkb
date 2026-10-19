@@ -31,7 +31,7 @@ MAX_FILES = 20
 MAX_FILE_BYTES = 25 * 1024 * 1024
 MAX_TOTAL_BYTES = 100 * 1024 * 1024
 URL_TTL_SECONDS = 300
-CASE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+CASE_ID_RE = re.compile(r"^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$")  # "." and ".." would be path segments
 CASE_DOCS_PATH_RE = re.compile(r"^/v1/cases/([^/]+)/documents/?$")
 DOC_NAMESPACE = uuid.UUID("5d3f0a52-7c1e-4a8b-9b36-6f1c2e0d7a11")
 
@@ -74,7 +74,9 @@ async def unhandled(_, exc):
 
 
 class BodyLimit:
-    """Counts request body bytes, so the limit also holds for chunked uploads without Content-Length."""
+    """Counts request body bytes, so the limit also holds for chunked uploads without Content-Length.
+    The multipart parser turns the exception from receive() into a 400, so once the limit is hit the app's own
+    response is dropped and a 413 is sent instead."""
 
     def __init__(self, app):
         self.app = app
@@ -82,18 +84,31 @@ class BodyLimit:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
-        total = 0
+        total, exceeded, started = 0, False, False
 
         async def counted():
-            nonlocal total
+            nonlocal total, exceeded
             message = await receive()
             if message["type"] == "http.request":
                 total += len(message.get("body", b""))
                 if total > MAX_TOTAL_BYTES + 1024 * 1024:
+                    exceeded = True
                     raise BodyTooLarge()
             return message
 
-        await self.app(scope, counted, send)
+        async def guarded_send(message):
+            nonlocal started
+            if exceeded and not started:
+                return
+            started = started or message["type"] == "http.response.start"
+            await send(message)
+
+        try:
+            await self.app(scope, counted, guarded_send)
+        except BodyTooLarge:
+            pass
+        if exceeded and not started:
+            await err(413, f"request too large (limit {MAX_TOTAL_BYTES} bytes of files)")(scope, receive, send)
 
 
 @app.exception_handler(RequestValidationError)
@@ -149,8 +164,8 @@ def inspect(upload):
     """Returns (size, sha256) and verifies the PDF header; leaves the file rewound."""
     f = upload.file
     head = f.read(5)
-    if not head:
-        raise HTTPException(400, f"{clean_filename(upload.filename)} is empty")
+    if not head:  # the contract: an empty file is not a PDF either
+        raise HTTPException(415, f"{clean_filename(upload.filename)} is empty, not a PDF")
     if head != b"%PDF-":
         raise HTTPException(415, f"{clean_filename(upload.filename)} is not a PDF")
     f.seek(0)
@@ -200,41 +215,8 @@ def register_hashes(case_id, entries):
             log.warning("content hash register failed: %s", type(e).__name__)
 
 
-@router.post("/cases/{case_id}/documents", status_code=201)
-def upload(case_id: str, files: List[UploadFile] = File(...), uploaded_by: Optional[str] = Form(None)):
-    if uploaded_by is not None and len(uploaded_by) > 255:
-        raise HTTPException(400, "uploaded_by is longer than 255 characters")
-    if not 0 < len(files) <= MAX_FILES:
-        raise HTTPException(400, f"send 1-{MAX_FILES} files in the 'files' field")
-
-    # validate everything first; nothing is written when any file is invalid
-    prepared, total = [], 0
-    for upload_file in files:
-        size, sha = inspect(upload_file)
-        if size == 0:
-            raise HTTPException(400, f"{clean_filename(upload_file.filename)} is empty")
-        total += size
-        prepared.append((upload_file, size, sha))
-    if total > MAX_TOTAL_BYTES:
-        raise HTTPException(413, f"request too large ({total} bytes, limit {MAX_TOTAL_BYTES})")
-
-    # 1) plan: one entry per distinct content; what already exists in this case is a duplicate
-    plan = []  # (document_id, upload_file, size, sha)
-    for upload_file, size, sha in prepared:
-        plan.append((str(uuid.uuid5(DOC_NAMESPACE, f"{case_id}:{sha}")), upload_file, size, sha))
-    existing = {}
-    for document_id in {p[0] for p in plan}:
-        item = docs.get_item(Key={"case_id": case_id, "document_id": document_id}, ConsistentRead=True).get("Item")
-        if item:
-            existing[document_id] = item
-    pending = {}  # document_id -> (upload_file, size, sha), first occurrence wins
-    for document_id, upload_file, size, sha in plan:
-        if document_id not in existing and document_id not in pending:
-            pending[document_id] = (upload_file, size, sha)
-
-    # 2) objects to S3 first; they are invisible until their DynamoDB rows exist
-    items = {}
-    received_at = now_iso()
+def store_and_commit(case_id, uploaded_by, pending, items, ours, existing, received_at):
+    """Steps 2 and 3 of upload(): S3 objects, then one DynamoDB transaction. Fills items, ours and existing."""
     for document_id, (upload_file, size, sha) in pending.items():
         key = f"cases/{case_id}/original/{document_id}.pdf"
         filename = clean_filename(upload_file.filename)
@@ -242,8 +224,14 @@ def upload(case_id: str, files: List[UploadFile] = File(...), uploaded_by: Optio
         meta = {"case_id": case_id, "document_id": document_id, "sha256": sha, "filename": quote(filename[:100])}
         if uploaded_by:
             meta["uploaded_by"] = quote(uploaded_by[:100])
-        s3.upload_fileobj(upload_file.file, BUCKET, key,
-                          ExtraArgs={"ContentType": "application/pdf", "Metadata": meta})
+        # conditional put: a concurrent upload of the same content never overwrites the first object and its
+        # metadata (412 = the object is there already; its content is the same, the key is derived from sha256)
+        try:
+            ours[document_id] = s3.put_object(Bucket=BUCKET, Key=key, Body=upload_file.file, IfNoneMatch="*",
+                                              ContentType="application/pdf", Metadata=meta).get("VersionId")
+        except ClientError as e:
+            if e.response.get("Error", {}).get("Code") not in ("PreconditionFailed", "ConditionalRequestConflict"):
+                raise
         item = {"case_id": case_id, "document_id": document_id, "filename": filename,
                 "content_type": "application/pdf", "size_bytes": size, "sha256": sha, "received_at": received_at,
                 "s3_key": key}
@@ -276,9 +264,64 @@ def upload(case_id: str, files: List[UploadFile] = File(...), uploaded_by: Optio
     else:
         raise HTTPException(409, "concurrent upload, please retry")
 
+
+def remove_uncommitted(case_id, ours):
+    """The request failed: delete the S3 versions it created, but only where no DynamoDB row references the key
+    (a row of a concurrent winner may point to our object). Errors are logged, the original error is kept."""
+    for document_id, version_id in ours.items():
+        try:
+            if docs.get_item(Key={"case_id": case_id, "document_id": document_id}, ConsistentRead=True).get("Item"):
+                continue
+            key = f"cases/{case_id}/original/{document_id}.pdf"
+            s3.delete_object(Bucket=BUCKET, Key=key, **({"VersionId": version_id} if version_id else {}))
+        except Exception as e:  # noqa: BLE001
+            log.warning("cleanup of uploaded object failed: %s", type(e).__name__)
+
+
+@router.post("/cases/{case_id}/documents", status_code=201)
+def upload(case_id: str, files: List[UploadFile] = File(...), uploaded_by: Optional[str] = Form(None),
+           include_also_in: bool = Query(False)):
+    if uploaded_by is not None and len(uploaded_by) > 255:
+        raise HTTPException(400, "uploaded_by is longer than 255 characters")
+    if not 0 < len(files) <= MAX_FILES:
+        raise HTTPException(400, f"send 1-{MAX_FILES} files in the 'files' field")
+
+    # validate everything first; nothing is written when any file is invalid
+    prepared, total = [], 0
+    for upload_file in files:
+        size, sha = inspect(upload_file)
+        total += size
+        prepared.append((upload_file, size, sha))
+    if total > MAX_TOTAL_BYTES:
+        raise HTTPException(413, f"request too large ({total} bytes, limit {MAX_TOTAL_BYTES})")
+
+    # 1) plan: one entry per distinct content; what already exists in this case is a duplicate
+    plan = []  # (document_id, upload_file, size, sha)
+    for upload_file, size, sha in prepared:
+        plan.append((str(uuid.uuid5(DOC_NAMESPACE, f"{case_id}:{sha}")), upload_file, size, sha))
+    existing = {}
+    for document_id in {p[0] for p in plan}:
+        item = docs.get_item(Key={"case_id": case_id, "document_id": document_id}, ConsistentRead=True).get("Item")
+        if item:
+            existing[document_id] = item
+    pending = {}  # document_id -> (upload_file, size, sha), first occurrence wins
+    for document_id, upload_file, size, sha in plan:
+        if document_id not in existing and document_id not in pending:
+            pending[document_id] = (upload_file, size, sha)
+
+    # 2) objects to S3 first; they are invisible until their DynamoDB rows exist
+    items, ours = {}, {}  # ours: document_id -> S3 version this request created (deleted again if the request fails)
+    received_at = now_iso()
+    try:
+        store_and_commit(case_id, uploaded_by, pending, items, ours, existing, received_at)
+    except BaseException:
+        remove_uncommitted(case_id, ours)
+        raise
+
     # 4) stejný obsah v jiných případech (jen informace; index nikdy nesmí způsobit selhání) a registrace v indexu
     shas = {document_id: sha for document_id, _, _, sha in plan}
-    elsewhere = find_in_other_cases(case_id, sorted(set(shas.values())))
+    # `also_in` prozrazuje ID cizích případů, proto jen na výslovné vyžádání (?include_also_in=true) důvěryhodným volajícím
+    elsewhere = find_in_other_cases(case_id, sorted(set(shas.values()))) if include_also_in else {}
     register_hashes(case_id, sorted((sha, document_id) for document_id, sha in shas.items()))
 
     out, seen = [], set()

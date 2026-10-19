@@ -13,7 +13,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-MOCK_DIR = ROOT.parents[1] / "validator-agent-mock"
+# repo: be-validator-agent/mock; pracovní kopie: infra/validator-agent-mock
+MOCK_DIR = next((p for p in (ROOT.parent / "mock", ROOT.parents[1] / "validator-agent-mock") if p.is_dir()), ROOT.parent / "mock")
 KEY = "test-key-9f3a77c1"
 
 
