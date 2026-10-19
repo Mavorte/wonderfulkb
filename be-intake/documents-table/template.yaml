@@ -1,9 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
+# Puvodni sablona bez streamu (pouziva ji trigger/deploy.sh rollback). Nasazena je kopie se streamem:
+# infra/validator-agent/trigger/documents-table-with-stream.yaml. Retain, PITR a tag jsou v obou.
 Description: wonderfulkb-uw-documents table (uploaded documents per case). Clients and cases tables are managed separately (part 1).
 
 Resources:
   DocumentsTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: wonderfulkb-uw-documents
       BillingMode: PAY_PER_REQUEST
@@ -13,3 +17,7 @@ Resources:
       KeySchema:
         - {AttributeName: case_id, KeyType: HASH}
         - {AttributeName: document_id, KeyType: RANGE}
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - {Key: project, Value: wonderfulkb}
