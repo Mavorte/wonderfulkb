@@ -1,0 +1,2 @@
+# unittest and Stubber are provided by Python and the pinned runtime SDK.
+-r src/requirements.txt

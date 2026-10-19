@@ -1,7 +1,16 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Transform": "AWS::Serverless-2016-10-31",
-  "Description": "wonderfulkb Case & Client EPHEMERAL MOCK demo; no database or shared persistence. CodeUri packages stdlib-only Python directly.",
+  "Description": "wonderfulkb Case & Client; explicit ephemeral mock or external DynamoDB adapter. No database lifecycle resources.",
+  "Parameters": {
+    "DataBackend": {"Type": "String", "Default": "mock", "AllowedValues": ["mock", "dynamodb"]},
+    "ClientsTableName": {"Type": "String", "Default": "wonderfulkb-uw-clients", "AllowedPattern": "[A-Za-z0-9_.-]{3,255}"},
+    "CasesTableName": {"Type": "String", "Default": "wonderfulkb-uw-cases", "AllowedPattern": "[A-Za-z0-9_.-]{3,255}"},
+    "ClientsIcoIndexName": {"Type": "String", "Default": "ico-index", "AllowedPattern": "[A-Za-z0-9_.-]{3,255}"},
+    "CasesClientCreatedIndexName": {"Type": "String", "Default": "client-created-index", "AllowedPattern": "[A-Za-z0-9_.-]{3,255}"},
+    "ExternalTablesAccountId": {"Type": "String", "Default": "609394381050", "AllowedPattern": "[0-9]{12}"}
+  },
+  "Conditions": {"UseDynamoDB": {"Fn::Equals": [{"Ref": "DataBackend"}, "dynamodb"]}},
   "Resources": {
     "CaseClientLogGroup": {
       "Type": "AWS::Logs::LogGroup",
@@ -14,7 +23,7 @@
     },
     "CaseClientRole": {
       "Type": "AWS::IAM::Role",
-      "Metadata": {"com.aws.cloudformation.Context": {"why": "Lambda only needs to append to its precreated log group", "must": "No database, S3, VPC or credential permissions"}},
+      "Metadata": {"com.aws.cloudformation.Context": {"why": "Scoped logs and conditional external table access", "must": "Mock has no DB rights; no table lifecycle, S3 or VPC permissions"}},
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
@@ -29,7 +38,19 @@
               "Resource": {"Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-case-client:log-stream:*"}
             }]
           }
-        }],
+        }, {"Fn::If": ["UseDynamoDB", {
+          "PolicyName": "CaseClientExternalDynamoDB",
+          "PolicyDocument": {"Version": "2012-10-17", "Statement": [
+            {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:Scan", "dynamodb:ConditionCheckItem"],
+             "Resource": {"Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${ExternalTablesAccountId}:table/${ClientsTableName}"}},
+            {"Effect": "Allow", "Action": ["dynamodb:Query"],
+             "Resource": {"Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${ExternalTablesAccountId}:table/${ClientsTableName}/index/${ClientsIcoIndexName}"}},
+            {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem"],
+             "Resource": {"Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${ExternalTablesAccountId}:table/${CasesTableName}"}},
+            {"Effect": "Allow", "Action": ["dynamodb:Query"],
+             "Resource": {"Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${ExternalTablesAccountId}:table/${CasesTableName}/index/${CasesClientCreatedIndexName}"}}
+          ]}
+        }, {"Ref": "AWS::NoValue"}]}],
         "Tags": [{"Key": "project", "Value": "wonderfulkb"}]
       }
     },
@@ -52,7 +73,7 @@
     "CaseClientFunction": {
       "Type": "AWS::Serverless::Function",
       "DependsOn": "CaseClientLogGroup",
-      "Metadata": {"com.aws.cloudformation.Context": {"why": "Single on-demand stdlib-only Lambda with packaged synthetic fixtures", "must": "Explicit ephemeral mock opt-in; state exists only inside one execution environment"}},
+      "Metadata": {"com.aws.cloudformation.Context": {"why": "One on-demand handler with explicit backend", "must": "Mock is ephemeral; DynamoDB uses existing tables and execution role"}},
       "Properties": {
         "FunctionName": {"Fn::Sub": "${AWS::StackName}-case-client"},
         "CodeUri": "src/",
@@ -61,7 +82,14 @@
         "MemorySize": 256,
         "Timeout": 10,
         "Role": {"Fn::GetAtt": ["CaseClientRole", "Arn"]},
-        "Environment": {"Variables": {"DATA_BACKEND": "mock", "ALLOW_EPHEMERAL_MOCK": "true"}},
+        "Environment": {"Variables": {
+          "DATA_BACKEND": {"Ref": "DataBackend"},
+          "ALLOW_EPHEMERAL_MOCK": {"Fn::If": ["UseDynamoDB", "false", "true"]},
+          "CLIENTS_TABLE_NAME": {"Ref": "ClientsTableName"},
+          "CASES_TABLE_NAME": {"Ref": "CasesTableName"},
+          "CLIENTS_ICO_INDEX_NAME": {"Ref": "ClientsIcoIndexName"},
+          "CASES_CLIENT_CREATED_INDEX_NAME": {"Ref": "CasesClientCreatedIndexName"}
+        }},
         "Events": {
           "ListClients": {"Type": "Api", "Properties": {"RestApiId": {"Ref": "CaseClientApi"}, "Path": "/clients", "Method": "get"}},
           "CreateCase": {"Type": "Api", "Properties": {"RestApiId": {"Ref": "CaseClientApi"}, "Path": "/cases", "Method": "post"}},

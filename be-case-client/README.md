@@ -1,141 +1,170 @@
-# wonderfulkb Case & Client — EPHEMERAL MOCK
+# wonderfulkb Case & Client
 
-Jedna Python Lambda, syntetické zabalené fixtures a čtyři REST proxy operace podle
-nezměněného `openapi-case-client.yaml` 1.3.0-final. **Není to produkční databáze.**
-Žádné Python dependencies, AWS SDK, credentials lookup, síť ani zápis do `/tmp`.
+Jedna Python Lambda, čtyři operace a nezměněné OpenAPI 1.3.0-final. Repository
+hranice má dva explicitní režimy: ephemeral mock a externí DynamoDB adaptér.
+Žádný fallback. Tato implementace je ověřovaná pouze lokálně pomocí SDK Stubberu
+a skutečného handleru; cloudové připojení, gateway, persistence a souběh v AWS
+nejsou lokálními testy prokázané. HTTP integrační runner je odložený návrh
+v proposalu, nikoli součást této komponenty.
 
-## Chování a omezení dema
+## Instalace a lokální ověření
 
-- Povinné přesné hodnoty `DATA_BACKEND=mock` a `ALLOW_EPHEMERAL_MOCK=true`.
-  Factory odmítne jinou konfiguraci i při injekci repository. Veřejný vstup vrátí
-  JSON 500 bez falešného markeru. Aktivovaný handler dává všem odpovědím včetně
-  chyb `X-Data-Backend: mock` a `Content-Type: application/json`.
-- Stav vytvořených cases žije pouze v jednom execution environmentu. Cold start
-  obnoví fixtures, jiné instance mají nezávislá data. **Žádná trvalá, globální ani
-  meziinstanční idempotence a žádná záruka HTTP POST → další GET.**
-- Uvnitř jedné repository je rozhodnutí create/repeat/conflict atomické pod
-  zámkem. Stejné ID a klient vrací 200 s původními metadata/časem, i když klient
-  už není aktivní; jiný vlastník 409. Nový aktivní klient →201/open/UTC;
-  neexistující →404, inactive/blocked →409. Nová repository má hlubokou kopii dat.
-- `GET /clients`: AND filtry `ico`, `name`, `status`. Názvy ignorují velikost,
-  diakritiku a celé právní formy s.r.o., a.s., v.o.s., k.s., společnost s ručením
-  omezeným a akciová společnost (včetně mezer/teček). Řazení podle client_id.
-- `GET /cases/{case_id}` a `GET /clients/{client_id}/cases`: nejprve existence
-  klienta pro seznam; existující bez cases →prázdné pole. Nejnovější cases první,
-  shodné časy podle case_id vzestupně; status pouze `open`.
-- Limit 1–100, výchozí 50. Neprůhledný verzovaný kurzor je svázaný s endpointem,
-  klientem, normalizovanými filtry, limitem a posledním ID; neplatný/cizí →400.
-  Není autentizace, podpis ani šifrování a není to snapshot. Nad neměnnými fixtures
-  funguje i mezi instancemi; nově vytvořená ephemeral data mohou po resetu chybět.
-- Demo odchylky od zamýšlené DB verze: metadata objekt nejvýše **16384 bajtů**
-  kompaktního UTF-8 JSON (`ensure_ascii=False`, bez NaN/Infinity); neplatné path ID
-  detailu case →400 i když kontrakt tento status výslovně nevyjmenovává.
-  Neznámá route →404, nepodporovaná metoda známé route →405. Chyby mají
-  `{"error":"..."}`. Neočekávané/config chyby →500, nikoli úspěšný prázdný seznam.
-  Neznámé vlastnosti request objektu nejsou zakázány; veřejná serializace má allowlist.
-
-## Offline ověření z kořene repozitáře
-
-Podporován lokální Python 3.9+ (ověřeno 3.9.6); cílový AWS runtime 3.13.
-Unit testy nepotřebují SAM, Docker, server, přihlášení, síť nebo reálný API key.
-Testy si konfiguraci i import path nastavují samy.
+Lokální Python 3.9+, cílový Lambda runtime Python 3.13. Runtime SDK, JSON knihovna
+i transitivní závislosti jsou připnuté v `src/requirements.txt`. Dev manifest
+odkazuje na stejný lock; unittest je standardní knihovna, Stubber dodává botocore.
 
 ```sh
-python3 -m unittest discover -s be-case-client/tests -p 'test_*.py' -v
-python3 -m compileall -q be-case-client/src
-npm --prefix apps/backoffice test && npm --prefix apps/backoffice run build
+python3 -m venv .venv-case-client
+. .venv-case-client/bin/activate
+python3 -m pip install -r be-case-client/requirements-dev.txt
+PYTHONPATH=be-case-client/src python3 -m unittest discover -s be-case-client/tests -p 'test_*.py' -v
+python3 -m compileall -q be-case-client/src be-case-client/tests
+npm --prefix apps/backoffice test
+npm --prefix apps/backoffice run build
 ```
 
-Přímé volání skutečného handleru uloženým REST proxy eventem:
+Testy DB používají explicitní falešné credentials, `/dev/null` místo AWS configu
+a credentials souboru, vypnuté metadata discovery a zákaz socket/DNS. Nepotřebují
+profil, SSO, Docker, DynamoDB Local, LocalStack, server ani API klíč. Stubber
+ověřuje přesné SDK požadavky i simulované transakční interleavingy, ne skutečný
+cloudový souběh. Mock factory neprovádí SDK inicializaci ani credential discovery.
+
+## Konfigurace
+
+| Proměnná | Hodnota / pravidlo |
+|---|---|
+| `DATA_BACKEND` | Povinné `mock` nebo `dynamodb` |
+| `ALLOW_EPHEMERAL_MOCK` | Pouze pro mock povinné přesně `true` |
+| `CLIENTS_TABLE_NAME` | DB povinné, host kontrakt `wonderfulkb-uw-clients` |
+| `CASES_TABLE_NAME` | DB povinné, host kontrakt `wonderfulkb-uw-cases`, odlišná tabulka |
+| `CLIENTS_ICO_INDEX_NAME` | DB povinné, host kontrakt `ico-index` |
+| `CASES_CLIENT_CREATED_INDEX_NAME` | DB povinné, host kontrakt **`client-created-index`** |
+| `AWS_REGION` / `AWS_DEFAULT_REGION` | DB povinný region, první má přednost; host `eu-central-1` |
+
+Názvy tabulek/indexů jsou 3–255 ASCII písmen/číslic/`_.-`; prázdná či neplatná
+konfigurace selže i při injekci repository. Neznámý backend a selhání SDK nikdy
+neaktivují mock. Warm handler se při změně konfigurace znovu vytvoří. Aktivovaný
+handler vrací `X-Data-Backend: mock` nebo `dynamodb` také u chyb. Chyba konfigurace
+či inicializace vrací sanitizovanou 500 bez falešného backend markeru.
+
+Lambda používá **execution role**, nikoli profil, API klíč nebo DB heslo. Hostův
+lokální SSO alias `ai-hackathon` patří výhradně do budoucího host runbooku.
+API key kontroluje API Gateway, ne Python handler; není DB credential.
+
+## Chování
+
+- Společná pravidla: stejné case ID + klient →200 s původním časem/metadata,
+  jiný vlastník →409. Existující case má přednost i před nyní inactive/blocked
+  nebo odstraněným klientem. Nový case pro neexistujícího klienta →404,
+  inactive/blocked →409; aktivní →201, `status=open`, UTC čas.
+- DB nejprve konzistentně čte case. Nový zápis je jediný `TransactWriteItems`:
+  existence a active status klienta + `attribute_not_exists(case_id)` při Put.
+  Condition konflikt vyvolá jeden konzistentní read-back průchod: vítěz stejného
+  klienta →200, jiný →409; změněný/smazaný klient →409/404. Nevyřešený závod →500.
+  Smíšené/chybějící cancellation reasons, transaction conflict, oprávnění,
+  throttling a timeout jsou 5xx, nikoli automaticky 409. Žádné opakované zápisy
+  v recovery. Při timeoutu není znám výsledek; další explicitní stejný POST
+  může idempotentně přečíst skutečný výsledek.
+- Přímý detail a kontroly klienta jsou `GetItem` s `ConsistentRead=true`.
+  Seznam cases nejprve ověří klienta, pak Query `client-created-index`,
+  `ScanIndexForward=false`, bez nepodporovaného strong read GSI. GSI je
+  **eventually consistent**: okamžitý seznam po POST není garantovaný. Stejné
+  timestampy nemají veřejný tie-break slib. Klient bez cases má prázdný seznam.
+- Klienti: přesné IČO přes Query `ico-index`, jinak Scan pro malý syntetický
+  dataset. AND filtry status/název se vyhodnocují v adaptéru. Normalizace názvu
+  je společná s mockem (casefold, diakritika, celé právní formy). Žádný požadavek
+  na `name_normalized` nebo nový index. Scan nemá globální třídění; není fulltext
+  pro velká data a spotřebovává read kapacitu i za nezobrazené položky.
+- Veřejný limit 1–100, default 50. SDK PageSize `min(limit,25)` omezuje vyhodnocené
+  položky, ne počet shod; adapter pokračuje i přes prázdné filtrované stránky
+  a 1MB hranice. Nejvýše 8 SDK stránek (200 vyhodnocených položek), časový budget
+  7 s, rezerva 3 s před dalším voláním, případně kratší zbývající Lambda čas.
+  SDK connect/read timeout 1/2 s, total attempts 1. Nedostatek času před první
+  stránkou je 5xx; po čtení může přijít neplná/prázdná stránka s pokračováním.
+- Token je max 4096 znaků, kanonický verzovaný base64url JSON s přesným schématem
+  a stringovými AttributeValue klíči. Je svázaný s backendem, regionem, oběma
+  tabulkami/indexy, operací, klientem, normalizovanými filtry a limitem. Cizí či
+  neplatný token →400 před SDK. Při naplnění limitu uprostřed SDK stránky obsahuje
+  klíč poslední vydané položky, ne LEK konce stránky; jinak obsahuje LEK. Funguje
+  napříč instancemi, bez uchovávání objektů v tokenu. Token není autentizace ani
+  šifrování a při souběžných změnách **není snapshotová konzistence**.
+- Metadata musí být objekt do **16384 bajtů kompaktního UTF-8 JSON**. Null,
+  boolean, integer, desetinná čísla i vnořené seznamy/mapy se zachovají.
+  JSON requesty/odpovědi používají simplejson/Decimal bezeztrátově, SDK
+  TypeSerializer/TypeDeserializer. Přímé Python float vstupy se převádějí přes
+  jejich JSON zápis na Decimal. NaN/Infinity, DynamoDB-nekompatibilní čísla/typy
+  a příliš hluboké objekty se odmítnou před
+  zápisem. Interní atributy se nevracejí; nekompatibilní uložená data →500 bez
+  vymyšlených hodnot. Metadata mohou v uloženém case chybět.
+- Chyby mají `{"error":"..."}`. Provozní chyby ani neexistující tabulka nejsou
+  business 404 nebo prázdný úspěch. Aplikace neloguje payloady či SDK detaily;
+  nezapínat SDK wire/debug logy. Neplatné path ID →400, neznámá route →404,
+  nesprávná metoda →405. Veřejné serializátory mají allowlist.
+
+### Ephemeral mock
+
+Mock má zabalené syntetické fixtures a vlastní lock/deep copies. Stav/idempotence
+nových cases žije jen v jedné repository/execution environmentu, cold start
+obnoví fixtures. Žádná globální persistence ani POST → další HTTP GET záruka.
+Klienty třídí podle client_id, cases nejnovější první s case_id tie-breakem.
+Kurzory nad neměnnými fixtures jsou meziinstanční; nová ephemeral data mohou po
+resetu chybět. Oddělovat mock, offline test a případné budoucí live prostředky.
+
+## SAM artefakt a budoucí host runbook
+
+Šablona `template.yaml` je JSON (YAML podmnožina), stále sedm prostředků, jedna
+Python 3.13 Lambda/256MB/10s, čtyři API-key chráněné REST routy, stage v1,
+key/usage plan a scoped log group s retencí 7 dní. Gateway 403/429 zůstávají
+oddělené od aplikačních chyb. Outputs mají ID klíče, nikdy jeho hodnotu.
+
+Parametry: `DataBackend` (default `mock`), `ClientsTableName`, `CasesTableName`,
+`ClientsIcoIndexName`, `CasesClientCreatedIndexName` (defaults dle tabulky env),
+`ExternalTablesAccountId` (default `609394381050`). Region vezme Lambda z AWS;
+rezervovaný env `AWS_REGION` se v šabloně nenastavuje. Žádné DB resources,
+seed, migrace, VPC nebo přebírání tabulek do stacku.
+
+Mock role má jen scoped `logs:CreateLogStream`/`logs:PutLogEvents`. Pouze při
+`DataBackend=dynamodb` podmíněná policy přidává následující přesná oprávnění
+na prefixu `arn:${AWS::Partition}:dynamodb:${AWS::Region}:${ExternalTablesAccountId}:table/`:
+
+| Resource suffix | Akce |
+|---|---|
+| `${ClientsTableName}` | `GetItem`, `Scan`, `ConditionCheckItem` |
+| `${ClientsTableName}/index/${ClientsIcoIndexName}` | `Query` |
+| `${CasesTableName}` | `GetItem`, `PutItem` |
+| `${CasesTableName}/index/${CasesClientCreatedIndexName}` | `Query` |
+
+Akce mají prefix `dynamodb:`. TransactWriteItems autorizuje jednotlivé akce;
+nepřidává se transakční wildcard. Read-only host oprávnění nestačí na POST.
+Žádný DeleteItem/UpdateItem ani jiné tabulky. Případný cross-account přístup
+potřebuje i odpovídající externí resource policy, kterou vlastní host.
+
+Offline lint a nativní balení z kořene, pokud host má SAM/cfn-lint a Python 3.13:
 
 ```sh
-DATA_BACKEND=mock ALLOW_EPHEMERAL_MOCK=true python3 - be-case-client/events/list-clients.json <<'PY'
-import json
-from pathlib import Path
-import sys
-sys.path.insert(0, str(Path('be-case-client/src').resolve()))
-from case_client_handler import lambda_handler
-event = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
-print(json.dumps(lambda_handler(event, None), ensure_ascii=False, indent=2))
-PY
+AWS_REGION=eu-central-1 AWS_DEFAULT_REGION=eu-central-1 AWS_EC2_METADATA_DISABLED=true AWS_CONFIG_FILE=/dev/null AWS_SHARED_CREDENTIALS_FILE=/dev/null AWS_ACCESS_KEY_ID=offline AWS_SECRET_ACCESS_KEY=offline SAM_CLI_TELEMETRY=0 sam validate --lint --template-file be-case-client/template.yaml
+sam build --template-file be-case-client/template.yaml
 ```
 
-Argument lze nahradit `be-case-client/events/get-case.json`,
-`be-case-client/events/list-client-cases.json` nebo
-`be-case-client/events/create-case.json`. Každý nový proces obnoví fixtures.
-Handler API key neověřuje: patří gateway. Statické testy SAM kontrolují strukturu,
-neprokazují reálnou gateway ochranu. Factory `create_handler(repository)` přijímá
-čtyřoperační `CaseClientRepository`; nový DB adaptér přijde až v další fázi.
+Build je nativní, bez povinného Dockeru a bez `--use-container`. SDK a simplejson
+se balí podle připnutého manifestu pro cílový runtime; nepoužívat samotné `src/`
+bez dependencies. Budoucí host balení/deploy musí použít výstup
+`.aws-sam/build/template.yaml`. Chybějící host runtime/SAM worker neinstaluje.
 
-## Host runbook: validace a deploy (v coding tasku se neprovádí)
+**Před jakýmkoli budoucím nasazením** host samostatně ověří vlastnictví cílového
+API/stacku/role a write práva. Existující cizí API se neimportuje ani nepřebírá
+automaticky. Profil `ai-hackathon` je jen lokální host SSO, nikdy env aplikace.
+Nasazení není automatická návaznost tohoto tasku.
 
-Host potřebuje AWS SAM CLI (`sam`), AWS CLI, profil `ai-hackathon` a oprávnění
-pro vytvoření těchto prostředků/IAM role. Šablona je JSON (platná YAML podmnožina).
-Z kořene **nejprve skutečně validovat**:
+Host dosud ověřil pouze klíče/indexy a ALL projekce. Před použitím dat musí
+potvrdit nekličové atributy proti OpenAPI, zejména:
 
-```sh
-sam validate --lint --template-file be-case-client/template.yaml
-sam deploy --guided --profile ai-hackathon --region eu-central-1 --stack-name wonderfulkb-case-client-mock --template-file be-case-client/template.yaml --capabilities CAPABILITY_IAM
-```
+1. `created_at`: jednotný UTC string, přesnost a lexikografická kompatibilita
+   s novými `YYYY-MM-DDTHH:MM:SS.ffffffZ`; různé formáty mohou změnit GSI pořadí.
+2. Metadata jako DynamoDB map odpovídající JSON objektu/číslům, bez binárních/set
+   hodnot; optional nepřítomnost je podporovaná, null místo objektu nikoli.
+3. Client `status` přesně active/inactive/blocked a další veřejné typy/enumy;
+   nespoléhat na pomocné atributy, nedoplňovat chybějící business hodnoty.
 
-Použít přímé `CodeUri: src/` balení; `sam build` ani container build není nutný.
-Guided deploy potvrdí vytvoření IAM role (`CAPABILITY_IAM`), API má key ochranu.
-Neukládat odpovědi guided průvodce do repozitářového `samconfig.toml` (Save arguments:
-N); případný deployment bucket spravuje SAM/host, služba nemá S3 oprávnění.
-Jedna on-demand Lambda 256MB/10s, REST stage v1, klíč/usage plan,
-log retention 7 dní; role pouze CreateLogStream/PutLogEvents vlastní skupiny.
-Host rozšíří registrovanou projektovou bránu o backendové příkazy při zachování
-frontend test/build. Worker externí registry/config neupravuje.
-
-### Outputs a bezpečné získání klíče (pouze host)
-
-Outputs obsahují URL `/v1`, FunctionName, RestApiId, ApiKeyId, UsagePlanId,
-nikdy hodnotu API key. V privátním shellu vypnout tracing; nezapínat verbose curl,
-nezapisovat klíč do souboru, historie, logů nebo dokumentace:
-
-```sh
-set +x
-API_URL=$(aws cloudformation describe-stacks --stack-name wonderfulkb-case-client-mock --profile ai-hackathon --region eu-central-1 --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue | [0]' --output text)
-API_KEY_ID=$(aws cloudformation describe-stacks --stack-name wonderfulkb-case-client-mock --profile ai-hackathon --region eu-central-1 --query 'Stacks[0].Outputs[?OutputKey==`ApiKeyId`].OutputValue | [0]' --output text)
-API_KEY=$(aws apigateway get-api-key --api-key "$API_KEY_ID" --include-value --profile ai-hackathon --region eu-central-1 --query value --output text)
-```
-
-### Smoke (pouze host, po deployi)
-
-Následující shell helper posílá klíč přes stdin konfigurace curl, ne přes argv.
-`-i` ukáže HTTP status a response hlavičky; úspěchy musí mít
-`X-Data-Backend: mock`. Po vytvoření/vazbě klíče může gateway potřebovat krátkou
-dobu na propagaci. Žádné POST → další GET ani opakované HTTP POST →200 jako
-důkaz persistence/idempotence; ta je ověřena pouze offline v jedné repository.
-
-```sh
-mock_request() {
-  printf 'header = "x-api-key: %s"\n' "$API_KEY" | curl --config - --silent --show-error -i "$@"
-}
-mock_request "$API_URL/clients"                                                # 200
-mock_request "$API_URL/cases/fixture-old"                                      # 200, packaged fixture
-mock_request "$API_URL/clients/11111111-1111-4111-8111-111111111111/cases"         # 200
-mock_request -H 'Content-Type: application/json' -X POST "$API_URL/cases" \
-  --data "{\"case_id\":\"smoke-$(date +%s)\",\"client_id\":\"11111111-1111-4111-8111-111111111111\",\"metadata\":{\"demo\":true}}" # 201
-mock_request -H 'Content-Type: application/json' -X POST "$API_URL/cases" \
-  --data '{"case_id":"smoke-inactive","client_id":"33333333-3333-4333-8333-333333333333"}' # 409
-mock_request -H 'Content-Type: application/json' -X POST "$API_URL/cases" \
-  --data '{"case_id":"smoke-missing","client_id":"99999999-9999-4999-8999-999999999999"}' # 404
-curl --silent --show-error -i "$API_URL/clients"                                # 403
-curl --silent --show-error -i -H 'x-api-key: deliberately-invalid' "$API_URL/clients" # 403
-unset API_KEY API_KEY_ID
-unset -f mock_request
-```
-
-Ověřit i JSON `error` u 403; 429 má JSON gateway response při throttling/quota.
-Skutečný runtime API key/gateway smoke je odpovědnost hosta, ne výsledek offline suite.
-
-### Úklid pouze vytvořeného demo stacku (host)
-
-```sh
-sam delete --stack-name wonderfulkb-case-client-mock --profile ai-hackathon --region eu-central-1
-unset API_URL
-```
-
-Tento postup se nevztahuje na jiné stacky/služby. Cloud deploy ani smoke nebyly
-provedeny při lokální implementaci.
+Skutečné připojení, deploy, HTTP/gateway a persistence smoke zůstávají samostatnou
+host fází s vlastními důkazy. Statické IAM/SAM testy ani Stubber tyto důkazy nenahrazují.

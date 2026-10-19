@@ -8,20 +8,9 @@ import json
 from pathlib import Path
 import re
 from threading import Lock
-import unicodedata
 
-from case_client_repository import Conflict, InvalidRequest, NotFound
-
-
-def normalize_name(value):
-    value = ''.join(c for c in unicodedata.normalize('NFKD', value.casefold())
-                    if not unicodedata.combining(c))
-    # Whole expressions only, including dotted/spaced abbreviations.
-    value = re.sub(
-        r'(?<!\w)(?:spolecnost\s+s\s+rucenim\s+omezenym|akciova\s+spolecnost|'
-        r's\s*\.?\s*r\s*\.?\s*o\.?|a\s*\.?\s*s\.?|'
-        r'v\s*\.?\s*o\s*\.?\s*s\.?|k\s*\.?\s*s\.?)(?!\w)', ' ', value)
-    return ' '.join(value.split())
+from case_client_repository import (InvalidRequest, NotFound, normalize_name,
+                                    existing_case, active_client)
 
 
 def _page(items, id_field, scope, filters, limit, token):
@@ -81,13 +70,8 @@ class MockCaseClientRepository:
         with self._lock:
             if case_id in self._cases:
                 case = self._cases[case_id]
-                if case['client_id'] != client_id:
-                    raise Conflict('Case belongs to another client')
-                return deepcopy(case), False
-            if client_id not in self._clients:
-                raise NotFound('Client not found')
-            if self._clients[client_id]['status'] != 'active':
-                raise Conflict('Client is not active')
+                return existing_case(deepcopy(case), client_id)
+            active_client(self._clients.get(client_id))
             case = {'case_id': case_id, 'client_id': client_id, 'status': 'open',
                     'created_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                     'metadata': deepcopy(metadata)}

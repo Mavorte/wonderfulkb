@@ -232,7 +232,12 @@ class CaseClientLambdaTests(unittest.TestCase):
             self.handler = self.module.create_handler(self.adapter.MockCaseClientRepository())
             self.invoke()
             self.post('offline-network')
-        for path in (Path(__file__).resolve().parents[1] / 'src').glob('*.py'):
+        with patch('boto3.client', side_effect=AssertionError('SDK forbidden in mock')), \
+                patch('botocore.credentials.CredentialResolver.load_credentials',
+                      side_effect=AssertionError('credentials forbidden in mock')):
+            self.module.create_handler()({'httpMethod': 'GET', 'path': '/clients'}, None)
+        for name in ('case_client_repository.py', 'case_client_mock_repository.py'):
+            path = Path(__file__).resolve().parents[1] / 'src' / name
             tree = ast.parse(path.read_text())
             for node in ast.walk(tree):
                 names = [n.name for n in node.names] if isinstance(node, ast.Import) else (
