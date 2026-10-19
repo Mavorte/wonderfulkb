@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Intake Get",
+  "description": "Resolves an intake link hash to its case, fetches case and client details from the AWS case/client API, and returns them with the upload endpoint",
+  "method": "POST",
+  "path_slug": "intake-get"
+}
