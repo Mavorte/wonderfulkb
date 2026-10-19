@@ -1,7 +1,7 @@
 {
   "kind": "http",
   "name": "Evaluation Get",
-  "description": "Reads a case-evaluator run from agent_functions.case_evaluations with its per-rule rows from agent_functions.case_evaluation_results, plus the most recent runs for the picker",
+  "description": "Reads a case-evaluator run from agent_functions.case_evaluations with its per-rule rows from agent_functions.case_evaluation_results, by evaluation_id or the latest for case_id, plus the most recent runs for the picker",
   "method": "POST",
   "path_slug": "evaluation-get"
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ActivityTimeline from "./ActivityTimeline";
 import DecisionPanel from "./DecisionPanel";
 import DocumentPanel, { type Focus } from "./DocumentPanel";
@@ -16,6 +17,7 @@ import {
   type RuleView,
 } from "./evaluation";
 import { rawStatusLabel } from "./ruleLabels";
+import getCasePath from "../cases/getCasePath";
 import useEvaluation from "./useEvaluation";
 
 type Tab = "rules" | "activity";
@@ -26,10 +28,6 @@ const verdictLabel: Record<string, string> = {
   approved: "Ready",
   rejected: "Rejected",
 };
-
-function readEvaluationId(): string | null {
-  return new URLSearchParams(window.location.search).get("evaluation_id");
-}
 
 function countRules(rules: RuleView[], status: CheckStatus) {
   return rules.filter((r) => r.status === status).length;
@@ -177,7 +175,18 @@ function Review({ view, evaluations, onPick }: { view: CaseView; evaluations: Ev
   const [open, setOpen] = useState<Set<number>>(
     () => new Set(view.groups.filter((g) => g.status === "fail" || g.status === "warn").map((g) => g.id)),
   );
-  const [tab, setTab] = useState<Tab>("rules");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab: Tab = searchParams.get("tab") === "activity" ? "activity" : "rules";
+  const setTab = (next: Tab) =>
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === "rules") params.delete("tab");
+        else params.set("tab", next);
+        return params;
+      },
+      { replace: true },
+    );
   const evaluatedGroups = view.groups.filter((g) => g.evaluated);
   const duration = formatDuration(ev.started_at, ev.finished_at);
 
@@ -210,7 +219,7 @@ function Review({ view, evaluations, onPick }: { view: CaseView; evaluations: Ev
         <nav aria-label="Breadcrumb">
           <ol className="kb-breadcrumb cr-crumbs">
             <li>
-              <a href="#cases">Cases</a>
+              <Link to="/queue">Cases</Link>
             </li>
             <li aria-hidden="true">/</li>
             <li>{ev.case_id}</li>
@@ -380,9 +389,11 @@ function Review({ view, evaluations, onPick }: { view: CaseView; evaluations: Ev
   );
 }
 
-export default function CaseReviewPage({ initialEvaluationId }: { initialEvaluationId?: string | null }) {
-  const [evaluationId, setEvaluationId] = useState<string | null>(() => initialEvaluationId ?? readEvaluationId());
-  const state = useEvaluation(evaluationId);
+export default function CaseReviewPage() {
+  const caseId = useParams<{ caseId: string }>().caseId ?? null;
+  const evaluationId = useSearchParams()[0].get("evaluation");
+  const navigate = useNavigate();
+  const state = useEvaluation({ caseId, evaluationId });
 
   const view = useMemo(
     () =>
@@ -393,15 +404,18 @@ export default function CaseReviewPage({ initialEvaluationId }: { initialEvaluat
   );
 
   const pick = (id: string) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("evaluation_id", id);
-    window.history.replaceState(null, "", url);
-    setEvaluationId(id);
+    const picked = state.status === "ready" ? state.payload.evaluations.find((e) => e.evaluation_id === id) : undefined;
+    if (picked) navigate(getCasePath(picked.case_id, id));
   };
 
   if (state.status === "loading") return <p className="cr-state">Loading evaluation…</p>;
   if (state.status === "error") return <p className="cr-state cr-state--error">Couldn't load the evaluation: {state.message}</p>;
-  if (!view) return <p className="cr-state">Evaluation {evaluationId} not found.</p>;
+  if (!view) {
+    const missing = evaluationId ? `Evaluation ${evaluationId} not found.` : caseId ? `Case ${caseId} has no evaluation yet.` : "No evaluation yet.";
+    return <p className="cr-state">{missing}</p>;
+  }
+  // "/cases" shows the latest run; give it its case's address so the link can be shared.
+  if (!caseId) return <Navigate to={getCasePath(view.evaluation.case_id)} replace />;
 
   return <Review key={view.evaluation.evaluation_id} view={view} evaluations={state.payload.evaluations} onPick={pick} />;
 }

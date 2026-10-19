@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import CaseStatusPill from "../cases/CaseStatusPill";
 import formatDate from "../cases/formatDate";
 import listClientDirectory, { type DirectoryClient } from "./listClientDirectory";
@@ -18,8 +19,13 @@ export default function ClientsPage() {
   const [allClients, setAllClients] = useState<DirectoryClient[]>();
   const [truncated, setTruncated] = useState(false);
   const [error, setError] = useState(false);
-  const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get("q") ?? "";
+  const setQuery = (next: string) => setSearchParams(next ? { q: next } : {}, { replace: true });
+  const selectedId = useParams<{ clientId: string }>().clientId;
+  const navigate = useNavigate();
+  // The filter stays in the query string while a client is opened or closed.
+  const search = searchParams.toString() ? `?${searchParams}` : "";
 
   const load = useCallback(() => {
     setError(false);
@@ -69,7 +75,7 @@ export default function ClientsPage() {
           </div>
         </div>
 
-        {selected && <ClientDetail client={selected} onClose={() => setSelectedId(undefined)} />}
+        {selected && <ClientDetail client={selected} onClose={() => navigate(`/clients${search}`)} />}
 
         <div aria-busy={!clients && !error}>
           {error ? (
@@ -103,9 +109,9 @@ export default function ClientsPage() {
                   {clients.map((c) => (
                     <tr key={c.id} aria-selected={c.id === selectedId}>
                       <td>
-                        <button type="button" className="bo-link bo-table__strong" onClick={() => setSelectedId(c.id)}>
+                        <Link className="bo-link bo-table__strong" to={`/clients/${encodeURIComponent(c.id)}${search}`}>
                           {c.name}
-                        </button>
+                        </Link>
                         <span className="bo-table__meta">IČO {c.ico}</span>
                       </td>
                       <td>{c.address ?? "—"}</td>
