@@ -1,0 +1,16 @@
+{
+  "name": "case_evaluations",
+  "description": "One row per case-evaluator run. The backoffice app polls the latest row for a case.",
+  "columns": [
+    { "name": "evaluation_id", "type": "string", "required": true, "primary_key": true },
+    { "name": "case_id", "type": "string", "required": true },
+    { "name": "status", "type": "string", "required": true },
+    { "name": "verdict", "type": "string" },
+    { "name": "summary", "type": "string" },
+    { "name": "rules_total", "type": "number" },
+    { "name": "is_mock", "type": "boolean" },
+    { "name": "started_at", "type": "datetime" },
+    { "name": "finished_at", "type": "datetime" }
+  ],
+  "indexes": [{ "name": "by_case_started", "columns": ["case_id", "started_at"] }]
+}

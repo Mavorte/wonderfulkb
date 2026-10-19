@@ -1,0 +1,15 @@
+.npmrc
+node_modules/
+dist/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+bun.lock
+bun.lockb
+*.log
+.DS_Store
+.vscode/
+.wonderful/*
+!.wonderful/CODEOWNERS
+!.wonderful/actions/
+!.wonderful/actions/**

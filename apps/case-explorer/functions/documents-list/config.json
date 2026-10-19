@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Documents List",
+  "description": "Lists a case's documents from the AWS documents API (GET /cases/{case_id}/documents)",
+  "method": "POST",
+  "path_slug": "documents-list"
+}

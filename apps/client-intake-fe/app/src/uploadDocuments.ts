@@ -5,7 +5,11 @@ type WonderfulApi = ReturnType<typeof useWonderful>["api"];
 
 type UploadResult =
   | { ok: true; documents: UploadedDocument[] }
-  | { ok: false; message: string };
+  | { ok: false; message: string; failedFile?: File };
+
+// `staging` reports the file being stored now; `submitting` the hand-off of all
+// staged files to ingest.
+export type UploadProgress = { phase: "staging"; index: number } | { phase: "submitting" };
 
 type StageResponse = { key?: string; error?: string };
 
@@ -32,9 +36,11 @@ export default async function uploadDocuments(
   hash: string,
   files: File[],
   uploadedBy: string | null | undefined,
+  onProgress: (progress: UploadProgress) => void,
 ): Promise<UploadResult> {
   const staged: Array<{ key: string; name: string }> = [];
-  for (const file of files) {
+  for (const [index, file] of files.entries()) {
+    onProgress({ phase: "staging", index });
     try {
       const result = await api.invokeFunction<StageResponse>("client-intake/intake-stage", {
         method: "POST",
@@ -42,14 +48,15 @@ export default async function uploadDocuments(
       });
       if (!result?.key) {
         const reason = result?.error === "invalid_file" ? "is not a valid PDF" : "could not be uploaded";
-        return { ok: false, message: `${file.name} ${reason}.` };
+        return { ok: false, message: `${file.name} ${reason}.`, failedFile: file };
       }
       staged.push({ key: result.key, name: file.name });
     } catch {
-      return { ok: false, message: `Upload failed: ${file.name} could not be sent. Please try again.` };
+      return { ok: false, message: `${file.name} could not be sent. Please try again.`, failedFile: file };
     }
   }
 
+  onProgress({ phase: "submitting" });
   try {
     const result = await api.invokeFunction<SubmitResponse>("client-intake/intake-submit", {
       method: "POST",
@@ -58,11 +65,14 @@ export default async function uploadDocuments(
     if (result?.error) {
       return {
         ok: false,
-        message: result.error === "rejected" && result.message ? result.message : "Upload failed. Please try again later.",
+        message:
+          result.error === "rejected" && result.message
+            ? result.message
+            : "The document service did not accept the files. Please try again later.",
       };
     }
     return { ok: true, documents: result?.documents ?? [] };
   } catch {
-    return { ok: false, message: "Upload failed: the document service could not be reached." };
+    return { ok: false, message: "The documents could not be sent to KB. Please try again." };
   }
 }

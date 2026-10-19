@@ -1,0 +1,297 @@
+{
+ "case": {
+  "case_id": "mock-stavby-fiser",
+  "client_id": "9a3d5e71-4c2b-4f8a-b6d0-7e1f2a3b4c55",
+  "status": "open",
+  "created_at": "2026-10-19T09:00:00Z",
+  "metadata": {
+   "loan_number": "17026014/25",
+   "asset": "Tandemový válec BOMAG BW 154 vč. příslušenství",
+   "serial_number": "101871101268"
+  }
+ },
+ "client": {
+  "client_id": "9a3d5e71-4c2b-4f8a-b6d0-7e1f2a3b4c55",
+  "ico": "25317688",
+  "dic": "CZ25317688",
+  "name": "Stavby Fišer a.s.",
+  "legal_form": "a.s.",
+  "address": "Mlýnská 388/68, Trnitá, 602 00 Brno",
+  "status": "active",
+  "contacts": [
+   {
+    "name": "Vít Juryta",
+    "role": "prokurista",
+    "email": "juryta@example.com",
+    "preferred_channel": "email"
+   }
+  ],
+  "signatories": [
+   {
+    "name": "Vít Juryta",
+    "function": "prokurista",
+    "authorized": true
+   }
+  ],
+  "kyc": {
+   "status": "ok",
+   "checked_at": "2026-05-28"
+  },
+  "source": "synthetic"
+ },
+ "documents": [
+  {
+   "document_id": "b5c3d7",
+   "title": "0_F_Smlouva.pdf",
+   "label": "smlouva_o_uveru",
+   "label_status": "predicted",
+   "processing_status": "completed",
+   "page_count": 4,
+   "description": null,
+   "text": "uzavřená v souladu s ustanovením § 2395 a násl. zákona č. 89/2012 Sb., občanský zákoník, ve znění pozdějších \npředpisů (dále jen „občanský zákoník“) mezi níže identifikovaným poskytovatelem financování jako úvěrujícím a \npříjemcem financování jako úvěrovaným (dále jen „smlouva o úvěru“)  \nIdentifikace poskytovatele financování:  Identifikace příjemce financování:  \nSG Equipment Finance Czech Republic s.r.o.  Stavby Fišer a.s.  \nnáměstí Junkových 2772/1  \n155 00 Praha 5  \n  \ne-mail pro sdělení data zahájení pojištění:  \nPOVonline@sgef.cz  \n  \nMlýnská 388/68, Trnitá  \n602 00 Brno  \n  \nBankovní spojení: 250048621/0100 Komerční \nbanka, a.s.  \nMěna: CZK  \nBankovní spojení: 0162710187/0100  \nKomerční banka, a.s., Praha 1, Na Příkopě 33  \nMěna: CZK  \nIČ:  61061344  \nDIČ:  CZ61061344  \nZápis v OR: Městský soud v Praze, C 43038  \nIČ:  25317688  \nDIČ:  CZ25317688  \nZápis v OR: Krajský soud v Brně, B 4444  \n- dále jen poskytovatel financování  -  - dále jen příjemce financování  -  \n  \nSoučástí smlouvy o úvěru jsou Všeobecné obchodní podmínky ke smlouvě o úvěru (dále jen „ VOP“) platné od \n01.01.2024, verze 017/1000006366/20240101.  \nPodpisem smlouvy o úvěru žádá příjemce financování poskytovatele financování o čerpání úvěru ve výši stanovené \nníže. Poskytovatel financování se zavazuje, že za podmínek stanovených touto smlouvou o úvěru a VOP poskytne \npříjemci financování finanční prostředky do výše uvedené v této smlouvě o úvěru s parametry úvěru specifikovanými \nv této smlouvě o úvěru a příjemce financování se zavazuje poskytnuté finanční prostředky vrátit a zaplatit úroky a \ndalší platby v souladu s podmínkami této smlouvy a VOP .   \n  \n PŘEDMĚT FINANCOVÁNÍ:  \nTandemový válec BOMAG BW 154 vč. příslušenství  \nDODAVATEL:  \nPWA s.r.o.   \nOkružní 6   \n252 42 Jesenice - Osnice   \nIČ:  26762855  \nDIČ:  CZ26762855   \nZápis v OR: Městský soud v Praze, C 920  \n  \n  \n  \nPředběžná kupní cena bez \nDPH (dále jen PKC):  \nVýrobní číslo:  \nVýrobce: Rok \nvýroby: Stav:  \n  \n           \n  \n4 034 900,00 CZK  \n101871101268   \nBOMAG  \n2025  \nnový  \n  \nVýše poskytnutého úvěru:   100,0000% z PKC, maximálně však 4 034 900,00 CZK  \nMěna poskytnutého úvěru:  CZK  \n  \n   \n  \nÚvěr bude čerpán z účtu poskytovatele financování jednorázově/postupně poté, co budou splněny níže uvedené \npodmínky a podmínky stanovené VOP:  \n  \n  \n  \nSMLOUVA O ÚVĚRU Č. 17171/25 \n   \n  \nR000145669_Z25_06017\f1 / 3  S_CZ_SDA_017_100_001_c1  \n  \nFCZ021CCDA  \nR000145669_Z25_06017 \n  \nSPLÁTKY A OSTATNÍ PARAMETRY SMLOUVY O ÚVĚRU:  \nMěna smlouvy o úvěru:  CZK  \nDruh financování:  \n  \nFixní (na dobu 3 let)   \n  \nDoba splácení (v měsících) ve smyslu čl. 1 odst. 1.1 VOP:  36  \nVýše úvěru (jistina):   4 034 900,00  CZK  \nPředběžná výše úroku:  367 895,32  CZK  \nVýše úvěrových splátek celkem:  \n(konečná výše jistiny úvěru a úroku bude stanovena v souladu \ns článkem 1 a článkem 4 VOP)  \n4 402 795,32  CZK  \nPoplatek za sjednání úvěru:  0,00   \nPředběžná výše splátek  Frekvence splácení  Předběžná splatnost splátek  Počet splátek  \n122 299,87  CZK  měsíční  k 15. v daném měsíci  36  \n   \n  \nSmlouva je zařazena do dotačního finančního programu Evropské investiční banky (dále jen \nzvýhodnění: 0,25 % p.a. na úrokové sazbě  \n  \n  \n„EIB“) finanční  \n      \n  \n  \nPojištění předmětu financování:  \n \nPojištění dle článku 2 odst. 2.1 VOP (povinné zákonné pojištění) sjednává:  nesjednává se  \nPojištění dle článku 2 odst. 2.2 VOP (škodní pojištění) sjednává:  příjemce financování  \n  \n  \nPříjemce financování je povinen před čerpáním úvěru předložit poskytovateli financování níže uvedené podklady \nvztahující se ke smlouvě o úvěru:     \n  \nPoskytovatel financování poskytne úvěr na účet příjemce financování č. 250048621/0100   vedený v měně CZK, \npřičemž příjemce financování již zaplatil kupní cenu za předměty financování na účet dodavatele. Nejedná-li se o \nregistrovaný účet příjemce financování (zveřejněný správcem daně v registru plátců DPH), je příjemce financování \npovinen před poskytnutím úvěru prokázat poskytovateli financování, že je majitelem tohoto účtu (např. výpisem z \núčtu nebo potvrzením banky). Příjemce financování je povinen před čerpáním úvěru předložit poskytovateli \nfinancování následující podklady:  \na) kopii daňového dokladu dodavatele uvedeného ve smlouvě o úvěru obsahujícího detailní specifikaci předmětu \nfinancování (včetně výrobního čísla),  \nb) kopii kupní smlouvy uzavřené mezi dodavatelem a příjemcem financování, popř. dodavatelem potvrzené \nobjednávky či jiného dokladu o uzavření příslušné smlouvy s dodavatelem,  \nc) kopii oboustranně podepsaného dokladu o předání a převzetí předmětu financování (dodací list, předávací \nprotokol),  \nd) doklad o zaplacení předmětu financování dodavateli a též doklad o tom, že příjemce financování uhradil svému \ndodavateli všechny dluhy vyplývající z příslušných smluv s takovým dodavatelem,   \ne) potvrzení dodavatele o převodu vlastnického práva, dokládající převod vlastnického práva k předmětu \nfinancování od dodavatele na příjemce financování,   \nf) smlouvu/smlouvy o zajišťovacím převodu vlastnického práva specifikované/specifikovaných níže\fDalší podmínky úvěru:  \n  \nZajištění úvěru:   \n- Smlouva o zajišťovacím převodu vlastnického práva/Zástavní smlouva:  \nk předmětu/předmětům financování, u něhož/nichž je uzavření této smlouvy \nposkytovatelem financování vyžadováno.   \n  \ndle pododst. 6.1.1 VOP   \n  \nSmlouva č. 17026014/25  2 / 3  S_CZ_SDA_017_100_001_c1  \n  \nR000145669_Z25_06017 \n  \nFinanční prostředky získané z poskytnutého úvěru je příjemce financování oprávněn použít výlučně na pořízení \npředmětu specifikovaného ve smlouvě o úvěru.  \n  \nPříjemce financování je povinen splácet úvěr a úroky z poskytnutých plateb v souladu s podmínkami uvedenými ve \nsmlouvě o úvěru a VOP a konečným předpisem splátek.   \n  \nTato smlouva je platná a účinná dnem jejího podpisu. Je-li tato smlouva podepisována poskytovatelem financování \nelektronicky, nabývá platnosti a účinnosti nejdříve podpisem druhé z osob, které ji podepisují za poskytovatele \nfinancování. Ustanovení o nabytí  platnosti, případně i účinnosti nejdříve okamžikem podpisu druhé z osob \npodepisujících za poskytovatele financování v případě elektronického podepisování se uplatní rovněž na VOP a \nveškeré případné dodatky či přílohy této smlouvy. Je -li příjemce financová ní povinnou osobou dle zákona č. \n340/2015 Sb., o registru smluv, v účinném znění (dále jen „povinná osoba“), nabývá smlouva o úvěru účinnosti \nnejdříve dnem zveřejnění smlouvy a související dokumentace v registru smluv, není -li sjednáno pozdější datum \núčinnosti.  \nZměny této smlouvy vyžadují písemnou formu (tj. buď oboustranně rukopisně nebo oboustranně elektronicky \npodepsaný dokument, není-li uvedeno jinak). Za písemnou formu nebude pro tento účel považována pouhá výměna \ne-mailových či jiných elektronických zpráv.   \n  \nPříjemce financování může návrh této smlouvy přijmout pouze ve znění navrhovaném poskytovatelem financování \ns vyloučením možného přijetí návrhu smlouvy s dodatkem nebo odchylkou.  \n  \nPříjemce financování prohlašuje, že při jednání o uzavření této smlouvy mu byly sděleny všechny pro něj relevantní \nskutkové a právní okolnosti k posouzení možnosti uzavřít tuto smlouvu a že neočekává ani nepožaduje od \nposkytovatele financování žádné další informace v této věci.   \n  \nVšechny spory vznikající z této smlouvy o úvěru a v souvislosti s ní budou rozhodovány s konečnou platností u \nRozhodčího soudu při Hospodářské komoře České republiky a Agrární komoře České republiky podle jeho řádu \ntřemi rozhodci.   \n  \n  \n.........1.10.2024...........  \nDatum  \n  \nBrno, .........1.10.2024...........  \nMísto, datum  \nPoskytovatel financování:  Příjemce financování:  \nSG Equipment Finance Czech Republic s.r.o.  Stavby Fišer a.s.  \n.............. .........  \nPodpis  \n  \n............... ........  \nPodpis  \n  \n............. ..................  \nPodpis  \n  \n.....Petr Kůt........  \nJméno  \nKarel Jíra.  \nJméno  \n................George Fišer...............  \nJméno  \n  \nzmocněnec  \nFunkce  \n  \n  \nzmocněnec  \nFunkce  \n  \n  \n..................Jednatel.............  \nFunkce\fV případě elektronického podepisování mohou být podpisy připojeny namísto ve shora uvedené podpisové tabulce \nv podpisovém archu, jenž je v takovém případě nedílnou součástí tohoto dokumentu.   \nSmlouva č. 17026014/25  3 / 3  S_CZ_SDA_017_100_001_c1",
+   "confidence": 0.98,
+   "pages_failed": [],
+   "signatures": [
+    {
+     "signature_id": "sig_b5c3d7_01",
+     "page": 3,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "provider",
+     "role_source": "nearest_text",
+     "role_evidence": "Poskytovatel financování: SG Equipment Finance Czech Republic s.r.o. / Petr Kůt, zmocněnec",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    },
+    {
+     "signature_id": "sig_b5c3d7_02",
+     "page": 3,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "provider",
+     "role_source": "nearest_text",
+     "role_evidence": "Poskytovatel financování: SG Equipment Finance Czech Republic s.r.o. / Karel Jíra, zmocněnec",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    },
+    {
+     "signature_id": "sig_b5c3d7_03",
+     "page": 3,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "borrower",
+     "role_source": "nearest_text",
+     "role_evidence": "Příjemce financování: Stavby Fišer a.s. / George Fišer, Jednatel",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    }
+   ]
+  },
+  {
+   "document_id": "86a091",
+   "title": "10_Podklady_k_vyplate_Objednavka_TS.pdf",
+   "label": "objednavka",
+   "label_status": "predicted",
+   "processing_status": "completed",
+   "page_count": 9,
+   "description": null,
+   "text": "R000145661_Z25_06017 \n OBJEDNÁVKA č.: 1982 \n Číslo zakázky: I-28-1020 Vystaveno: 26.06.2025 \nNázev zakázky: Pokládková četa \n \n Kontakt - stavba:Karel Nový Tel.: +420 601 742 572 \nE-mail:  \n Objednatel IČO: 2531788   DIČ:CZ2531788 \nStavby Fišer a.s. \nTel: +420 123 983 475 \nraco \n  Dodavatel  IČO:26762855 DIČ:CZ26762855 \nJesenice-Osnice \nTel: +420 616 840 012 \nadam@awpsro.cz \nMlýnská 388/68 \n60200 Trnitá, Brno \nKontakt: Rácová Ivana \nE-mail: \nAWP s.r.o. \nOkružní 6 \n25242 \nKontakt:Adam Martin \nE-mail: \nPokládková četa. \nObjednáváme u Vás nákup silničního vibračního válce BOMAG BW 154 AP- 5 AM dle Vaší cenové nabídky  ze dne 3.3.2025, která je \nsoučástí této objednávky. \nSpecifikace/druh Množství MJ Cena/MJ Cena bez DPH \nnákup silničního válce BOMAG BW 154 AP- 5 AM 1,00 kpl. 3 999 900,00 3 999 \n900,00 \ntablet včetně komunikačního software 1,00 kpl. 35 000,00 35 000,00 \nV případě, že je Dodavatel plátce DPH, bude DPH účtována dle platných právních předpisů. Cena celkem bez DPH: \n4 034 900,00 CZK \nZáloha: bez zálohy \nSplatnost: 30 dnů ode dne doručení faktury objednateli \nFakturace: po předání \nPozastávky: bez pozastávky \nDoprava: s dopravou (zajistí dodavatel) \nMísto plnění: FIRESTA - Brno Modřice (Brněnská 681, 664 42 Modřice) \nDoba plnění: od 26.06.2025 do 30.09.2025 (dle dohody s kontaktní osobou) \nZáruční doba: 24 měsíců od převzetí Objednatelem \nObchodní podmínky uvedené na druhé straně Objednávky (dále jen „OP“) jsou                 nedílnou součástí                                vypuštění \nnení možné                Objednávky, jejich a jsou neměnné. \nZávěrečný text: \nObjednávka je platná po podpisu obou smluvních stran a nahrazuje smlouvu do chvíle podpisu KS. \nVeškeré obchodně-technické podmínky neuvedené v objednávkce budou uvedeny v KS. \nFakturováno bude dle skutečnosti a oboustranně odsouhlaseného předávacího protokolu. \nFaktury zasílejte na emai: faktury@firesta.cz. Faktury zaslané na jinou adresu nebudou považovány za platně doručené. \nVeškerá jednání smluvních stran v souvislosti s předmětem plnění se budou posuzovat dle této objednávky, bez ohledu na to, zda k nim došlo \npřed podpisem či po podpisu této objednávky. \nSoučástí standardní výbavy bude níže uvedené jinak příplatkové nadstandardní vybavení: \n- Kompletní podrcovač v ceně 275.000,- Kč bez DPH, \n- Kompletní příprava pro systém BOMAP ( veškerá kabeláž, elektronika, apod.) v ceně 125.000,- Kč bez DPH. Pro provoz   systému je pak \nnutné pouze dokoupit tablet a softwarovou licenci pro samotný provoz. \n- Bezpečnostní kamerový systém 360 st. pro monitoring osob a předmětů v okolí stroje v ceně 72.000,- Kč bez DPH. \n  \nkontakt na stavbu: p. Freml tel.  \nkontakt na vedoucího skladu Modřice:  \nMísto dodání válce: sklad Modřice, Brněnská 68\f1 / 2 \nR000145661_Z25_06017 \nObchodní podmínky: \n1.     Potvrzení Objednávky \n1.1 Dodavatel je povinen řádně potvrzenou Objednávku doručit Objednateli nejpozději do 5 pracovních dnů ode dne jejího doručení Dodavateli, příp. do 5 \npracovních dnů ode dne vzájemného odsouhlasení jejího finálního znění, a to způsobem uvedeným pod podpisovou tabulkou na konci této strany \nObjednávky.  \n1.2 Objednatel vylučuje přijetí Objednávky ze strany Dodavatele s dodatkem či odchylkou. Pokud bude Objednávka obsahovat dodatky či odchylky, bude \nse jednat o protinávrh, se kterým Objednatel musí vyslovit souhlas, a to písemnou formou. V opačném případě platí, že k uzavření smluvního vztahu \nnedošlo. \n1.3 Poskytne-li Dodavatel plnění dle Objednávky, aniž by ji před tím písemně potvrzenou řádně doručil Objednateli, je Objednatel oprávněn takto poskytnuté \nplnění odmítnout bez nároku Dodavatele na její byť jen částečné uhrazení. \n2.    Poskytování plnění \n2.1 Dodavatel se zavazuje k řádnému poskytnutí plnění dle Objednávky a pokynů Objednatele ve kvalitě a způsobem, jak je předpokládá Objednávka vč. \njejích příp. příloh. Dodavatel odpovídá za to, že poskytnuté plnění bude mít po celou dobu smluvního vztahu sjednané vlastnosti a že bude bez vad. \n2.2 V případě porušení povinností dle bodu 2.1. OP se Dodavatel zavazuje Objednateli nahradit všechny škody a nemajetkové újmy i další případné náklady, které \nObjednateli takovým porušením vzniknou. \n2.3 Objednatel se zavazuje plnění poskytnuté řádně a v souladu s Objednávkou převzít a zaplatit za něj Dodavateli sjednanou cenu, a to níže uvedeným \nzpůsobem. \n2.4 Objednatel není povinen převzít plnění s vadami či nedodělky, byť by nebránily ani neomezovaly jeho užívání \n2.5 V případě poskytování plnění na staveništi Objednatele se Dodavatel zavazuje: \n2.5.1 dodržovat platné bezpečnostní, hygienické, požární a ekologické předpisy, kdy za důsledky jejich porušování nese plnou zodpovědnost; za \npřípadné sankce a postihy plynoucí z jejich porušení odpovídá pouze Dodavatel a zavazuje se je uhradit; \n2.5.2 hospodařit s odpady vzniklými v souvislosti s poskytováním plnění na své náklady a v souladu s platnými předpisy a pokyny Objednatele; za \npřípadné sankce a postihy plynoucí z jejich porušení odpovídá pouze Dodavatel a zavazuje se je uhradit; \n2.5.3 umístit reklamu v místě poskytování plnění jen s předchozím písemným souhlasem Objednatele. \n3.   Ostatní ujednání \n3.1 Strany si výslovně vědomě sjednávají, že fakturace bude možná až po uzavření smlouvy, která nahradí Objednávku v souladu s bodem 4.5. OP. \nVeškeré platební podmínky a podmínky fakturace budou proto řešeny až ve smlouvě dle předchozí věty. \n3.2 Dodavatel poskytuje záruku za jakost poskytovaného plnění a v rámci poskytnutých záruk nese odpovědnost za nedostatky (vady) plnění zjištěné v \nzáruční době, pokud není na první straně Objednávky uvedeno jinak. Dodavatel je povinen v průběhu záruční doby odstranit všechny vady plnění, a to \nna vlastní odpovědnost a na vlastní náklady i v případě, kdy reklamaci neuznává. Prokáže-li se později, že Objednatel reklamoval neoprávněně, uhradí \nDodavateli náklady vynaložené na odstranění vady. V případě, že Dodavatel poruší svou povinnost spočívající v odstranění reklamovaných vad, je \nObjednatel oprávněn nechat dotčené vady odstranit třetí osobou na náklady Dodavatele. \n3.3 Dodavatel není oprávněn postoupit či zastavit pohledávky či jiná práva a povinnosti vyplývající z Objednávky vůči Objednateli, ledaže by s tím \nObjednatel předem písemně souhlasil. Informace o takovém souhlasu jsou povinnou náležitostí faktury. \n3.4 Bude-li Dodavatel v prodlení s plněním sjednaných termínů, je Dodavatel povinen uhradit Objednateli vedle náhrady škody rovněž smluvní pokutu ve \nvýši 0,2 % z ceny plnění za každý započatý den prodlení. Smluvní pokutu dle předchozí věty je Dodavatel povinen uhradit Objednateli také v případě \nporušení povinností stanovených v bodech 2.5., 4.1. a/nebo 4.2. OP. \n3.5 Objednatel má zaveden Systém environmentálního managementu ČSN EN ISO 14001. Dodavatel je povinen se s ním seznámit  a dodržovat jej. \n4.    Závěrečné ujednání \n4.1 Objednatel i Dodavatel mohou od Objednávky odstoupit, bude-li druhá strana v prodlení s plněním kterékoliv povinnosti dle Objednávky po dobu delší \nnež 7 dnů či v případě podstatného porušení svých povinností dle Objednávky a platných předpisů. V případě odstoupení od Objednávky  \nObjednatelem, tzn. z důvodů ležících na straně Zhotovitele, má Zhotovitel nárok pouze na úhradu částky za práce a dodávky řádně provedené do dne \nodstoupení ponížené o 10 %. \n4.2 V případě rozporu mezi textem úvodní strany Objednávky a OP má přednost text úvodní strany Objednávky.  \n4.3 Práva a povinnosti v Objednávce neupravené se řídí platnými právními předpisy České republiky, zejména příslušnými ustanoveními zákona č. 89/2012 \nSb., občanského zákoníku, ve znění pozdějších předpisů. \n4.4 Objednatel a Dodavatel prohlašují, že s obsahem Objednávky včetně jejích příp. příloh souhlasí. Objednávka je platná a pro obě její strany závazná od \nokamžiku podpisu oběma jejími stranami, resp. připojením podpisu druhou stranou. \n4.5 Strany si výslovně sjednávají, že Objednávka bude nahrazena smlouvou, a to bez zbytečného odkladu od řádného potvrzení Objednávky. Pokud bude  \nDodavatel prokazatelně proces sjednávání znění této smlouvy zdržovat a/nebo tuto komunikaci bez odůvodnění přeruší na dobu delší než 14 dní, \nje Objednatel oprávněn nepřevzít od Dodavatele Objednávkou sjednané (dílčí) plnění a/nebo odmítnout vydání a/nebo podpis příslušného potvrzení \ndokládající řádné (dílčí) dodání předmětu plnění dle Objednávky. Veškeré obchodně-dodací podmínky neupravené v Objednávce budou řešeny ve \nsmlouvě dle předchozí věty. Okamžikem uzavření smlouvy dle tohoto odstavce se Objednávka ruší a její obsah je plně nahrazen obsahem této \nsmlouvy, pokud v ní není uvedeno jinak. \n4.6 Veškerá jednání smluvních stran v souvislosti s předmětem plnění se budou posuzovat dle Objednávky, bez ohledu na to, zda k nim došlo před \npodpisem či po podpisu Objednávky. \nDatum a podpis: \n Objednatel    \nDodavatel\fOriginál řádně podepsané (tzn. potvrzené) Objednávky zašlete bez zbytečného odkladu Objednateli, a to níže uvedeným způsobem: \n- v případě jejího podpisu Dodavatelem uznávaným elektronickým podpisem e-mailem na adresu Objednatele                                          \na/neboobjednavky@firesta.cz \n- v případě jejího podpisu Dodavatelem fyzickým vlastnoručním podpisem ve dvou vyhotoveních poštou na adresu Mlýnská 388/68, 602 00 Brno   \ns obálkou nadepsanou „Potvrzená Objednávka“. \n2 / 2\fR000145661_Z25_06017\nNabídka živičných vibračních válců BOMAG\npro společnost FIRESTA – Fišer, rekonstrukce, stavby a.s.\nV Brně dne 3. března 2025\nAWP s.r.o., výhradní zastoupení společnosti BOMAG, GmbH v ČR pro segment velké mechanizace, Okružní 635, 252 42 Osnice – Jesenice u Prahy\fR000145661_Z25_06017\nVážený pane Fremle, ve smyslu Vaší poptávky si Vám dovoluji předložit nabídku na vibrační válce BOMAG za níže uvedených podmínek.\nServis: Veškerý případný servis v České republice je naší firmou zajišťován ze středisek Praha - Osnice a Brno - Modřice.\nDodávka a platební podmínky: termíny dodání do cca 3 - 4 měsíců. Platební podmínky – na základě vystavené faktury dle dohody.\nZáruka: záruční doba v délce 24 měsíců nebo 2000 motohodin, dle toho, co nastane dříve.\nTechnická dokumentace smykového vibračního válce BOMAG BW 154 AP – 5 AM (Asphaltmanager na předním a vibrace na zadním běhounu, možný podrcovač)\nprovozní hmotnost kg 7950; maximální hmotnost kg 10900; zatížení předního běhounu kg 4100; zatížení zadního běhounu kg 3850; šířka běhounu mm 1500; statické lineární zatížení kg/cm 27,3 / 25,7; provozní rychlost km/h 0 – 11; motor Kubota V 3307 - T; emisní norma EURO V; chlazení vodou\fR000145661_Z25_06017\npočet válců 4; výkon kW 75,4; elektrická výbava V 12; běhouny ocelové/dělené; pohon hydrostatický; provozní brzda hydrostatická; parkovací brzda hydromechanická; budící síla kN (AM) 121; frekvence Hz 45; amplituda mm 0 - 0,82; budící síla kN (zadní běhoun) 89/48; frekvence Hz 44/45; amplituda mm 0,73/0,41; objem palivové nádrže 180; objem vodní nádrže 550\nStandardní výbava vibračního válce BOMAG BW 154 AP – 5 AM: hydrostatický pohon pojezdu a vibrací, řízení smykem, oba dva dělené běhouny, celouzavřená kabina s vytápěním, elektronický kontrolní modul, systém Asphaltmanager, LCD display, akustická signalizace při couvání, výstražný maják, pracovní osvětlení, CE, návod k obsluze v ČJ\fR000145661_Z25_06017\nkatalog náhradních dílů\nSystém Asphaltmanager - unikátní patentovaný automatický systém nastavující hutnící účinek dle okamžitého stavu zhutnění zpracovávaného materiálu\nNadstandardní výbava zahrnutá v ceně nabídky: 2x přítlačné a ořezávací kolečko PP+LP, Klimatizace, Rádio, vnější zpětná zrcátka, osvětlení běhounů, ECOSTOP, alarm zpětného chodu „White Sound“, příprava pro podrcovací zařízení.\nCena stroje dle výše uvedené specifikace: Bomag BW 154 AP – 5 AM 3.894.600,- Kč\nTechnická dokumentace smykového vibračního válce BOMAG BW 154 APO – 5 (Standardní vibrace na předním a oscilace na zadním běhounu, možný podrcovač)\nprovozní hmotnost kg 7950; maximální hmotnost kg 10500; zatížení předního běhounu kg 3850; zatížení zadního běhounu kg 4100; šířka běhounu mm 1500; motor Kubota V 3307 - T; emisní norma EURO V; počet válců 4; výkon kW 55,4\fR000145661_Z25_06017\nběhouny ocelové/dělené; pohon hydrostatický; budící síla kN 89/48; frekvence Hz 44/45; amplituda mm 0,73/0,41; frekvence Hz (zadní běhoun - oscilace) 45; amplituda mm 0,82; objem palivové nádrže 180; objem vodní nádrže 550\nStandardní výbava vibračního válce BOMAG BW 154 APO – 5: hydrostatický pohon pojezdu a vibrací, řízení smykem, oba dva dělené běhouny, celouzavřená kabina s vytápěním, oscilace na zadním běhounu, LCD display, CE, návod k obsluze v ČJ, katalog náhradních dílů\fR000145661_Z25_06017\nSystém Oscilace - díky možnosti horizontální vibrace v zadním běhounu válce umožňuje provádět hutnící práce na mostech nebo v zastavěných oblastech\nNadstandardní výbava zahrnutá v ceně nabídky: 2x přítlačné a ořezávací kolečko PP+LP, Klimatizace, Rádio, vnější zpětná zrcátka, osvětlení běhounů, ECOSTOP, alarm zpětného chodu „White Sound“, příprava pro podrcovací zařízení.\nCena stroje dle výše uvedené specifikace: Bomag BW 154 APO – 5 3.698.800,- Kč\nPříplatková výbava, která není zahrnuta ve výše uvedených cenách: Kompletní precizní podrcovač BOMAG: 1 ks 275.000,- Kč; Příprava na systém BOMAP: 1 ks 125.000,- Kč\nVšechny výše uvedené ceny jsou bez příslušné DPH, včetně dopravy na místo určení, předvedení a zaškolení obsluhy stroje.\nS pozdravem\n(razítko) AWP s.r.o., Okružní 635, Osnice - Jesenice u Prahy\nMgr. Martin Adam, vedoucí provozovny Brno",
+   "confidence": 0.9,
+   "pages_failed": [],
+   "signatures": [
+    {
+     "signature_id": "sig_86a091_01",
+     "page": 9,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "supplier",
+     "role_source": "nearest_text",
+     "role_evidence": "AWP s.r.o. / Mgr. Martin Adam, vedoucí provozovny Brno",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    }
+   ]
+  },
+  {
+   "document_id": "3fe0d3",
+   "title": "11_Protokol_Potvrzeni_o_prechodu_vlastnictvi.pdf",
+   "label": "predavaci_protokol",
+   "label_status": "predicted",
+   "processing_status": "completed",
+   "page_count": 2,
+   "description": null,
+   "text": "R000145667_Z25_06017 \n  \nPOTVRZENÍ O PŘEVODU VLASTNICKÉHO PRÁVA  \nTímto potvrzujeme, že obchodní společnost  \n  Stavby Fišer a.s.  \n  Mlýnská 388/68, Trnitá, 602 00 Brno  \n  IČ: 25317688  \n  DIČ: CZ25317688   Zápis v OR: Krajský \nsoud v Brně, B 4444  \nkterá u nás zakoupila předmět  \n    \n  Tandemový válec BOMAG BW 154 vč. příslušenství,  \n výr. č.: 101871101268  \ndle faktury č. ………1234……………….. splnila celý dluh vyplývající z této faktury.  \nTímto potvrzujeme, že byla uhrazena celá částka kupní ceny a dále, že vlastnické právo k výše \nspecifikovanému předmětu bylo převedeno na výše uvedený subjekt dne …………10.11:2025……………..   \nPodepisující osoby svými podpisy stvrzují, že jsou ze své funkce či zařazení nebo z pověření statutárního \norgánu oprávněny k podpisu tohoto potvrzení.  \nJesenice - Osnice,………9.9.2025…………………  \nMísto, datum  \nDodavatel:  \nPWA s.r.o.  \n……………………………………………………  \nPodpis   \n………………………George Fišer……………………………  \nJméno – hůlkovým písmem   \n………………………………jednatel……………………  \nFunkce\fCZ_SDA_000_908_117_c1  \n  \nFCZ021CCE1",
+   "confidence": 0.98,
+   "pages_failed": [],
+   "signatures": [
+    {
+     "signature_id": "sig_3fe0d3_01",
+     "page": 1,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "supplier",
+     "role_source": "nearest_text",
+     "role_evidence": "Dodavatel: PWA s.r.o. / George Fišer, jednatel",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    }
+   ]
+  },
+  {
+   "document_id": "1ae008",
+   "title": "14_Podklady_k_vyplate_Uhrada_KC.pdf",
+   "label": "doklad_o_uhrade",
+   "label_status": "predicted",
+   "processing_status": "completed",
+   "page_count": 1,
+   "description": null,
+   "text": "Oznámení o provedení příkazu k úhradě \nPayment order processing notification \n   \n \nDate and time of message issue \nKomerční banka, a. s. \nSídlo: Praha 1, Na Příkopě 33, čp. 969, PSČ 114 07, \n1/1 \nIČO: 45 31 70 54, banka je zapsána v obchodním rejstříku vedeném \nMěstským soudem v Praze, oddíl B, vložka 1360 \nR000145666_Z25_06017 \nStav příkazu \nStatus of the payment \nzaúčtovaný \nbooked \n   \n   \n   \nNa vrub účtu číslo \nDebited account number \nKód banky \nBank code \nDatum splatnosti \nPayable date \nSymboly platby \nSymbols of the payment \n  \n250048 \n 0100 \n   \n03.11.2025 \n Variabilní \nVariable \nKonstantní \nConstant \nSpecifický \nSpecific \nVe prospěch účtu číslo \nCredited account number \nKód banky \nBank code \nČástka/měna \nAmount/Currency \n   \n   \n   \n  \n11-3600267 \n   \n0100 \n  882 229,00 CZK \n4 \n 888 \n 0 \n 0 \nPopis pro mě \nDescription for me \n   \nZpráva pro příjemce \nMessage for beneficiary \n   \nStavby Fišer a.s. \nDatum a čas vyhotovení zprávy \n 13. 11. 2025 15:34",
+   "confidence": 0.98,
+   "pages_failed": [],
+   "signatures": []
+  },
+  {
+   "document_id": "afddcd",
+   "title": "2_Form_Zajistovaci_prevod_vl._prava.pdf",
+   "label": "zajistovaci_prevod",
+   "label_status": "predicted",
+   "processing_status": "completed",
+   "page_count": 6,
+   "description": null,
+   "text": "SMLOUVA O ZAJIŠŤOVACÍM PŘEVODU VLASTNICKÉHO PRÁVA  \nuzavřená níže uvedeného dne, měsíce a roku v souladu s § 2040 a násl. zákona č. 89/2012 Sb., \nobčanského zákoníku, ve znění pozdějších předpisů mezi:  \n  \nIdentifikace poskytovatele financování:  Identifikace příjemce financování:  \nSG Equipment Finance Czech Republic s.r.o.  Stavby a.s.  \nnáměstí Junkových 2772/1  \n155 00 Praha 5  \n  \nIČ:   61061344  \nDIC:  CZ61061344  \nZápis v OR: Městský soud v Praze, C 43038  \n  \nMlýnská 388/68, Trnitá  \n602 00 Brno  \n  \nIČ:  25317688  \nDIČ:  CZ25317688  \nZápis v OR: Krajský soud v Brně, B 4444  \n  \n- dále jen SGEF, též věřitel -  - dále jen příjemce financování, též dlužník -   \nZajišťovaná smlouva o úvěru č.: 171171/25 - \ndále jen zajišťovaná smlouva -   \nNázev:  Výrobce:  Výrobní číslo:  R. v.:  Stav:  V hodnotě:  \nTandemový válec BOMAG  BOMAG  101871101268  2025  nový  4 034 900,00 CZK   \nBW 154 vč. příslušenství  \n   \n  \n- dále jen předmět zajištění -  \n 1.  PŘEDMĚT A ÚČEL SMLOUVY  \n 1.1.  Věřitel uzavřel s dlužníkem v záhlaví definovanou zajišťovanou smlouvu.  \n1.2. Zajišťovací převod vlastnického práva k předmětu zajištění se uskutečňuje za účelem zajištění veškerých \ndluhů dlužníka vůči věřiteli vyplývajících ze závazku ze zajišťované smlouvy a/nebo vzniklých v \nsouvislosti se závazkem ze zajišťované smlouvy, včetně dluhů dlužníka vyplývajících z předčasného \nukončení (včetně odstoupení) závazku ze zajišťované smlouvy, práv na náhradu újmy, dluhů týkajících \nse zaplacení veškerých smluvních pokut podle zajišťované smlouvy, jakož i na vydání bezdůvodného \nobohacení, stane-li se nebo ukáže-li se být zajišťovaná smlouva neplatnou, zdánlivou, neúčinnou nebo \nnevymahatelnou (dále společně jen “dluh“).  \n 2.  PŘEDMĚT ZAJIŠTĚNÍ  \n2.1. Dlužník bude k okamžiku účinnosti této smlouvy výlučným vlastníkem předmětu zajištění a prohlašuje, že \npředmět zajištění k témuž okamžiku není zatížen žádným právem třetích osob, bude bez vad a funkční.  \n2.2. Dlužník k zajištění dluhu uvedeného v článku 1 odst. 1.2 této smlouvy převádí na věřitele dočasně \nvlastnické právo k předmětu zajištění.  \n3. PŘEVOD VLASTNICKÉHO PRÁVA A PRÁVO NA ZPENĚŽENÍ PŘEDMĚTU ZAJIŠTĚNÍ  \n3.1. Převodem vlastnického práva z dlužníka na věřitele se věřitel stává dočasným vlastníkem \npředmětu zajištění se všemi právy s tím spojenými a dlužník tato práva pozbývá. Věřitel \npřevod vlastnického práva k předmětu zajištění akceptuje.  \n  \nR000145664_Z25_06017\fR000145664_Z25_06017 \n   2 / 6  CZ_ZSD_700_802_250_c2  \n  \n3.2. Účinnost převodu vlastnického práva nastává okamžikem účinnosti této smlouvy, aniž by \ndošlo k fyzickému předání předmětu zajištění věřiteli. Věřitel a dlužník se dohodli, že předmět \nzajištění bude nadále při splnění podmínek stanovených touto smlouvou v užívání dlužníka. \nTímto současně smluvní strany uzavírají smlouvu o výpůjčce, kterou věřitel přenechává \ndlužníkovi předmět zajištění bezplatně do dočasného užívání. Dlužník nese nebezpečí \nnahodilého zničení, riziko poškození, ztráty, totální  \n 1 / 6  CZ_ ZSD_700_802_250_c2  \n  \nFCZ021CCE3  \n  \nškody a ztráty použitelnosti, odcizení či předčasného opotřebení, jakož i snížení hodnoty předmětu \nzajištění. Je-li předmětem zajištění vozidlo, které dle zákona musí být registrováno v registru silničních \nvozidel (dále jen vozidlo), je dlužník povinen na základě této smlouvy do 10 dnů od účinnosti této \nsmlouvy zapsat věřitele do registru silničních vozidel jako vlastníka, nebude-li dohodnuto jinak. Dlužník \nbude v registru silničních vozidel registrován jako provozovatel vozidla. Technický průkaz bude v držení \ndlužníka, nebude-li dohodnuto jinak.   \n3.3. Převod vlastnického práva podle této smlouvy se sjednává s rozvazovací podmínkou, spočívající v úplném \na řádném splnění všech dluhů dlužníka ze zajišťované smlouvy. Splněním rozvazovací podmínky \núčinky převodu vlastnického práva zanikají a vlastnické právo automaticky přechází zpět na dlužníka, \nkterý se tímto stane vlastníkem předmětu zajištění. Tyto účinky nastanou rovněž úplným splněním dluhů \ndlužníka ze zajišťované smlouvy po sjednané lhůtě splatnosti, dojde-li k takovému splnění před tím, \nnež věřitel odešle dlužníkovi výzvu k odevzdání předmětu zajištění dle odst. 3.4, jejíž součástí bude \noznámení o tom, že zajišťovací převod vlastnického práva se stává nepodmíněným.  \nSoučasně věřitel vydá dlužníkovi z úschovy doklady vztahující se k předmětu zajištění, byly-li uloženy \nu věřitele.  \n3.4. Dostane-li se dlužník do prodlení s úhradou dle zajišťované smlouvy a nesplní svoji povinnost ani přes \ndvě po sobě následující upomínky a/nebo pokud jiným podstatným způsobem poruší zajišťovanou \nsmlouvu, je povinen na první písemnou výzvu věřitele, vě řiteli odevzdat předmět zajištění včetně \nveškerých jeho součástí, příslušenství a dokladů, čímž zároveň zaniká výpůjčka uvedená v odst. 3.2 \ntohoto článku. Neučiní-li tak dlužník, je věřitel oprávněn předmět zajištění na náklady dlužníka odebrat. \nVěřitel je oprávněn předmět zajištění zpeněžit, a to s péčí řádného hospodáře formou přímého prodeje \nnebo ve  veřejné soutěži o nejvhodnější nabídku, jejímž jediným kritériem je nabídnutá cena. Před \nzpeněžením předmětu zajištění zjistí věřitel jeho hodnotu na základě ocenění, které věřitel na náklady \ndlužníka obdržel od věřitelem jmenovaného znalce, ze znalců zapsaných v seznamu soudních znalců \n(dále jen “hodnota předmětu zajištění“).  \n3.5. Veřejná soutěž bude vyhlášena na internetových stránkách věřitele, doba pro zasílání nabídek bude činit \njeden týden. Minimální nabídková cena bude činit 75% hodnoty předmětu zajištění, pokud se ve veřejné \nsoutěži nepřihlásí žádný zájemce, je věřitel o právněn nabízet předmět zajištění ve veřejné soutěži \nopakovaně, když minimální nabídková cena bude v dalších veřejných soutěžích vždy nižší o dalších \n20% hodnoty předmětu zajištění.  \n3.6. Přímý prodej předmětu zajištění třetí osobě vybrané věřitelem se uskuteční při dodržení následujících \npodmínek: a) předmět zajištění bude prodán za cenu rovnající se nejméně 75 % hodnoty předmětu \nzajištění; b) věřitel je povinen na písemnou žádost dlu žníka doložit, že s nabídkou přímého prodeje \npředmětu zajištění oslovil nejméně 2 potenciální zájemce, kterým lze v daném místě a čase potenciálně \nprodat věc srovnatelnou s předmětem zajištění za srovnatelných okolností, ledaže s ohledem na \npovahu předmětu zajištění splnění této podmínky po věřiteli nelze rozumně požadovat; c) Nebude -li \nvěřitel z důvodu nezájmu o koupi předmětu zajištění za cenu rovnající se nejméně 75 % hodnoty \npředmětu zajištění schopen předmět zajištění prodat po dobu 30 dnů od oznámení započetí realizace \npráva na zpeněžení předmětu zajištění podle této smlouvy dlužníkovi, je věřitel oprávněn prodat \npředmět zajištění za nejvyšší nabídnutou cenu, a to i přesto, že tato cena nebude dosahovat 75 % \nhodnoty předmětu zajištění; d) věřitel je op rávněn prodat předmět zajištění za nižší cenu než cenu \nodpovídající 75 % hodnoty předmětu zajištění i před uplynutím lhůty 30 dnů od oznámení započetí \nrealizace práva na zpeněžení předmětu zajištění podle této smlouvy dlužníkovi: (i) hrozí -li důvodné \nriziko poklesu ceny předmětu zajištění, v důsledku kterého může věřitel rozumně očekávat, že \ndosažená prodejní cena předmětu zajištění při prodeji před uplynutím výše uvedené lhůty 30 dnů bude \nvyšší než prodejní cena předmětu zajištění, kterou by bylo možné dosáhnout za srovnatelných okolností \npři prodeji po uplynutí uvedené lhůty; nebo (ii) bude-li k tomu mít předchozí souhlas dlužníka.\fR000145664_Z25_06017 \n   3 / 6  CZ_ZSD_700_802_250_c2  \n  \n3.7. Finanční prostředky z prodeje předmětu zajištění je věřitel po odečtení účelně vynaložených nákladů \nzpeněžení předmětu zajištění, včetně případné smluvní pokuty dle odst. 3.8 této smlouvy, oprávněn \npoužít k uspokojení touto smlouvou zajištěného dluhu dlužníka včetně příslušenství. Zbydou -li po \ntakovém uspokojení věřitele finanční prostředky, vydá je věřitel dlužníkovi. Strany si potvrzují, společný \nzájem dosáhnout co nejvyššího výnosu ze zpeněžení předmětu zajištění a s ohledem na to dlužník \nbere na vědomí, že není možno předvídat délku období, během kterého musí být prodej dokončen.   \n3.8. Pokud je dlužník v prodlení s úhradou dle zajišťované smlouvy a nesplní svoji povinnost ani přes dvě po \nsobě následující upomínky a/nebo pokud jiným podstatným způsobem poruší zajišťovanou smlouvu, je \nvěřitel dále oprávněn požadovat smluvní pokutu dle  své volby až do výše 5% hodnoty předmětu \nzajištění. Pokud po odečtení účelně vynaložených nákladů na zpeněžení předmětu zajištění a \npohledávky věřitele za dlužníkem včetně výše uvedené smluvní pokuty zbydou finanční prostředky, je \nvěřitel povinen vydat je dlužníkovi.  \n3.9. V případě, že dojde ke zpeněžení předmětu zajištění, zavazuje se dlužník vystavit řádný daňový doklad a \ndoručit jej věřiteli do 10 dnů ode dne, kdy mu bude sděleno, že předmět zajištění byl zpeněžen. Dlužník \npro případ, že nesplní svou povinnost uvede nou v předchozí větě, podpisem této smlouvy zároveň \nuděluje věřiteli plnou moc k tomu, aby věřitel takový doklad vystavil jménem dlužníka. Dlužník se \nzavazuje takto vystavený doklad přijmout a řádně zaevidovat. O zpeněžení předmětu bude dlužník \nneprodleně informován.  \n 4.  UŽÍVÁNÍ, ÚDRŽBA A POJIŠTĚNÍ PŘEDMĚTU ZAJIŠTĚNÍ  \n4.1. Dlužník je povinen užívat předmět zajištění v rámci své běžné činnosti výhradně v souladu s účelem, k \nněmuž je předmět zajištění určen a v rozsahu daném jeho charakterem tak, aby nedocházelo k jeho \npoškození nebo zničení s výjimkou běžného opotřebení předmětu zajištění. Dlužník je dále povinen \nužívat předmět zajištění pouze v místech a v rozsahu pojistného krytí předmětu zajištění.   \n4.2. Dlužník je povinen udržovat předmět zajištění v technicky bezvadném stavu a zdržet se všeho jednání, v \njehož důsledku by mohlo dojít ke snížení hodnoty předmětu zajištění nad rámec běžného opotřebení. \nÚdržbu a opravy smí provádět pouze autorizovaná servisní opravna, která je dodavatelem předmětu \nzajištění, popř. výrobcem k tomu oprávněna. Náklady na provoz, údržbu a opravy nese dlužník. V \nopačném případě je věřitel oprávněn na náklady dlužníka provést tyto činnosti sám. Dlužník je povinen \ndodržovat zákony a právní předpisy platné pro držení a užívání předmětu zajištění. Za účelem ochrany \nsvých zájmů je věřitel oprávněn předmět zajištění označit způsobem, který bude považovat za účelný.  \n4.3. Dlužník je povinen poskytnout věřiteli kdykoli veškeré požadované informace týkající se předmětu \nzajištění. Dlužník bude neprodleně informovat věřitele o všech skutečnostech, které mohou ovlivnit, \nomezit nebo vyloučit uspokojení pohledávky věřitele z případného prodeje předmětu zajištění (zejména \nuplatnění vlastnických práv třetích osob, zástavní právo, výkon rozhodnutí apod., popř. zvláštní událost \njako krádež, poškození nebo zničení). Škody na předmětu zajištění, jeho zničení nebo odcizení musí \nbýt s udáním všech relevantních okolností neprodleně písemně oznámeny věřiteli.  Poruší-li dlužník \nněkterou z těchto povinností, vzniká věřiteli právo na smluvní pokutu ve výši hodnoty předmětu zajištění \nuvedené v záhlaví této smlouvy.   \n4.4. Dlužník je povinen umožnit kdykoli oprávněné osobě věřitele provedení kontroly stavu předmětu zajištění \na dodržování smluvních podmínek. Dlužník je povinen informovat věřitele, je -li držitelem předmětu \nzajištění třetí osoba. Dlužník se zavazuje zajistit přístup k předmětu zajištění na vlastní náklady, a to i \nv případě, je -li držitelem předmětu zajištění třetí osoba. Není -li možné zajistit přístup k předmětu \nzajištění jinak, zavazuje se dlužník provést na vlastní náklady nezbytné stavební úpravy nutné p ro \numožnění převzetí předmětu zajištění. Dlužník je povinen umožnit věřiteli přezkoušení předmětu \nzajištění. Dlužník je povinen zdržet se jakéhokoli jednání, které by mohlo vést ke vzniku práv třetích \nosob k předmětu zajištění.  \n4.5. Změny na předmětu zajištění (vestavby, přestavby nebo jakékoli jiné technické změny) jsou možné \nvýhradně na základě předchozího písemného souhlasu věřitele. Smluvní strany se dohodly na tom, že \nmovité věci, které byly dlužníkem vestavěny do předmětu zajištění, přecházejí jejich zabudováním do \nvlastnictví věřitele. T ato smlouva se vztahuje i na uvedené vestavby.  \n4.6. Dlužník je povinen pojistit předmět zajištění proti obvyklým rizikům (včetně zákonného či povinně \nsmluvního pojištění, je -li stanoveno) a udržovat pojištění na vlastní náklady po celou dobu trvání \nsmluvního vztahu v platnosti. Podrobnosti o právech a povinnostech dlužníka i věřitele týkajících se \npojištění předmětu zajištění jsou uvedeny v zajišťované smlouvě. V případě totální škody na předmětu\fR000145664_Z25_06017 \n   4 / 6  CZ_ZSD_700_802_250_c2  \n  \nzajištění se smluvní strany zavazují ve lhůtě do jednoho měsíce od vzniku totální škody uzavřít na výzvu \njedné ze smluvních stran smlouvu o zajišťovacím převodu vlastnického práva za totožných podmínek \njako v této smlouvě ohledně jiného předmětu zajištění v obdobné hodnotě.   \n 4.7.  Veškeré daně a poplatky spojené s provozem a užíváním předmětu zajištění je povinen hradit dlužník.   \n4.8.  Každá exekuce postihující předmět zajištění nebo hrozba této exekuce musí být neprodleně ohlášena \nvěřiteli. Náklady na intervenci, pokud nebudou věřiteli uhrazeny, nese dlužník.  \n 5.  DOBA TRVÁNÍ ZÁVAZKU ZE SMLOUVY  \n5.1. Tato smlouva se stává platnou okamžikem podpisu oběma smluvními stranami. Je -li smlouva \npodepisována věřitelem elektronicky, nabývá platnosti nejdříve podpisem druhé z osob, které ji \npodepisují za věřitele. Tato smlouva nabývá účinnosti, jakmile se dlužník stane vlastníkem předmětu \nzajištění nebo dnem jejího podpisu, podle toho, která okolnost nastane později, v případě \nelektronického podepisování věřitelem nejdříve podpisem druhé z osob, které ji podepisují za věřitele, \na trvá až do okamžiku řádného a  úplného uspokojení všech zajištěných dluhů dlužníka vůči věřiteli. \nUstanovení o nabytí platnosti a/nebo účinnosti nejdříve okamžikem podpisu druhé z osob \npodepisujících za věřitele v případě elektronického podepisování se uplatní rovněž na veškeré případné \ndodatky či přílohy této smlouvy.  \n5.2. Po dobu účinnosti závazku z této smlouvy se dlužník nesmí dopustit jakéhokoli jednání majícího za \nnásledek zmaření či ztížení uspokojení věřitele pomocí předmětu zajištění, zejména se nesmí pokusit \npředmět zajištění zcizit nebo zatížit právy třetích osob. Dlužník rovněž odpovídá za to, že se jednání \nmajícího za následek zmaření či ztížení uspokojení věřitele pomocí předmětu zajištění nedopustil před \nnabytím účinnosti této smlouvy, zejména že předmět zajištění nezcizil ani nezatížil právy třetích osob. \nTakováto jednání dlužníka se považují za podstatné porušení zajišťované smlouvy uvedené v záhlaví; \nzároveň je v takovém případě dlužník povinen zaplatit věřiteli smluvní pokutu ve výši hodnoty předmětu \nzajištění uvedené v záhlaví této smlouvy.  \n 6.  PROHLÁŠENÍ DLUŽNÍKA  \n6.1. Dlužník činí při podpisu této smlouvy následující prohlášení a potvrzuje a zaručuje věřiteli pravdivost, \núplnost a přesnost tohoto prohlášení.   \n6.2. V případě právnické osoby: Dlužník je k podpisu této smlouvy, převzetí povinností dle této smlouvy a \nplnění této smlouvy oprávněn a jeho podpis této smlouvy, převzetí povinností dle této smlouvy a plnění \ntéto smlouvy nejsou v rozporu se zakladatelskými dokumenty ani vnitřními předp isy dlužníka ani v \nrozporu se smluvně převzatými povinnostmi dlužníka ani žádnými právními předpisy závaznými pro \ndlužníka a byly řádně schváleny v souladu s právními předpisy a se všemi příslušnými zakladatelskými \ndokumenty a vnitřními předpisy dlužníka a tato smlouva nevyžaduje ke své platnosti a účinnosti žádné \ndalší souhlasy nebo jiné úkony. Dlužník prohlašuje, že si není vědom, že by (i) nejvyšší orgán dlužníka \nnebyl informován o podmínkách této smlouvy, (ii) nejvyšší org án dlužníka zakázal uzavření této \nsmlouvy, (iii) členu/členům orgánu dlužníka, který/kteří uzavírají tuto smlouvu, byl pozastaven výkon \nfunkce a (iv) společenská smlouva / stanovy dlužníka vyžadovaly souhlas nejvyššího orgánu dlužníka \nk uzavření této smlouvy.  \n6.3. V případě fyzické osoby: Dlužník je k podpisu této smlouvy, převzetí povinností dle této smlouvy a plnění \ntéto smlouvy oprávněn a jeho podpis této smlouvy, převzetí povinností dle této smlouvy a plnění této \nsmlouvy nejsou v rozporu se smluvně převzatými povinnostmi dlužníka ani žádnými právními předpisy \nzávaznými pro dlužníka a tato smlouva nevyžaduje ke své platnosti a účinnosti žádné další souhlasy \nnebo jiné úkony či kroky.  \n6.4. Předmět zajištění je způsobilý být předmětem převodu vlastnického práva z dlužníka na věřitele a \nneexistuje žádná skutečnost, která má nebo by mohla mít za následek částečnou nebo úplnou \nneplatnost či nevynutitelnost této smlouvy. Dlužník se zavazuje v souladu s právními předpisy provést \nveškeré úkony, které souvisí s převodem vlastnického práva, a to včetně registrace předmětu zajištění, \npokud je registrace právními předpisy vyžadována.   \n6.5. Je-li předmětem zajištění vozidlo, které dle zákona musí být registrováno v registru silničních vozidel (dále \njen „vozidlo“), je dlužník povinen na základě této smlouvy do 10 dnů od účinnosti této smlouvy nechat \nzapsat věřitele do registru silničních vozidel jako vlastníka. Dlužník bude v registru silničních vozidel\fR000145664_Z25_06017 \n   5 / 6  CZ_ZSD_700_802_250_c2  \n  \nregistrován jako provozovatel vozidla. Dlužník je povinen do 5 pracovních dnů po registraci vozidla/po \nzápisu změn v registru silničních vozidel předat věřiteli kopii osvědčení o registraci vozidla obsahujícího \núdaj o vlastnictví věřitele.  \n6.6. Věřitel v souvislosti s podpisem této smlouvy o zajišťovacím převodu práva udělí dlužníkovi plnou moc k \nzápisu věřitele jako vlastníka vozidla do registru silničních vozidel a udělí dlužníkovi souhlas, aby se \ndlužník v registru silničních vozidel nechal zaregistrovat jako provozovatel vozidla. Věřitel souhlasí s \ntím, aby vozidlo bylo zaregistrováno v registru silničních vozidel příslušném dle sídla/trvalého bydliště \ndlužníka.  \n6.7. Dlužník je pro případ, že předmětem zajištění je vozidlo, které nebude z jeho strany v rozporu s článkem \n6. odst. 6.5. této smlouvy zaregistrováno v registru silničních vozidel s věřitelem jako vlastníkem, \npovinen udělit věřiteli současně s podpisem t éto smlouvy plnou moc ke všem právním jednáním \nsouvisejícím s vyznačením změny vlastníka vozidla v evidenci registru silničních vozidel a k \neventuálnímu vystavení duplikátů chybějících dokumentů u vozidla.  \n 7.  DORUČOVÁNÍ  \n7.1. Jakékoliv oznámení, upomínka, výzva nebo jakékoliv jiné sdělení, jež má být podle této smlouvy učiněno, \nbude považováno za doručené:  \na) dnem fyzického předání oznámení, je-li oznámení zasíláno prostřednictvím kurýra nebo osobně, resp. \ndnem, kdy bylo odmítnuto převzetí; nebo  \nb) dnem odeslání se zpětným potvrzením bezporuchovosti takovéhoto odeslání, je-li oznámení zasíláno \nprostřednictvím faxu, resp. dnem, kdy zpětné potvrzení bylo neoprávněně odmítnuto; nebo  \nc) dnem doručení potvrzeným na doručence, je-li oznámení zasíláno doporučenou poštou, resp. sedmým \ndnem ode dne podání na poště, nebyla-li zásilka přes poštovní výzvu vyzvednuta, za předpokladu, že \nadresát měl objektivní možnost se s ní seznámit.  \n7.2. Veškerá sdělení dle odst. 7.1 budou doručována na adresy uvedené u specifikace příslušných stran \nuvedené v záhlaví této smlouvy, nedohodnou-li se strany jinak, nebo dokud neoznámí příslušná strana \nostatním stranám písemně změnu adresy pro doručování pro účely této smlouvy.  \n 8.  ZÁVĚREČNÁ USTANOVENÍ  \n8.1. Platí, že dlužník může návrh této smlouvy přijmout pouze ve znění navrhovaném věřitelem s vyloučením \nmožného přijetí návrhu této smlouvy s dodatkem nebo odchylkou dle § 1740 odst. 3 Občanského \nzákoníku.  \n 8.2.  Změny této smlouvy mohou být učiněny pouze písemně.  \n8.3. Dlužník prohlašuje, že při jednání o uzavření této smlouvy mu byly sděleny všechny pro něj relevantní \nskutkové a právní okolnosti k posouzení možnosti uzavřít tuto smlouvu dle § 1728 občanského \nzákoníku a že neočekává ani nepožaduje od věřitele žádné další informace v této věci.  \n8.4. Strany této smlouvy si ujednaly, že vylučují aplikaci ustanovení § 1799 a § 1800 občanského zákoníku \ntýkající se smluv uzavíraných adhezním způsobem na tuto smlouvu.  \n 8.5.  Povinnosti dlužníka z této smlouvy přecházejí na jeho právní nástupce.  \n8.6. Jestliže se jedno nebo více ustanovení této smlouvy stane neplatným či zdánlivým, platnost ostatních \nustanovení tím není dotčena. Smluvní strany si namísto neplatného či zdánlivého ustanovení dohodnou \ntakové platné ustanovení, které se bude nejvíce blížit hospodářskému účelu zamýšlenému neplatným \nči zdánlivým ustanovením.   \n8.7. Smluvní pokuty sjednané v této smlouvě jsou splatné sedmý den po doručení výzvy či příslušného (ve \nstanovených případech daňového) dokladu věřitele k zaplacení smluvní pokuty dlužníku, na účet \nvěřitele uvedený ve výzvě či v příslušném dokladu. Ustanoveními o smluvní pokutě není dotčeno právo \nvěřitele požadovat náhradu veškeré vzniklé škody způsobené porušením smluvní povinnosti, na kterou \nse vztahuje povinnost uhradit smluvní pokutu.\fR000145664_Z25_06017 \n   6 / 6  CZ_ZSD_700_802_250_c2  \n  \n 8.8.  Tato smlouva se řídí právním řádem České republiky.   \n8.9. Všechny spory vznikající z této smlouvy a v souvislosti s ní budou rozhodovány s konečnou platností u \nRozhodčího soudu při Hospodářské komoře České republiky a Agrární komoře České republiky podle \njeho řádu třemi rozhodci.  \n8.10. Tato smlouva je vyhotovena ve dvou stejnopisech, z nichž každá smluvní strana obdrží po jednom.  \n....................  \nDatum  \nBrno, ............1.12.2025........  \nMísto, datum  \nPoskytovatel financování:  Příjemce financování:  \nSG Equipment Finance Czech Republic s.r.o.  FIRESTA-Fišer, rekonstrukce, stavby a.s.  \n............... ........  \nPodpis  \n  \n............. ..........  \nPodpis  \n  \n.................... ...........  \nPodpis  \n  \n        Petr Kůt  \nJméno  \n     .Karel Jíra.  \nJméno  \n....................George Fišer...........  \nJméno  \n  \nzmocněnec  \nFunkce  \n  \n  \nzmocněnec  \nFunkce  \n  \n  \n................jednatel...............  \nFunkce  \n  \nV případě elektronického podepisování mohou být podpisy připojeny namísto ve shora uvedené podpisové \ntabulce v podpisovém archu, jenž je v takovém případě nedílnou součástí tohoto dokumentu.",
+   "confidence": 0.98,
+   "pages_failed": [],
+   "signatures": [
+    {
+     "signature_id": "sig_afddcd_01",
+     "page": 6,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "provider",
+     "role_source": "nearest_text",
+     "role_evidence": "Poskytovatel financování: SG Equipment Finance Czech Republic s.r.o. / Petr Kůt, zmocněnec",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    },
+    {
+     "signature_id": "sig_afddcd_02",
+     "page": 6,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "provider",
+     "role_source": "nearest_text",
+     "role_evidence": "Poskytovatel financování: SG Equipment Finance Czech Republic s.r.o. / Karel Jíra, zmocněnec",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    },
+    {
+     "signature_id": "sig_afddcd_03",
+     "page": 6,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "borrower",
+     "role_source": "nearest_text",
+     "role_evidence": "Příjemce financování: FIRESTA-Fišer, rekonstrukce, stavby a.s. / George Fišer, jednatel",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    }
+   ]
+  },
+  {
+   "document_id": "18a4a2",
+   "title": "3_Form_Vinkulace_poj.pdf",
+   "label": "vinkulace_pojisteni",
+   "label_status": "predicted",
+   "processing_status": "completed",
+   "page_count": 2,
+   "description": null,
+   "text": "Příjemce financování (Pojistník):  Stavby fišer a.s. Mlýnská 388/68, Trnitá, \n602 00 Brno IČ: 25317628  \nRozsah pojištění:  odcizení, vandalismus, škodní, živelní  \nPředmět pojištění:  Tandemový válec BOMAG BW 154 vč. příslušenství   \nVýrobní číslo:  101871101268  \nZačátek pojištění:  …………………1.12.2025…………………………... (prosíme doplňte)  \nČíslo pojistné smlouvy:  ………………………123456789……………….…….. (prosíme doplňte)  \nPojistná částka:  4 034 900,00 CZK  \nPoskytovatel financování:  SG Equipment Finance Czech Republic s.r.o. náměstí \nJunkových 2772/1, 155 00 Praha 5  \nIČ: 61061344  \nE-mail: cc@sgef.cz  \nČ. účtu: 0162710187/0100  \nPo dobu trvání závazku ze smlouvy č.: 17026014/25 uzavřené mezi pojistníkem a poskytovatelem financování se \npojistitel neodvolatelně zavazuje, že:  \n1. V případě vzniku pojistné události nevyplatí pojistné plnění vztahující se k předmětu pojištění jinému subjektu, \nnež je poskytovatel financování, bez předchozího písemného souhlasu poskytovatele financování.  \n2. Nebude-li dohodnuto jinak, případná pojistná plnění budou vyplácena na výše uvedený účet poskytovatele \nfinancování.  \n3. V případě vzniku práva na pojistné plnění bude neprodleně poskytovatele financování o této skutečnosti \ninformovat.   \n4. Bude neprodleně poskytovatele financování informovat o zániku nebo ukončení pojištění.  \n  \nPojistitel bere na vědomí, že v textu shora uvedené smlouvy zmocnil příjemce financování poskytovatele \nfinancování, aby kontaktoval pojistitele za účelem získávání informací o stavu a změnách veškerých pojistných \nsmluv týkajících se předmětu pojištění (kte rý je zároveň předmětem financování), výplatách pojistného plnění, \nplatbách pojistného a pojistných událostech.   \n  \nPojistitel bere na vědomí, že poskytovatel financování byl pojistníkem v textu shora uvedené smlouvy oprávněn \ndále zmocnit ve stejném rozsahu pojišťovacího zprostředkovatele. S těmito oprávněními poskytovatele financování \npojistitel souhlasí.   \n  \nV …Praze……………….., dne 1.11.2025    ........................ ...............................................  \nPodpis a razítko pojistitele  \n  \n  \n……………Jirsa, poradce……………………………………..  \nJméno a funkce podepisující osoby  \nPLNÁ IDENTIFIKACE POJISTITELE (prosíme doplňte)  \nNázev společnosti: Pojišťovna ABC………………………. Sídlo:Staré Pecky 1, Peckov.  \nIČ: 9878564    Zápis v OR: ………………………………spis. Značka 5567…….  \n  \nPříjemce financování (pojistník) tímto v souladu s § 126 a násl. zákona č. 277/2009 Sb., o pojišťovnictví, ve znění \npozdějších předpisů, uděluje pojistiteli souhlas s poskytnutím výše uvedených informací a informací o \nskutečnostech týkajících se pojištění,  k němuž se vztahuje právní jednání, jehož obsahovou součástí je tento \nsouhlas, což dokládá svým podpisem.  \n  \nV Brno, dne .1.11.2025       ………………………………………………..  \n.                                                                            Podpis a razítko příjemce financování (Pojistníka)  \n  \nV případě elektronického podepisování mohou být podpisy namísto ve shora uvedeném místě určeném pro podpis \npřipojeny v podpisovém archu, jenž je v takovém případě nedílnou součástí tohoto dokumentu.  \n  \nPROHLÁŠENÍ O VINKULACI \n   \n  \nR000145668_Z25_06017\fCZ_SDA_000_702_112_c2  \n  \nFCZ021CCDE",
+   "confidence": 0.98,
+   "pages_failed": [],
+   "signatures": [
+    {
+     "signature_id": "sig_18a4a2_01",
+     "page": 1,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "insurer",
+     "role_source": "nearest_text",
+     "role_evidence": "Podpis a razítko pojistitele / Jirsa, poradce",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    },
+    {
+     "signature_id": "sig_18a4a2_02",
+     "page": 1,
+     "bbox": null,
+     "detector": "textract",
+     "detection_score": 72.0,
+     "role": "borrower",
+     "role_source": "nearest_text",
+     "role_evidence": "Podpis a razítko příjemce financování (Pojistníka)",
+     "crop_url": null,
+     "phash": null,
+     "copy_suspicion": {
+      "level": "none",
+      "matches": []
+     },
+     "similar_signatures": []
+    }
+   ]
+  }
+ ]
+}

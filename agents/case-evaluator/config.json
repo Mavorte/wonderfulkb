@@ -1,0 +1,218 @@
+{
+  "profile": {
+    "version": "1.0",
+    "name": "case-evaluator",
+    "display_name": "Case Evaluator",
+    "description": "Backoffice agent that checks a loan case's documents against the business rules before disbursement",
+    "mode": "backoffice",
+    "locale": "en-US",
+    "timezone": "UTC",
+    "gender": "female"
+  },
+  "behavior": {
+    "routing": {
+      "mode": "automated"
+    },
+    "channels": {
+      "task": {
+        "async_timeout_minutes": 15
+      }
+    },
+    "attachments": {
+      "enabled": true,
+      "upload_to_s3": true,
+      "max_per_conversation": 0,
+      "max_file_size_mb": 0,
+      "max_extracted_text_chars": 0,
+      "ocr_provider": "gemini",
+      "ocr_options": {
+        "model": "gemini-3.5-flash-lite",
+        "temperature": 0.1
+      }
+    },
+    "guardrails": {
+      "pii": {
+        "policies": [],
+        "beep_padding_start_ms": 0,
+        "beep_padding_end_ms": 0,
+        "batch_verifier_enabled": false,
+        "batch_verifier_max_retries": 0,
+        "batch_verifier_continue_on_error": false,
+        "pii_masking_thinking_budget": 0
+      },
+      "governance_enabled": false,
+      "automated_issues_enabled": true
+    },
+    "privacy": {
+      "call_recording": {
+        "disabled": false,
+        "require_consent": false,
+        "upload_transcript": false
+      },
+      "data_retention": {
+        "enabled": false
+      }
+    },
+    "sandbox": {
+      "cache_directory_enabled": false,
+      "web_search_enabled": false,
+      "ai_analyst_enabled": false,
+      "coding_agent_enabled": false,
+      "demo_fast_mode_enabled": false,
+      "tool_output_cache_threshold_bytes": 65536
+    },
+    "internal": {
+      "compact_context": true,
+      "use_dynamic_announcements": true,
+      "prompts": {
+        "dynamic_announcement": {}
+      }
+    },
+    "capabilities": {
+      "disable_json_diacritics": false,
+      "disable_hours_and_numbers_diacritics": false
+    },
+    "tool_overrides": {},
+    "global_tools": {
+      "start_evaluation": {
+        "type": "programmable",
+        "config": {}
+      },
+      "get_document": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_loan_agreement_present": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_required_documents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_recipient_match": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_invoice_contents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_purchase_contract_contents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_handover_protocol_contents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_technical_specification_contents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_payment_proof_contents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_security_transfer_contents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_insurance_vinculation_contents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_guarantee_contents": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_recipient_consistent": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_client_status": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_supplier_consistent": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_provider_consistent": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_asset_consistent": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_amounts_consistent": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_contract_number_consistent": {
+        "type": "programmable",
+        "config": {}
+      },
+      "evaluate_guarantor_consistent": {
+        "type": "programmable",
+        "config": {}
+      },
+      "finish_evaluation": {
+        "type": "programmable",
+        "config": {}
+      },
+      "fail_evaluation": {
+        "type": "programmable",
+        "config": {}
+      }
+    }
+  },
+  "ai": {
+    "llm": {
+      "voice": {
+        "providers": {
+          "openai": {
+            "model": "gpt-realtime-1.5",
+            "top_p": 0
+          },
+          "wonderful-fr": {
+            "model": "gemma-4-31b",
+            "top_p": 0
+          }
+        },
+        "priority": [
+          "wonderful-fr",
+          "openai"
+        ],
+        "failure_threshold": 3
+      },
+      "chat": {
+        "providers": {
+          "wonderful-fr": {
+            "model": "gemma-4-31b",
+            "top_p": 0
+          }
+        },
+        "priority": [
+          "wonderful-fr"
+        ],
+        "failure_threshold": 3,
+        "enabled": false
+      }
+    }
+  },
+  "prompts": {
+    "agent": "base.md",
+    "summary": "summary.md",
+    "tags": "tags.md",
+    "skip_turn": {},
+    "read_directive": "internal_prompts/read_directive.md"
+  },
+  "a2a": {
+    "server": {
+      "internal_enabled": true,
+      "enabled": false
+    }
+  }
+}

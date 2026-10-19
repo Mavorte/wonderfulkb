@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Document Get",
+  "description": "Fetches one document from the AWS documents API: validation view, vectors or signatures",
+  "method": "POST",
+  "path_slug": "document-get"
+}

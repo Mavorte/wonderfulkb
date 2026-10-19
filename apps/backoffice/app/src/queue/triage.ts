@@ -1,24 +1,30 @@
-// Ranks cases for the backoffice work queue. A case's status says whose move it
-// is; findings derived from the client registry, the uploaded documents and the
-// loan terms extracted into case metadata say how acute it is.
+// Ranks the backoffice work queue: one row per case with a case-evaluator run.
+// A case's status says whose move it is; its latest run and the client registry
+// say how acute it is.
 
-import type { CaseStatus } from "../cases/caseStatus";
+import { isCaseStatus, type CaseStatus } from "../cases/caseStatus.ts";
+import { rawStatusLabel, ruleLabels } from "../review/ruleLabels.ts";
 
-export type { CaseStatus };
+export type QueueIssue = { rule_id: string; status: string; expected: string | null; found: string | null; reasoning: string };
 
+/** A case as the case-queue function returns it. */
 export type QueueCase = {
   case_id: string;
-  client_id: string;
-  status: CaseStatus;
-  created_at: string;
-  client: { name: string; ico: string; kyc_status: string | null; kyc_checked_at: string | null } | null;
-  principal: number | null;
-  months: number | null;
-  schedule_rows: number;
-  disbursement: string | null;
-  dates: Partial<Record<string, string>>;
-  expected_documents: string[];
-  documents: { filename: string; received_at: string; label?: string; confidence?: number }[];
+  // False when the case API has no case with this id; client and dates are then empty.
+  case_found: boolean;
+  client_id: string | null;
+  status: string;
+  created_at: string | null;
+  client: { name: string; ico: string; kyc_status: string | null } | null;
+  evaluation: {
+    evaluation_id: string;
+    status: string;
+    verdict: string | null;
+    summary: string | null;
+    started_at: string | null;
+    finished_at: string | null;
+    issues: QueueIssue[];
+  };
 };
 
 // Blocking stops the case; material must be resolved before a decision.
@@ -32,32 +38,52 @@ export type Finding = { severity: Severity; title: string; detail: string; actio
 export const tiers = ["decision", "waiting", "processing", "done"] as const;
 export type Tier = (typeof tiers)[number];
 
-export type TriagedCase = QueueCase & { tier: Tier; findings: Finding[] };
+export type TriagedCase = Omit<QueueCase, "status"> & { status: CaseStatus; tier: Tier; findings: Finding[] };
 
-const documentNames: Record<string, string> = {
-  uver: "loan agreement",
-  faktura: "invoice",
-  predani: "handover protocol",
-  cerpani: "drawdown request",
-  objednavka: "purchase order",
-  vinkulace: "insurance assignment",
-  zajisteni: "security transfer",
-  uhrada: "payment confirmation",
-  splatky: "repayment schedule",
-  nabidka: "offer",
-  ruceni: "guarantee",
-  specifikace: "technical specification",
-  dodaci_list: "delivery note",
-  pojisteni: "insurance policy",
+const tierByStatus: Record<CaseStatus, Tier> = {
+  awaiting_decision: "decision",
+  open: "waiting",
+  awaiting_clarification: "waiting",
+  intake_in_progress: "processing",
+  evaluating: "processing",
+  approved: "processing",
+  completed: "done",
 };
 
-export const documentName = (key: string) => documentNames[key] ?? key;
+const issueSeverity: Record<string, Severity> = {
+  conflict: "blocking",
+  failed: "blocking",
+  missing: "material",
+  cannot_verify: "material",
+};
+
+const issueAction: Record<string, string> = {
+  conflict: "Resolve the conflict between the documents",
+  failed: "Check the failed rule in the case review",
+  missing: "Request the missing item from the client",
+  cannot_verify: "Verify it by hand in the case review",
+};
+
+// The case API does not move cases along the lifecycle yet and leaves them
+// "open", so an open case is placed by its latest evaluator run. A failed run
+// waits on the worker to run it again, so it counts as awaiting a decision.
+export function statusOf(c: QueueCase): CaseStatus {
+  if (c.status !== "open" && isCaseStatus(c.status)) return c.status;
+  if (c.evaluation.status === "completed" || c.evaluation.status === "failed") return "awaiting_decision";
+  return "evaluating";
+}
 
 export function findIssues(c: QueueCase): Finding[] {
   const findings: Finding[] = [];
-  const { dates } = c;
 
-  if (!c.client) {
+  if (!c.case_found) {
+    findings.push({
+      severity: "blocking",
+      title: "Case not in the case registry",
+      detail: `The evaluator ran on case ${c.case_id}, which the case API does not know.`,
+      action: "Check which case the evaluator was run on",
+    });
+  } else if (!c.client) {
     findings.push({
       severity: "blocking",
       title: "Client not in registry",
@@ -73,95 +99,41 @@ export function findIssues(c: QueueCase): Finding[] {
     });
   }
 
-  // Paying the supplier directly before the contract is signed means money left without a binding loan.
-  const paidOn = dates.payment ?? dates.first_tranche;
-  if (c.disbursement === "supplier_direct" && paidOn && dates.signing && paidOn < dates.signing) {
-    findings.push({
-      severity: "blocking",
-      title: "Paid out before signing",
-      detail: `Supplier paid on ${paidOn}, contract signed on ${dates.signing}.`,
-      action: "Hold the case and verify the signing date on the contract",
-    });
-  }
-
-  if (dates.buyer_payment && dates.first_tranche && dates.first_tranche < dates.buyer_payment) {
-    findings.push({
-      severity: "blocking",
-      title: "Drawn before own contribution",
-      detail: `First tranche on ${dates.first_tranche}, client's own payment on ${dates.buyer_payment}.`,
-      action: "Confirm the own contribution was paid before the drawdown",
-    });
-  }
-
-  const uploaded = c.documents.map((d) => d.filename.toLowerCase());
-  const missing = c.expected_documents.filter((key) => !uploaded.some((name) => name.includes(key)));
-  if (missing.length > 0) {
+  const evaluation = c.evaluation;
+  if (evaluation.status === "failed") {
     findings.push({
       severity: "material",
-      title: `${missing.length} required ${missing.length === 1 ? "document" : "documents"} missing`,
-      detail: `Missing: ${missing.map(documentName).join(", ")}.`,
-      action: "Request the missing documents from the client",
+      title: "Checks did not finish",
+      detail: "The latest case-evaluator run failed, so no check results are available.",
+      action: "Run the case evaluation again",
     });
   }
 
-  const unclassified = c.documents.filter((d) => d.label === "jine");
-  if (unclassified.length > 0) {
-    findings.push({
-      severity: "material",
-      title: `${unclassified.length} unclassified ${unclassified.length === 1 ? "document" : "documents"}`,
-      detail: `Not recognised as a known type: ${unclassified.map((d) => d.filename).join(", ")}.`,
-      action: "Classify the document manually",
-    });
+  if (evaluation.status === "completed") {
+    for (const issue of evaluation.issues) {
+      const label = ruleLabels[issue.rule_id] ?? issue.rule_id.replace(/_/g, " ");
+      findings.push({
+        severity: issueSeverity[issue.status] ?? "material",
+        title: `${label}: ${(rawStatusLabel[issue.status] ?? issue.status).toLowerCase()}`,
+        detail: issue.found ?? issue.reasoning,
+        action: issueAction[issue.status] ?? "Check the rule in the case review",
+      });
+    }
   }
 
-  if (c.documents.length > 0 && c.principal === null) {
-    findings.push({
-      severity: "material",
-      title: "Loan terms not extracted",
-      detail: "Documents are uploaded but no principal, term or dates were extracted.",
-      action: "Check the loan agreement and enter the terms",
-    });
-  }
-
-  if (c.months && c.schedule_rows > 0 && c.schedule_rows < c.months) {
-    findings.push({
-      severity: "material",
-      title: "Repayment schedule incomplete",
-      detail: `${c.schedule_rows} of ${c.months} instalments are in the schedule.`,
-      action: "Compare the schedule with the loan agreement",
-    });
-  }
-
-  return findings;
+  // Blocking findings first, so the row leads with what stops the case.
+  return findings.sort((a, b) => Number(b.severity === "blocking") - Number(a.severity === "blocking"));
 }
-
-// The cases table does not track the lifecycle yet and leaves every case "open",
-// so an open case that already has documents is placed by how far intake got.
-export function statusOf(c: QueueCase): CaseStatus {
-  if (c.status !== "open" || c.documents.length === 0) return c.status;
-  return c.principal === null ? "intake_in_progress" : "awaiting_decision";
-}
-
-const tierByStatus: Record<CaseStatus, Tier> = {
-  awaiting_decision: "decision",
-  open: "waiting",
-  awaiting_clarification: "waiting",
-  intake_in_progress: "processing",
-  evaluating: "processing",
-  approved: "processing",
-  completed: "done",
-};
 
 const count = (c: TriagedCase, severity: Severity) => c.findings.filter((f) => f.severity === severity).length;
 
-/** Most acute first: tier, then blocking and material findings, then exposure, then the oldest case. */
+/** Most acute first: tier, then blocking and material findings, then the longest-waiting run. */
 export function compareCases(a: TriagedCase, b: TriagedCase): number {
   return (
     tiers.indexOf(a.tier) - tiers.indexOf(b.tier) ||
     count(b, "blocking") - count(a, "blocking") ||
     count(b, "material") - count(a, "material") ||
-    (b.principal ?? -1) - (a.principal ?? -1) ||
-    a.created_at.localeCompare(b.created_at)
+    (a.evaluation.started_at ?? "").localeCompare(b.evaluation.started_at ?? "")
   );
 }
 

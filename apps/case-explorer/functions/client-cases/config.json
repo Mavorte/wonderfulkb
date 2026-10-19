@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Client Cases",
+  "description": "Lists a client's cases from the AWS case/client API (GET /clients/{client_id}/cases)",
+  "method": "POST",
+  "path_slug": "client-cases"
+}

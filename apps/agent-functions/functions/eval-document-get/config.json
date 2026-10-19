@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Eval Document Get",
+  "description": "Returns one document's page texts for the case-evaluator agent (body: case_id, document_id)",
+  "method": "POST",
+  "path_slug": "eval-document-get"
+}

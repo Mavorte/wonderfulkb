@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "name": "Case evaluation: document contents rules",
+  "description": "Missing fields, missing signatures, blank and unreadable pages, and signatures that could not be loaded.",
+  "scenario_slugs": [
+    "clean_case_ready",
+    "multiple_defects",
+    "invoice_incomplete",
+    "purchase_contract_unsigned_by_seller",
+    "purchase_contract_page_failed",
+    "handover_unsigned_by_recipient",
+    "handover_blank_page",
+    "handover_low_confidence_scan",
+    "technical_specification_required",
+    "technical_specification_incomplete",
+    "payment_proof_without_reference",
+    "security_transfer_one_sgef_signatory",
+    "vinculation_unsigned_by_insurer",
+    "guarantee_unsigned_by_guarantor",
+    "signatures_unavailable"
+  ],
+  "max_parallel_evaluations": 15
+}

@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Case Queue",
+  "description": "Lists every case from the AWS case/client API (GET /cases) with its client (GET /clients) and its latest case-evaluator run with the rules that did not pass, for the Work queue",
+  "method": "GET",
+  "path_slug": "case-queue"
+}
