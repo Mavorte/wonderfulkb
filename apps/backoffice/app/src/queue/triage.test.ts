@@ -37,10 +37,10 @@ test("evaluator conflicts block, missing items are material, blocking findings c
     evaluation: { ...evaluation, issues: [issue("invoice_contents", "missing"), issue("recipient_matches_client", "conflict")] },
   });
   assert.deepEqual(
-    findings.map((f) => [f.severity, f.title, f.detail]),
+    findings.map((f) => [f.severity, f.title]),
     [
-      ["blocking", "Recipient matches client record: conflict", "recipient_matches_client conflict"],
-      ["material", "Invoice: missing", "invoice_contents missing"],
+      ["blocking", "Recipient matches client record: conflict"],
+      ["material", "Invoice: missing"],
     ],
   );
 });

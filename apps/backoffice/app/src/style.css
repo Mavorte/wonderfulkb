@@ -182,3 +182,6 @@
 .bo-queue__done[open] > summary { margin-bottom: var(--kb-space-4); }
 .bo-table--queue .bo-status { margin: var(--kb-space-1) 0; }
 .bo-queue__review { display: block; margin-top: var(--kb-space-2); font-weight: var(--kb-weight-regular); }
+/* The review link stretches over its row, so the whole row opens the case. */
+.bo-table--queue tbody tr { position: relative; cursor: pointer; }
+.bo-queue__review::after { content: ""; position: absolute; inset: 0; }

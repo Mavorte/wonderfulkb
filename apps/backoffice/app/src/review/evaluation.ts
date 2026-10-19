@@ -34,7 +34,6 @@ export interface ResultRow {
 export interface EvaluationPayload {
   evaluation: EvaluationRow | null;
   results: ResultRow[];
-  evaluations: EvaluationRow[];
 }
 
 export interface SourceRef {
