@@ -1,0 +1,5 @@
+{
+  "httpMethod": "GET", "resource": "/clients", "path": "/clients",
+  "pathParameters": null, "queryStringParameters": {"limit": "2"},
+  "body": null, "isBase64Encoded": false
+}

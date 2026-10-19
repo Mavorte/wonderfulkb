@@ -6,7 +6,8 @@
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "build": "node build.mjs",
-    "package:plugin": "node scripts/package-plugin.mjs"
+    "package:plugin": "node scripts/package-plugin.mjs",
+    "test": "node --test \"functions/**/*.test.ts\""
   },
   "devDependencies": {
     "@wonderful/types": "^0.1.27",

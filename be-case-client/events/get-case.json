@@ -1,0 +1,5 @@
+{
+  "httpMethod": "GET", "resource": "/cases/{case_id}", "path": "/cases/fixture-old",
+  "pathParameters": {"case_id": "fixture-old"}, "queryStringParameters": null,
+  "body": null, "isBase64Encoded": false
+}

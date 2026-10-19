@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: wonderfulkb-ingest - API key secret and App Runner instance role
+
+Parameters:
+  RawBucket:
+    Type: String
+    Default: wonderfulkb-raw-document-storage
+
+Resources:
+  ApiKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: wonderfulkb/ingest-api-key
+      Description: x-api-key for wonderfulkb-ingest (Wonderful upload)
+      GenerateSecretString:
+        PasswordLength: 40
+        ExcludePunctuation: true
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: wonderfulkb-ingest-instance
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: tasks.apprunner.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: data
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:AbortMultipartUpload]
+                Resource: !Sub "arn:aws:s3:::${RawBucket}/cases/*"
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wonderfulkb-uw-documents"
+              - Effect: Allow
+                Action: dynamodb:GetItem
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wonderfulkb-uw-cases"
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref ApiKeySecret
+
+Outputs:
+  SecretArn: {Value: !Ref ApiKeySecret}
+  InstanceRoleArn: {Value: !GetAtt InstanceRole.Arn}

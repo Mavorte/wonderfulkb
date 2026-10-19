@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "name": "Client Intake",
+  "slug": "client-intake",
+  "description": "Client-facing intake: shows case and client details from AWS and uploads PDF documents for the case",
+  "analytics_events": [
+    { "key": "intake_opened", "feature_key": "client_intake", "stage": "opened", "label": "Intake page opened" },
+    { "key": "upload_started", "feature_key": "document_upload", "stage": "started", "label": "Document upload started" },
+    { "key": "upload_completed", "feature_key": "document_upload", "stage": "completed", "label": "Documents uploaded", "outcome": true },
+    { "key": "upload_failed", "feature_key": "document_upload", "stage": "failed", "label": "Document upload failed" }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Case Create",
+  "description": "Registers a Client Intake link for an existing case; without case_id, preserves standalone mocked case creation",
+  "method": "POST",
+  "path_slug": "case-create"
+}

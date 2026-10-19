@@ -9,7 +9,7 @@ import createCase, { type Case } from "./createCase";
 const documentTypes = [["loan_agreement", "Úvěrová smlouva"], ["invoice", "Faktura"], ["handover", "Předávací protokol"], ["insurance", "Pojištění"], ["guarantee", "Ručení"]];
 
 export default function NewCasePage() {
-  const { track } = useWonderful();
+  const { api: wonderfulApi, track } = useWonderful();
   const trackRef = useRef(track);
   trackRef.current = track;
   const [api] = useState(() => createDocumentApi());
@@ -51,9 +51,14 @@ export default function NewCasePage() {
     track("case_create_started");
     requestId.current ??= `case-${crypto.randomUUID()}`;
     try {
-      const created = await createCase(client, requestId.current, required, api);
+      const { case: created, intakeError } = await createCase(client, requestId.current, required, api, wonderfulApi);
       setCases((items) => [created, ...items.filter((item) => item.case_id !== created.case_id)]);
       setSelectedCase(created);
+      if (intakeError) {
+        setError("Případ je uložen a dokumenty lze zpracovávat. Registrace odkazu Client Intake selhala; opakované odeslání ji zkusí znovu pro stejný případ.");
+        track("case_create_failed", { step: "intake_link", case_id: created.case_id });
+        return;
+      }
       requestId.current = null;
       track("case_create_completed");
     } catch {
@@ -64,7 +69,7 @@ export default function NewCasePage() {
 
   return <>
     <h1 className="bo-title">Kontrola firemní dokumentace</h1>
-    <form className="bo-card" onSubmit={submit}>
+    <form className="bo-card" onSubmit={submit} noValidate>
       <ClientCombobox clients={clients} value={client} disabled={loading || submitting} error={error}
         onChange={(value) => { setClient(value); setError(undefined); }} />
       {loading && <p role="status">Načítání firem…</p>}
@@ -74,9 +79,18 @@ export default function NewCasePage() {
             onChange={(e) => setRequired((items) => e.target.checked ? [...items, key] : items.filter((item) => item !== key))} /> {label}
         </label>)}
       </fieldset>
-      <div className="bo-actions"><button className="kb-btn kb-btn--primary" disabled={loading || submitting || !client}>
-        {submitting ? "Zakládání…" : "Založit případ"}
+      <div className="bo-actions"><button type="submit" className={`kb-btn kb-btn--primary${submitting ? " is-loading" : ""}`}
+        aria-busy={submitting} disabled={loading || submitting || !client}>
+        {submitting ? "Zakládání…" : requestId.current && selectedCase?.case_id === requestId.current ? "Dokončit registraci odkazu" : "Založit případ"}
       </button></div>
+      <div role="status" aria-live="polite">
+        {selectedCase?.hash && client && <p className="bo-success">
+          <svg className="kb-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9.5 16.17 5.33 12l-1.41 1.41L9.5 19 20.5 8l-1.41-1.41L9.5 16.17Z" />
+          </svg>
+          <span>Případ <strong>{selectedCase.case_id}</strong> pro {client.name} je uložen. Hash odkazu Client Intake: <code>{selectedCase.hash}</code></span>
+        </p>}
+      </div>
     </form>
     {client && cases.length > 0 && <section className="bo-case-list" aria-label="Případy firmy">
       <h2>Případy: {client.name}</h2>
