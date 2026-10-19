@@ -2,10 +2,11 @@
 // shows: case details, client details, and whether documents can be uploaded.
 //
 // Configuration (tenant-level):
-// - global `kb_aws_documents_api_url`: base URL of the case/client API (openapi-case-client.yaml).
+// - global `case_eval_documents_api_url`: base URL of the AWS API that serves cases and
+//   clients (openapi-case-client.yaml).
 //   When empty, mock data is returned so the UI can be demoed before AWS is live.
 // - global `kb_aws_ingest_url`: base URL of the ingest service. Empty → upload disabled.
-// - secret `kb-aws-ingest-api-key` (type "API Key", header x-api-key): key for the case/client API.
+// - secret `kb-aws-ingest-api-key` (type "API Key", header x-api-key): key for that API.
 //   It is attached by the runtime (`secretName`) and never returned to the browser.
 
 import type { FunctionContext } from "@wonderful/types";
@@ -157,7 +158,7 @@ async function userFunction(context: FunctionContext): Promise<IntakeData | Inta
     return { error: "invalid_link" };
   }
 
-  const caseApiUrl = getGlobalUrl(context, "kb_aws_documents_api_url");
+  const caseApiUrl = getGlobalUrl(context, "case_eval_documents_api_url");
   const canUpload = Boolean(getGlobalUrl(context, "kb_aws_ingest_url"));
 
   if (!caseApiUrl) {

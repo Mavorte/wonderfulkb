@@ -1,13 +1,13 @@
 // Calls the AWS case/client API (openapi-case-client.yaml).
 //
 // Configuration (tenant-level):
-// - global `kb_aws_documents_api_url`: base URL of the API, e.g. `https://<id>.execute-api.eu-central-1.amazonaws.com/v1`.
+// - global `case_eval_documents_api_url`: base URL of the API, e.g. `https://<id>.execute-api.eu-central-1.amazonaws.com/v1`.
 // - secret `kb-aws-ingest-api-key` (type "API Key"): its `header_name` and `api_key`
 //   authenticate the request to API Gateway.
 
 import type { FunctionContext } from "@wonderful/types";
 
-const URL_GLOBAL = "kb_aws_documents_api_url";
+const URL_GLOBAL = "case_eval_documents_api_url";
 const SECRET_NAME = "kb-aws-ingest-api-key";
 const TIMEOUT_MS = 8000;
 
