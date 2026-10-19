@@ -1,12 +1,11 @@
 import { useState, type ReactNode } from "react";
 import KbLogo from "./kb/kb-logo.svg?react";
-import CasesPage from "./cases/CasesPage";
 import NewCasePage from "./cases/NewCasePage";
 import ClientsPage from "./clients/ClientsPage";
 import QueuePage from "./queue/QueuePage";
 import CaseReviewPage from "./review/CaseReviewPage";
 
-type Page = "queue" | "case-review" | "cases" | "new-case" | "clients";
+type Page = "queue" | "case-review" | "new-case" | "clients";
 
 const navItems: { page: Page; label: string; icon: ReactNode }[] = [
   {
@@ -20,11 +19,6 @@ const navItems: { page: Page; label: string; icon: ReactNode }[] = [
     icon: (
       <path d="M9 2h6v2h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h4V2Zm0 4H6v14h12V6h-3v2H9V6Zm1.5 10.4-3-3 1.4-1.4 1.6 1.6 4.6-4.6 1.4 1.4-6 6Z" />
     ),
-  },
-  {
-    page: "cases",
-    label: "All cases",
-    icon: <path d="M4 5h16v2H4V5Zm0 6h16v2H4v-2Zm0 6h16v2H4v-2Z" />,
   },
   {
     page: "new-case",
@@ -42,6 +36,12 @@ const navItems: { page: Page; label: string; icon: ReactNode }[] = [
 // @wonderful/ui-base, so the app matches KB's own visual language.
 export default function App() {
   const [page, setPage] = useState<Page>("queue");
+  const [reviewId, setReviewId] = useState<string | null>(null);
+
+  const openReview = (evaluationId: string) => {
+    setReviewId(evaluationId);
+    setPage("case-review");
+  };
 
   return (
     <div className="app-root bo-shell">
@@ -58,7 +58,11 @@ export default function App() {
                   type="button"
                   className="bo-nav__item"
                   aria-current={page === item.page ? "page" : undefined}
-                  onClick={() => setPage(item.page)}
+                  onClick={() => {
+                    // The nav item opens the review from the URL, not the last case opened from the queue.
+                    if (item.page === "case-review") setReviewId(null);
+                    setPage(item.page);
+                  }}
                 >
                   <svg className="kb-icon" viewBox="0 0 24 24" aria-hidden="true">
                     {item.icon}
@@ -71,9 +75,8 @@ export default function App() {
         </nav>
       </aside>
       <main className="bo-main">
-        {page === "queue" && <QueuePage />}
-        {page === "case-review" && <CaseReviewPage />}
-        {page === "cases" && <CasesPage onNewCase={() => setPage("new-case")} />}
+        {page === "queue" && <QueuePage onOpenReview={openReview} />}
+        {page === "case-review" && <CaseReviewPage key={reviewId} initialEvaluationId={reviewId} />}
         {page === "new-case" && <NewCasePage />}
         {page === "clients" && <ClientsPage />}
       </main>

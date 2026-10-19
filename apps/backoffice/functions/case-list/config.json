@@ -1,7 +1,0 @@
-{
-  "kind": "http",
-  "name": "Case List",
-  "description": "Lists all cases from the AWS case/client API (GET /cases), newest first, one page at a time",
-  "method": "GET",
-  "path_slug": "case-list"
-}
