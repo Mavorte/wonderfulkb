@@ -1,24 +1,26 @@
 # Client Intake
 
-Client-facing intake page. The client opens a share link, sees their case and client details, and uploads PDFs straight to the AWS ingest service.
+Client-facing intake page. The client opens a share link, sees their case and client details, and uploads PDFs, which are passed on to the AWS ingest service.
 
 ## Flow
 
 1. Link: `https://kb-hackathon.app.sb.wonderful.ai/s/G2o9x5js40Ir?h=<hash>` (the app's anonymous share link; no access token)
-2. `functions/intake-get` maps `h` → `case_id` in table `client_intake.intake_links`, calls `GET /cases/{case_id}` and `GET /clients/{client_id}` on the case/client API, and returns case, client and upload target.
-3. The browser POSTs all files in one `multipart/form-data` request to `{kb_aws_ingest_url}/cases/{case_id}/documents` with `x-api-key`.
+2. `functions/intake-get` maps `h` → `case_id` in table `client_intake.intake_links`, calls `GET /cases/{case_id}` and the client lookup on the case/client API, and returns case, client and whether upload is available.
+3. The browser sends each PDF (base64, max 10 MB) to `functions/intake-stage`, which stores it in Custom Storage under `client-intake/<case_id>/<uuid>/<name>` and returns the key. A share-link app can only invoke Functions, not the Custom Storage API.
+4. The browser calls `functions/intake-submit` with `h` and the storage keys plus original file names. The function checks the keys are inside the case's folder, downloads the files, POSTs them in one `multipart/form-data` request to `{kb_aws_ingest_url}/cases/{case_id}/documents`, and deletes the storage copies once ingest accepts them.
+
+The API keys stay server-side (`fetch(..., { secretName })`), so the AWS services need no CORS.
 
 ## Configuration
 
 | Name | Kind | Value |
 | --- | --- | --- |
-| `kb_aws_case_api_url` | global variable | Case/client API base, e.g. `https://<apiId>.execute-api.eu-central-1.amazonaws.com/v1`. Empty → mock data. |
-| `kb_aws_ingest_url` | global variable | Ingest service base. Empty → upload disabled. |
-| `kb-aws-api-key` | secret, type API Key | `{"header_name": "x-api-key", "api_key": "..."}` |
+| `kb_aws_case_api_url` | global variable | Case/client API base, `https://bgm7k1ggqi.execute-api.eu-central-1.amazonaws.com/v1`. Empty → mock data. |
+| `kb_aws_ingest_url` | global variable | Ingest service base, `https://vt9mavpjky.eu-central-1.awsapprunner.com/v1`. Empty → upload disabled. |
+| `kb-aws-api-key` | secret, type API Key | Case/client API key (API Gateway key `wonderfulkb-demo-key`): `{"header_name": "x-api-key", "api_key": "..."}` |
+| `kb-aws-ingest-api-key` | secret, type API Key | Ingest key (AWS Secrets Manager `wonderfulkb/ingest-api-key`), same shape. It differs from the case API key. |
 
-The AWS ingest service must allow CORS from `https://kb-hackathon.app.sb.wonderful.ai` (`POST`, headers `x-api-key`, `Content-Type`, plus the `OPTIONS` preflight).
-
-Case details shown come from `case.metadata`: `loan_number`, `asset`, `serial_number`, `required_documents` (string array). Until `GET /clients/{client_id}` exists, the function falls back to `GET /clients?ico=<metadata.ico>`.
+Case details shown come from `case.metadata` (`loan_number`, `asset`, `serial_number`, `required_documents` string array), falling back to the top-level `loan_agreement_no`, `asset_name` and `serial_number` that synthetic cases use. `GET /clients/{client_id}` is not deployed, so the function falls back to `GET /clients?ico=<metadata.ico>`, or lists the clients and matches `client_id`.
 
 ## Links
 
