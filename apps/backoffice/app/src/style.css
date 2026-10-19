@@ -71,6 +71,7 @@
 .bo-success__list { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: var(--kb-space-1) var(--kb-space-4); }
 .bo-success__list dt { color: var(--kb-text-secondary); }
 .bo-success__list dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.bo-link { display: flex; flex-wrap: wrap; gap: var(--kb-space-2); align-items: center; }
 
 .bo-combobox { position: relative; }
 .bo-combobox__search { position: absolute; left: 12px; top: 12px; pointer-events: none; }
