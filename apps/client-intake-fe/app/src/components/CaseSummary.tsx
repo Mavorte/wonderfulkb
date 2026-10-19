@@ -1,28 +1,20 @@
-import { Badge, Card, Col, Icon, Row, Stack, Text } from "@wonderful/ui-base";
 import type { IntakeData } from "../types";
+import KbIcon from "./KbIcon";
 
 type Field = { label: string; value: unknown };
 
 function FieldList({ fields }: { fields: Field[] }) {
   const visible = fields.filter((f) => f.value !== undefined && f.value !== null && f.value !== "");
-  if (visible.length === 0) {
-    return (
-      <Text variant="body-sm" color="secondary">
-        No details available.
-      </Text>
-    );
-  }
+  if (visible.length === 0) return <p className="app-empty">No details available.</p>;
   return (
-    <Stack gap={3}>
+    <dl className="app-fields">
       {visible.map((f) => (
-        <Stack gap={1} key={f.label}>
-          <Text variant="label-sm" color="secondary">
-            {f.label}
-          </Text>
-          <Text variant="body">{String(f.value)}</Text>
-        </Stack>
+        <div key={f.label}>
+          <dt>{f.label}</dt>
+          <dd>{String(f.value)}</dd>
+        </div>
       ))}
-    </Stack>
+    </dl>
   );
 }
 
@@ -34,44 +26,51 @@ export default function CaseSummary({ data }: { data: IntakeData }) {
   const client = data.client;
 
   return (
-    <Stack gap={4}>
-      <Row>
-        <Col xs={12} md={6}>
-          <Card padding={5} title="Case" actions={data.is_mock ? <Badge text="Demo data" color="orange" /> : undefined}>
-            <FieldList
-              fields={[
-                { label: "Case ID", value: data.case.case_id },
-                { label: "Loan agreement", value: metadata.loan_number },
-                { label: "Financed asset", value: metadata.asset },
-                { label: "Serial number", value: metadata.serial_number },
-              ]}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} md={6}>
-          <Card padding={5} title="Client">
-            <FieldList
-              fields={[
-                { label: "Name", value: client?.name },
-                { label: "IČO", value: client?.ico },
-                { label: "DIČ", value: client?.dic },
-                { label: "Address", value: client?.address },
-              ]}
-            />
-          </Card>
-        </Col>
-      </Row>
+    <>
+      <div className="app-grid">
+        <section className="app-card">
+          <div className="app-card__head">
+            <h2 className="app-card__title">Case</h2>
+            {data.is_mock && <span className="kb-badge kb-badge--dark">Demo data</span>}
+          </div>
+          <FieldList
+            fields={[
+              { label: "Case ID", value: data.case.case_id },
+              { label: "Loan agreement", value: metadata.loan_number },
+              { label: "Financed asset", value: metadata.asset },
+              { label: "Serial number", value: metadata.serial_number },
+            ]}
+          />
+        </section>
+        <section className="app-card">
+          <div className="app-card__head">
+            <h2 className="app-card__title">Client</h2>
+          </div>
+          <FieldList
+            fields={[
+              { label: "Name", value: client?.name },
+              { label: "IČO", value: client?.ico },
+              { label: "DIČ", value: client?.dic },
+              { label: "Address", value: client?.address },
+            ]}
+          />
+        </section>
+      </div>
       {requiredDocuments.length > 0 && (
-        <Card padding={5} title="Documents we need from you">
-          <Stack gap={2}>
+        <section className="app-card">
+          <div className="app-card__head">
+            <h2 className="app-card__title">Documents we need from you</h2>
+          </div>
+          <ul className="app-list">
             {requiredDocuments.map((doc) => (
-              <Text variant="body" key={doc}>
-                <Icon name="file-pdf" color="secondary" /> {doc}
-              </Text>
+              <li key={doc}>
+                <KbIcon name="file" className="kb-icon--accent" />
+                {doc}
+              </li>
             ))}
-          </Stack>
-        </Card>
+          </ul>
+        </section>
       )}
-    </Stack>
+    </>
   );
 }
