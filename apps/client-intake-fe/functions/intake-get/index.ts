@@ -5,7 +5,7 @@
 // - global `kb_aws_case_api_url`: base URL of the case/client API (openapi-case-client.yaml).
 //   When empty, mock data is returned so the UI can be demoed before AWS is live.
 // - global `kb_aws_ingest_url`: base URL of the ingest service. Empty → upload disabled.
-// - secret `kb-aws-api-key` (type "API Key", header x-api-key): key for the case/client API.
+// - secret `aws_api_key` (type "API Key", header x-api-key): key for the case/client API.
 //   It is attached by the runtime (`secretName`) and never returned to the browser.
 
 import type { FunctionContext } from "@wonderful/types";
