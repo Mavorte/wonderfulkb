@@ -1,0 +1,5 @@
+# vývoj a testy (bez AWS): moto, pytest; PyMuPDF jen z hotového kola (Python 3.14: jinak se kompiluje a visí)
+-r requirements-worker.txt
+boto3>=1.40
+pytest>=8
+moto[s3,dynamodb,sqs]>=5

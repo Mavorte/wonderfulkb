@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: wonderfulkb Validator Agent API (návrh)
-  version: 0.3.0
+  version: 0.4.0
   description: |
     Čtecí API, kterým Wonderful vyhodnocovací (validační) agent získává vstupy k posouzení case.
     Návrh, nic není nasazené. Podrobný popis a otevřené otázky: `VALIDATOR-AGENT.md`.
@@ -15,6 +15,7 @@ info:
     | Jaký je typ, popis a celý text dokumentu? | `getDocumentForValidation` |
     | Je dokument opravdu to, za co se vydává? Jaké ověřené dokumenty se mu podobají? | `getDocumentVectors` (`similar_to_verified`) |
     | Jsou na dokumentu podpisy, čí jsou, nejsou to kopie? | `getDocumentSignatures` |
+    | Ukázat člověku čitelný podpis (jen lidská kontrola, auditováno) | `revealSignatureImage` |
 
     ## Doporučený postup agenta
 
@@ -38,8 +39,8 @@ info:
 
     ## Chyby
 
-    Vždy `{"error": "popis"}`. `400` neplatný parametr, `403` chybí nebo je špatný API klíč, `404` neexistující case
-    nebo dokument, `409` OCR ještě nedoběhlo (v těle `processing_status`), `5xx` chyba služby (volání je idempotentní,
+    Vždy `{"error": "popis"}`. `400` neplatný parametr, `401` chybí API klíč (hlavička `x-api-key` chybí nebo je prázdná), `403` špatný API klíč (jako Ingest API), `404` neexistující case
+    nebo dokument, `409` OCR ještě nedoběhlo (v těle `processing_status`; u `revealSignatureImage` výřez není zašifrovaný), `5xx` chyba služby (volání je idempotentní,
     lze opakovat).
 servers:
   - url: https://{host}/v1
@@ -54,7 +55,7 @@ tags:
   - name: vectors
     description: Vektory textu a obrazu, nejbližší ověřené dokumenty (S3 Vectors)
   - name: signatures
-    description: Podpisy nalezené v dokumentu, jejich role a podezření na kopii
+    description: Podpisy nalezené v dokumentu, jejich role, podezření na kopii, zkreslený náhled a odkrytí výřezu
 
 paths:
   /cases/{case_id}/documents:
@@ -102,6 +103,7 @@ paths:
                     page_count: null
                 next_token: null
         '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
 
@@ -114,6 +116,14 @@ paths:
         Základní vstup pro každé pravidlo: celý přepis dokumentu, typ (`label`), krátký popis a jistota klasifikace.
         Volat pro každý dokument case. Pro `partial` vrací text úspěšně přečtených stran a v `pages_failed` seznam
         stran, které chybí; pravidlo, které potřebuje chybějící stranu, nesmí z mlčení usuzovat, že v ní nic není.
+
+        **Duplicity napříč případy.** `duplicate_of` vypisuje dokumenty v JINÝCH případech se stejným obsahem (SHA-256
+        souboru), `duplicate_relevant` říká, zda je to podezřelé („stejný doklad použit ve dvou financováních“).
+        Pravidlo má číst `duplicate_relevant`, ne jen délku `duplicate_of`: `true` je jen u individuálních dokumentů
+        (faktura, protokol, objednávka, doklad o úhradě, vyplněné formuláře). Standardní text, který je legitimně stejný
+        ve všech případech (VOP), a obsah, který leží ve 3 a více různých případech (práh šablony), je `false`.
+        Obě pole se **vynechají**, když se index duplicit nepodařilo přečíst nebo o dokumentu nic neví; chybějící pole
+        neznamená „bez duplicity“ a volání kvůli tomu neselže.
       parameters:
         - $ref: '#/components/parameters/CaseId'
         - $ref: '#/components/parameters/DocumentId'
@@ -134,7 +144,11 @@ paths:
                 confidence: 0.93
                 page_count: 4
                 processing_status: completed
+                duplicate_of:
+                  - {case_id: 170170-25, document_id: 6f1c2e0d-7a11-5d3f-9b36-0a524a8b7c1e, label: faktura}
+                duplicate_relevant: true
         '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
         '409':
@@ -201,6 +215,7 @@ paths:
                   - {document_id: b2e801, label: smlouva_o_uveru, score: 0.88}
                   - {document_id: 0c5d19, label: zadost_o_uver, score: 0.54}
         '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
 
@@ -211,7 +226,10 @@ paths:
       summary: Nalezené podpisy dokumentu, přiřazená role, podezření na kopii (nepotvrzuje pravost)
       description: |
         Každý nález má stranu, polohu (`bbox`), přiřazenou roli (podle nejbližšího textu, např. „Za dlužníka")
-        a výřez `crop_url` pro lidskou kontrolu. Nález se vždy odkazuje na stranu a výřez.
+        a odkazy pro lidskou kontrolu: `preview_url` (zkreslený náhled, podpis z něj nejde přečíst) a `reveal_path`
+        (cesta, na které se čitelný výřez po odkrytí vydá, viz `revealSignatureImage`). Nález se vždy odkazuje na stranu
+        a výřez. Nový (šifrovaný) výřez se nevrací čitelným odkazem (dříve `crop_url`). Dočasně do migrace mají
+        starší nezmigrované čitelné výřezy ještě `crop_url` (nasazení s `LEGACY_PLAIN_CROP_URL=true`).
 
         **Jak číst výsledek:**
         - `signatures: []` = žádný podpis nenalezen (pravidlo „podpis chybí" ho musí rozlišit od chyby `5xx`).
@@ -249,7 +267,9 @@ paths:
                     role: borrower
                     role_source: nearest_text
                     role_evidence: Za dlužníka
-                    crop_url: https://example.invalid/crop/sig_01.png
+                    preview_url: https://example.invalid/preview/sig_01.preview.png
+                    reveal_path: /cases/7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90/documents/d2f4a1/signatures/sig_01/image
+                    crop_available: true
                     phash: c3a1e07b5d2f9a44
                     copy_suspicion:
                       level: suspected
@@ -257,8 +277,61 @@ paths:
                         - {signature_id: sig_02, document_id: e9b7c2, score: 0.99}
                     similar_signatures: []
         '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+
+  /cases/{case_id}/documents/{document_id}/signatures/{signature_id}/image:
+    get:
+      tags: [signatures]
+      operationId: revealSignatureImage
+      summary: Čitelný výřez podpisu (odkrytí na vyžádání, auditováno)
+      description: |
+        Vrátí dešifrovaný PNG výřezu. Určeno pro lidskou kontrolu (člověk, který rozhoduje o nálezu), **ne pro kontext
+        LLM**: agent pracuje s `preview_url`, `role` a `copy_suspicion` a obrázek si nestahuje.
+
+        - Čitelný podpis se nikde neukládá; výřez je v úložišti šifrovaný a tady se dešifruje při každém volání.
+          Odpověď má `Cache-Control: no-store`, `Content-Disposition: inline` a nelze ji uložit do mezipaměti.
+        - Každé volání s platným API klíčem (i neúspěšné) se zapíše do auditního logu: identifikátor volajícího (ID API klíče nebo jeho
+          otisk, nikdy hodnota klíče), čas, case, dokument, podpis a výsledek. Obraz do logu nejde.
+        - Čitelný náhradní výřez neexistuje: výřez, který ještě není šifrovaný, se nevrací (`409`).
+        - Odkaz na tuto cestu se nepředpodepisuje; volá se s `x-api-key` jako ostatní cesty. Cesta je v poli
+          `reveal_path` podpisu (relativně k adrese serveru).
+        - Pro neznámý nebo nezpracovaný dokument, neexistující podpis nebo chybějící výřez je `404`.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+        - name: signature_id
+          in: path
+          required: true
+          description: '`signature_id` z volání `getDocumentSignatures` (např. `sig_01`)'
+          schema: {type: string, pattern: '^[A-Za-z0-9._-]{1,128}$'}
+      responses:
+        '200':
+          description: PNG výřezu podpisu
+          headers:
+            Cache-Control:
+              description: Vždy `no-store`
+              schema: {type: string, example: no-store}
+            Content-Disposition:
+              schema: {type: string, example: inline}
+          content:
+            image/png:
+              schema: {type: string, format: binary}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409':
+          description: Výřez ještě není zašifrovaný (starý čitelný objekt čeká na migraci); odkrytí není možné a čitelný výřez se nevrací
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Výřez nejde odkrýt (poškozený blok, zamítnutí KMS) nebo je výstup zpracování neplatný; podrobnosti jsou jen v logu
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
 
 components:
   securitySchemes:
@@ -285,8 +358,13 @@ components:
       content:
         application/json:
           schema: {$ref: '#/components/schemas/Error'}
+    Unauthorized:
+      description: Chybí API klíč (hlavička `x-api-key` chybí nebo je prázdná)
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
     Forbidden:
-      description: Chybí nebo je špatný API klíč
+      description: Špatný API klíč
       content:
         application/json:
           schema: {$ref: '#/components/schemas/Error'}
@@ -367,6 +445,28 @@ components:
         processing_status:
           type: string
           enum: [completed, partial]
+        duplicate_of:
+          type: array
+          description: |
+            Dokumenty se stejným obsahem v jiných případech (bez téhož případu); prázdné pole = nikde jinde není.
+            Pole chybí, když se index duplicit nepodařilo přečíst.
+          items: {$ref: '#/components/schemas/DuplicateOf'}
+        duplicate_relevant:
+          type: boolean
+          description: |
+            `true` jen když existuje jiný případ se stejným obsahem, štítek dokumentu je individuální doklad
+            (`duplicate_policy: flag` v taxonomy.yaml) a obsah neleží ve 3 a více různých případech (šablona).
+            Chybí spolu s `duplicate_of`.
+    DuplicateOf:
+      type: object
+      required: [case_id, document_id, label]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        label:
+          type: string
+          nullable: true
+          description: Štítek původního dokumentu, jak ho zná index; `null`, dokud ho zpracování nedoplnilo
     Vector:
       type: object
       required: [model, model_version, dimension]
@@ -442,7 +542,7 @@ components:
           items: {$ref: '#/components/schemas/SimilarSignature'}
     Signature:
       type: object
-      required: [signature_id, page, detector]
+      required: [signature_id, page, detector, reveal_path, crop_available]
       properties:
         signature_id: {type: string}
         page: {type: integer, minimum: 1}
@@ -466,10 +566,28 @@ components:
           type: string
           nullable: true
           description: Text, podle kterého byla role přiřazena (např. „Za dlužníka")
+        preview_url:
+          type: string
+          nullable: true
+          description: |
+            Předpodepsané URL (platnost 300 s) zkresleného náhledu výřezu: hrubé rozložení inkoustu, podpis z něj nejde
+            přečíst ani okopírovat, lze ho ukázat bez odkrytí. `null`, pokud náhled neexistuje.
+        reveal_path:
+          type: string
+          description: 'Cesta endpointu `revealSignatureImage` pro tento podpis, relativní k adrese serveru: `/cases/{case_id}/documents/{document_id}/signatures/{signature_id}/image`'
+        crop_available:
+          type: boolean
+          description: |
+            `true` = existuje šifrovaný výřez a `reveal_path` ho odkryje. `false` = výřez chybí nebo ještě není zašifrovaný
+            (starší čitelné výřezy čekají na migraci); `reveal_path` pak vrátí `404` nebo `409`.
         crop_url:
           type: string
           nullable: true
-          description: Předpodepsané URL výřezu podpisu pro lidskou kontrolu (platnost 300 s)
+          deprecated: true
+          description: |
+            Zrušeno. U šifrovaného výřezu se čitelný odkaz nevrací: pole chybí (přechodově může být přítomné s hodnotou
+            `null`). Dočasně do migrace (nasazení s `LEGACY_PLAIN_CROP_URL=true`) mají starší nezmigrované čitelné výřezy
+            (`crop_available: false`) předpodepsaný odkaz platný 300 s. Použij `preview_url` a `reveal_path`.
         phash: {type: string, nullable: true}
         copy_suspicion: {$ref: '#/components/schemas/CopySuspicion'}
         similar_signatures:

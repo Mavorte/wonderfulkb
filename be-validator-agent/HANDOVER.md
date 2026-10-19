@@ -47,11 +47,21 @@ Podpisy v dokumentu mají roli (`borrower`, `guarantor`, …), ne jméno osoby. 
 - Podpis se zatím vrací jako `crop_url` na čitelný výřez; šifrované odkrytí je ve vývoji a odpověď se tím může změnit.
 
 ## Co není ověřené
-Volání jsme ověřili na živých datech z případů `17794315-26` a `SYN-B01` (200, 403, 404, 409); partial a `neighbors` s ověřenými dokumenty se nezkoušely. Zpracování nových nahrávek po uploadu nikdo automaticky nespouští (pipeline běží ručně).
+Volání jsme ověřili na živých datech z případů `17794315-26` a `SYN-B01` (200, 403, 404, 409); partial a `neighbors` s ověřenými dokumenty se nezkoušely. Nové nahrávky zpracovává automaticky trigger (viz „Co není hotové“, bod Zpracování po uploadu); odkrytí výřezu `/image`, `preview_url` a 401 bez klíče ověřeny živě 19. 10. večer.
+
+## Stav nasazení (19. 10. 2026, večer)
+| Část | Stav |
+|---|---|
+| Agent API | nasazeno jednou verzí s dedupem, odkrytím podpisu a `status` u podpisů; `crop_url` se vrací jako `null` (přechodové pole) |
+| Ingest | nasazen obraz `:v7`, `also_in` ve výchozí odpovědi vypnuté (jen s `?include_also_in=true`) |
+| Tabulka hashů obsahu | vytvořena a naplněna (168 dokumentů, žádná duplicita mezi případy) |
+| Zpracování po uploadu (trigger) | nasazeno; test: upload → `completed` za asi minutu, bez zásahu člověka |
+| Redakce a šifrování výřezů | zapojeno v pipeline; pilot na dvou syntetických dokumentech a na případu SYN-A03 (9 dokumentů, všechny po opravě `completed`) |
 
 ## Co není hotové
-- **Zpracování po uploadu:** pipeline se spouští ručně (`pipeline/`); automatický trigger z ingestu je rozpracovaný a v repu není. Do té doby nově nahraný dokument nemá analýzu (404 / 409).
-- **Zbytek datasetu:** zpracované jsou jen případy v tabulce výše; zbytek čeká na dávku (`pipeline/run_rest.sh`, zatím jen zkontrolovaný syntakticky).
-- **Soukromí podpisů:** knihovna a návrh jsou v [privacy/](privacy/README.md) a [docs/validator-agent-privacy.md](docs/validator-agent-privacy.md), v pipeline ani v API zapojené nejsou; 42 čitelných výřezů a čitelné originály zůstávají v bucketu do rozhodnutí o migraci.
-- **Ověřené dokumenty a podpisy klienta:** `neighbors` a `similar_signatures` zatím nemají z čeho vracet.
-- **Audit:** nezávislý audit modulů a jeho nálezy jsou v [docs/validator-agent-audit.md](docs/validator-agent-audit.md); část nálezů (např. `copy_suspicion`) je od té doby opravená nebo v opravě.
+- **Dataset je zpracovaný jen částečně:** zbytek se zpracuje dávkou (`pipeline/run_rest.sh`) nebo triggerem s backfillem; ani jedno se zatím nespustilo.
+- **Stávající čitelná data v bucketu** (originály, stránky a výřezy z dřívějších zpracování) zůstávají do rozhodnutí o migraci a zálohování. Nové zpracování čitelné výřezy ani stránky už nezapisuje.
+- **Maskování nezaručí úplné odstranění podpisů.** Měření na syntetických datech: s detekcí a stávajícími zónami 98,8 % podpisů skupiny A skryto (4 ze 323 zůstaly čitelné, všechny na skenech), s upravenými zónami 100 % (laděno na týchž datech); detaily v [privacy/measure/report.md](privacy/measure/report.md). Razítka mimo box podpisu zůstávají čitelná.
+- **`neighbors` a `similar_signatures`** zatím nemají z čeho vracet (čeká na ověřené dokumenty).
+- **Neověřeno živě:** neprázdné `duplicate_of`, `preview_url` a samotné odkrytí z Lambdy (KMS Decrypt), chování triggeru pod zátěží a při selhání workeru (DLQ).
+- **Audit:** [docs/validator-agent-audit.md](docs/validator-agent-audit.md); část nálezů je od té doby opravená.

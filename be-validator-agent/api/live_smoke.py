@@ -105,13 +105,16 @@ def main():
         check("vektory s hodnotami", st == 200 and len(b["text_vectors"][0]["values"]) == 1024 and b["image_vectors"] == [], st)
         st, b = get(f"/cases/{CASE}/documents/{A}/signatures", {"match_client": ["true"]})
         s = b["signatures"][0] if st == 200 else {}
-        check("podpisy: crop_url, vektor, similar_signatures z téhož case",
-              st == 200 and "X-Amz-Expires=300" in s["crop_url"] and ".s3.eu-central-1.amazonaws.com" in s["crop_url"]
+        check("podpisy: bez crop_url, s reveal_path a crop_available=false (v testu je jen starý čitelný výřez), vektor, similar_signatures z téhož case",
+              st == 200 and "crop_url" not in s and s["crop_available"] is False and s["preview_url"] is None
+              and s["reveal_path"] == f"/cases/{CASE}/documents/{A}/signatures/sig_01/image"
               and s["vector"]["dimension"] == 1024 and s["similar_signatures"] and s["similar_signatures"][0]["document_id"] == B, (st, str(s)[:300]))
         print("     similar_signatures:", s.get("similar_signatures"))
+        check("odkrytí starého čitelného výřezu: 409, ne obrázek", get(f"/cases/{CASE}/documents/{A}/signatures/sig_01/image")[0] == 409)
         st, b = get(f"/cases/{CASE}/documents/{A}/signatures", {"include_vectors": ["false"]})
         check("podpisy bez vektoru", st == 200 and "vector" not in b["signatures"][0], st)
         check("špatný klíč 403", get(f"/cases/{CASE}/documents", k="spatny")[0] == 403)
+        check("bez klíče 401", get(f"/cases/{CASE}/documents", k="")[0] == 401)
         check("neznámý dokument 404", get(f"/cases/{CASE}/documents/neexistuje")[0] == 404)
         check("neznámý case 404", get("/cases/wonderfulkb-neexistuje/documents")[0] == 404)
     finally:

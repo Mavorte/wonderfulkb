@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import hmac
+import logging
 import os
 import posixpath
 import re
@@ -20,6 +21,8 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException
 
+import content_hashes
+
 API_KEY = os.environ["API_KEY"]
 BUCKET = os.environ["RAW_BUCKET"]
 REGION = os.environ.get("AWS_REGION", "eu-central-1")
@@ -31,6 +34,9 @@ URL_TTL_SECONDS = 300
 CASE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 CASE_DOCS_PATH_RE = re.compile(r"^/v1/cases/([^/]+)/documents/?$")
 DOC_NAMESPACE = uuid.UUID("5d3f0a52-7c1e-4a8b-9b36-6f1c2e0d7a11")
+
+log = logging.getLogger("wonderfulkb-ingest")
+logging.basicConfig(level=logging.INFO)
 
 ddb = boto3.resource("dynamodb", region_name=REGION)
 cases = ddb.Table(os.environ.get("CASES_TABLE", "wonderfulkb-uw-cases"))
@@ -158,12 +164,40 @@ def inspect(upload):
     return size, sha.hexdigest()
 
 
-def public(item, duplicate=None):
+def public(item, duplicate=None, also_in=None):
     out = {"document_id": item["document_id"], "filename": item["filename"], "received_at": item["received_at"],
            "content_type": item["content_type"], "size_bytes": int(item["size_bytes"])}
     if duplicate is not None:
         out["duplicate"] = duplicate
+    if also_in is not None:  # None = index hashů nedostupný, pole se vynechá (prázdný seznam = nikde jinde není)
+        out["also_in"] = also_in
     return out
+
+
+def find_in_other_cases(case_id, hashes):
+    """{sha256: [{case_id, document_id}]} pro stejný obsah v jiných případech. Chyba indexu = {} (pole se vynechá);
+    do logu jde jen typ chyby, nikdy hash, id ani obsah."""
+    if not content_hashes.enabled():
+        return {}
+    found = {}
+    for sha in hashes:
+        try:
+            found[sha] = content_hashes.lookup_other_cases(sha, case_id)
+        except Exception as e:  # noqa: BLE001 - výpadek indexu nesmí shodit nahrání
+            log.warning("content hash lookup failed: %s", type(e).__name__)
+            return {}
+    return found
+
+
+def register_hashes(case_id, entries):
+    """Zaregistruje [(sha256, document_id)] v indexu; chyba se jen zaloguje (typ chyby)."""
+    if not content_hashes.enabled():
+        return
+    for sha, document_id in entries:
+        try:
+            content_hashes.register(sha, case_id, document_id)
+        except Exception as e:  # noqa: BLE001
+            log.warning("content hash register failed: %s", type(e).__name__)
 
 
 @router.post("/cases/{case_id}/documents", status_code=201)
@@ -242,12 +276,18 @@ def upload(case_id: str, files: List[UploadFile] = File(...), uploaded_by: Optio
     else:
         raise HTTPException(409, "concurrent upload, please retry")
 
+    # 4) stejný obsah v jiných případech (jen informace; index nikdy nesmí způsobit selhání) a registrace v indexu
+    shas = {document_id: sha for document_id, _, _, sha in plan}
+    elsewhere = find_in_other_cases(case_id, sorted(set(shas.values())))
+    register_hashes(case_id, sorted((sha, document_id) for document_id, sha in shas.items()))
+
     out, seen = [], set()
     for document_id, *_ in plan:
+        also_in = elsewhere.get(shas[document_id])
         if document_id in existing:
-            out.append(public(existing[document_id], duplicate=True))
+            out.append(public(existing[document_id], duplicate=True, also_in=also_in))
         else:
-            out.append(public(items[document_id], duplicate=document_id in seen))
+            out.append(public(items[document_id], duplicate=document_id in seen, also_in=also_in))
         seen.add(document_id)
     return JSONResponse({"case_id": case_id, "documents": out}, status_code=201)
 

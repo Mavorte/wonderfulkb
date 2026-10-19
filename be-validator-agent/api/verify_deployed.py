@@ -36,6 +36,8 @@ def main(base, case_id, doc_id=None):
     show("healthz bez klíče", 200, st)
     st, b = get(f"/cases/{case_id}/documents", "spatny-klic")
     show("špatný klíč", 403, st)
+    st, b = get(f"/cases/{case_id}/documents", None)
+    show("bez klíče", 401, st)
     st, b = get(f"/cases/{case_id}/documents")
     show("seznam dokumentů", 200, st, f"{len(b.get('documents', []))} dokumentů" if st == 200 else str(b))
     if st != 200:

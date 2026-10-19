@@ -10,6 +10,12 @@ def _skip_from_env():
     return frozenset(s.strip() for s in os.environ.get("PIPELINE_SKIP", "").split(",") if s.strip())
 
 
+def _redact_from_env():
+    """PIPELINE_REDACT, on by default. Off (0/false/no/off) is for debugging only: pages/<n>.png and everything else
+    is then built from the readable original."""
+    return os.environ.get("PIPELINE_REDACT", "1").strip().lower() not in ("0", "false", "no", "off")
+
+
 @dataclass(frozen=True)
 class Settings:
     region: str = field(default_factory=lambda: os.environ.get("AWS_DEFAULT_REGION") or "eu-central-1")
@@ -25,3 +31,4 @@ class Settings:
     max_vision_pages: int = field(default_factory=lambda: int(os.environ.get("PIPELINE_MAX_VISION_PAGES", "30")))
     max_pdf_bytes: int = 50 * 1024 * 1024
     skip: frozenset = field(default_factory=_skip_from_env)  # subset of STEPS
+    redact: bool = field(default_factory=_redact_from_env)   # mask signatures before anything else reads the PDF

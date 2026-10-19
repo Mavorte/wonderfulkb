@@ -42,7 +42,8 @@ def _find_pdfs(aws, case_id, wanted):
     docs = {i["document_id"]: i for i in aws.list_documents(case_id)}
     for document_id in sorted(missing):
         for key in (docs.get(document_id, {}).get("s3_key"), f"cases/{case_id}/original/{document_id}.pdf"):
-            data = aws.get_bytes_or_none(key) if key else None
+            # a masked copy has the signatures blacked out: its ink masks would be empty and say `none` wrongly
+            data = aws.get_bytes_or_none(key) if key and "/redacted/" not in key else None
             if data is not None:
                 found[document_id] = data
                 break

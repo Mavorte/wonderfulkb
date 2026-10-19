@@ -1,0 +1,450 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+# NENASAZENO. Nasazení schvaluje uživatel: ./deploy.sh --plan, pak ./deploy.sh (popis v README.md).
+Description: wonderfulkb document trigger - DynamoDB Stream of wonderfulkb-uw-documents -> SQS -> pipeline worker
+
+Parameters:
+  StreamArn:
+    Type: String
+    Description: Stream of wonderfulkb-uw-documents (deploy.sh reads it from describe-table after the stream is enabled)
+    AllowedPattern: "^arn:aws:dynamodb:eu-central-1:[0-9]{12}:table/wonderfulkb-uw-documents/stream/.+$"
+  DocumentsTable: {Type: String, Default: wonderfulkb-uw-documents}
+  AnalysisTable: {Type: String, Default: wonderfulkb-uw-document-analysis}
+  RawBucket: {Type: String, Default: wonderfulkb-raw-document-storage}
+  VectorBucket: {Type: String, Default: wonderfulkb-vectors}
+  MaxConcurrency:
+    Type: Number
+    Default: 2
+    MinValue: 2
+    MaxValue: 10
+    Description: >-
+      Workers running at the same time (event source mapping limit; the account allows no reserved concurrency,
+      because it only has 10 in total). Each worker spends BedrockRpm requests a minute.
+  BedrockRpm:
+    Type: Number
+    Default: 12
+    MinValue: 1
+    MaxValue: 25
+    Description: Bedrock requests per minute per worker and step (vision, classify, embed run one after another). The team limit is 50 a minute.
+  WorkerMemory: {Type: Number, Default: 3008, MinValue: 1024, MaxValue: 10240}
+  SignatureKmsKeyArn:
+    Type: String
+    AllowedPattern: "^arn:aws:kms:eu-central-1:[0-9]{12}:key/.+$"
+    Description: >-
+      KMS key of the encrypted signature crops (alias wonderfulkb-signatures; deploy.sh resolves the key ARN from the
+      alias). Required: the pipeline masks signatures by default (PIPELINE_REDACT=1) and encrypts the crops.
+      The worker may only GenerateDataKey with it, never Decrypt.
+  HashesTable: {Type: String, Default: wonderfulkb-uw-content-hashes}
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: SNS topic for the alarms. Empty = the alarms only change state.
+
+Conditions:
+  HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
+
+Globals:
+  Function:
+    Tags:
+      project: wonderfulkb
+      component: trigger
+    Environment:
+      Variables:
+        ANALYSIS_TABLE: !Ref AnalysisTable
+        DOCUMENTS_TABLE: !Ref DocumentsTable
+        RAW_BUCKET: !Ref RawBucket
+        QUEUE_URL: !Ref DocumentQueue
+        DLQ_URL: !Ref DeadLetterQueue
+
+Resources:
+  # ---- queues -------------------------------------------------------------------------------------------------
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: wonderfulkb-trigger-documents-dlq
+      VisibilityTimeout: 120  # longer than the marker's timeout
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  DocumentQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: wonderfulkb-trigger-documents
+      # Longer than the worker timeout (900 s) and than common.LEASE_SECONDS (930 s): a message is not handed out again
+      # while its worker may still run, and the retry of a killed worker finds the claim expired.
+      VisibilityTimeout: 1200
+      MessageRetentionPeriod: 345600
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 3
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  # ---- enqueue: stream -> queued row + message ---------------------------------------------------------------
+  EnqueueLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/wonderfulkb-trigger-enqueue
+      RetentionInDays: 14
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  EnqueueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: wonderfulkb-trigger-enqueue
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - {Effect: Allow, Principal: {Service: lambda.amazonaws.com}, Action: "sts:AssumeRole"}
+      Policies:
+        - PolicyName: enqueue
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadStream
+                Effect: Allow
+                Action: [dynamodb:DescribeStream, dynamodb:GetRecords, dynamodb:GetShardIterator]
+                Resource: !Ref StreamArn
+              - Sid: ListStreams
+                Effect: Allow
+                Action: dynamodb:ListStreams
+                Resource: "*"
+              - Sid: QueuedRow
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+              - Sid: Send
+                Effect: Allow
+                Action: sqs:SendMessage
+                Resource: !GetAtt DocumentQueue.Arn
+              - Sid: DiscardedBatches
+                Effect: Allow
+                Action: sqs:SendMessage
+                Resource: !GetAtt DeadLetterQueue.Arn
+              - Sid: Logs
+                Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub "${EnqueueLogGroup.Arn}:*"
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  EnqueueFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: wonderfulkb-trigger-enqueue
+      Description: New document row (stream INSERT) -> analysis row queued + SQS message
+      CodeUri: build/light/
+      Runtime: python3.14
+      Architectures: [arm64]
+      Handler: trigger.enqueue_handler.handler
+      MemorySize: 256
+      Timeout: 60
+      Role: !GetAtt EnqueueRole.Arn
+      LoggingConfig:
+        LogGroup: !Ref EnqueueLogGroup
+      Events:
+        Documents:
+          Type: DynamoDB
+          Properties:
+            Stream: !Ref StreamArn
+            # LATEST: documents that exist today are not in the stream, backfill.py queues them.
+            StartingPosition: LATEST
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 1
+            MaximumRetryAttempts: 5
+            MaximumRecordAgeInSeconds: 3600
+            BisectBatchOnFunctionError: true
+            FunctionResponseTypes: [ReportBatchItemFailures]
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"eventName": ["INSERT"]}'
+            DestinationConfig:
+              OnFailure:
+                Type: SQS
+                Destination: !GetAtt DeadLetterQueue.Arn
+
+  # ---- worker: queue -> pipeline.run_document / case step --------------------------------------------------
+  WorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/wonderfulkb-trigger-worker
+      RetentionInDays: 14
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  WorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: wonderfulkb-trigger-worker
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - {Effect: Allow, Principal: {Service: lambda.amazonaws.com}, Action: "sts:AssumeRole"}
+      Policies:
+        - PolicyName: worker
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadDocuments
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Query]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DocumentsTable}"
+              - Sid: Analysis
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:BatchGetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:Query]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+              - Sid: ReadOriginalsMaskedCopiesAndOwnOutput
+                Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/original/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/redacted/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
+              - Sid: WriteMaskedCopyAndOwnOutput
+                # no write access to original/: the readable original is only ever read
+                Effect: Allow
+                Action: [s3:PutObject, s3:PutObjectTagging]
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/redacted/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
+              - Sid: ListForMissingKeys
+                # without ListBucket a missing key answers 403 instead of 404 (cache and signatures.json checks)
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !Sub "arn:${AWS::Partition}:s3:::${RawBucket}"
+                Condition:
+                  StringLike:
+                    # the copy check and the redaction list the case prefixes (pipeline/copies.py)
+                    "s3:prefix": ["cases/*"]
+              - Sid: WriteVectors
+                Effect: Allow
+                Action: [s3vectors:PutVectors, s3vectors:GetVectors, s3vectors:QueryVectors, s3vectors:ListVectors, s3vectors:DeleteVectors]
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-text"
+                  - !Sub "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-image"
+                  - !Sub "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-signatures"
+              - Sid: ContentHashIndex
+                # dedup module: is the same content already analysed in another case (register / lookup)
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:Query]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${HashesTable}"
+              - Sid: Embeddings
+                Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed-text-v2:0"
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed-image-v1"
+              - Sid: ClassifyConverse
+                # eu. inference profile of Claude Haiku 4.5 (the profile fans out to EU regions)
+                Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+                  - !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0"
+              - Sid: VisionAndClassifyMantle
+                Effect: Allow
+                Action: bedrock-mantle:CreateInference
+                Resource: !Sub "arn:${AWS::Partition}:bedrock-mantle:${AWS::Region}:${AWS::AccountId}:project/*"
+                Condition:
+                  StringEquals:
+                    "bedrock-mantle:Model": qwen.qwen3-vl-235b-a22b-instruct
+              - Sid: Textract
+                # Textract actions have no resource-level permissions
+                Effect: Allow
+                Action: textract:AnalyzeDocument
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    "aws:RequestedRegion": !Ref AWS::Region
+              - Sid: ReadQueue
+                Effect: Allow
+                Action: [sqs:ReceiveMessage, sqs:DeleteMessage, sqs:GetQueueAttributes, sqs:ChangeMessageVisibility]
+                Resource: !GetAtt DocumentQueue.Arn
+              - Sid: SendCaseAndMalformed
+                Effect: Allow
+                Action: sqs:SendMessage
+                Resource: [!GetAtt DocumentQueue.Arn, !GetAtt DeadLetterQueue.Arn]
+              - Sid: Logs
+                Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub "${WorkerLogGroup.Arn}:*"
+              - Sid: EncryptSignatureCrops
+                # write-only: no kms:Decrypt, only the API may reveal a crop (be-validator-agent/docs/validator-agent-privacy.md, part 7)
+                Effect: Allow
+                Action: [kms:GenerateDataKey, kms:DescribeKey]
+                Resource: !Ref SignatureKmsKeyArn
+                Condition:
+                  "ForAllValues:StringEquals":
+                    "kms:EncryptionContextKeys": [case_id, document_id, signature_id]
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  WorkerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: wonderfulkb-trigger-worker
+      Description: SQS message -> pipeline.run_document for one document (or the case step for one case)
+      # Container image: the dependencies (PyMuPDF with its ONNX runtime, numpy, Pillow, pypdfium2) are about
+      # 325 MB unpacked, over the 250 MB limit of a zip package. x86_64 because the image is built on the same
+      # architecture (no emulation); the ~25 % higher price per GB-second does not matter at this volume.
+      PackageType: Image
+      Architectures: [x86_64]
+      ImageConfig:
+        Command: [trigger.worker_handler.handler]
+      MemorySize: !Ref WorkerMemory
+      Timeout: 900
+      EphemeralStorage: {Size: 2048}
+      Role: !GetAtt WorkerRole.Arn
+      LoggingConfig:
+        LogGroup: !Ref WorkerLogGroup
+      Environment:
+        Variables:
+          # per worker; they run one after another inside a document, two workers double the figure
+          PIPELINE_BEDROCK_RPM: !Ref BedrockRpm
+          CLASSIFY_MAX_RPM: !Ref BedrockRpm
+          WONDERFULKB_BEDROCK_RPM: !Ref BedrockRpm
+          PYTHONUNBUFFERED: "1"
+          # signatures are masked before anything is read onward and the crops are encrypted (privacy decision 19. 10.)
+          PIPELINE_REDACT: "1"
+          PRIVACY_KMS_KEY_ID: !Ref SignatureKmsKeyArn
+          DEDUP_HASHES_TABLE: !Ref HashesTable
+      Events:
+        Documents:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt DocumentQueue.Arn
+            BatchSize: 1
+            FunctionResponseTypes: [ReportBatchItemFailures]
+            ScalingConfig:
+              MaximumConcurrency: !Ref MaxConcurrency
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: build/pkg
+      DockerTag: latest
+
+  # ---- DLQ marker: failed row with a reason ------------------------------------------------------------------
+  DlqLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/wonderfulkb-trigger-dlq
+      RetentionInDays: 14
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  DlqRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: wonderfulkb-trigger-dlq
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - {Effect: Allow, Principal: {Service: lambda.amazonaws.com}, Action: "sts:AssumeRole"}
+      Policies:
+        - PolicyName: dlq
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadDlq
+                Effect: Allow
+                Action: [sqs:ReceiveMessage, sqs:DeleteMessage, sqs:GetQueueAttributes]
+                Resource: !GetAtt DeadLetterQueue.Arn
+              - Sid: MarkFailed
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:BatchGetItem, dynamodb:UpdateItem]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+              - Sid: CaseComplete
+                Effect: Allow
+                Action: dynamodb:Query
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DocumentsTable}"
+              - Sid: QueueCase
+                Effect: Allow
+                Action: sqs:SendMessage
+                Resource: !GetAtt DocumentQueue.Arn
+              - Sid: Logs
+                Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub "${DlqLogGroup.Arn}:*"
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  DlqFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: wonderfulkb-trigger-dlq
+      Description: Dead-lettered document -> analysis row failed (with reason), metric DeadLettered
+      CodeUri: build/light/
+      Runtime: python3.14
+      Architectures: [arm64]
+      Handler: trigger.dlq_handler.handler
+      MemorySize: 256
+      Timeout: 60
+      Role: !GetAtt DlqRole.Arn
+      LoggingConfig:
+        LogGroup: !Ref DlqLogGroup
+      Events:
+        Dead:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt DeadLetterQueue.Arn
+            BatchSize: 5
+            FunctionResponseTypes: [ReportBatchItemFailures]
+
+  # ---- alarms -------------------------------------------------------------------------------------------------
+  DeadLetteredAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wonderfulkb-trigger-dead-lettered
+      AlarmDescription: A document (or a message) went to the DLQ; the row is marked failed. Re-queue with backfill.py after the cause is fixed.
+      Namespace: wonderfulkb/Trigger
+      MetricName: DeadLettered
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref "AWS::NoValue"]
+
+  DlqNotEmptyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wonderfulkb-trigger-dlq-not-empty
+      AlarmDescription: Messages stay in the DLQ (the DLQ marker cannot handle them).
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - {Name: QueueName, Value: !GetAtt DeadLetterQueue.QueueName}
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref "AWS::NoValue"]
+
+  QueueStuckAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: wonderfulkb-trigger-queue-stuck
+      AlarmDescription: The oldest message waited more than 4 hours (workers do not keep up or are failing).
+      Namespace: AWS/SQS
+      MetricName: ApproximateAgeOfOldestMessage
+      Dimensions:
+        - {Name: QueueName, Value: !GetAtt DocumentQueue.QueueName}
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 14400
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref "AWS::NoValue"]
+
+Outputs:
+  QueueUrl: {Value: !Ref DocumentQueue}
+  QueueName: {Value: !GetAtt DocumentQueue.QueueName}
+  DeadLetterQueueUrl: {Value: !Ref DeadLetterQueue}
+  WorkerFunction: {Value: !Ref WorkerFunction}
