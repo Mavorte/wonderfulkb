@@ -1,17 +1,21 @@
 // Creates a case for a client in the AWS case/client API and registers its
 // intake link, so the Client Intake app can resolve `?h=<hash>` to the case.
 //
+// The response carries the client's intake link, built from the global
+// `public_access_base_url` (the Client Intake public URL) as `<base>?h=<hash>`.
+//
 // The API assigns the case id and returns it. The client's name and IČO go
 // into the case metadata so the case list can show them.
 
 import type { FunctionContext } from "@wonderful/types";
 import { getErrorMessage, requestAwsApi, type AwsCase } from "../lib/awsApi";
-import { generateHash } from "./ids";
+import { buildIntakeLink, generateHash } from "./ids";
 
 const LINKS_TABLE = "client_intake.intake_links";
+const BASE_URL_GLOBAL = "public_access_base_url";
 
 type CaseCreateResponse =
-  | { case_id: string; client_id: string; hash: string | null; created_at: string }
+  | { case_id: string; client_id: string; hash: string | null; link: string | null; created_at: string }
   | { error: "missing_client_id" | "client_not_found" | "client_not_active" | "upstream" };
 
 async function userFunction(context: FunctionContext): Promise<CaseCreateResponse> {
@@ -55,5 +59,8 @@ async function userFunction(context: FunctionContext): Promise<CaseCreateRespons
     hash = null;
   }
 
-  return { case_id: created.case_id, client_id: clientId, hash, created_at: created.created_at };
+  const link = buildIntakeLink(String(context.globals.get(BASE_URL_GLOBAL) ?? ""), hash);
+  if (hash && !link) console.log(`global ${BASE_URL_GLOBAL} is not set; case ${created.case_id} has no intake link`);
+
+  return { case_id: created.case_id, client_id: clientId, hash, link, created_at: created.created_at };
 }

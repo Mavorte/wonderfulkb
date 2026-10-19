@@ -14,6 +14,16 @@ export default function NewCasePage() {
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const [created, setCreated] = useState<{ case: Case; client: Client }>();
+  const [copy, setCopy] = useState<"copied" | "failed">();
+
+  const onCopy = async (link: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopy("copied");
+    } catch {
+      setCopy("failed");
+    }
+  };
 
   useEffect(() => {
     if (opened.current) return;
@@ -30,6 +40,7 @@ export default function NewCasePage() {
       const result = await createCase(api, client);
       track("case_create_completed");
       setCreated({ case: result, client });
+      setCopy(undefined);
       setClient(null);
     } catch (e) {
       track("case_create_failed");
@@ -81,9 +92,23 @@ export default function NewCasePage() {
                   <dd>
                     <code>{created.case.id}</code>
                   </dd>
-                  <dt>Intake link hash</dt>
+                  <dt>Client link</dt>
                   <dd>
-                    {created.case.hash ? <code>{created.case.hash}</code> : "Could not be registered."}
+                    {created.case.link ? (
+                      <span className="bo-link">
+                        <code>{created.case.link}</code>
+                        <button
+                          type="button"
+                          className="kb-btn kb-btn--secondary kb-btn--small"
+                          onClick={() => onCopy(created.case.link!)}
+                        >
+                          {copy === "copied" ? "Copied" : "Copy link"}
+                        </button>
+                        {copy === "failed" && <span>Copy failed. Select the link and copy it.</span>}
+                      </span>
+                    ) : (
+                      "Could not be created."
+                    )}
                   </dd>
                 </dl>
               </span>
