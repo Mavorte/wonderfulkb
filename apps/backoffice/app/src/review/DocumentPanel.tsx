@@ -1,0 +1,163 @@
+import { useEffect, useRef } from "react";
+import StatusIcon from "./StatusIcon";
+import type { DocView, RequiredDoc } from "./evaluation";
+
+export interface Focus {
+  docKey: string;
+  page: number;
+  // Changes on every click so re-selecting the same page scrolls again.
+  nonce: number;
+}
+
+function shortTitle(title: string) {
+  return title.replace(/\.pdf$/i, "").replace(/^\d+_/, "").replace(/_/g, " ");
+}
+
+export default function DocumentPanel({
+  docs,
+  missing,
+  focus,
+  onSelect,
+}: {
+  docs: DocView[];
+  missing: RequiredDoc[];
+  focus: Focus | null;
+  onSelect: (focus: Focus) => void;
+}) {
+  const doc = docs.find((d) => d.key === focus?.docKey) ?? docs[0];
+  const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!focus) return;
+    // In the stacked (narrow) layout the panel can sit below the fold.
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (focus.nonce && rect && (rect.top > window.innerHeight || rect.bottom < 0)) {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    const scroller = scrollRef.current;
+    const page = pageRefs.current[focus.page - 1];
+    if (scroller && page) scroller.scrollTo({ top: page.offsetTop - scroller.offsetTop, behavior: "smooth" });
+  }, [focus]);
+
+  if (!doc) {
+    return (
+      <section className="cr-docs cr-docs--empty" aria-label="Documents">
+        <p>No documents referenced by this evaluation.</p>
+      </section>
+    );
+  }
+
+  const activePage = focus?.docKey === doc.key ? focus.page : null;
+
+  return (
+    <section className="cr-docs" aria-label="Documents" ref={sectionRef}>
+      <div className="cr-docs__strip" role="tablist" aria-label="Case documents">
+        {docs.map((d) => (
+          <button
+            key={d.key}
+            type="button"
+            role="tab"
+            aria-selected={d.key === doc.key}
+            className="cr-thumb"
+            onClick={() => onSelect({ docKey: d.key, page: d.referencedPages[0] ?? 1, nonce: Date.now() })}
+            title={d.title}
+          >
+            <span className={`cr-thumb__img${d.pages.length ? "" : " is-unavailable"}`}>
+              {d.pages.length ? (
+                <img src={d.pages[0]} alt="" loading="lazy" />
+              ) : (
+                <svg className="kb-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm4 18H6V4h7v5h5v11Z" />
+                </svg>
+              )}
+              {d.status && (
+                <span className="cr-thumb__badge">
+                  <StatusIcon status={d.status} size={16} />
+                </span>
+              )}
+            </span>
+            <span className="cr-thumb__title">{shortTitle(d.title)}</span>
+            <span className="cr-thumb__meta">{d.pages.length ? `${d.pages.length} p.` : "No preview"}</span>
+          </button>
+        ))}
+        {missing.map((m) => (
+          <div key={m.description} className="cr-thumb cr-thumb--missing" title={m.description}>
+            <span className="cr-thumb__img">
+              <StatusIcon status="fail" />
+              <span>Missing</span>
+            </span>
+            <span className="cr-thumb__title">{m.description}</span>
+          </div>
+        ))}
+      </div>
+
+      <header className="cr-docs__head">
+        <div>
+          <h2 className="cr-docs__title">{shortTitle(doc.title)}</h2>
+          <p className="cr-docs__sub">
+            {doc.title}
+            {doc.referencedPages.length > 0 && ` · cited p. ${doc.referencedPages.join(", ")}`}
+          </p>
+        </div>
+        {doc.pdf ? (
+          <a className="kb-btn kb-btn--tertiary kb-btn--small" href={doc.pdf} target="_blank" rel="noreferrer">
+            Open PDF
+          </a>
+        ) : (
+          <button type="button" className="kb-btn kb-btn--tertiary kb-btn--small" disabled title="Documents API not connected yet">
+            Open PDF
+          </button>
+        )}
+      </header>
+
+      {doc.fields.length > 0 && (
+        <details className="cr-extracted" open={!doc.pages.length}>
+          <summary>Extracted data</summary>
+          <dl>
+            {doc.fields.map((f) => (
+              <div key={f.field} className={f.value ? undefined : "is-empty"}>
+                <dt>{f.field.replace(/_/g, " ")}</dt>
+                <dd>
+                  {f.value ?? "not found"}
+                  {f.page ? <span className="cr-muted"> · p. {f.page}</span> : null}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
+
+      {doc.pages.length ? (
+        <div className="cr-docs__pages" ref={scrollRef}>
+          {doc.pages.map((src, i) => (
+            <div
+              key={src}
+              className={`cr-page${doc.referencedPages.includes(i + 1) ? " is-cited" : ""}${activePage === i + 1 ? " is-active" : ""}`}
+              ref={(el) => {
+                pageRefs.current[i] = el;
+              }}
+            >
+              <img src={src} alt={`${doc.title}, page ${i + 1}`} loading={i < 3 ? "eager" : "lazy"} />
+              <span className="cr-page__no">
+                {doc.referencedPages.includes(i + 1) && "Cited · "}
+                {i + 1} / {doc.pages.length}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="cr-docs__pages cr-docs__unavailable">
+          <div className="cr-unavailable">
+            <svg className="kb-icon kb-icon--32" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm4 18H6V4h7v5h5v11Z" />
+            </svg>
+            <p>Page preview not available</p>
+            <p className="cr-muted">The documents API isn't connected to this app yet.</p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

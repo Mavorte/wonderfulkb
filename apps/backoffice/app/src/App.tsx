@@ -4,14 +4,22 @@ import CasesPage from "./cases/CasesPage";
 import NewCasePage from "./cases/NewCasePage";
 import ClientsPage from "./clients/ClientsPage";
 import QueuePage from "./queue/QueuePage";
+import CaseReviewPage from "./review/CaseReviewPage";
 
-type Page = "queue" | "cases" | "new-case" | "clients";
+type Page = "queue" | "case-review" | "cases" | "new-case" | "clients";
 
 const navItems: { page: Page; label: string; icon: ReactNode }[] = [
   {
     page: "queue",
     label: "Work queue",
     icon: <path d="M3 5h4v4H3V5Zm6 1h12v2H9V6Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Zm-6 5h4v4H3v-4Zm6 1h12v2H9v-2Z" />,
+  },
+  {
+    page: "case-review",
+    label: "Case review",
+    icon: (
+      <path d="M9 2h6v2h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h4V2Zm0 4H6v14h12V6h-3v2H9V6Zm1.5 10.4-3-3 1.4-1.4 1.6 1.6 4.6-4.6 1.4 1.4-6 6Z" />
+    ),
   },
   {
     page: "cases",
@@ -64,6 +72,7 @@ export default function App() {
       </aside>
       <main className="bo-main">
         {page === "queue" && <QueuePage />}
+        {page === "case-review" && <CaseReviewPage />}
         {page === "cases" && <CasesPage onNewCase={() => setPage("new-case")} />}
         {page === "new-case" && <NewCasePage />}
         {page === "clients" && <ClientsPage />}
