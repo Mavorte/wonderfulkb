@@ -1,7 +1,7 @@
 import "./style.css";
 import { useWonderful } from "@wonderful/app-sdk";
 import { useEffect, useRef, useState } from "react";
-import CaseSummary from "./components/CaseSummary";
+import CaseSummary, { RequiredDocuments } from "./components/CaseSummary";
 import Notice from "./components/Notice";
 import UploadPanel from "./components/UploadPanel";
 import getIntakeHash from "./getIntakeHash";
@@ -87,9 +87,12 @@ export default function App() {
           )}
           {state.status === "error" && <Notice variant="error" title={state.title} description={state.description} />}
           {state.status === "ready" && (
-            <div className="app-stack">
+            <div className="app-layout">
               <CaseSummary data={state.data} />
-              <UploadPanel data={state.data} />
+              <div className="app-grid app-grid--fill">
+                <RequiredDocuments data={state.data} />
+                <UploadPanel data={state.data} />
+              </div>
             </div>
           )}
         </div>
