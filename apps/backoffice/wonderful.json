@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "name": "Backoffice",
+  "slug": "backoffice",
+  "description": "KB back-office tool for creating cases for a selected client. Uses mocked client data.",
+  "analytics_events": [
+    {
+      "key": "new_case_opened",
+      "feature_key": "new_case",
+      "stage": "opened",
+      "label": "New case screen opened"
+    },
+    {
+      "key": "case_create_started",
+      "feature_key": "new_case",
+      "stage": "started",
+      "label": "Case creation started"
+    },
+    {
+      "key": "case_create_completed",
+      "feature_key": "new_case",
+      "stage": "completed",
+      "label": "Case created",
+      "outcome": true
+    },
+    {
+      "key": "case_create_failed",
+      "feature_key": "new_case",
+      "stage": "failed",
+      "label": "Case creation failed"
+    }
+  ]
+}
