@@ -1,0 +1,3 @@
+# Redakce PDF (signature_privacy.redact). Jen z hotového kola, na Pythonu 3.14 se jinak kompiluje a visí:
+#   pip install --only-binary :all: -r requirements-redact.txt
+PyMuPDF>=1.25

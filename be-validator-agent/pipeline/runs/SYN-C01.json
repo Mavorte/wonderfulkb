@@ -1,0 +1,115 @@
+{
+ "documents": [
+  {
+   "case_id": "SYN-C01",
+   "document_id": "55167e2f-ac23-53d4-ba8c-23e14ced3af0",
+   "title": "00_uver.pdf",
+   "status": "completed",
+   "pages": 2,
+   "seconds": 13.7,
+   "calls": {
+    "dynamodb.UpdateItem": 1,
+    "dynamodb.PutItem": 1,
+    "dynamodb.GetItem": 2,
+    "s3.GetObject": 1,
+    "s3.PutObject": 8,
+    "bedrock-runtime.Converse": 1,
+    "bedrock-runtime.InvokeModel": 5,
+    "s3vectors.PutVectors": 2,
+    "s3vectors.QueryVectors": 2,
+    "textract.AnalyzeDocument": 2
+   },
+   "label": "smlouva_o_uveru",
+   "confidence": 0.95,
+   "description": "Smlouva o účelovém úvěru č. 872001/26 mezi poskytovatelem Nerovex Finance s.r.o. a příjemcem Dravonex Obrábění s.r.o. na financování nákupu CNC obráběcího centra ROVENTA MC 540 od dodavatele Roventa Technika s.r.o. v částce 1 736 000 Kč s dobou splácení 18 měsíců.",
+   "pages_failed": []
+  },
+  {
+   "case_id": "SYN-C01",
+   "document_id": "3af28c24-54d0-5f82-8ff6-fa56af3cbf5f",
+   "title": "01_faktura.pdf",
+   "status": "completed",
+   "pages": 1,
+   "seconds": 26.1,
+   "calls": {
+    "sso.GetRoleCredentials": 1,
+    "dynamodb.UpdateItem": 1,
+    "dynamodb.PutItem": 1,
+    "dynamodb.GetItem": 2,
+    "s3.GetObject": 2,
+    "s3.PutObject": 5,
+    "bedrock-runtime.InvokeModel": 2,
+    "s3vectors.PutVectors": 2,
+    "s3vectors.QueryVectors": 2,
+    "textract.AnalyzeDocument": 1,
+    "http.bedrock-mantle": 1
+   },
+   "label": "faktura",
+   "confidence": 0.95,
+   "description": "Faktura - daňový doklad FV-C26-0001 vystavená společností Roventa Technika s.r.o. pro Dravonex Obrábění s.r.o. za CNC obráběcí centrum ROVENTA MC 540 s výrobním číslem C26-01-CNC-008001, smlouva č. 872001/26, vystavená 18.01.2026, celková částka 3 000 800,00 Kč včetně DPH 21 %.",
+   "pages_failed": []
+  },
+  {
+   "case_id": "SYN-C01",
+   "document_id": "5c34e8ce-6555-58d9-bce9-4cdae3caf6f9",
+   "title": "02_predani.pdf",
+   "status": "completed",
+   "pages": 1,
+   "seconds": 22.9,
+   "calls": {
+    "dynamodb.UpdateItem": 1,
+    "dynamodb.PutItem": 1,
+    "dynamodb.GetItem": 2,
+    "s3.GetObject": 2,
+    "s3.PutObject": 7,
+    "bedrock-runtime.InvokeModel": 2,
+    "s3vectors.PutVectors": 2,
+    "s3vectors.QueryVectors": 2,
+    "textract.AnalyzeDocument": 1,
+    "http.bedrock-mantle": 1
+   },
+   "label": "predavaci_protokol",
+   "confidence": 0.95,
+   "description": "Předávací a přejímací protokol mezi Roventa Technika s.r.o. a Dravonex Obrábění s.r.o. o předání CNC obráběcího centra ROVENTA MC 540 s výrobním číslem C26-01-CNC-008001 dne 25.1.2026, včetně technických parametrů a potvrzení bez výhrad.",
+   "pages_failed": []
+  },
+  {
+   "case_id": "SYN-C01",
+   "document_id": "dd577764-28fa-595e-bdec-545a1bf81fe2",
+   "title": "03_cerpani.pdf",
+   "status": "completed",
+   "pages": 1,
+   "seconds": 7.0,
+   "calls": {
+    "dynamodb.UpdateItem": 1,
+    "dynamodb.PutItem": 1,
+    "dynamodb.GetItem": 2,
+    "s3.GetObject": 1,
+    "s3.PutObject": 6,
+    "bedrock-runtime.Converse": 1,
+    "bedrock-runtime.InvokeModel": 2,
+    "s3vectors.PutVectors": 2,
+    "s3vectors.QueryVectors": 2,
+    "textract.AnalyzeDocument": 1
+   },
+   "label": "uhrada_kupni_ceny",
+   "confidence": 0.75,
+   "description": "Potvrzení o čerpání úvěru od Nerovex Finance s.r.o. pro příjemce Dravonex Obrábění s.r.o. (smlouva 872001/26) dokumentující výplatu úvěru ve výši 1 736 000 Kč na účet dodavatele Roventa Technika s.r.o. dne 26.01.2026 a nabytí vlastnictví kupujícím.",
+   "pages_failed": []
+  }
+ ],
+ "totals": {
+  "dynamodb.UpdateItem": 4,
+  "dynamodb.PutItem": 4,
+  "dynamodb.GetItem": 8,
+  "s3.GetObject": 6,
+  "s3.PutObject": 26,
+  "bedrock-runtime.Converse": 2,
+  "bedrock-runtime.InvokeModel": 11,
+  "s3vectors.PutVectors": 8,
+  "s3vectors.QueryVectors": 8,
+  "textract.AnalyzeDocument": 5,
+  "sso.GetRoleCredentials": 1,
+  "http.bedrock-mantle": 2
+ }
+}

@@ -1,0 +1,139 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+# NENASAZENO. Nasazení schvaluje uživatel (be-validator-agent/docs/validator-agent-storage.md, pravidla pro všechny části).
+#   sam build && sam deploy --guided --profile hackathon --region eu-central-1 --stack-name wonderfulkb-agent-api
+# Pozor: sam build zabalí celý adresář; testy, fixtury a server.py se do Lambdy dostanou také (nejsou použité).
+Description: wonderfulkb validator agent API (read-only, document / vectors / signatures)
+
+Parameters:
+  AnalysisTable: {Type: String, Default: wonderfulkb-uw-document-analysis}
+  # Volitelné: tabulka případů jen pro rozlišení "case existuje, ale nemá zpracované dokumenty" (200 []) od 404.
+  # Výchozí prázdné = Lambda k ní nemá přístup a case bez řádků v analýze vrací 404.
+  CasesTable: {Type: String, Default: ""}
+  RawBucket: {Type: String, Default: wonderfulkb-raw-document-storage}
+  VectorBucket: {Type: String, Default: wonderfulkb-vectors}
+  ApiKeySecretName: {Type: String, Default: wonderfulkb/ingest-api-key}
+
+Conditions:
+  HasCasesTable: !Not [!Equals [!Ref CasesTable, ""]]
+
+Resources:
+  # Vlastní role místo AWSLambdaBasicExecutionRole (ta dává logs:* na všechny skupiny).
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: wonderfulkb-agent-api-lambda
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: read-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadAnalysisTable
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Query]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+              - !If
+                - HasCasesTable
+                - Sid: ReadCasesTable
+                  Effect: Allow
+                  Action: dynamodb:GetItem
+                  Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
+                - !Ref AWS::NoValue
+              - Sid: ReadAnalysisObjects
+                Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
+              - Sid: ListAnalysisPrefix
+                # jen kvůli rozlišení "objekt neexistuje" od "zamítnuto" (signatures.json); jen předpona analysis
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !Sub "arn:${AWS::Partition}:s3:::${RawBucket}"
+                Condition:
+                  StringLike:
+                    "s3:prefix": "cases/*/analysis/*"
+              - Sid: ReadVectors
+                Effect: Allow
+                Action: [s3vectors:GetVectors, s3vectors:QueryVectors]
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-text"
+                  - !Sub "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-image"
+                  - !Sub "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-signatures"
+              - Sid: ReadApiKey
+                Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                # Secrets Manager přidává k názvu 6 náhodných znaků
+                Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${ApiKeySecretName}-??????"
+              - Sid: WriteOwnLogs
+                Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub "${LogGroup.Arn}:*"
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/wonderfulkb-agent-api
+      RetentionInDays: 14
+      Tags:
+        - {Key: project, Value: wonderfulkb}
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: wonderfulkb-agent-api
+      Description: Čtecí API pro validačního agenta (GET dokument, vektory, podpisy)
+      CodeUri: .
+      Handler: app.handler
+      Runtime: python3.14
+      Architectures: [arm64]
+      MemorySize: 512
+      Timeout: 20
+      Role: !GetAtt ApiRole.Arn
+      Tags:
+        project: wonderfulkb
+        component: agent-api
+      LoggingConfig:
+        LogGroup: !Ref LogGroup
+      Environment:
+        Variables:
+          ANALYSIS_TABLE: !Ref AnalysisTable
+          CASES_TABLE: !Ref CasesTable
+          RAW_BUCKET: !Ref RawBucket
+          VECTOR_BUCKET: !Ref VectorBucket
+          API_KEY_SECRET: !Ref ApiKeySecretName
+          # API_KEY se v AWS nenastavuje; klíč se čte ze Secrets Manageru.
+      Events:
+        Any:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /{proxy+}
+            Method: GET
+        Health:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /healthz
+            Method: GET
+
+  # Stage v1 => adresa https://<id>.execute-api.eu-central-1.amazonaws.com/v1/cases/... jako v OpenAPI.
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: v1
+      Tags:
+        project: wonderfulkb
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/v1"

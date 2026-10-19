@@ -1,0 +1,136 @@
+# Ukázková pravidla referenčního agenta. Nejsou to pravidla KB ani Wonderful; pravidla (včetně pravidel
+# podpisů) píše Wonderful. Soubor jde vyměnit (--rules jiny.yaml), typy pravidel jsou v refagent/checks.py.
+#
+# Zásady, které z pravidel nejdou obejít (jsou v kódu):
+#  - Doporučení je jen "schválit" nebo "ke kontrole člověkem". Agent nic nezamítá.
+#  - Prázdný nález podpisů NENÍ důkaz, že podpis chybí (Textract: úplnost ~92 % u generických, ~59 % u rukopisu).
+#    Pravidlo podpisů proto nikdy neříká "chybí", jen "detektor nenašel, zkontrolujte okem".
+#  - Chybějící hodnota v textu (pole se nepodařilo vyčíst) není nesoulad; nesoulad je jen dvojice různých hodnot.
+version: 1
+
+settings:
+  # Štítek s jistotou pod tímto číslem jde ke kontrole (confidence je jistota klasifikace, ne pravdivost dokumentu).
+  low_label_confidence: 0.7
+  # Kolik nejbližších ověřených dokumentů se žádá u pravidla label_check (jen u predicted / nejistých štítků).
+  neighbors: 3
+  # Nejvýš tolik znaků citace v nálezu.
+  quote_chars: 160
+
+rules:
+  - id: R-READY
+    type: documents_ready
+    title: Všechny dokumenty případu jsou zpracované
+    # processing_status jiný než completed/partial = text ještě není; partial = chybí strany (pages_failed).
+
+  - id: R-COMPLETE
+    type: required_documents
+    title: Úplnost podkladů podle smlouvy o úvěru
+    # Seznam podkladů čte agent z textu smlouvy (položky a) až f) za větou, která odpovídá section_start).
+    contract_label: smlouva_o_uveru
+    section_start: 'předložit\s+poskytovateli\s+financování\s+(?:níže\s+uvedené|následující)\s+podklady'
+    item_regex: '^\s*([a-h])\)\s+(.*)'
+    # Mapování položky smlouvy (regex na text položky) -> štítky dokumentů, které ji pokrývají.
+    items:
+      - {match: 'daňov\w*\s+doklad|faktur', labels: [faktura], name: faktura / daňový doklad dodavatele}
+      - {match: 'kupní\s+smlouv|objednávk', labels: [objednavka, dohoda_o_zaplaceni_kupni_ceny], name: kupní smlouva / potvrzená objednávka}
+      - {match: 'předání\s+a\s+převzetí|předávací\s+protokol|dodací\s+list', labels: [predavaci_protokol], name: doklad o předání a převzetí}
+      - {match: 'doklad\s+o\s+zaplacení|zaplacení\s+předmětu', labels: [uhrada_kupni_ceny], name: doklad o zaplacení dodavateli}
+      - {match: 'výpis\s+z\s+účtu|úhradu\s+DPH', labels: [uhrada_kupni_ceny], name: výpis / doklad o úhradě DPH}
+      - {match: 'prohlášení\s+o\s+ručení', labels: [ruceni], name: prohlášení o ručení}
+      - {match: 'potvrzení\s+dodavatele\s+o\s+převodu', labels: [predavaci_protokol], name: potvrzení dodavatele o převodu vlastnictví}
+      - {match: 'zajišťovac\w*\s+převod', labels: [zajistovaci_prevod_vlastnickeho_prava], name: smlouva o zajišťovacím převodu}
+
+  - id: R-COMPLETE-TABLE
+    type: required_documents
+    title: Úplnost podkladů podle přílohové tabulky smlouvy
+    # Varianta pro syntetické smlouvy (SYN-*): nemají výčet a) až f), ale tabulku „Příloha / Identifikace“.
+    # Použije se jen když R-COMPLETE výčet ve smlouvě nenašel. Hodnota „Nesjednáno“ položku nevyžaduje.
+    contract_label: smlouva_o_uveru
+    only_if_missing: R-COMPLETE
+    table_items:
+      - {match: '^Objednávka\s+(?!Nesjednáno)\S+', labels: [objednavka], name: objednávka}
+      - {match: '^Faktura[^\n]*?\s(?!Nesjednáno)[A-Z]{1,4}-\S+', labels: [faktura], name: faktura}
+      - {match: '^Zajištění\s+Zajišťovací\s+převod', labels: [zajistovaci_prevod_vlastnickeho_prava], name: zajišťovací převod}
+      - {match: '^Ručení\s+(?!Nesjednáno)\S+', labels: [ruceni], name: ručení}
+      - {match: '^Pojistná\s+smlouva\s+(?!Nesjednáno)\S+', labels: [vinkulace_pojisteni], name: pojištění (vinkulace)}
+
+  - id: R-CONTRACT-NO
+    type: field_consistency
+    title: Číslo smlouvy se shoduje napříč dokumenty
+    value_type: id
+    # Referenční hodnota: první dokument v tomto pořadí štítků (záznam ze systému, pak smlouva).
+    reference_labels: [data_ze_systemu, smlouva_o_uveru]
+    skip_labels: [vop]
+    extractors:
+      - kind: regex
+        pattern: '(?:smlouv\w*|smluv|úvěru)\s+č(?:\.|íslo)?\s*:?\s*(?P<v>\d{4,9}/\d{2})'
+        flags: i
+
+  - id: R-SERIAL
+    type: field_consistency
+    title: Výrobní číslo předmětu se shoduje napříč dokumenty
+    value_type: id
+    reference_labels: [smlouva_o_uveru, data_ze_systemu]
+    skip_labels: [vop]
+    # Heuristika nad textovým výpisem: hodnota bývá za popiskem o několik řádků níž (tabulka), nebo hned za ním.
+    extractors:
+      - kind: after_label
+        label: '(?:výrobní\s+číslo|výr\.\s*č\.)\s*:?'
+        window: 12
+        token: '(?<![\w/,.-])(?=[A-Z0-9-]*\d)[A-Z0-9-]{7,20}(?![\w/,.-])'
+        exclude: ['^CZ\d{8,10}$', '^\d{1,9}$', '^\d{2}-\d{2}-\d{4}$']
+
+  - id: R-PRICE
+    type: field_consistency
+    title: Kupní cena bez DPH se shoduje se smlouvou
+    value_type: amount
+    reference_labels: [smlouva_o_uveru]
+    only_labels: [objednavka, dohoda_o_zaplaceni_kupni_ceny]
+    extractors:
+      - kind: after_label
+        label: 'Předběžná\s+kupní\s+cena\s+bez\s+DPH'
+        window: 12
+        token: '(?<![\d.,])\d{1,3}(?:[  ]\d{3})+[,.]\d{2}(?![\d])'
+      - kind: after_label
+        label: 'Cena\s+celkem\s+bez\s+DPH\s*:?'
+        window: 3
+        token: '(?<![\d.,])\d{1,3}(?:[  ]\d{3})+[,.]\d{2}(?![\d])'
+      - kind: regex
+        pattern: 'Kupní\s+cena\s+bez\s+DPH\s+(?P<v>\d{1,3}(?:[ \u00a0]\d{3})+[,.]\d{2})\s*CZK'
+        flags: i
+      - kind: regex
+        pattern: 'za\s+cenu\s+(?P<v>\d{1,3}(?:[  ]\d{3})+[,.]\d{2})\s*CZK'
+        flags: i
+
+  - id: R-VAT
+    type: vat_check
+    title: DPH odpovídá sazbě z kupní ceny
+    price_rule: R-PRICE
+    reference_labels: [smlouva_o_uveru]
+    rate: 0.21
+    tolerance: 1.0
+    extractors:
+      - kind: regex
+        pattern: '(?P<v>\d{1,3}(?:[  ]\d{3})*[,.]\d{2})\s*CZK\s+představující\s+DPH'
+        flags: i
+
+  - id: R-SIGNATURES
+    type: signatures_expected
+    title: Podpisy jsou tam, kde mají být (jen nález detektoru, ne důkaz)
+    # Role, které detektor ve volání 3 má u daného typu dokumentu najít. Typy mimo seznam se na podpisy nekontrolují.
+    expected_roles:
+      smlouva_o_uveru: [provider, borrower]
+      zajistovaci_prevod_vlastnickeho_prava: [borrower, provider]
+      vinkulace_pojisteni: [insurer, borrower]
+      ruceni: [provider, guarantor]
+      dohoda_o_zaplaceni_kupni_ceny: [buyer, supplier]
+      predavaci_protokol: [supplier, buyer]
+      objednavka: [buyer]
+    # Podpis téhož výřezu ve více dokumentech je jen podezření na kopii, nikdy tvrzení o pravosti.
+    flag_copy_suspicion: true
+
+  - id: R-LABEL
+    type: label_check
+    title: Typ dokumentu (štítek) a jeho jistota
+    # Ověřené štítky (verified) se neposuzují. Predicted / bez jistoty / pod prahem se porovnají se sousedy.
+    check_neighbors: true

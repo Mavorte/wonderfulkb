@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.aws-sam/
+.textract-cache/
+crops/
+*.pyc
+.DS_Store
+ref-agent/demo/
+eval/reports/

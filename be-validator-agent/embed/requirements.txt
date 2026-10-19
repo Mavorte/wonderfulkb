@@ -1,0 +1,8 @@
+boto3>=1.40
+Pillow>=10
+# jen pro live_check.py (vykreslení PDF); PyMuPDF se nepoužívá
+pypdfium2>=4
+pytest>=8
+# jen pro benchmark.py
+pypdf>=5
+numpy>=2

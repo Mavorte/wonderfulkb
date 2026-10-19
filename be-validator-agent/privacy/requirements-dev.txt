@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest>=8
+moto[kms,s3]>=5
+-r requirements-redact.txt
