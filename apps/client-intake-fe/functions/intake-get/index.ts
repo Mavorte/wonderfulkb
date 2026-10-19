@@ -2,15 +2,15 @@
 // shows: case details, client details, and whether documents can be uploaded.
 //
 // Configuration (tenant-level):
-// - global `kb_aws_case_api_url`: base URL of the case/client API (openapi-case-client.yaml).
+// - global `kb_aws_documents_api_url`: base URL of the case/client API (openapi-case-client.yaml).
 //   When empty, mock data is returned so the UI can be demoed before AWS is live.
 // - global `kb_aws_ingest_url`: base URL of the ingest service. Empty → upload disabled.
-// - secret `aws_api_key` (type "API Key", header x-api-key): key for the case/client API.
+// - secret `kb-aws-ingest-api-key` (type "API Key", header x-api-key): key for the case/client API.
 //   It is attached by the runtime (`secretName`) and never returned to the browser.
 
 import type { FunctionContext } from "@wonderful/types";
 import type { IntakeCase, IntakeClient, IntakeData } from "../../app/src/types";
-import { CASE_API_SECRET, getCaseIdForHash, getErrorMessage, getGlobalUrl } from "../shared/intakeLinks";
+import { INGEST_SECRET, getCaseIdForHash, getErrorMessage, getGlobalUrl } from "../shared/intakeLinks";
 
 const TIMEOUT_MS = 8000;
 
@@ -77,7 +77,7 @@ async function getJson<T>(url: string): Promise<JsonResponse<T>> {
   const response = await fetch(url, {
     method: "GET",
     headers: { accept: "application/json" },
-    secretName: CASE_API_SECRET,
+    secretName: INGEST_SECRET,
     timeoutMs: TIMEOUT_MS,
   });
   const text = await response.text();
@@ -157,7 +157,7 @@ async function userFunction(context: FunctionContext): Promise<IntakeData | Inta
     return { error: "invalid_link" };
   }
 
-  const caseApiUrl = getGlobalUrl(context, "kb_aws_case_api_url");
+  const caseApiUrl = getGlobalUrl(context, "kb_aws_documents_api_url");
   const canUpload = Boolean(getGlobalUrl(context, "kb_aws_ingest_url"));
 
   if (!caseApiUrl) {

@@ -5,9 +5,7 @@ import type { FunctionContext } from "@wonderful/types";
 
 const LINKS_TABLE = "client_intake.intake_links";
 
-// Secret names (type "API Key", header x-api-key). The two AWS services use
-// different keys: API Gateway for the case/client API, the service itself for ingest.
-export const CASE_API_SECRET = "aws_api_key";
+// Secret name (type "API Key", header x-api-key), shared by the case/client API and ingest.
 export const INGEST_SECRET = "kb-aws-ingest-api-key";
 
 export async function getCaseIdForHash(context: FunctionContext, hash: string): Promise<string | null> {

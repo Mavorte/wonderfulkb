@@ -15,10 +15,9 @@ The API keys stay server-side (`fetch(..., { secretName })`), so the AWS service
 
 | Name | Kind | Value |
 | --- | --- | --- |
-| `kb_aws_case_api_url` | global variable | Case/client API base, `https://bgm7k1ggqi.execute-api.eu-central-1.amazonaws.com/v1`. Empty → mock data. |
+| `kb_aws_documents_api_url` | global variable | Case/client API base, `https://bgm7k1ggqi.execute-api.eu-central-1.amazonaws.com/v1`. Empty → mock data. |
 | `kb_aws_ingest_url` | global variable | Ingest service base, `https://vt9mavpjky.eu-central-1.awsapprunner.com/v1`. Empty → upload disabled. |
-| `aws_api_key` | secret, type API Key | Case/client API key (API Gateway key `wonderfulkb-demo-key`): `{"header_name": "x-api-key", "api_key": "..."}` |
-| `kb-aws-ingest-api-key` | secret, type API Key | Ingest key (AWS Secrets Manager `wonderfulkb/ingest-api-key`), same shape. It differs from the case API key. |
+| `kb-aws-ingest-api-key` | secret, type API Key | Key for both the case/client API and ingest (AWS Secrets Manager `wonderfulkb/ingest-api-key`): `{"header_name": "x-api-key", "api_key": "..."}` |
 
 Case details shown come from `case.metadata` (`loan_number`, `asset`, `serial_number`, `required_documents` string array), falling back to the top-level `loan_agreement_no`, `asset_name` and `serial_number` that synthetic cases use. `GET /clients/{client_id}` is not deployed, so the function falls back to `GET /clients?ico=<metadata.ico>`, or lists the clients and matches `client_id`.
 
