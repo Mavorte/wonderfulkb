@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "@wonderful/ui-base/style.css";
-import App from "../src/App";
+import App from "../src";
 import type { WonderfulContext } from "./sdk-shim";
 
 type RunnerBootstrap = {

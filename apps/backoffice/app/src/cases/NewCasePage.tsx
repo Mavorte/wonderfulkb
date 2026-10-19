@@ -57,7 +57,7 @@ export default function NewCasePage() {
   return (
     <>
       <h1 className="bo-title">New case</h1>
-      <form className="bo-card" onSubmit={onSubmit} noValidate>
+      <form className="bo-card bo-card--full" onSubmit={onSubmit} noValidate>
         <ClientCombobox
           search={(query) => searchClients(api, query)}
           value={client}
