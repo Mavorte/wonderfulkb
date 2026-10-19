@@ -2,8 +2,9 @@ import { useState, type ReactNode } from "react";
 import KbLogo from "./kb/kb-logo.svg?react";
 import CasesPage from "./cases/CasesPage";
 import NewCasePage from "./cases/NewCasePage";
+import ClientsPage from "./clients/ClientsPage";
 
-type Page = "cases" | "new-case";
+type Page = "cases" | "new-case" | "clients";
 
 const navItems: { page: Page; label: string; icon: ReactNode }[] = [
   {
@@ -15,6 +16,11 @@ const navItems: { page: Page; label: string; icon: ReactNode }[] = [
     page: "new-case",
     label: "New case",
     icon: <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />,
+  },
+  {
+    page: "clients",
+    label: "Clients",
+    icon: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" />,
   },
 ];
 
@@ -51,7 +57,9 @@ export default function App() {
         </nav>
       </aside>
       <main className="bo-main">
-        {page === "cases" ? <CasesPage onNewCase={() => setPage("new-case")} /> : <NewCasePage />}
+        {page === "cases" && <CasesPage onNewCase={() => setPage("new-case")} />}
+        {page === "new-case" && <NewCasePage />}
+        {page === "clients" && <ClientsPage />}
       </main>
     </div>
   );
