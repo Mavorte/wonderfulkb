@@ -28,7 +28,7 @@ Odpověď `201` obsahuje přidělené `case_id` (UUID); použijte ho v dalších
 
 `POST /cases` je v kontraktu (OpenAPI 1.4.0) prostý create: `case_id` generuje služba, bez idempotence, případné `case_id` v těle se ignoruje.
 
-> **Nasazená verze je zatím stará (ověřeno 19. 10. 2026).** `POST /cases` bez `case_id` vrací `400 {"error":"case_id invalid"}`. Dokud se nenasadí nová Lambda (`infra/case-client/handler.mjs`), posílejte `case_id` (1–128 znaků `A-Za-z0-9._-`) a `client_id`; volání je idempotentní (stejné `case_id` + `client_id` → `200`, jiný klient → `409`).
+Nasazeno 19. 10. 2026 (Lambda `wonderfulkb-case-client`). Starší klienti, kteří posílali vlastní `case_id`, ho dál mohou posílat, server ho ignoruje a vrátí vlastní.
 
 Sémantika chyb: chybějící nebo špatný klíč → **403** · neznámý klient/case → **404** · klient `inactive`/`blocked` → **409** · nad 10 req/s (burst 20) → **429**.
 
