@@ -8,9 +8,9 @@ import json
 from pathlib import Path
 import re
 from threading import Lock
+from uuid import uuid4
 
-from case_client_repository import (InvalidRequest, NotFound, normalize_name,
-                                    existing_case, active_client)
+from case_client_repository import InvalidRequest, NotFound, normalize_name, active_client
 
 
 def _page(items, id_field, scope, filters, limit, token):
@@ -66,17 +66,20 @@ class MockCaseClientRepository:
             clients, next_token = _page(items, 'client_id', 'clients', filters, limit, token)
             return {'clients': clients, 'next_token': next_token}
 
-    def create_case(self, case_id, client_id, metadata):
+    def create_case(self, client_id, metadata):
         with self._lock:
-            if case_id in self._cases:
-                case = self._cases[case_id]
-                return existing_case(deepcopy(case), client_id)
             active_client(self._clients.get(client_id))
+            for _ in range(3):
+                case_id = str(uuid4())
+                if case_id not in self._cases:
+                    break
+            else:
+                raise RuntimeError('Unable to allocate case ID')
             case = {'case_id': case_id, 'client_id': client_id, 'status': 'open',
                     'created_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                     'metadata': deepcopy(metadata)}
             self._cases[case_id] = case
-            return deepcopy(case), True
+            return deepcopy(case)
 
     def get_case(self, case_id):
         with self._lock:

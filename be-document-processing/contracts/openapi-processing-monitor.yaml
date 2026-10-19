@@ -1,0 +1,989 @@
+openapi: 3.0.3
+info:
+  title: WonderfulKB Document Processing Monitor API — návrh
+  version: 0.3.0
+  description: |
+    Návrh čtecího rozhraní, nikoli implementované nebo nasazené API.
+    Autoritou business struktury je aktuální AWS, nikoli starší pk/sk/payload adapter.
+    Výchozí známá pole odpovídají průzkumu 19. 10. 2026; před implementací ověřit aktuální
+    schéma a upravit mapování. Kontrakt je uspořádán podle entit, ne podle DynamoDB itemů.
+    Existující business data se tímto kontraktem nemění. Audit je interní package stejné služby.
+    Žádný upload, retry, cancel, reprocess nebo business zápis není součástí tohoto API.
+    Revize 0.3: primární auditní zápis je runtime Event navázaný na existující business ID.
+    Document/Upload/Analysis jsou read-through business pohledy, nikoli znovu ukládané auditní entity.
+    Run/Attempt/Step/Page/AuditSnapshot jsou čtecí projekce událostí, nikoli požadavek
+    paralelně ukládat plné snapshoty. Pouze doložené bounded dotazy mohou vyžádat malý
+    rebuildable runtime index bez business dat. Statické business atributy se do auditu nekopírují.
+    Historické vstupní/výstupní reference a minimální tehdejší runtime kontext patří jednou
+    k příslušné události, ne do každé události ani do nového business manifestu.
+    Historie vyžaduje nové auditní zápisy; existující snapshot ji nedokazuje.
+    Bez usage, ceny, původního run/attempt cache, queue wait a periodického heartbeat.
+
+    Úplná cesta = server /v1 + path /cases/...; nekombinovat dva prefixy /v1.
+    Neexistující case/document/run vrací 404; nepřístupná identita 403 nebo konzistentně
+    maskovanou 404 dle politiky brány. Chyba zdroje není prázdný seznam ani chybějící data.
+    Při nedostupnosti zdroje nutného pro úplnou odpověď vrátit 503; ne tichý partial 200.
+    Chybějící volitelné business atributy vynechat, explicitní null znamená neznámou hodnotu;
+    auditní reference a měření mohou být null. Nula není náhrada za neznámé měření.
+    Nová pole odpovědí klient ignoruje, neznámé doménové stavy zobrazí jako neznámý stav
+    a zachová původní řetězec. Identifikátory jsou opaque, nikoli nutně UUID.
+
+    Každá odpověď je case-scoped a autorizovaná serverem. x-api-key je serverový credential,
+    nikoli uživatelská autorizace případu: používá jej autentizovaná backoffice proxy.
+    Klíč nepatří do browseru. Produkční host/routing a způsob předání důvěryhodného case
+    oprávnění musí být dohodnuty při integraci; placeholder server není nasazený endpoint.
+    Data i inference zůstávají v eu-central-1; tyto čtecí operace inference nevolají.
+    Všechny odpovědi mají Cache-Control: private, no-store (i kde není hlavička
+    opakovaně rozepsána). Neznámý attempt_no nebo run_id je 404, ne prázdná kolekce.
+    Audit jako celek může být explicitně ještě nenakonfigurován: pak union používá
+    business zdroje a audit availability=unavailable/not_configured, žádný pokus o čtení
+    neexistující tabulky. Konfigurovaný ale rozbitý auditní zdroj znamená 503.
+  x-proposal-id: proposal-20261019-150954-c8891f
+  x-proposal-file: ../../docs/proposals/proposal-20261019-150954-c8891f_monitoring-zpracovani-dokumentu-prubeh-mezivysledky-a-audit.md
+  x-design-guide: ../PROCESSING-MONITOR-API.md
+  x-contract-status: design-only
+servers:
+  - url: https://{host}/v1
+    description: Návrhový host existující dokumentové služby, nikoli nová aplikace.
+    variables:
+      host:
+        default: REPLACE_WITH_DOCUMENT_API_HOST
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: documents
+    description: Sjednocená identita dokumentu v případu.
+  - name: uploads
+    description: Existující metadata přijetí, bez změny ingest workflow.
+  - name: analyses
+    description: Existující business snapshot analýzy.
+  - name: audit
+    description: Vedlejší pozorování, běhy, pokusy a mezivýsledky; nová instrumentace.
+  - name: artifacts
+    description: Autorizované reference originálů a výsledků bez veřejných S3 klíčů.
+paths:
+  /cases/{case_id}/processing/documents:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    get:
+      tags: [documents]
+      operationId: listProcessingDocuments
+      summary: Dokumenty případu ze sjednocených zdrojů
+      description: |
+        Union upload, analysis a audit dokumentových identit, nikoli inner join.
+        Jeden document_id právě jednou, vzestupně lexikograficky podle document_id.
+        Žádný full-table Scan. Query zdrojů po case_id, bounded merge a opaque next_token
+        držící pozice/buffer všech zdrojů. Neemitovat další ID, dokud jsou všechny zdroje
+        známy alespoň po toto ID. Nevyčerpaný zdroj při budgetu: vrátit dosavadní prefix
+        a next_token, případně prázdnou stránku s next_token; není to konec seznamu.
+        Token je svázaný s case, filtry, řazením, oprávněním a expirací; není auth.
+        Mezi stránkami nejde o transakční snapshot. Nový dokument s nižším ID může být
+        vidět až po refresh od první stránky. Při expiraci 400, ne restart skrytě od začátku.
+        Filtry jsou nad sjednoceným dokumentem, mohou vrátit méně než limit výsledků;
+        next_token=null pouze když jsou všechny zdroje vyčerpány. summary/count není
+        součástí odpovědi, aby počet stránky nevypadal jako počet všech dokumentů.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+        - name: processing_status
+          in: query
+          description: Přesná hodnota business analysis.processing_status; unknown pro chybějící stav. Není to odhad z auditu.
+          schema: {type: string, minLength: 1, maxLength: 100}
+        - name: relationship
+          in: query
+          schema: {type: string, enum: [matched, upload_only, analysis_only, audit_only]}
+      responses:
+        '200':
+          description: Stránka dokumentů bez velkých textů a URL.
+          headers:
+            Cache-Control: {$ref: '#/components/headers/PrivateCache'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentList'}
+              example:
+                observed_at: '2026-10-19T15:30:00Z'
+                case_id: case-demo
+                documents:
+                  - case_id: case-demo
+                    document_id: doc-demo
+                    display_name: smlouva.pdf
+                    relationship: matched
+                    processing_status: completed
+                    label: smlouva
+                    page_count: 4
+                    updated_at: '2026-10-19T15:00:00Z'
+                    audit:
+                      state: unavailable
+                      reason: not_instrumented
+                      active_run_id: null
+                      published_run_id: null
+                      projection_revision: null
+                next_token: null
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [documents]
+      operationId: getProcessingDocument
+      summary: Identita, business snapshoty a dostupnost auditu
+      description: |
+        Funguje i před dokončením zpracování a pro analysis_only/upload_only/audit_only.
+        upload nebo analysis je null jen při potvrzené absenci, nikoli chybě čtení.
+        Business analysis.processing_status a audit.processing_status se neslučují
+        do jednoho neprokazatelného stavu. Rozpor je v UI viditelný.
+      responses:
+        '200':
+          description: Aktuální detail dokumentu bez obsahů artefaktů.
+          headers:
+            Cache-Control: {$ref: '#/components/headers/PrivateCache'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentDetail'}
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/upload:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [uploads]
+      operationId: getProcessingUpload
+      summary: Metadata existujícího uploadu
+      description: |
+        Obálka state=absent a data=null je platná pro analysis_only dokument.
+        Pro neexistující dokument 404, pro chybu zdroje 503. s3_key se nevystavuje,
+        nahrazuje jej opaque source_artifact_id pro autorizovaný přístup.
+      responses:
+        '200':
+          description: Dostupnost a metadata uploadu.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UploadResponse'}
+              example:
+                observed_at: '2026-10-19T15:30:00Z'
+                case_id: case-demo
+                document_id: analysis-only-demo
+                state: absent
+                reason: not_created
+                data: null
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/analysis:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [analyses]
+      operationId: getProcessingAnalysis
+      summary: Aktuální business analýza
+      description: |
+        Současný flat AWS snapshot, nikoli source DocumentResult a nikoli historie.
+        Vrací dostupná pole i při queued/processing/partial/failed; absence textu
+        neblokuje čtení metadat. text_s3_key mapuje na text_artifact_id, ne raw URL.
+        Bez znalosti provenance nelze current analysis přiřadit zvolenému historickému runu.
+      responses:
+        '200':
+          description: Analýza nebo potvrzená absence.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AnalysisResponse'}
+              example:
+                observed_at: '2026-10-19T15:30:00Z'
+                case_id: case-demo
+                document_id: doc-demo
+                state: available
+                reason: null
+                data:
+                  case_id: case-demo
+                  document_id: doc-demo
+                  title: smlouva.pdf
+                  label: smlouva
+                  label_status: predicted
+                  confidence: 0.9
+                  processing_status: completed
+                  page_count: 4
+                  text_artifact_id: artifact-text-demo
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/audit:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [audit]
+      operationId: getProcessingAudit
+      summary: Dostupnost, čerstvost a aktuální auditní projekce
+      description: |
+        Neinstrumentovaný legacy dokument vrací unavailable/not_instrumented, žádný
+        syntetický run ani completed kroky. observed_at je čas přečtení, nikoli heartbeat.
+        projection_revision je monotónní pouze v rámci této dokumentové auditní projekce,
+        ne revize business tabulek nebo konzistentní transakce mezi zdroji.
+      responses:
+        '200':
+          description: Aktuální audit dokumentu nebo explicitně nedostupná historie.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuditResponse'}
+              example:
+                observed_at: '2026-10-19T15:30:00Z'
+                case_id: case-demo
+                document_id: doc-demo
+                state: unavailable
+                reason: not_instrumented
+                active_run_id: null
+                published_run_id: null
+                projection_revision: null
+                freshness: unknown
+                last_activity_at: null
+                coverage: {state: unknown, gaps_known: null, reason: not_instrumented}
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [audit]
+      operationId: listProcessingRuns
+      summary: Běhy dokumentu
+      description: |
+        Řazení created_at sestupně, run_id jako tie-breaker. Toto pořadí nemusí
+        odpovídat fyzickému RUN#uuid klíči; úložiště/projekce musí bounded query podpořit.
+        Run vzniká vědomým novým zpracováním, retry workeru je další attempt téhož runu.
+        unavailable + items=[] neznamená pozorovanou prázdnou historii.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Dostupnost historie a stránka běhů.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RunList'}
+              examples:
+                legacy:
+                  summary: Historie není dostupná, nikoli potvrzeně prázdná.
+                  value:
+                    observed_at: '2026-10-19T15:30:00Z'
+                    state: unavailable
+                    reason: not_instrumented
+                    coverage: {state: unknown, gaps_known: null, reason: not_instrumented}
+                    items: []
+                    next_token: null
+                observedEmpty:
+                  summary: Audit je k dispozici, nebyl pozorován žádný běh.
+                  value:
+                    observed_at: '2026-10-19T15:30:00Z'
+                    state: available
+                    reason: null
+                    coverage: {state: complete, gaps_known: false, reason: null}
+                    items: []
+                    next_token: null
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [audit]
+      operationId: getProcessingRun
+      summary: Jeden doložený běh a jeho konfigurace
+      description: Nevrací všechny stránky ani události v jednom JSON. Neznámý run nebo cizí příslušnost vrací 404 dle auth politiky.
+      responses:
+        '200':
+          description: Doložený běh.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RunResponse'}
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/attempts:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [audit]
+      operationId: listProcessingAttempts
+      summary: Pokusy workeru v běhu
+      description: Řazení attempt_no vzestupně. Není to SQS delivery count; mezery nejsou synteticky doplněny.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka pokusů a úplnost pozorování.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AttemptList'}
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/steps:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [audit]
+      operationId: listProcessingSteps
+      summary: Fáze a jejich stavy v konkrétním pokusu
+      description: attempt_no je povinné, žádné implicitní smíchání posledních pokusů. Řazení sequence,step_id vzestupně.
+      parameters:
+        - $ref: '#/components/parameters/AttemptNo'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka kroků.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StepList'}
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/pages:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [audit]
+      operationId: listProcessingPages
+      summary: Stránky, mezivýsledky a cache reuse konkrétního pokusu
+      description: |
+        page_number je 1-based, řazení vzestupně. Dostupné i před koncem běhu.
+        Text/náhledy jen přes artifact reference, ne velký obsah v poll odpovědi.
+        Nevytvářet pending stránku jen z absence auditního záznamu. Neznámý attempt 404;
+        potvrzený attempt bez coverage vrátí unavailable, ne pozorovanou prázdnou sadu.
+      parameters:
+        - $ref: '#/components/parameters/AttemptNo'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka stránkových mezivýsledků.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PageList'}
+              example:
+                observed_at: '2026-10-19T15:30:00Z'
+                state: available
+                reason: null
+                coverage: {state: partial, gaps_known: true, reason: delivery_gap}
+                items:
+                  - run_id: run-demo
+                    attempt_no: 2
+                    page_number: 1
+                    status: completed
+                    method: native
+                    cache_hit: true
+                    text_artifact_id: page-text-demo
+                  - run_id: run-demo
+                    attempt_no: 2
+                    page_number: 2
+                    status: failed
+                    method: vision
+                    cache_hit: false
+                    error: {code: provider_timeout, message_safe: Přepis stránky překročil časový limit., retryable: true}
+                next_token: null
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/events:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [audit]
+      operationId: listProcessingEvents
+      summary: Časová osa významných událostí
+      description: |
+        Řazení sequence,event_id vzestupně; occurred_at a recorded_at rozlišují
+        čas události a doručení. Pořadí je pozorované v rámci runu, ne globální causalita.
+        Primární auditní fakta jsou události; ostatní runtime GET jsou jejich projekce.
+        Chybějící události se nevyrábějí z aktuálního business snapshotu; periodický heartbeat není MVP.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka událostí a coverage.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EventList'}
+              example:
+                observed_at: '2026-10-19T15:30:00Z'
+                state: available
+                reason: null
+                coverage: {state: partial, gaps_known: true, reason: delivery_gap}
+                items:
+                  - schema_version: '1.0'
+                    case_id: case-demo
+                    document_id: document-demo
+                    run_id: run-demo
+                    event_id: evt-demo-7
+                    sequence: 7
+                    type: PageCacheReused
+                    occurred_at: '2026-10-19T15:00:00Z'
+                    recorded_at: '2026-10-19T15:00:00.020Z'
+                    attempt_no: 2
+                    stage: page_transcription
+                    page_number: 1
+                    artifact_ids: [cache-page-demo]
+                    details: {cache_hit: true, outcome: completed}
+                next_token: null
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/artifacts:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+    get:
+      tags: [artifacts]
+      operationId: listProcessingArtifacts
+      summary: Originál, současné výsledky a doložené mezivýsledky
+      description: |
+        Bez run_id vrací jen document-level originál a současné business reference;
+        nikoli neomezenou historii. S run_id jen artefakty s prokázaným vztahem k běhu.
+        Aktuální legacy text nesmí být přiřazen libovolnému runu. Filtrovaná nedostupná
+        historie je unavailable, ne důkaz, že nebyly artefakty. Řazení artifact_id vzestupně.
+      parameters:
+        - name: run_id
+          in: query
+          schema: {type: string, minLength: 1, maxLength: 256}
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Stránka metadat bez download URL.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ArtifactList'}
+        default: {$ref: '#/components/responses/Failure'}
+  /cases/{case_id}/processing/documents/{document_id}/artifacts/{artifact_id}:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+      - $ref: '#/components/parameters/DocumentId'
+      - name: artifact_id
+        in: path
+        required: true
+        schema: {type: string, minLength: 1, maxLength: 512}
+    get:
+      tags: [artifacts]
+      operationId: getProcessingArtifactAccess
+      summary: Metadata artefaktu a krátkodobý autorizovaný přístup
+      description: |
+        Ověřit case/document/run/version vlastnictví serverem, nikdy nepřijmout bucket,
+        key či libovolnou URL od klienta. Samostatné oprávnění ke čtení obsahu.
+        Metadata-only bez práva obsahu neznamená download URL; 403 pro toto volání.
+        Odkaz jen na serverem zvolený objekt/verzi, krátká expirace, ne do DB/logů.
+        State pending/missing/unavailable vrací 200 a access=null, ne prázdný obsah.
+        Chyba čtení/signování 503, ne missing. Pro nedůvěryhodný obsah preferovat attachment;
+        náhled jen v bezpečně izolovaném rendereru. Nikdy nespouštět HTML nebo instrukce textu.
+      responses:
+        '200':
+          description: Metadata a GET URL jen pro ready artefakt.
+          headers:
+            Cache-Control: {$ref: '#/components/headers/PrivateCache'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ArtifactAccessResponse'}
+              example:
+                observed_at: '2026-10-19T15:30:00Z'
+                artifact:
+                  case_id: case-demo
+                  document_id: doc-demo
+                  artifact_id: artifact-text-demo
+                  kind: analysis_text
+                  state: ready
+                  content_type: text/plain
+                  version_id: version-demo
+                access:
+                  url: https://example.invalid/short-lived-artifact
+                  method: GET
+                  expires_at: '2026-10-19T15:35:00Z'
+        default: {$ref: '#/components/responses/Failure'}
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Server-to-server klíč existující proxy; případová autorizace je další povinná serverová kontrola.
+  parameters:
+    CaseId:
+      name: case_id
+      in: path
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 256}
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 256}
+    RunId:
+      name: run_id
+      in: path
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 256}
+    AttemptNo:
+      name: attempt_no
+      in: query
+      required: true
+      schema: {type: integer, minimum: 1}
+    Limit:
+      name: limit
+      in: query
+      schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+    NextToken:
+      name: next_token
+      in: query
+      description: Opaque expirovatelný token svázaný se scope a filtry; null v odpovědi znamená vyčerpání.
+      schema: {type: string, minLength: 1, maxLength: 16384}
+  headers:
+    PrivateCache:
+      description: Citlivá odpověď ani podepsaný odkaz se nesdílejí přes cache.
+      schema: {type: string, example: 'private, no-store'}
+  responses:
+    Failure:
+      description: |
+        Jednotný error tvar. 400 neplatný parametr/token, 403 credential nebo oprávnění,
+        404 neexistující identita (případně bezpečně maskovaná), 429 rate limit,
+        500 interní chyba, 503 nedostupný zdroj. Retry-After u 429/503 podle situace.
+        Nikdy stack trace, dokumentové hodnoty, credentials nebo raw provider odpověď.
+      headers:
+        Retry-After:
+          description: Počet sekund do dalšího pokusu, pokud je opakování vhodné.
+          schema: {type: integer, minimum: 1}
+        Cache-Control: {$ref: '#/components/headers/PrivateCache'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example: {error: Zdroj je dočasně nedostupný., code: source_unavailable, retryable: true}
+  schemas:
+    Error:
+      type: object
+      required: [error, code, retryable]
+      properties:
+        error: {type: string}
+        code: {type: string}
+        retryable: {type: boolean}
+        correlation_id: {type: string}
+    Observation:
+      type: object
+      required: [observed_at]
+      properties:
+        observed_at:
+          type: string
+          format: date-time
+          description: UTC čas čtení/projekce, nikoli čas posledního zpracování.
+    Pagination:
+      type: object
+      required: [next_token]
+      properties:
+        next_token: {type: string, nullable: true}
+    Availability:
+      type: object
+      required: [state, reason]
+      description: |
+        available = data/sada je čitelná, může být legitimně prázdná.
+        absent = potvrzeně chybí business snapshot. unavailable = funkce/historie
+        není dostupná (neinstrumentována, retence, neznámá provenance); není to chyba sítě.
+        Auditní collections nepoužívají absent; výpadek povinného zdroje vrací 503.
+      properties:
+        state: {type: string, enum: [available, absent, unavailable]}
+        reason:
+          type: string
+          nullable: true
+          description: Např. not_created, not_instrumented, history_expired, provenance_unknown. null pro available bez zvláštního důvodu.
+    Coverage:
+      type: object
+      required: [state, gaps_known]
+      properties:
+        state: {type: string, enum: [complete, partial, unknown]}
+        gaps_known:
+          type: boolean
+          nullable: true
+          description: null pokud nelze posoudit; false není záruka regulatorně úplného auditu.
+        reason: {type: string, nullable: true}
+    Relationship:
+      type: string
+      enum: [matched, upload_only, analysis_only, audit_only]
+      description: matched=upload+analysis; audit přítomnost je samostatná. audit_only znamená potvrzenou absenci obou business snapshotů.
+    ProcessingStatus:
+      type: string
+      nullable: true
+      description: |
+        Aktuální zdrojová hodnota bez uzavřeného enumu. Známé awaiting_upload, queued,
+        processing, completed, partial, failed. null pokud chybí; žádné dovozování queued
+        z existence uploadu. Budoucí neznámé hodnoty musí klient bezpečně zobrazit.
+      example: completed
+    Upload:
+      description: Read-through existujících ingest metadata. Tento DTO se do auditního deníku neukládá.
+      type: object
+      nullable: true
+      required: [case_id, document_id]
+      description: |
+        Dnešní AWS atributy, nikoli povinná budoucí DB struktura. Pole kromě identity
+        jsou volitelná a nullable; absence/null se zachová. Interní s3_key je záměrně
+        nahrazen autorizovaným artifact ID. Další DB pole se nevystavují automaticky.
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        filename: {type: string, nullable: true}
+        content_type: {type: string, nullable: true}
+        size_bytes: {type: integer, format: int64, minimum: 0, nullable: true}
+        sha256: {type: string, nullable: true}
+        received_at: {type: string, format: date-time, nullable: true}
+        uploaded_by: {type: string, nullable: true, description: Jen role oprávněná vidět identitu; sdílený API klient není ověřená osoba.}
+        source_artifact_id: {type: string, nullable: true}
+    Analysis:
+      description: Read-through současného business výsledku. Tento DTO se do auditního deníku neukládá.
+      type: object
+      nullable: true
+      required: [case_id, document_id]
+      description: |
+        Projekce současné AWS analýzy. Nevyžaduje source DocumentResult, OCR blocks,
+        fields nebo run_id. Nové atributy pouze po explicitním safe mappingu, žádný
+        otevřený raw DB dump. confidence znamená klasifikaci, ne přesnost OCR.
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        title: {type: string, nullable: true}
+        description: {type: string, nullable: true}
+        label: {type: string, nullable: true}
+        label_status: {type: string, nullable: true, description: Dnes predicted/verified; neuzavírat novým hodnotám.}
+        confidence: {type: number, nullable: true, description: 'Zdrojové klasifikační skóre, ne kalibrovaná pravděpodobnost ani OCR kvalita.'}
+        processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
+        page_count: {type: integer, minimum: 0, nullable: true}
+        pipeline_version: {type: string, nullable: true}
+        updated_at: {type: string, format: date-time, nullable: true}
+        text_artifact_id: {type: string, nullable: true}
+    AuditSnapshot:
+      description: Odvozený runtime přehled, nikoli primární zapisovaná business entita. Případná materializace jen pro doložený bounded dotaz bez business dat.
+      allOf:
+        - $ref: '#/components/schemas/Availability'
+        - type: object
+          required: [active_run_id, published_run_id, projection_revision]
+          properties:
+            active_run_id: {type: string, nullable: true}
+            published_run_id: {type: string, nullable: true}
+            published_attempt_no: {type: integer, minimum: 1, nullable: true}
+            projection_revision: {type: integer, minimum: 0, nullable: true}
+            processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
+            stage: {type: string, nullable: true}
+            attempt_no: {type: integer, minimum: 1, nullable: true}
+            freshness: {type: string, enum: [fresh, stale, unknown]}
+            last_activity_at: {type: string, format: date-time, nullable: true, description: 'Poslední zachycená hranice existujícího toku; žádný pravidelný heartbeat nebo důkaz živosti.'}
+            coverage: {$ref: '#/components/schemas/Coverage'}
+            pages: {$ref: '#/components/schemas/PageCounters'}
+    PageCounters:
+      type: object
+      description: |
+        Počty vzájemně disjunktních aktuálních stavů ve zvoleném pokusu, nikoli součet
+        historických pokusů. cache_hit je příznak completed, ne další kategorie.
+        Když nejsou počty úplné, coverage není complete; nedopočítávat pending z mezery.
+      properties:
+        total: {type: integer, minimum: 0, nullable: true}
+        completed: {type: integer, minimum: 0, nullable: true}
+        failed: {type: integer, minimum: 0, nullable: true}
+        running: {type: integer, minimum: 0, nullable: true}
+        pending: {type: integer, minimum: 0, nullable: true}
+    DocumentSummary:
+      type: object
+      required: [case_id, document_id, display_name, relationship, processing_status, audit]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        display_name: {type: string, description: 'Neprázdné analysis.title, jinak neprázdné upload.filename, jinak document_id; není vstup klasifikace.'}
+        relationship: {$ref: '#/components/schemas/Relationship'}
+        processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
+        label: {type: string, nullable: true}
+        page_count: {type: integer, minimum: 0, nullable: true}
+        updated_at: {type: string, format: date-time, nullable: true}
+        audit: {$ref: '#/components/schemas/AuditSnapshot'}
+    DocumentList:
+      allOf:
+        - $ref: '#/components/schemas/Observation'
+        - $ref: '#/components/schemas/Pagination'
+        - type: object
+          required: [case_id, documents]
+          properties:
+            case_id: {type: string}
+            documents: {type: array, items: {$ref: '#/components/schemas/DocumentSummary'}}
+    DocumentDetail:
+      allOf:
+        - $ref: '#/components/schemas/Observation'
+        - $ref: '#/components/schemas/DocumentSummary'
+        - type: object
+          required: [upload, analysis]
+          properties:
+            upload: {$ref: '#/components/schemas/Upload'}
+            analysis: {$ref: '#/components/schemas/Analysis'}
+    UploadResponse:
+      allOf:
+        - $ref: '#/components/schemas/Observation'
+        - $ref: '#/components/schemas/Availability'
+        - type: object
+          required: [case_id, document_id, data]
+          properties:
+            case_id: {type: string}
+            document_id: {type: string}
+            data: {$ref: '#/components/schemas/Upload'}
+    AnalysisResponse:
+      allOf:
+        - $ref: '#/components/schemas/Observation'
+        - $ref: '#/components/schemas/Availability'
+        - type: object
+          required: [case_id, document_id, data]
+          properties:
+            case_id: {type: string}
+            document_id: {type: string}
+            data: {$ref: '#/components/schemas/Analysis'}
+    AuditResponse:
+      allOf:
+        - $ref: '#/components/schemas/Observation'
+        - $ref: '#/components/schemas/AuditSnapshot'
+        - type: object
+          required: [case_id, document_id]
+          properties:
+            case_id: {type: string}
+            document_id: {type: string}
+    Timing:
+      type: object
+      properties:
+        created_at: {type: string, format: date-time, nullable: true}
+        started_at: {type: string, format: date-time, nullable: true}
+        finished_at: {type: string, format: date-time, nullable: true}
+        duration_ms: {type: number, minimum: 0, nullable: true, description: 'Měřené trvání, ne domněnka z updated_at.'}
+    SafeFailure:
+      type: object
+      nullable: true
+      required: [code, message_safe, retryable]
+      properties:
+        code: {type: string}
+        message_safe: {type: string}
+        retryable: {type: boolean, nullable: true}
+    Run:
+      description: Čtecí projekce událostí běhu a jednou zachyceného runtime kontextu, nikoli plná kopie jobu/config ani nový business záznam.
+      allOf:
+        - $ref: '#/components/schemas/Timing'
+        - type: object
+          required: [case_id, document_id, run_id, processing_status, coverage]
+          properties:
+            case_id: {type: string}
+            document_id: {type: string}
+            run_id: {type: string}
+            job_id: {type: string, nullable: true}
+            processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
+            mode: {type: string, nullable: true, description: 'Dnes auto/visual, konfigurace není skutečná metoda každé stránky.'}
+            pipeline_version: {type: string, nullable: true, description: 'Deklarovaná verze, nikoli hash zdrojového kódu.'}
+            prompt_version: {type: string, nullable: true, description: 'Deklarovaná verze, nikoli hash obsahu promptu.'}
+            config_hash: {type: string, nullable: true}
+            source_artifact_id: {type: string, nullable: true}
+            provider: {type: string, nullable: true}
+            model: {type: string, nullable: true, description: Jen doložená konfigurace runu; per-stage model může být jiný.}
+            api: {type: string, nullable: true}
+            region: {type: string, nullable: true}
+            coverage: {$ref: '#/components/schemas/Coverage'}
+            error: {$ref: '#/components/schemas/SafeFailure'}
+    Attempt:
+      description: Čtecí projekce událostí úspěšného claimu a dalších hranic pokusu, nikoli druhý execution owner.
+      allOf:
+        - $ref: '#/components/schemas/Timing'
+        - type: object
+          required: [run_id, attempt_no, status]
+          properties:
+            run_id: {type: string}
+            attempt_no: {type: integer, minimum: 1}
+            status: {type: string, description: Např. queued/running/succeeded/partial/failed/lease_lost; otevřená množina.}
+            retry_reason: {type: string, nullable: true, description: 'Jen zachycený error code při rozhodnutí/requeue předchozího pokusu; lease expiry bez známé příčiny není provider chyba.'}
+            last_activity_at: {type: string, format: date-time, nullable: true, description: 'Poslední zachycená hranice existujícího toku; žádný pravidelný heartbeat nebo důkaz živosti.'}
+            error: {$ref: '#/components/schemas/SafeFailure'}
+    Step:
+      description: Čtecí projekce start/end/failure událostí, nikoli požadavek na samostatný zápis STEP objektu.
+      allOf:
+        - $ref: '#/components/schemas/Timing'
+        - type: object
+          required: [run_id, attempt_no, step_id, sequence, stage, status]
+          properties:
+            run_id: {type: string}
+            attempt_no: {type: integer, minimum: 1}
+            step_id: {type: string}
+            sequence: {type: integer, minimum: 0}
+            stage: {type: string, description: Např. source_validation/queued/page_transcription/extraction/result_publishing; otevřená množina.}
+            status: {type: string, description: pending/running/succeeded/failed/skipped a budoucí stavy. not_instrumented není succeeded.}
+            provider: {type: string, nullable: true}
+            model: {type: string, nullable: true}
+            metrics: {$ref: '#/components/schemas/Metrics'}
+            artifact_ids: {type: array, items: {type: string}}
+            error: {$ref: '#/components/schemas/SafeFailure'}
+    Metrics:
+      type: object
+      description: Jen skutečně měřené/vrácené hodnoty. Neznámé null/vynecháno, ne 0. Nové metriky jen explicitním kontraktem.
+      properties:
+        client_call_duration_ms: {type: number, minimum: 0, nullable: true, description: 'Nový monotónní wrapper kolem existujícího BedrockClient.complete; zahrnuje lokální práci a SDK retries, není čistou provider latencí.'}
+        unknown_reason: {type: string, nullable: true}
+    Page:
+      description: Čtecí runtime průběh stránky z událostí; obsah a statické údaje uložené stránky se připojují z potvrzené existující reference, nekopírují se do auditu.
+      allOf:
+        - $ref: '#/components/schemas/Timing'
+        - type: object
+          required: [run_id, attempt_no, page_number, status]
+          properties:
+            run_id: {type: string}
+            attempt_no: {type: integer, minimum: 1}
+            page_number: {type: integer, minimum: 1}
+            status: {type: string, description: Např. pending/running/completed/failed; absence eventu není pending.}
+            method: {type: string, nullable: true, description: Doložená skutečná cesta native/vision nebo budoucí hodnota.}
+            model: {type: string, nullable: true}
+            cache_hit: {type: boolean, nullable: true, description: 'Hook až po úspěšném načtení a validaci Page cache; cache nedokládá původní run ani attempt.'}
+            fallback_reason: {type: string, nullable: true, description: 'Známý warning z PdfFirstOcr.transcribe, nikoli domněnka z method=vision.'}
+            warning_codes: {type: array, items: {type: string}}
+            preview_artifact_id: {type: string, nullable: true}
+            text_artifact_id: {type: string, nullable: true}
+            structured_artifact_id: {type: string, nullable: true}
+            error: {$ref: '#/components/schemas/SafeFailure'}
+    Event:
+      type: object
+      description: |
+        Jediná primární zapisovaná auditní entita, zde její bezpečná veřejná projekce.
+        Neměnná fakta runtime přechodu, ne kopie dokumentu/uploadu/analýzy.
+        details je allowlist podle type, nikoli obecný business payload. Pole mimo typ se nevyplňují.
+        Historický runtime kontext jen v RunQueued; artefaktové vazby jsou opaque.
+      required: [schema_version, case_id, document_id, run_id, event_id, sequence, type, occurred_at, recorded_at]
+      properties:
+        schema_version: {type: string, enum: ['1.0']}
+        case_id: {type: string}
+        document_id: {type: string}
+        run_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, description: Sémantická runtime událost např. PageCacheReused/PageCompleted/RetryEnqueued/ResultPublished.}
+        occurred_at: {type: string, format: date-time}
+        recorded_at: {type: string, format: date-time}
+        attempt_no: {type: integer, minimum: 1, nullable: true}
+        stage: {type: string, nullable: true}
+        page_number: {type: integer, minimum: 1, nullable: true}
+        correlation_id: {type: string, nullable: true}
+        artifact_ids: {type: array, items: {type: string}}
+        error: {$ref: '#/components/schemas/SafeFailure'}
+        details:
+          type: object
+          additionalProperties: false
+          description: |
+            Pracovní sjednocený allowlist, ne povinnost všech polí pro všechny eventy.
+            outcome/duration pro finish/failure; cache_hit pouze pro cache reuse/provedenou stránku;
+            method/model jen skutečně provedená cesta/volání, ne model aktuálně nastavený v prostředí.
+            RunQueued může jednou nést historický runtime kontext, nikdy celý config/job objekt.
+            Přesný type-to-fields kontrakt musí být potvrzen před implementací.
+          properties:
+            outcome: {type: string}
+            duration_ms: {type: number, minimum: 0}
+            client_call_duration_ms: {type: number, minimum: 0}
+            cache_hit: {type: boolean}
+            method: {type: string}
+            model: {type: string}
+            fallback_reason: {type: string}
+            warning_codes: {type: array, items: {type: string}}
+            run_context:
+              type: object
+              additionalProperties: false
+              description: Minimální historický kontext pouze pro RunQueued; skutečná source verze/hash přes autorizovanou source artifact referenci.
+              properties:
+                job_id: {type: string}
+                config_hash: {type: string}
+                mode: {type: string}
+                pipeline_version: {type: string}
+                prompt_version: {type: string}
+                provider: {type: string}
+                api: {type: string}
+                region: {type: string}
+                ocr_model: {type: string}
+                extraction_model: {type: string}
+    Artifact:
+      description: Čtecí metadata existujícího potvrzeného artefaktu; audit uchovává jen vazbu/reference, nikoli kopii obsahu nebo všech těchto metadat.
+      type: object
+      required: [case_id, document_id, artifact_id, kind, state]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        artifact_id: {type: string}
+        kind: {type: string, description: source/preview/page_text/analysis_text/structured_result/extraction/manifest a budoucí typy.}
+        state: {type: string, enum: [ready, pending, missing, unavailable]}
+        reason: {type: string, nullable: true}
+        run_id: {type: string, nullable: true}
+        attempt_no: {type: integer, minimum: 1, nullable: true}
+        page_number: {type: integer, minimum: 1, nullable: true}
+        content_type: {type: string, nullable: true}
+        size_bytes: {type: integer, minimum: 0, nullable: true}
+        sha256: {type: string, nullable: true, description: 'Jen existující měřený hash nebo hash skutečně serializovaného auditního manifestu; ETag není SHA-256.'}
+        version_id: {type: string, nullable: true, description: Jen skutečně známá verze; bez ní nelze slibovat neměnný historický obsah.}
+        created_at: {type: string, format: date-time, nullable: true}
+    Collection:
+      allOf:
+        - $ref: '#/components/schemas/Observation'
+        - $ref: '#/components/schemas/Pagination'
+        - $ref: '#/components/schemas/Availability'
+        - type: object
+          required: [coverage]
+          description: unavailable vyžaduje reason, items=[],next_token=null; available může být prázdné. Rozpor stav/data je chyba kontraktu.
+          properties:
+            coverage: {$ref: '#/components/schemas/Coverage'}
+    RunList:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          required: [items]
+          properties:
+            items: {type: array, items: {$ref: '#/components/schemas/Run'}}
+    RunResponse:
+      allOf:
+        - $ref: '#/components/schemas/Observation'
+        - type: object
+          required: [data]
+          properties:
+            data: {$ref: '#/components/schemas/Run'}
+    AttemptList:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          required: [items]
+          properties:
+            items: {type: array, items: {$ref: '#/components/schemas/Attempt'}}
+    StepList:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          required: [items]
+          properties:
+            items: {type: array, items: {$ref: '#/components/schemas/Step'}}
+    PageList:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          required: [items]
+          properties:
+            items: {type: array, items: {$ref: '#/components/schemas/Page'}}
+    EventList:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          required: [items]
+          properties:
+            items: {type: array, items: {$ref: '#/components/schemas/Event'}}
+    ArtifactList:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          required: [items]
+          properties:
+            items: {type: array, items: {$ref: '#/components/schemas/Artifact'}}
+    ArtifactAccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/Observation'
+        - type: object
+          required: [artifact, access]
+          properties:
+            artifact: {$ref: '#/components/schemas/Artifact'}
+            access:
+              type: object
+              nullable: true
+              required: [url, method, expires_at]
+              properties:
+                url: {type: string, format: uri}
+                method: {type: string, enum: [GET]}
+                expires_at: {type: string, format: date-time}

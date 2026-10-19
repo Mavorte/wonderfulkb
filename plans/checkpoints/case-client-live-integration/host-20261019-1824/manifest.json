@@ -1,0 +1,14 @@
+{
+  "status": "ARTIFACT_READY_AUTH_BLOCKED",
+  "authorization": "user1561777083901026427",
+  "artifact_bytes": 1505800,
+  "artifact_sha256": "40863ba031628a4d9db1b7d4a8c569a9d7a0669a784e8a5207544b38ed25dc05",
+  "artifact_code_sha256": "QIY7oDFiik2dsbfUqMVpqdegZpp4TopSB1RLOO0l3AU=",
+  "deploy_attempts": 0,
+  "post_attempts": 0,
+  "target": "arn:aws:lambda:eu-central-1:609394381050:function:wonderfulkb-case-client",
+  "api_url": "https://bgm7k1ggqi.execute-api.eu-central-1.amazonaws.com/v1",
+  "live_claim": false,
+  "blocker": "AWS SSO token expired; interactive sign-in required",
+  "budget": "max3forward+1rollback,30min from first live attempt,max6POST,reuse4fixtures; oldhistoryreadonly"
+}

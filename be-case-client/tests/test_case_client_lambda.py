@@ -56,7 +56,7 @@ class CaseClientLambdaTests(unittest.TestCase):
             case_id=case_id, client_id=client_id, **extra), expected=expected)
 
     def test_post_generates_new_uuid_and_ignores_supplied_case_id(self):
-        body = {'client_id': ACTIVE, 'case_id': 'caller-controlled', 'metadata': {}}
+        body = {'client_id': ACTIVE, 'case_id': {'arbitrary': ['caller-controlled']}, 'metadata': {}}
         first = self.invoke('POST', '/cases', body=body, expected=201)
         second = self.invoke('POST', '/cases', body=body, expected=201)
         self.assertNotEqual(first['case_id'], second['case_id'])
@@ -64,6 +64,8 @@ class CaseClientLambdaTests(unittest.TestCase):
             parsed = UUID(result['case_id'])
             self.assertEqual(parsed.version, 4)
             self.assertEqual(result['status'], 'open')
+        omitted = self.invoke('POST', '/cases', body={'client_id': ACTIVE}, expected=201)
+        self.assertEqual(UUID(omitted['case_id']).version, 4)
 
     def cases(self, client=ACTIVE, query=None, expected=200):
         return self.invoke(resource='/clients/{client_id}/cases',
@@ -91,28 +93,25 @@ class CaseClientLambdaTests(unittest.TestCase):
                 for item in items if isinstance(items, list) else [items]:
                     self.assertLessEqual(set(item), fields)
 
-    def test_repeat_preserves_original_case_and_new_repository_resets(self):
+    def test_repeat_creates_distinct_cases_and_new_repository_resets(self):
         first = self.post(metadata={'note': 'první'})
-        repeat = self.post(expected=200, metadata={'note': 'jiné'})
-        self.assertEqual(first, repeat)
+        repeat = self.post(expected=201, metadata={'note': 'jiné'})
+        self.assertNotEqual(first['case_id'], repeat['case_id'])
         self.assertEqual(first['status'], 'open')
         self.assertTrue(first['created_at'].endswith('Z'))
         self.assertEqual(self.invoke(resource='/cases/{case_id}',
-                         params={'case_id': 'offline-case'}), first)
+                         params={'case_id': first['case_id']}), first)
         self.handler = self.module.create_handler(self.adapter.MockCaseClientRepository())
         self.invoke(resource='/cases/{case_id}',
-                    params={'case_id': 'offline-case'}, expected=404)
+                    params={'case_id': first['case_id']}, expected=404)
 
     def test_business_errors_and_existing_inactive_precedence(self):
         self.post()
-        for client in (OTHER, MISSING):
-            self.post(client_id=client, expected=409)
+        self.post(client_id=OTHER, expected=201)
+        self.post(client_id=MISSING, expected=404)
         for client in (INACTIVE, BLOCKED):
             self.post('new-' + client, client, expected=409)
         self.post('missing-client', MISSING, expected=404)
-        original = self.invoke(resource='/cases/{case_id}', params={'case_id': 'fixture-inactive'})
-        self.assertEqual(self.post('fixture-inactive', INACTIVE, expected=200,
-                                  metadata={'changed': True}), original)
         self.assertEqual(self.cases(EMPTY)['cases'], [])
         self.cases(MISSING, expected=404)
         self.invoke(resource='/cases/{case_id}', params={'case_id': 'absent'}, expected=404)
@@ -185,10 +184,7 @@ class CaseClientLambdaTests(unittest.TestCase):
 
     def test_request_validation_and_base64(self):
         for body in ([], None, {}, {'case_id': 'a'}, {'case_id': 'a', 'client_id': 'wrong'},
-                     {'case_id': 'a/b', 'client_id': ACTIVE}, {'case_id': '', 'client_id': ACTIVE},
-                     {'case_id': 'x' * 129, 'client_id': ACTIVE},
-                     {'case_id': True, 'client_id': ACTIVE},
-                     {'case_id': 'a', 'client_id': ACTIVE, 'metadata': []}):
+                     {'client_id': ACTIVE, 'metadata': []}):
             self.invoke('POST', '/cases', body=body, expected=400)
         for raw in ('', '{', 'null', '{"case_id":"a","client_id":"' + ACTIVE + '","metadata":{"v":NaN}}',
                     '{"case_id":"a","client_id":"' + ACTIVE + '","metadata":{"v":Infinity}}'):
@@ -260,11 +256,10 @@ class CaseClientLambdaTests(unittest.TestCase):
         from concurrent.futures import ThreadPoolExecutor
         from threading import Barrier
         metadata = {'nested': {'items': [1]}}
-        first, created = self.repository.create_case('copy', ACTIVE, metadata)
-        self.assertTrue(created)
+        first = self.repository.create_case(ACTIVE, metadata)
         metadata['nested']['items'].append(2)
         first['metadata']['nested']['items'].append(3)
-        self.assertEqual(self.repository.get_case('copy')['metadata']['nested']['items'], [1])
+        self.assertEqual(self.repository.get_case(first['case_id'])['metadata']['nested']['items'], [1])
         clients = self.repository.list_clients({}, 50)['clients']
         clients[0]['contacts'][0]['email'] = 'changed@demo.example'
         self.assertEqual(self.repository.list_clients({}, 50)['clients'][0]['contacts'][0]['email'],
@@ -272,8 +267,8 @@ class CaseClientLambdaTests(unittest.TestCase):
         self.assertEqual(self.adapter.MockCaseClientRepository().list_clients({}, 50)['clients'][0]['contacts'][0]['email'],
                          'kontakt@zlutoucka.example')
         for case_id, owners, statuses in (
-                ('concurrent-same', [ACTIVE, ACTIVE], [200, 201]),
-                ('concurrent-different', [ACTIVE, OTHER], [201, 409])):
+                ('concurrent-same', [ACTIVE, ACTIVE], [201, 201]),
+                ('concurrent-different', [ACTIVE, OTHER], [201, 201])):
             barrier = Barrier(2)
             def call(owner):
                 barrier.wait()

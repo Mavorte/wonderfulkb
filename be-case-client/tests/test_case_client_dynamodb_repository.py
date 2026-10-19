@@ -154,8 +154,8 @@ class DynamoDBRepositoryTests(unittest.TestCase):
             response['LastEvaluatedKey'] = last
         self.stub.add_response('scan', response, params)
 
-    def transaction(self, metadata=None, error=None, reasons=None):
-        new = case(metadata={} if metadata is None else metadata)
+    def transaction(self, metadata=None, error=None, reasons=None, case_id='offline-db'):
+        new = case(case_id, metadata={} if metadata is None else metadata)
         params = {'TransactItems': [
             {'ConditionCheck': {'TableName': ENV['CLIENTS_TABLE_NAME'],
                 'Key': {'client_id': {'S': ACTIVE}},
@@ -172,10 +172,12 @@ class DynamoDBRepositoryTests(unittest.TestCase):
         else:
             self.stub.add_response('transact_write_items', {}, params)
 
-    def create(self, metadata=None):
+    def create(self, metadata=None, case_id='offline-db', generated_ids=None):
         with patch('case_client_dynamodb_repository.datetime') as clock:
-            clock.now.return_value = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
-            return self.repo.create_case('offline-db', ACTIVE, {} if metadata is None else metadata)
+            with patch('case_client_dynamodb_repository.uuid4') as generated:
+                generated.side_effect = generated_ids or [case_id]
+                clock.now.return_value = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
+                return self.repo.create_case(ACTIVE, {} if metadata is None else metadata)
 
     def invoke(self, resource='/clients', method='GET', query=None, body=None, params=None, expected=200):
         result = case_client_handler.create_handler(self.repo)({
@@ -342,61 +344,56 @@ class DynamoDBRepositoryTests(unittest.TestCase):
             'ScanIndexForward': False, 'Limit': 25})
         self.assertEqual(self.invoke('/clients/{client_id}/cases', params={'client_id': ACTIVE})['cases'], [])
 
-    def test_create_then_new_instance_idempotence_and_owner_conflict(self):
+    def test_create_generated_id_persisted_and_strong_get(self):
         metadata = {'nested': [None, True, 17, Decimal('0.1234567890123456789')]}
-        self.get('cases', 'offline-db', None)
         self.get('clients', ACTIVE, client())
         self.transaction(metadata)
-        created, is_new = self.create(metadata)
-        self.assertTrue(is_new)
+        created = self.create(metadata)
         self.assertEqual(created, case(metadata=metadata))
         self.get('cases', 'offline-db', created)
-        self.repo = self.repository()
-        self.assertEqual(self.create({'changed': True}), (created, False))
-        self.get('cases', 'offline-db', case(client_id='22222222-2222-4222-8222-222222222222'))
-        with self.assertRaises(Conflict):
-            self.create()
+        self.assertEqual(self.repo.get_case('offline-db'), created)
 
-    def test_post_handler_decimal_201_then_200_without_client_read(self):
-        self.get('cases', 'offline-db', None)
+    def test_post_handler_decimal_create_returns_server_id(self):
+        generated_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
         self.get('clients', ACTIVE, client())
-        self.transaction({'n': Decimal('0.1234567890123456789')})
-        raw = '{"case_id":"offline-db","client_id":"' + ACTIVE + '","metadata":{"n":0.1234567890123456789}}'
+        self.transaction({'n': Decimal('0.1234567890123456789')}, case_id=generated_id)
+        raw = '{"case_id":"ignored","client_id":"' + ACTIVE + '","metadata":{"n":0.1234567890123456789}}'
         with patch('case_client_dynamodb_repository.datetime') as clock:
-            clock.now.return_value = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
-            first = self.invoke('/cases', 'POST', body=raw, expected=201)
-        self.get('cases', 'offline-db', first)
-        self.repo = self.repository()
-        self.assertEqual(self.invoke('/cases', 'POST', body=raw), first)
+            with patch('case_client_dynamodb_repository.uuid4', return_value=generated_id):
+                clock.now.return_value = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
+                first = self.invoke('/cases', 'POST', body=raw, expected=201)
+        self.assertEqual(first['case_id'], generated_id)
+        self.get('cases', generated_id, first)
+        self.assertEqual(self.invoke('/cases/{case_id}', params={'case_id': generated_id}), first)
 
-    def test_new_client_business_errors_and_existing_precedence(self):
+    def test_new_client_business_errors(self):
         for status, expected in ((None, NotFound), ('inactive', Conflict), ('blocked', Conflict)):
-            self.get('cases', 'offline-db', None)
             self.get('clients', ACTIVE, None if status is None else client(status=status))
             with self.assertRaises(expected):
                 self.create()
-            self.get('cases', 'offline-db', case())
-            self.assertEqual(self.create(), (case(), False))
 
     def test_condition_race_recovery(self):
-        for winner, current_client, expected in (
-                (case(metadata={'winner': True}), None, None),
-                (case(client_id='22222222-2222-4222-8222-222222222222'), None, Conflict),
-                (None, None, NotFound), (None, client(status='blocked'), Conflict),
-                (None, client(status='inactive'), Conflict), (None, client(), RuntimeError)):
-            self.get('cases', 'offline-db', None)
-            self.get('clients', ACTIVE, client())
+        first_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+        second_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+        self.get('clients', ACTIVE, client())
+        self.transaction(error='TransactionCanceledException', reasons=[
+            {'Code': 'None'}, {'Code': 'ConditionalCheckFailed'}], case_id=first_id)
+        # Rebind the expected first transaction key to the deterministic candidate.
+        self.get('cases', first_id, case(first_id, client_id='22222222-2222-4222-8222-222222222222'))
+        self.transaction(case_id=second_id)
+        result = self.create(generated_ids=[first_id, second_id])
+        self.assertEqual(result, case(second_id))
+
+    def test_three_generated_key_collisions_fail_closed_without_exposing_occupants(self):
+        ids = [f'{letter * 8}-{letter * 4}-4{letter * 3}-8{letter * 3}-{letter * 12}'
+               for letter in 'abc']
+        self.get('clients', ACTIVE, client())
+        for case_id in ids:
             self.transaction(error='TransactionCanceledException', reasons=[
-                {'Code': 'None' if winner is not None else 'ConditionalCheckFailed'},
-                {'Code': 'ConditionalCheckFailed' if winner is not None else 'None'}])
-            self.get('cases', 'offline-db', winner)
-            if winner is None:
-                self.get('clients', ACTIVE, current_client)
-            if expected:
-                with self.assertRaises(expected):
-                    self.create()
-            else:
-                self.assertEqual(self.create(), (winner, False))
+                {'Code': 'None'}, {'Code': 'ConditionalCheckFailed'}], case_id=case_id)
+            self.get('cases', case_id, case(case_id, client_id='22222222-2222-4222-8222-222222222222'))
+        with self.assertRaises(RuntimeError):
+            self.create(generated_ids=ids)
 
     def test_transaction_infrastructure_errors_never_become_business_conflict(self):
         for error, reasons in (
@@ -404,12 +401,19 @@ class DynamoDBRepositoryTests(unittest.TestCase):
                 ('TransactionCanceledException', [{'Code': 'ConditionalCheckFailed'}, {'Code': 'ThrottlingError'}]),
                 ('TransactionCanceledException', [{'Code': 'TransactionConflict'}, {'Code': 'None'}]),
                 ('AccessDeniedException', None), ('ProvisionedThroughputExceededException', None)):
-            self.get('cases', 'offline-db', None)
             self.get('clients', ACTIVE, client())
             self.transaction(error=error, reasons=reasons)
             with self.assertRaises(Exception) as caught:
                 self.create()
             self.assertNotIsInstance(caught.exception, (Conflict, NotFound))
+
+    def test_client_condition_reason_rechecks_active_state(self):
+        self.get('clients', ACTIVE, client())
+        self.transaction(error='TransactionCanceledException', reasons=[
+            {'Code': 'ConditionalCheckFailed'}, {'Code': 'None'}])
+        self.get('clients', ACTIVE, client(status='blocked'))
+        with self.assertRaises(Conflict):
+            self.create()
 
     def test_stored_data_validation(self):
         for changes in ({'status': 'closed'}, {'created_at': 'yesterday'}, {'created_at': '2026-10-19T12:00:00+02:00'},
@@ -444,7 +448,6 @@ class DynamoDBRepositoryTests(unittest.TestCase):
             log.assert_not_called()
 
     def test_timeout_after_transaction_has_no_recovery_or_retry(self):
-        self.get('cases', 'offline-db', None)
         self.get('clients', ACTIVE, client())
         with patch.object(self.sdk, 'transact_write_items',
                           side_effect=ReadTimeoutError(endpoint_url='secret')) as write:
@@ -453,20 +456,19 @@ class DynamoDBRepositoryTests(unittest.TestCase):
             write.assert_called_once()
 
     def test_transaction_permission_failure_is_sanitized_by_handler(self):
-        self.get('cases', 'offline-db', None)
         self.get('clients', ACTIVE, client())
         self.transaction(error='AccessDeniedException')
         with patch('case_client_dynamodb_repository.datetime') as clock:
-            clock.now.return_value = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
-            self.invoke('/cases', 'POST', body=json.dumps({'case_id': 'offline-db',
-                        'client_id': ACTIVE}), expected=500)
+            with patch('case_client_dynamodb_repository.uuid4', return_value='offline-db'):
+                clock.now.return_value = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
+                self.invoke('/cases', 'POST', body=json.dumps({'case_id': 'offline-db',
+                            'client_id': ACTIVE}), expected=500)
 
     def test_unicode_metadata_boundary_and_all_optional_fields(self):
         metadata = {'x': 'á' * ((16384 - 8) // 2)}
-        self.get('cases', 'offline-db', None)
         self.get('clients', ACTIVE, client())
         self.transaction(metadata)
-        self.assertEqual(self.create(metadata), (case(metadata=metadata), True))
+        self.assertEqual(self.create(metadata), case(metadata=metadata))
         stored = case()
         stored.pop('metadata')
         self.get('cases', 'offline-db', stored)
@@ -478,10 +480,9 @@ class DynamoDBRepositoryTests(unittest.TestCase):
         self.assertEqual(self.invoke()['clients'], [stored_client])
 
     def test_direct_finite_float_is_serialized_as_json_number(self):
-        self.get('cases', 'offline-db', None)
         self.get('clients', ACTIVE, client())
         self.transaction({'n': Decimal('1.25')})
-        self.assertEqual(self.create({'n': 1.25}), (case(metadata={'n': Decimal('1.25')}), True))
+        self.assertEqual(self.create({'n': 1.25}), case(metadata={'n': Decimal('1.25')}))
 
     def test_client_read_respects_insufficient_list_time_budget(self):
         with self.assertRaises(RuntimeError):

@@ -1,0 +1,16 @@
+# Case Client: dokončit nasazení existujícího Pythonu a ověřit vytvoření case
+
+## Výsledek a existující řešení
+Nasaď hotový `be-case-client/src` na původní testovací API a odlaď vytvoření case proti skutečné DynamoDB. Použij existující deploy nástroj `be-case-client/tools/case_client_test_deploy.py` a HTTP runner `be-case-client/tests/integration/case_client_api_integration.py`; žádný nový framework. POST ignoruje caller case_id, generuje UUIDv4 a vrací201. Žádné verzovací operace, změny větví/worktree ani požadavek na feature branch. Uživatel pro tento task tuto projektovou podmínku výslovně zrušil.
+
+## Nové pověření 19.10.2026 17:49
+Host již doplnil roli `wonderfulkb-lambda-role` inline policy `case-client-active-condition-check`: pouze `dynamodb:ConditionCheckItem` na `arn:aws:dynamodb:eu-central-1:609394381050:table/wonderfulkb-uw-clients`. Readback souhlasí a IAM simulace s regionem vrací allowed. Tabulka/data/trust/ostatní policies nezměněny. Historická podmínka úplného zjištění uživatelů role a starý IAM blocker již tuto konkrétní hostem provedenou změnu neblokují; worker další IAM změny nedělá.
+
+Uživatel výslovně povoluje nový omezený pokus po této opravě. Zachovej původní manifest, jeho5/5pokusů, rollback a ambiguitu POST jako historii; nic nezelenat ani nemazat. Nové pokračování označ `case-live-beca6825-20261019-iam1750`, vlastní oddělené účtování max3forward deploy pokusy+1rezervovaný rollback,30min. Nejde o obcházení starého budgetu: jde o toto nové explicitní pověření. Zachovej/reuse4existující syntetické klienty, nevytvářej další. Neopakuj nejasný starýPOST. NovéPOST nejvýše6,≤2req/s, max2souběžně. Budget/evidence podpora jen minimální změnou existujících nástrojů, pokud nutná; žádný obecný run management.
+
+## Přesný scope a ověření
+Standardní profil ai-hackathon, account609394381050, regioneu-central-1; před mutacemi STS. Lambda wonderfulkb-case-client, původní role, python3.13/case_client_handler.lambda_handler; DATA_BACKEND=dynamodb, ALLOW_EPHEMERAL_MOCK=false, původní clients/cases tabulky a indexy. API bgm7k1ggqi/v1 a jeho4chráněnéAWS_PROXY metody zachovat. Ostatní env/auth/throttle/infrastrukturu/data neměnit. Klíč jenpaměť, bezredirectů/secretlogů. Předzměnou privátní ověřený ZIP/config snapshot, RevisionId/hashreadback; při nefunkčnosti rollback+HTTPověření. Žádné mazání případů.
+
+Primární live důkaz:201+novéUUIDv4,GETshodnéhoobjektu/metadata; druhýPOSTjinéID a callerIDignorován; unknown404,inactive/blocked409; klientský seznam vrací vytvořené cases; auth403. Není třeba přidávat další rozsáhlou testovací infrastrukturu. Zachovej standardní registrované brány a nezávislou přejímku; k nezměněnému hotovému kódu nevyráběj nový RED. Nutné nové executable chování má vlastní pravdivou TDD evidenci, původní dokončený proof nepřepisovat. Existující guard findings vypořádej věcně, nikoli dalšími nesouvisejícími požadavky.
+
+Použij `/Users/michal/.openclaw/tmp/opencode/case-client-venv/bin/python`, existujícíuv proLinuxx86_64wheels (venvnemápip), SAM`/Users/michal/.local/bin/sam`. Změny pouze be-case-client/** a sanitizované komponentové checkpointy/dokumentace. Plánování read-only. Výsledek musí doložit nasazený hash/runtime/backend+skutečnéHTTPvýsledky; pouhý plán, offline test nebo staráNodeAPI není úspěch. Konkrétní access/runtime blocker přiznej bez dalšího automatického prodlužování.

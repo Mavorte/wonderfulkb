@@ -1,0 +1,168 @@
+{
+  "account": "609394381050",
+  "api_preflight": "PASS: four original protected AWS_PROXY methods",
+  "api_url": "https://bgm7k1ggqi.execute-api.eu-central-1.amazonaws.com/v1",
+  "artifact_bytes": 1505800,
+  "artifact_code_sha256": "N4PmBM6ZzsAs00h5CVYMhzXPR+m7MIhin5CP8GGA4b4=",
+  "artifact_sha256": "3783e604ce99cec02cd3487909560c8735cf47e9bb3088629f908ff06180e1be",
+  "blocked_action": "http-integration",
+  "blocker": "HTTP expected 201, received 500",
+  "budget_origin": "Conservative deadline from actual RED capture timestamp (before first live operation).",
+  "case_ids": [],
+  "deploy_attempts": 5,
+  "fixture_attempts": 4,
+  "fixtures": [
+    {
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "ico": "99783416",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "active"
+    },
+    {
+      "client_id": "8c52c6c2-179b-4338-ac4f-05d9ce0730c3",
+      "ico": "99573725",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "active"
+    },
+    {
+      "client_id": "0c810d37-c26f-4fe5-ba6a-ef814353561e",
+      "ico": "94544265",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "inactive"
+    },
+    {
+      "client_id": "955a80e3-9712-4437-bfba-5fe9b7796fea",
+      "ico": "96119536",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "blocked"
+    }
+  ],
+  "function": "arn:aws:lambda:eu-central-1:609394381050:function:wonderfulkb-case-client",
+  "iam_status": "No IAM changes. Inline dynamodb-access lacks ConditionCheckItem. Target-region Lambda role user verified; full regional enumeration denied by SCP, so policy mutation disallowed by plan.",
+  "live_started_at": 1792423471.617295,
+  "missing_client_id": "1abb9a86-c328-4dd1-8bfc-b49f2c60228b",
+  "observed": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "N4PmBM6ZzsAs00h5CVYMhzXPR+m7MIhin5CP8GGA4b4=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "original": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "kgcHb9h9og06ykIX8OaV+JY3rzj35Ci44/xWNdyeFlA=",
+    "Handler": "handler.handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "nodejs22.x",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": null,
+      "CASES_CLIENT_CREATED_INDEX_NAME": null,
+      "CASES_TABLE_NAME": null,
+      "CLIENTS_ICO_INDEX_NAME": null,
+      "CLIENTS_TABLE_NAME": null,
+      "DATA_BACKEND": null
+    }
+  },
+  "original_http_baseline": "PASS: auth 403/403 and protected GET 200",
+  "owned_revision": "fbdd54fd-368e-46f6-8362-9353caec527f",
+  "post_attempts": 1,
+  "post_live": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "N4PmBM6ZzsAs00h5CVYMhzXPR+m7MIhin5CP8GGA4b4=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "posts": {
+    "N4PmBM6ZzsAs-without-id-1": {
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "discovered_ids": [],
+      "state": "ambiguous"
+    }
+  },
+  "pre_live": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "N4PmBM6ZzsAs00h5CVYMhzXPR+m7MIhin5CP8GGA4b4=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "prior_build_failure": "Attempt 1 failed before Lambda mutation: prepared interpreter has no pip module; existing uv will be used without installing tools.",
+  "read_only_smoke": "PASS (write matrix not executed)",
+  "recovery_http_smoke": "PASS: auth 403/403 and protected GET 200",
+  "region": "eu-central-1",
+  "restored": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "kgcHb9h9og06ykIX8OaV+JY3rzj35Ci44/xWNdyeFlA=",
+    "Handler": "handler.handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "nodejs22.x",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": null,
+      "CASES_CLIENT_CREATED_INDEX_NAME": null,
+      "CASES_TABLE_NAME": null,
+      "CLIENTS_ICO_INDEX_NAME": null,
+      "CLIENTS_TABLE_NAME": null,
+      "DATA_BACKEND": null
+    }
+  },
+  "revision_reconciliation": "Own code upload verified against latest CloudTrail update, hash, timestamp and unchanged original config; finalized revision used conditionally.",
+  "rollback": "verified-code-config-and-http",
+  "run_id": "case-live-beca6825-20261019",
+  "scenarios": {
+    "auth": "PASS",
+    "clients-search-normalization-and-pagination": "PASS",
+    "create-detail-decimal-repeat": "BLOCKED: HTTP expected 201, received 500",
+    "validation-and-missing": "PASS"
+  },
+  "status": "BLOCKED",
+  "suite_code_sha256": "N4PmBM6ZzsAs00h5CVYMhzXPR+m7MIhin5CP8GGA4b4=",
+  "task_id": "task-beca6825-147b-43d9-9fb6-694368e70948"
+}

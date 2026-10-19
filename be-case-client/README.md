@@ -1,11 +1,36 @@
 # wonderfulkb Case & Client
 
-Jedna Python Lambda, čtyři operace a nezměněné OpenAPI 1.3.0-final. Repository
+Jedna Python Lambda, čtyři operace a OpenAPI 1.4.0. Repository
 hranice má dva explicitní režimy: ephemeral mock a externí DynamoDB adaptér.
-Žádný fallback. Tato implementace je ověřovaná pouze lokálně pomocí SDK Stubberu
-a skutečného handleru; cloudové připojení, gateway, persistence a souběh v AWS
-nejsou lokálními testy prokázané. HTTP integrační runner je odložený návrh
-v proposalu, nikoli součást této komponenty.
+Žádný fallback. Komponenta obsahuje deploy nástroj
+`tools/case_client_test_deploy.py` a HTTP runner
+`tests/integration/case_client_api_integration.py` (výchozí režim read-only).
+**Live integrace není dokončena; stav je BLOCKED.** Lokální testy ani hlavička
+`X-Data-Backend` nenahrazují důkaz celé HTTP/DB matice.
+
+## Stav integračního pokusu
+
+Historický ledger pro `task-beca6825-147b-43d9-9fb6-694368e70948` zaznamenává
+Python deploy na původní Lambda/API a úspěšné read-only scénáře. První POST
+vrátil 500; chybí `dynamodb:ConditionCheckItem` na clients tabulce a SCP brání
+úplnému zjištění uživatelů sdílené role. IAM se neměnilo. Po rollbacku ledger
+dokládá původní `nodejs22.x` / `handler.handler` a recovery smoke 403/403/200.
+To je historická evidence, nikoli nový cloudový readback této session.
+
+- Cíl: profil `ai-hackathon`, účet `609394381050`, region `eu-central-1`,
+  Lambda `wonderfulkb-case-client`, API `bgm7k1ggqi`, stage `v1`.
+- Vyčerpáno **5/5 deploy pokusů**; zůstaly čtyři syntetičtí klienti a jeden
+  neověřený POST, žádné potvrzené case ID. Ledger se nesmí vynulovat.
+- Další live běh nebo mutace v tomto tasku nejsou povoleny. Nový pokus vyžaduje
+  výslovné zadání s novým rozpočtem a vyřešeným přístupem.
+- Offline review stále nachází vady deadline/recovery a evidence při resume.
+  Nová regrese deadline po limiteru selhává. Povinný proof helper odmítá nový
+  RED nad již dokončeným kanonickým proof; původní důkaz se nepřepisuje.
+
+Sanitizovaná evidence a aktuální review:
+[`manifest.json`](../plans/checkpoints/case-client-live-integration/task-beca6825-147b-43d9-9fb6-694368e70948/manifest.json),
+[`review-current.md`](../plans/checkpoints/case-client-live-integration/task-beca6825-147b-43d9-9fb6-694368e70948/review-current.md).
+Původní `review.md` zůstává historickým review staršího snapshotu.
 
 ## Instalace a lokální ověření
 
@@ -14,11 +39,10 @@ i transitivní závislosti jsou připnuté v `src/requirements.txt`. Dev manifes
 odkazuje na stejný lock; unittest je standardní knihovna, Stubber dodává botocore.
 
 ```sh
-python3 -m venv .venv-case-client
-. .venv-case-client/bin/activate
-python3 -m pip install -r be-case-client/requirements-dev.txt
-PYTHONPATH=be-case-client/src python3 -m unittest discover -s be-case-client/tests -p 'test_*.py' -v
-python3 -m compileall -q be-case-client/src be-case-client/tests
+PY=/Users/michal/.openclaw/tmp/opencode/case-client-venv/bin/python
+"$PY" -c 'import sys, boto3, botocore, simplejson; assert sys.version_info[:2] == (3, 13)'
+PYTHONPATH=be-case-client/src "$PY" -m unittest discover -s be-case-client/tests -p 'test_*.py' -v
+"$PY" -m compileall -q be-case-client/src be-case-client/tests be-case-client/tools
 npm --prefix apps/backoffice test
 npm --prefix apps/backoffice run build
 ```
@@ -48,23 +72,20 @@ handler vrací `X-Data-Backend: mock` nebo `dynamodb` také u chyb. Chyba konfig
 či inicializace vrací sanitizovanou 500 bez falešného backend markeru.
 
 Lambda používá **execution role**, nikoli profil, API klíč nebo DB heslo. Hostův
-lokální SSO alias `ai-hackathon` patří výhradně do budoucího host runbooku.
+lokální SSO alias `ai-hackathon` používají pouze komponentové live nástroje.
 API key kontroluje API Gateway, ne Python handler; není DB credential.
 
 ## Chování
 
-- Společná pravidla: stejné case ID + klient →200 s původním časem/metadata,
-  jiný vlastník →409. Existující case má přednost i před nyní inactive/blocked
-  nebo odstraněným klientem. Nový case pro neexistujícího klienta →404,
-  inactive/blocked →409; aktivní →201, `status=open`, UTC čas.
-- DB nejprve konzistentně čte case. Nový zápis je jediný `TransactWriteItems`:
+- Každý POST `/cases` generuje nové UUIDv4 na serveru, ignoruje jakékoli
+  dodané `case_id` a při úspěchu vrací 201. Aktivní klient → `status=open`, UTC čas;
+  neexistující klient →404, inactive/blocked →409.
+- DB nejprve konzistentně ověří klienta. Zápis je `TransactWriteItems`:
   existence a active status klienta + `attribute_not_exists(case_id)` při Put.
-  Condition konflikt vyvolá jeden konzistentní read-back průchod: vítěz stejného
-  klienta →200, jiný →409; změněný/smazaný klient →409/404. Nevyřešený závod →500.
-  Smíšené/chybějící cancellation reasons, transaction conflict, oprávnění,
-  throttling a timeout jsou 5xx, nikoli automaticky 409. Žádné opakované zápisy
-  v recovery. Při timeoutu není znám výsledek; další explicitní stejný POST
-  může idempotentně přečíst skutečný výsledek.
+  Condition konflikt se klasifikuje podle přesné pozice cancellation reasonů.
+  Kolize case klíče se ověří strong readem a zahodí; generátor zkusí nejvýše
+  tři UUID. Occupant se nikdy nevrací ani nepřepisuje. Nevyřešené/ambiguous
+  cancellation, exhaustion, permission, throttling a timeout jsou sanitizované 5xx.
 - Přímý detail a kontroly klienta jsou `GetItem` s `ConsistentRead=true`.
   Seznam cases nejprve ověří klienta, pak Query `client-created-index`,
   `ScanIndexForward=false`, bez nepodporovaného strong read GSI. GSI je
@@ -103,14 +124,14 @@ API key kontroluje API Gateway, ne Python handler; není DB credential.
 
 ### Ephemeral mock
 
-Mock má zabalené syntetické fixtures a vlastní lock/deep copies. Stav/idempotence
-nových cases žije jen v jedné repository/execution environmentu, cold start
+Mock má zabalené syntetické fixtures a vlastní lock/deep copies. Stav nových
+cases žije jen v jedné repository/execution environmentu, cold start
 obnoví fixtures. Žádná globální persistence ani POST → další HTTP GET záruka.
 Klienty třídí podle client_id, cases nejnovější první s case_id tie-breakem.
 Kurzory nad neměnnými fixtures jsou meziinstanční; nová ephemeral data mohou po
 resetu chybět. Oddělovat mock, offline test a případné budoucí live prostředky.
 
-## SAM artefakt a budoucí host runbook
+## SAM šablona a komponentové balení
 
 Šablona `template.yaml` je JSON (YAML podmnožina), stále sedm prostředků, jedna
 Python 3.13 Lambda/256MB/10s, čtyři API-key chráněné REST routy, stage v1,
@@ -139,25 +160,24 @@ nepřidává se transakční wildcard. Read-only host oprávnění nestačí na 
 Žádný DeleteItem/UpdateItem ani jiné tabulky. Případný cross-account přístup
 potřebuje i odpovídající externí resource policy, kterou vlastní host.
 
-Offline lint a nativní balení z kořene, pokud host má SAM/cfn-lint a Python 3.13:
+Offline lint z kořene (tuto šablonu pro existující testovací cíl nenasazovat):
 
 ```sh
-AWS_REGION=eu-central-1 AWS_DEFAULT_REGION=eu-central-1 AWS_EC2_METADATA_DISABLED=true AWS_CONFIG_FILE=/dev/null AWS_SHARED_CREDENTIALS_FILE=/dev/null AWS_ACCESS_KEY_ID=offline AWS_SECRET_ACCESS_KEY=offline SAM_CLI_TELEMETRY=0 sam validate --lint --template-file be-case-client/template.yaml
-sam build --template-file be-case-client/template.yaml
+AWS_REGION=eu-central-1 AWS_DEFAULT_REGION=eu-central-1 AWS_EC2_METADATA_DISABLED=true AWS_CONFIG_FILE=/dev/null AWS_SHARED_CREDENTIALS_FILE=/dev/null AWS_ACCESS_KEY_ID=offline AWS_SECRET_ACCESS_KEY=offline SAM_CLI_TELEMETRY=0 /Users/michal/.local/bin/sam validate --lint --template-file be-case-client/template.yaml
 ```
 
-Build je nativní, bez povinného Dockeru a bez `--use-container`. SDK a simplejson
-se balí podle připnutého manifestu pro cílový runtime; nepoužívat samotné `src/`
-bez dependencies. Budoucí host balení/deploy musí použít výstup
-`.aws-sam/build/template.yaml`. Chybějící host runtime/SAM worker neinstaluje.
+Komponentový deploy nástroj balí současné `src/*.py` a připnuté dependencies
+pro Linux x86_64 / CPython 3.13, ověřuje simplejson ELF a upload limit.
+Používá existující pip nebo uv; macOS venv není deploy artefakt. ZIP se nahrává
+přímo do existující Lambdy s RevisionId a waitery, bez S3/CloudFormation.
 
 **Před jakýmkoli budoucím nasazením** host samostatně ověří vlastnictví cílového
-API/stacku/role a write práva. Existující cizí API se neimportuje ani nepřebírá
-automaticky. Profil `ai-hackathon` je jen lokální host SSO, nikdy env aplikace.
-Nasazení není automatická návaznost tohoto tasku.
+API/role a write práva. Původní čtyři AWS_PROXY metody, klíče a throttles se
+zachovávají. Profil `ai-hackathon` je jen lokální host SSO, nikdy env aplikace.
+Explicitní write opt-in a run ID nejsou povolením resetovat vyčerpaný rozpočet.
 
-Host dosud ověřil pouze klíče/indexy a ALL projekce. Před použitím dat musí
-potvrdit nekličové atributy proti OpenAPI, zejména:
+Preflight kontroluje klíče/indexy a ALL projekce. Při práci s daty je dále nutné
+ověřit nekličové atributy proti OpenAPI, zejména:
 
 1. `created_at`: jednotný UTC string, přesnost a lexikografická kompatibilita
    s novými `YYYY-MM-DDTHH:MM:SS.ffffffZ`; různé formáty mohou změnit GSI pořadí.
@@ -166,5 +186,5 @@ potvrdit nekličové atributy proti OpenAPI, zejména:
 3. Client `status` přesně active/inactive/blocked a další veřejné typy/enumy;
    nespoléhat na pomocné atributy, nedoplňovat chybějící business hodnoty.
 
-Skutečné připojení, deploy, HTTP/gateway a persistence smoke zůstávají samostatnou
-host fází s vlastními důkazy. Statické IAM/SAM testy ani Stubber tyto důkazy nenahrazují.
+Úplná persistence a souběžná HTTP matice zůstávají neprokázané. Statické IAM/SAM
+testy ani Stubber tyto důkazy nenahrazují; stav zůstává BLOCKED.

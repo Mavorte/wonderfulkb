@@ -1,0 +1,166 @@
+{
+  "account": "609394381050",
+  "api_preflight": "PASS: four original protected AWS_PROXY methods",
+  "api_url": "https://bgm7k1ggqi.execute-api.eu-central-1.amazonaws.com/v1",
+  "artifact_bytes": 1505800,
+  "artifact_code_sha256": "6obGwm2G6bohQWeRvcDsVcH1sPJKqMYWk/euh3HQ2sA=",
+  "artifact_sha256": "ea86c6c26d86e9ba21416791bdc0ec55c1f5b0f24aa8c61693f7ae8771d0dac0",
+  "authorization": "User18:20 manual live verification/deployment; previously unused bounded continuation",
+  "case_ids": [
+    "9fbe90e5-c36d-4986-8b52-d6b53ccf5a6f",
+    "80bfafac-7906-4a3a-81fa-a1c2fd51a9a1"
+  ],
+  "continuation_id": "case-live-beca6825-20261019-iam1750",
+  "deploy_attempts": 1,
+  "fixture_attempts": 4,
+  "fixtures": [
+    {
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "ico": "99783416",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "active"
+    },
+    {
+      "client_id": "8c52c6c2-179b-4338-ac4f-05d9ce0730c3",
+      "ico": "99573725",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "active"
+    },
+    {
+      "client_id": "0c810d37-c26f-4fe5-ba6a-ef814353561e",
+      "ico": "94544265",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "inactive"
+    },
+    {
+      "client_id": "955a80e3-9712-4437-bfba-5fe9b7796fea",
+      "ico": "96119536",
+      "name": "Syntetick\u00fd \u017dlu\u0165ou\u010dk\u00fd case-live-beca6825-20261019 s.r.o.",
+      "source": "synthetic",
+      "state": "created",
+      "status": "blocked"
+    }
+  ],
+  "function": "arn:aws:lambda:eu-central-1:609394381050:function:wonderfulkb-case-client",
+  "historical_manifest": "plans/checkpoints/case-client-live-integration/task-beca6825-147b-43d9-9fb6-694368e70948/manifest.json",
+  "live_matrix": "PASS narrow authorized matrix",
+  "live_started_at": 1792426970.056936,
+  "observed": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "6obGwm2G6bohQWeRvcDsVcH1sPJKqMYWk/euh3HQ2sA=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "original": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "kgcHb9h9og06ykIX8OaV+JY3rzj35Ci44/xWNdyeFlA=",
+    "Handler": "handler.handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "nodejs22.x",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": null,
+      "CASES_CLIENT_CREATED_INDEX_NAME": null,
+      "CASES_TABLE_NAME": null,
+      "CLIENTS_ICO_INDEX_NAME": null,
+      "CLIENTS_TABLE_NAME": null,
+      "DATA_BACKEND": null
+    }
+  },
+  "original_http_baseline": "PASS: auth403/403 protectedGET200",
+  "post_attempts": 5,
+  "post_live": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "6obGwm2G6bohQWeRvcDsVcH1sPJKqMYWk/euh3HQ2sA=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "posts": {
+    "blocked": {
+      "client_id": "955a80e3-9712-4437-bfba-5fe9b7796fea",
+      "state": "response",
+      "status": 409
+    },
+    "create-0": {
+      "case_id": "9fbe90e5-c36d-4986-8b52-d6b53ccf5a6f",
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "immediate_get": "PASS",
+      "state": "201"
+    },
+    "create-1": {
+      "case_id": "80bfafac-7906-4a3a-81fa-a1c2fd51a9a1",
+      "client_id": "b0da7ff5-d21d-4962-a876-b7697351881d",
+      "immediate_get": "PASS",
+      "state": "201"
+    },
+    "inactive": {
+      "client_id": "0c810d37-c26f-4fe5-ba6a-ef814353561e",
+      "state": "response",
+      "status": 409
+    },
+    "unknown": {
+      "client_id": "b074e720-e8b3-4005-8813-56ac39104c57",
+      "state": "response",
+      "status": 404
+    }
+  },
+  "pre_live": {
+    "Architectures": [
+      "x86_64"
+    ],
+    "CodeSha256": "6obGwm2G6bohQWeRvcDsVcH1sPJKqMYWk/euh3HQ2sA=",
+    "Handler": "case_client_handler.lambda_handler",
+    "LastUpdateStatus": "Successful",
+    "Role": "arn:aws:iam::609394381050:role/wonderfulkb-lambda-role",
+    "Runtime": "python3.13",
+    "bindings": {
+      "ALLOW_EPHEMERAL_MOCK": "false",
+      "CASES_CLIENT_CREATED_INDEX_NAME": "client-created-index",
+      "CASES_TABLE_NAME": "wonderfulkb-uw-cases",
+      "CLIENTS_ICO_INDEX_NAME": "ico-index",
+      "CLIENTS_TABLE_NAME": "wonderfulkb-uw-clients",
+      "DATA_BACKEND": "dynamodb"
+    }
+  },
+  "region": "eu-central-1",
+  "rollback": "not-needed",
+  "run_id": "host-case-live-20261019-1820",
+  "scenarios": {
+    "auth": "PASS403/403",
+    "narrow-live-matrix": "PASS:2POST201 distinctUUID ignoredCallerID immediateGET metadata;unknown404 inactive409 blocked409;clientlistContainsCreated"
+  },
+  "status": "PASS",
+  "task_id": "host-case-live-20261019-1820"
+}

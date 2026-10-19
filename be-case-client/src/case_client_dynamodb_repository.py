@@ -7,12 +7,12 @@ import hashlib
 import json
 import re
 import time
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from boto3.dynamodb.types import TypeSerializer, TypeDeserializer
 
 from case_client_repository import (InvalidRequest, NotFound, normalize_name,
-                                    existing_case, active_client, metadata_json)
+                                    active_client, metadata_json)
 
 _SERIALIZER = TypeSerializer()
 _DESERIALIZER = TypeDeserializer()
@@ -263,37 +263,39 @@ class DynamoDBCaseClientRepository:
     def list_client_cases(self, client_id, filters, limit, token=None):
         return dict(self._list('cases', client_id, filters, limit, token), client_id=client_id)
 
-    def create_case(self, case_id, client_id, metadata):
+    def create_case(self, client_id, metadata):
         metadata = _metadata(metadata)
-        if not _case_id(case_id) or not _uuid(client_id):
-            raise InvalidRequest('Invalid case or client ID')
-        old = self._get('cases', case_id)
-        if old is not None:
-            return existing_case(old, client_id)
+        if not _uuid(client_id):
+            raise InvalidRequest('Invalid client ID')
         active_client(self._get('clients', client_id))
-        value = {'case_id': case_id, 'client_id': client_id, 'status': 'open',
-                 'created_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                 'metadata': metadata}
-        item = _SERIALIZER.serialize(value)['M']
-        try:
-            self.sdk.transact_write_items(TransactItems=[
-                {'ConditionCheck': {'TableName': self.clients_table,
-                    'Key': {'client_id': {'S': client_id}},
-                    'ConditionExpression': 'attribute_exists(#id) AND #status = :active',
-                    'ExpressionAttributeNames': {'#id': 'client_id', '#status': 'status'},
-                    'ExpressionAttributeValues': {':active': {'S': 'active'}}}},
-                {'Put': {'TableName': self.cases_table, 'Item': item,
-                    'ConditionExpression': 'attribute_not_exists(#id)',
-                    'ExpressionAttributeNames': {'#id': 'case_id'}}}])
-        except self.sdk.exceptions.TransactionCanceledException as error:
-            reasons = error.response.get('CancellationReasons', [])
-            codes = [r.get('Code') for r in reasons]
-            if (len(codes) != 2 or 'ConditionalCheckFailed' not in codes
-                    or any(c not in ('None', 'ConditionalCheckFailed') for c in codes)):
+        for _ in range(3):
+            case_id = str(uuid4())
+            value = {'case_id': case_id, 'client_id': client_id, 'status': 'open',
+                     'created_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                     'metadata': metadata}
+            item = _SERIALIZER.serialize(value)['M']
+            try:
+                self.sdk.transact_write_items(TransactItems=[
+                    {'ConditionCheck': {'TableName': self.clients_table,
+                        'Key': {'client_id': {'S': client_id}},
+                        'ConditionExpression': 'attribute_exists(#id) AND #status = :active',
+                        'ExpressionAttributeNames': {'#id': 'client_id', '#status': 'status'},
+                        'ExpressionAttributeValues': {':active': {'S': 'active'}}}},
+                    {'Put': {'TableName': self.cases_table, 'Item': item,
+                        'ConditionExpression': 'attribute_not_exists(#id)',
+                        'ExpressionAttributeNames': {'#id': 'case_id'}}}])
+                return _decode(item, 'cases')
+            except self.sdk.exceptions.TransactionCanceledException as error:
+                reasons = error.response.get('CancellationReasons')
+                if not isinstance(reasons, list) or len(reasons) != 2:
+                    raise
+                codes = [reason.get('Code') if isinstance(reason, dict) else None for reason in reasons]
+                if codes == ['None', 'ConditionalCheckFailed']:
+                    if self._get('cases', case_id) is not None:
+                        continue
+                    raise RuntimeError('Unresolved case ID condition') from None
+                if codes == ['ConditionalCheckFailed', 'None']:
+                    active_client(self._get('clients', client_id))
+                    raise RuntimeError('Unresolved client condition') from None
                 raise
-            winner = self._get('cases', case_id)
-            if winner is not None:
-                return existing_case(winner, client_id)
-            active_client(self._get('clients', client_id))
-            raise RuntimeError('Unresolved transaction condition') from None
-        return _decode(item, 'cases'), True
+        raise RuntimeError('Unable to allocate case ID')
