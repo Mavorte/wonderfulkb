@@ -2,7 +2,7 @@
   "schema_version": 1,
   "name": "Backoffice",
   "slug": "backoffice",
-  "description": "KB back-office tool for creating cases for a selected client. Uses mocked client data.",
+  "description": "KB back-office tool for creating cases for a selected client. Uses mocked client data; creating a case registers its Client Intake link.",
   "analytics_events": [
     {
       "key": "new_case_opened",

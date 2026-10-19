@@ -5,7 +5,7 @@ import { mockClients, type Client } from "../clients/mockClients";
 import createCase, { type Case } from "./createCase";
 
 export default function NewCasePage() {
-  const { track } = useWonderful();
+  const { api, track } = useWonderful();
   const trackRef = useRef(track);
   trackRef.current = track;
   const opened = useRef(false);
@@ -26,7 +26,7 @@ export default function NewCasePage() {
     setSubmitting(true);
     track("case_create_started");
     try {
-      const result = await createCase(client);
+      const result = await createCase(api, client);
       track("case_create_completed");
       setCreated({ case: result, client });
       setClient(null);
@@ -70,7 +70,8 @@ export default function NewCasePage() {
                 <path d="M9.5 16.17 5.33 12l-1.41 1.41L9.5 19 20.5 8l-1.41-1.41L9.5 16.17Z" />
               </svg>
               <span>
-                Case <strong>{created.case.id}</strong> created for {created.client.name}.
+                Case <strong>{created.case.id}</strong> created for {created.client.name}. Intake link
+                hash: <code>{created.case.hash}</code>
               </span>
             </p>
           )}
