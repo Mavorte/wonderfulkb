@@ -21,8 +21,10 @@ export default function DocumentPanel({
   focus,
   onSelect,
   onPreviewError,
+  running,
 }: {
   caseId: string;
+  running: boolean;
   docs: DocView[];
   missing: RequiredDoc[];
   focus: Focus | null;
@@ -52,7 +54,7 @@ export default function DocumentPanel({
   if (!doc) {
     return (
       <section className="cr-docs cr-docs--empty" aria-label="Documents">
-        <p>No documents referenced by this evaluation.</p>
+        <p>{running ? "Documents appear here as the agent reads them." : "No documents referenced by this evaluation."}</p>
       </section>
     );
   }

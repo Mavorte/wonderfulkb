@@ -11,6 +11,7 @@ import {
   groupSources,
   formatDuration,
   formatTime,
+  isRunning,
   type CaseView,
   type CheckStatus,
   type RuleGroup,
@@ -29,6 +30,11 @@ const verdictLabel: Record<string, string> = {
   approved: "Ready",
   rejected: "Rejected",
 };
+
+// Generated case ids are UUIDs; show a readable prefix and keep the full id in the tooltip.
+function shortId(id: string) {
+  return id.length > 12 ? id.slice(0, 8) : id;
+}
 
 function countRules(rules: RuleView[], status: CheckStatus) {
   return rules.filter((r) => r.status === status).length;
@@ -88,7 +94,9 @@ function GroupCard({
   open,
   onToggle,
   onOpen,
+  running,
 }: {
+  running: boolean;
   group: RuleGroup;
   open: boolean;
   onToggle: () => void;
@@ -104,7 +112,7 @@ function GroupCard({
             <span className="cr-rule__title" title={group.description}>
               {group.title}
             </span>
-            <span className="cr-rule__counts">Not evaluated by the agent yet</span>
+            <span className="cr-rule__counts">{running ? "Waiting for the agent…" : "Not evaluated by the agent yet"}</span>
           </span>
           <span />
           <span />
@@ -179,6 +187,9 @@ function Review({ view }: { view: CaseView }) {
     );
   const evaluatedGroups = view.groups.filter((g) => g.evaluated);
   const duration = formatDuration(ev.started_at, ev.finished_at);
+  const running = isRunning(ev);
+  const total = ev.rules_total ?? view.rules.length;
+  const progress = total ? Math.round((view.rules.length / total) * 100) : 0;
 
   const toggle = (id: number) =>
     setOpen((prev) => {
@@ -217,34 +228,76 @@ function Review({ view }: { view: CaseView }) {
         </nav>
         <div className="cr-header__row">
           <div>
-            <h1 className="cr-title">
-              {view.borrower ?? ev.case_id}{" "}
-              {view.amount ? (
-                <span className="cr-title__amount">{view.amount}</span>
-              ) : (
-                <span className="cr-title__amount cr-is-disabled" title="Loan amount isn't in the evaluation data">
-                  Amount —
-                </span>
-              )}
+            <h1 className="cr-title" title={view.borrower ? undefined : ev.case_id}>
+              {view.borrower ?? `Case ${shortId(ev.case_id)}`}
+              {view.amount && <span className="cr-title__amount">{view.amount}</span>}
             </h1>
             <p className="cr-header__meta">
-              Case {ev.case_id} · Evaluation {ev.evaluation_id}
+              {view.borrower && <span title={ev.case_id}>Case {shortId(ev.case_id)} · </span>}
+              <span title={ev.evaluation_id}>Run {ev.evaluation_id.replace(`${ev.case_id}-`, "")}</span>
             </p>
           </div>
           <div className="cr-run">
             {ev.is_mock && <span className="cr-mock">Mock data</span>}
-            <span className="kb-badge kb-badge--dark">
-              {ev.status === "completed" ? (verdictLabel[ev.verdict ?? ""] ?? ev.verdict ?? "Completed") : ev.status}
-            </span>
+            {running ? (
+              <span className="cr-live">Agent evaluating</span>
+            ) : (
+              <span className="kb-badge kb-badge--dark">
+                {ev.status === "completed" ? (verdictLabel[ev.verdict ?? ""] ?? ev.verdict ?? "Completed") : ev.status}
+              </span>
+            )}
             <span>
-              {formatTime(ev.started_at)}
+              {running ? `Started ${formatTime(ev.started_at)}` : formatTime(ev.started_at)}
               {duration && ` · ${duration}`}
             </span>
           </div>
         </div>
       </header>
 
-      <section className={`cr-action cr-action--${view.decision ?? "none"}`} aria-labelledby="cr-action-title">
+      <section className={`cr-action cr-action--${running ? "running" : (view.decision ?? "none")}`} aria-labelledby="cr-action-title">
+        {running ? (
+          <div className="cr-action__main" aria-live="polite">
+            <p className="cr-eyebrow">Agent at work</p>
+            <h2 className="cr-action__title" id="cr-action-title">
+              {view.headline}
+            </h2>
+            <div
+              className="cr-progress"
+              role="progressbar"
+              aria-label="Rules checked"
+              aria-valuemin={0}
+              aria-valuemax={total}
+              aria-valuenow={view.rules.length}
+            >
+              <span className="cr-progress__fill" style={{ width: `${Math.max(progress, 2)}%` }} />
+            </div>
+            <p className="cr-progress__label">
+              <strong>
+                {view.rules.length} of {total}
+              </strong>{" "}
+              rules checked · this page updates on its own
+            </p>
+            {view.fixes.length > 0 ? (
+              <>
+                <p className="cr-progress__found">Found so far</p>
+                <ol className="cr-action__list">
+                  {view.fixes.map((f) => (
+                    <li key={f.ruleId} title={f.found ?? undefined}>
+                      <span>{f.label}</span>
+                      <span className="cr-action__refs">
+                        <button type="button" className={`cr-ref cr-ref--${f.status}`} onClick={() => jumpToRule(f.ruleId)}>
+                          {rawStatusLabel[view.rules.find((r) => r.id === f.ruleId)?.rawStatus ?? ""] ?? "Open"}
+                        </button>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            ) : (
+              <p className="cr-muted">{view.rules.length ? "No issues found so far." : "The agent is opening the case documents."}</p>
+            )}
+          </div>
+        ) : (
         <div className="cr-action__main">
           <div className="cr-action__head">
             <p className="cr-eyebrow">Agent recommendation</p>
@@ -286,6 +339,7 @@ function Review({ view }: { view: CaseView }) {
             <p className="cr-muted">No rule needs correction.</p>
           )}
         </div>
+        )}
         <aside className="cr-action__side">
           <div className="cr-score" aria-label="Checklist result">
             <div className="cr-score__bar">
@@ -297,6 +351,7 @@ function Review({ view }: { view: CaseView }) {
                 />
               ))}
             </div>
+            {view.rules.length > 0 && (
             <ul className="cr-score__legend">
               <li>
                 <StatusIcon status="fail" size={16} /> {countRules(view.rules, "fail")} failed
@@ -308,11 +363,21 @@ function Review({ view }: { view: CaseView }) {
                 <StatusIcon status="pass" size={16} /> {countRules(view.rules, "pass")} passed
               </li>
             </ul>
+            )}
           </div>
-          <p className="cr-confidence cr-is-disabled" title="The evaluator doesn't report confidence yet">
-            Confidence <strong>—</strong>
-          </p>
-          <DecisionPanel key={ev.evaluation_id} view={view} />
+          {running ? (
+            <div className="cr-locked">
+              <p className="cr-locked__title">Your decision</p>
+              <p className="cr-muted">You can decide once the agent finishes all {total} rules.</p>
+            </div>
+          ) : (
+            <>
+              <p className="cr-confidence cr-is-disabled" title="The evaluator doesn't report confidence yet">
+                Confidence <strong>—</strong>
+              </p>
+              <DecisionPanel key={ev.evaluation_id} view={view} />
+            </>
+          )}
         </aside>
       </section>
 
@@ -320,9 +385,11 @@ function Review({ view }: { view: CaseView }) {
         <div className="cr-left">
           <dl className="cr-facts">
             {view.facts.map((f) => (
-              <div key={f.label} className={f.value ? undefined : "cr-is-disabled"}>
+              <div key={f.label} className={f.value || running ? undefined : "cr-is-disabled"}>
                 <dt>{f.label}</dt>
-                <dd title={f.value ?? "Not in the evaluation data"}>{f.value ?? "—"}</dd>
+                <dd title={f.value ?? (running ? "Not extracted yet" : "Not in the evaluation data")}>
+                  {f.value ?? (running ? <Skeleton width="6rem" /> : "—")}
+                </dd>
               </div>
             ))}
           </dl>
@@ -337,7 +404,7 @@ function Review({ view }: { view: CaseView }) {
                   Agent activity <span className="cr-tab__count">{view.rules.length}</span>
                 </button>
               </div>
-              {tab === "rules" && (
+              {tab === "rules" && evaluatedGroups.length > 0 && (
                 <button
                   type="button"
                   className="kb-link cr-expand"
@@ -352,7 +419,7 @@ function Review({ view }: { view: CaseView }) {
             {tab === "rules" ? (
               <ol className="cr-rules">
                 {view.groups.map((g) => (
-                  <GroupCard key={g.id} group={g} open={open.has(g.id)} onToggle={() => toggle(g.id)} onOpen={setFocus} />
+                  <GroupCard key={g.id} running={running} group={g} open={open.has(g.id)} onToggle={() => toggle(g.id)} onOpen={setFocus} />
                 ))}
               </ol>
             ) : (
@@ -364,6 +431,7 @@ function Review({ view }: { view: CaseView }) {
         </div>
 
         <DocumentPanel
+          running={running}
           caseId={ev.case_id}
           docs={previews.docs}
           missing={view.missingDocs}

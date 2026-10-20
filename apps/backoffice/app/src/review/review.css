@@ -395,3 +395,27 @@
 .cr-extracted .is-empty dd { color: var(--kb-text-muted); font-style: italic; }
 .cr-extracted dt { text-transform: capitalize; }
 .cr-failure { margin: 0 0 var(--kb-space-4); padding: var(--kb-space-3) var(--kb-space-4); border-radius: var(--kb-radius-sm); background: var(--cr-fail-surface); font-size: 0.875rem; line-height: 1.5rem; }
+
+/* Evaluation still running */
+.cr-action--running { border-left-color: var(--kb-text); }
+.cr-live {
+  display: inline-flex; align-items: center; gap: var(--kb-space-2); padding: 4px 10px 4px 8px; border-radius: var(--kb-radius-full);
+  background: var(--kb-surface-card); box-shadow: inset 0 0 0 1px var(--kb-border); color: var(--kb-text);
+  font-size: 0.75rem; line-height: 1rem; font-weight: var(--kb-weight-semibold);
+}
+.cr-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--kb-success); animation: cr-pulse 1.6s ease-out infinite; }
+@keyframes cr-pulse { 0% { box-shadow: 0 0 0 0 #267c2966; } 100% { box-shadow: 0 0 0 6px #267c2900; } }
+.cr-progress { position: relative; height: 8px; margin-top: var(--kb-space-3); max-width: 36rem; border-radius: var(--kb-radius-full); background: var(--kb-surface-subtle); overflow: hidden; }
+.cr-progress__fill {
+  position: absolute; inset: 0 auto 0 0; border-radius: inherit; transition: width 600ms var(--kb-ease);
+  background: repeating-linear-gradient(135deg, var(--kb-text) 0 8px, #4a4a4a 8px 16px) 0 0 / 22.6px 100%;
+  animation: cr-stripes 1s linear infinite;
+}
+@keyframes cr-stripes { to { background-position: 22.6px 0; } }
+.cr-progress__label { margin: var(--kb-space-2) 0 var(--kb-space-5); font-size: 0.875rem; line-height: 1.5rem; color: var(--kb-text-secondary); }
+.cr-progress__label strong { color: var(--kb-text); font-variant-numeric: tabular-nums; }
+.cr-progress__found { margin: 0 0 var(--kb-space-2); font-size: 0.875rem; line-height: 1.5rem; font-weight: var(--kb-weight-semibold); }
+.cr-locked { padding: var(--kb-space-4); border: 1px dashed var(--kb-border-strong); border-radius: var(--kb-radius-sm); font-size: 0.875rem; line-height: 1.5rem; }
+.cr-locked p { margin: 0; }
+.cr-locked__title { font-weight: var(--kb-weight-semibold); }
+@media (prefers-reduced-motion: reduce) { .cr-live::before, .cr-progress__fill { animation: none; } }
