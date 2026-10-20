@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lastNameMatches, normalizeName, parseFindings } from "./request";
+import { lastNameMatches, normalizeName, parseFindings, spokenCompanyName } from "./request";
 
 describe("lastNameMatches", () => {
   it("ignores diacritics and case", () => {
@@ -49,5 +49,14 @@ describe("parseFindings", () => {
   it("returns nothing for invalid JSON", () => {
     expect(parseFindings("not json")).toEqual([]);
     expect(parseFindings('{"label":"x"}')).toEqual([]);
+  });
+});
+
+describe("spokenCompanyName", () => {
+  it("drops the legal form and keeps the accents", () => {
+    expect(spokenCompanyName("Plastovra Výroba s.r.o.")).toBe("Plastovra Výroba");
+    expect(spokenCompanyName("Kompavex Servis, spol. s r.o.")).toBe("Kompavex Servis");
+    expect(spokenCompanyName("Stavby Fišer a.s.")).toBe("Stavby Fišer");
+    expect(spokenCompanyName("Agroluh Vřesava")).toBe("Agroluh Vřesava");
   });
 });

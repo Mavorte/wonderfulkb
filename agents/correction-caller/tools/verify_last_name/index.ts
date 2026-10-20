@@ -1,5 +1,5 @@
 import { s, w } from "@wonderful/types/schema";
-import { MAX_ATTEMPTS, getState, lastNameMatches, loadRow, parseFindings, setState, updateRow } from "../../lib/request";
+import { MAX_ATTEMPTS, getState, lastNameMatches, loadRow, parseFindings, setState, spokenCompanyName, updateRow } from "../../lib/request";
 
 const RETRY = "Sorry, I couldn't verify that. Could you say your last name once more, or spell it for me?";
 const LOCKED = "I'm sorry, I can't verify you right now. The bank will contact you another way. Goodbye.";
@@ -45,7 +45,7 @@ export default w.tool({
     return {
       verified: true,
       say: "Thank you, that matches our records.",
-      company_name: row.company_name,
+      company_name: spokenCompanyName(row.company_name),
       findings_total: parseFindings(row.findings).length,
       instruction: "Say the `say` text, then call next_finding.",
     };
