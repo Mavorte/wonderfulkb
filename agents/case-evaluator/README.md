@@ -101,13 +101,15 @@ One rule per entity of the control matrix (`Hack_Seznam kontrol.xlsx`). The agen
 | `recipient_consistent` | name, IČO, DIČ, address | client record |
 | `client_status_valid` | client `status` and `kyc.status`, and the people signing for the recipient | client record (`status=active`, `kyc.status=ok`, `signatories[].authorized`) |
 | `supplier_consistent` | name, IČO, DIČ, address, bank account | — |
-| `provider_consistent` | SGEF's name, IČO, DIČ, bank account | SGEF's own data (`SGEF` in `consistencySpecs.ts`) |
+| `provider_consistent` | provider's name, IČO, DIČ, bank account | — |
 | `asset_consistent` | name, manufacturer, serial number/VIN, year | case record (`metadata.asset`, `metadata.serial_number`) |
 | `amounts_consistent` | price without VAT, VAT, price with VAT, loan amount | — |
 | `contract_number_consistent` | loan contract number | case record (`metadata.loan_number`) |
 | `guarantor_consistent` | name, IČO, address; `not_applicable` without a guarantor | — |
 
-`provider_consistent` is not in the plan's table. It was added because the unhappy case's SGEF account and DIČ are wrong, and no other entity covers SGEF.
+`provider_consistent` is not in the plan's table. It was added because the unhappy case's provider name, account and DIČ are wrong, and no other entity covers the provider. It only compares the documents with each other, since the synthetic cases use another provider (Nerovex Finance s.r.o.) than SGEF.
+
+The agent lists each distinct value once, with every place it appears as `<ref>:<page>`, e.g. `{"value": "Epiroc Czech Republic s.r.o.", "at": ["D1:1", "D3:2"]}`. Documents go by the short refs `start_evaluation` gives them (D1, D2, …), which every tool accepts in place of a `document_id`. Writing each value once with short refs, instead of one entry per document with its full ID, roughly halves the output of the turn that records these eight rules, the slowest turn of a run.
 
 The tool checks:
 - that each value comes from a case document read with `get_document`, from a page with text;
@@ -124,6 +126,30 @@ Statuses:
 - `not_applicable`: only for `guarantor_consistent`.
 
 `client_status_valid` compares signatory names ignoring case, diacritics, academic titles and name order.
+
+## Regions behind each finding
+
+`get_document` also loads the document's regions from `agent-functions/eval-document-regions`: labelled paragraphs and table rows of text-layer pages, with their position (AWS documents API). The agent doesn't see them. When a rule is recorded, `lib/regions.ts` places each source on the region, and the line within it, that shows the cited value. It prefers regions whose label and party fit the rule, e.g. the supplier's `smluvni_strana` block. Each `sources` entry can then carry:
+
+| Field | Meaning |
+| --- | --- |
+| `region_id`, `page` | e.g. `p1-r04` on page 1. |
+| `bbox` | `[x0, y0, x1, y1]`, 0–1 of the page, origin top left; narrowed to the value's lines when it sits in some of them. |
+| `quote` | The document's own text at that place. |
+| `role` | `evidence`; `compare_a`, `compare_b`, … for the sides of a conflict (`a` is the reference value's side); `declaration` for the agreement clause requiring a missing document; `missing_value` for where a missing signature or party should be. |
+| `field` | The field or attribute whose value is there, as the rule's tool names it: a `*_contents` field (`creditor`, `asset_value`, …), a consistency attribute (`ico`, `bank_account`, …), `agreement_name` / `agreement_ico`, or `signatory`. |
+| `issue` | The issue this place shows: the attribute (`IČO`), the requirement, `<party> signature`, `unauthorized signatory`. |
+| `anchor` | `region`, `lines`, or `page_only` when no region was found. |
+
+Per issue:
+- **Consistency conflict:** every value of the differing attribute, by side.
+- **Missing required document:** the agreement's `povinny_podklad` region whose `refers_to` names the document type.
+- **Missing signature:** the document's `podpisovy_blok` region for that party.
+- **Missing party field:** the party's `smluvni_strana` block.
+- **`recipient_matches_client`:** the agreement's name and IČO.
+- **`client_status_valid`:** each signatory's name.
+
+Scanned pages have no regions, and the fixture cases have none, so their sources stay at page level (`anchor: page_only`). The field names follow the evidence contract in wonderfulkb `be-validator-agent/docs/regiony-dokumentu-navrh.md`.
 
 ## Statuses and verdict
 

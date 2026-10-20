@@ -10,7 +10,6 @@
 
 import type { FunctionContext } from "@wonderful/types";
 import type { UploadedDocument } from "../../app/src/types";
-import { toClientDocuments } from "../shared/ingestDocuments";
 import { getCaseIdForHash, getErrorMessage, getGlobalUrl, getRandomId, getUploadPrefix, INGEST_SECRET } from "../shared/intakeLinks";
 
 const MAX_FILES = 20;
@@ -118,7 +117,7 @@ async function userFunction(context: FunctionContext): Promise<SubmitResult | Su
       timeoutMs: TIMEOUT_MS,
     });
     const text = await response.text();
-    let body: { documents?: unknown; error?: string } | null = null;
+    let body: { documents?: UploadedDocument[]; error?: string } | null = null;
     try {
       body = text ? JSON.parse(text) : null;
     } catch {
@@ -144,8 +143,7 @@ async function userFunction(context: FunctionContext): Promise<SubmitResult | Su
         console.log(`could not delete ${key}: ${getErrorMessage(error)}`);
       }
     }
-    // Whitelist: internal fields such as `also_in` (other cases) must not reach the anonymous client.
-    return { documents: toClientDocuments(body?.documents) };
+    return { documents: body?.documents ?? [] };
   } catch (error) {
     console.log(`intake submit failed: ${getErrorMessage(error)}`);
     context.response.setStatus(502);

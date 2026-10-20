@@ -13,7 +13,7 @@ export default w.tool({
     ),
     signatories: s
       .array(s.object({ name: s.string(), document_id: s.string(), page: s.number() }))
-      .describe("Each person named as signing for the recipient (příjemce financování / kupující / úvěrovaný), as written, with the document_id and page. Not the signatories of SGEF, the supplier or the guarantor."),
+      .describe("Each person named as signing for the recipient (příjemce financování / kupující / úvěrovaný), as written, with the document's ref and page. Not the signatories of SGEF, the supplier or the guarantor."),
     reasoning: s.string().describe("Why you chose this status: the client's status and KYC, who signs and whether they are authorized."),
   }),
   handler: async (ctx, input) => recordRule(ctx, (run) => checkClientStatus(run, (id) => getDocumentRead(ctx, run, id), input)),

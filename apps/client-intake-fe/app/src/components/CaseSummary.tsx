@@ -26,7 +26,7 @@ export function RequiredDocuments({ data }: { data: IntakeData }) {
       <div className="app-card__head">
         <h2 className="app-card__title">Documents we need from you</h2>
       </div>
-      <ul className="app-list app-card__body">
+      <ul className="app-list app-list--columns">
         {requiredDocuments.map(String).map((doc) => (
           <li key={doc}>
             <KbIcon name="file" className="kb-icon--accent" />

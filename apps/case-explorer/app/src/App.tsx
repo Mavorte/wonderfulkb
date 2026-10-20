@@ -1,6 +1,6 @@
 import "./style.css";
 import { useWonderful } from "@wonderful/app-sdk";
-import { Alert, Box, Button, Col, InputText, PageLayout, Row, Stack, Text } from "@wonderful/ui-base";
+import { Alert, Box, Button, InputText, PageLayout, Stack, Text } from "@wonderful/ui-base";
 import { useEffect, useRef, useState } from "react";
 import CasePanel from "./components/CasePanel";
 import ClientCasesPanel from "./components/ClientCasesPanel";
@@ -10,6 +10,16 @@ import type { Client, UpstreamResult } from "./types";
 import { useExplorerApi } from "./useExplorerApi";
 
 type EvaluatorRun = { caseId: string; result: UpstreamResult } | null;
+
+const CLIENTS_OPEN_KEY = "case-explorer.clients-open";
+
+function readClientsOpen(): boolean {
+  try {
+    return localStorage.getItem(CLIENTS_OPEN_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
 
 export default function App() {
   const { track } = useWonderful();
@@ -22,6 +32,16 @@ export default function App() {
   const [caseId, setCaseId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [run, setRun] = useState<EvaluatorRun>(null);
+  const [isClientsOpen, setIsClientsOpen] = useState(readClientsOpen);
+
+  const toggleClients = (isOpen: boolean) => {
+    setIsClientsOpen(isOpen);
+    try {
+      localStorage.setItem(CLIENTS_OPEN_KEY, String(isOpen));
+    } catch {
+      // Storage may be blocked in the app frame; the toggle still works for this visit.
+    }
+  };
 
   useEffect(() => {
     if (hasTrackedOpen.current) return;
@@ -106,18 +126,37 @@ export default function App() {
                 onClose={() => setRun(null)}
               />
             )}
-            <Row>
-              <Col md={5} xl={4}>
-                <ClientsPanel
-                  selectedClientId={client?.client_id ?? null}
-                  onLoaded={(clients) => clients.forEach((c) => knownClients.current.set(c.client_id, c))}
-                  onSelect={(c) => {
-                    setClient(c);
-                    setCaseId(null);
-                  }}
-                />
-              </Col>
-              <Col md={7} xl={8}>
+            <div className="clients-layout">
+              {isClientsOpen ? (
+                <div className="clients-layout__side">
+                  <ClientsPanel
+                    selectedClientId={client?.client_id ?? null}
+                    onLoaded={(clients) => clients.forEach((c) => knownClients.current.set(c.client_id, c))}
+                    onSelect={(c) => {
+                      setClient(c);
+                      setCaseId(null);
+                    }}
+                    onCollapse={() => toggleClients(false)}
+                  />
+                </div>
+              ) : (
+                <div className="clients-rail">
+                  <Button
+                    size="small"
+                    variant="text"
+                    startIcon="caret-double-right"
+                    aria-label="Show clients"
+                    title="Show clients"
+                    onClick={() => toggleClients(true)}
+                  />
+                  <span className="clients-rail__label">
+                    <Text variant="caption" color="secondary">
+                      {client ? `Clients · ${client.name}` : "Clients"}
+                    </Text>
+                  </span>
+                </div>
+              )}
+              <div className="clients-layout__main">
                 <Stack gap={4}>
                   {client && <ClientCasesPanel client={client} selectedCaseId={caseId} onSelectCase={openCase} />}
                   {caseId && (
@@ -128,6 +167,7 @@ export default function App() {
                         if (known) setClient(known);
                       }}
                       onRunEvaluator={runEvaluator}
+                      onClose={() => setCaseId(null)}
                     />
                   )}
                   {!client && !caseId && (
@@ -139,8 +179,8 @@ export default function App() {
                     </Box>
                   )}
                 </Stack>
-              </Col>
-            </Row>
+              </div>
+            </div>
           </Stack>
         </PageLayout.Content>
       </PageLayout>

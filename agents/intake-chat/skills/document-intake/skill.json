@@ -1,0 +1,22 @@
+{
+  "name": "document-intake",
+  "display_name": "Document Intake",
+  "description": "Collect the loan agreement and the documents it requires, check each upload and send them to KB",
+  "tools": {
+    "check_loan_agreement": {
+      "type": "programmable",
+      "config": {}
+    },
+    "check_documents": {
+      "type": "programmable",
+      "config": {}
+    },
+    "submit_documents": {
+      "type": "programmable",
+      "config": {}
+    }
+  },
+  "prompts": {
+    "skill": "prompts/skill.md"
+  }
+}

@@ -5,10 +5,16 @@
 
 import type { DocumentType, RuleId } from "../rules";
 import { type DocumentRead, type Run, type Source, type TypedRequirement, findDocument } from "../run";
+import { FIELD_REGIONS, SIGNATURE_PARTIES } from "../regions";
 import { type CheckOutcome, rejected, requireReasoning } from "./check";
 
 // Signature roles of the documents API: provider is SGEF.
 export type SignatureRole = "provider" | "borrower" | "supplier" | "guarantor" | "insurer";
+
+const ROLES = new Set<string>(["provider", "borrower", "supplier", "guarantor", "insurer"]);
+
+// Other names the documents API gives the same parties, e.g. buyer on an order.
+const ROLE_ALIASES: Record<string, SignatureRole> = { buyer: "borrower", recipient: "borrower", seller: "supplier" };
 
 export type FieldSpec = { key: string; label: string; optional?: boolean };
 
@@ -78,7 +84,7 @@ export function checkContents(
   const document = input.document_id ? findDocument(run, input.document_id) : undefined;
   if (!input.document_id) problems.push(`Give the document_id of the ${spec.document_name} you checked.`);
   else if (!document) problems.push(`document_id "${input.document_id}" is not a document of this case.`);
-  else if (matched.length && !matched.includes(input.document_id)) {
+  else if (matched.length && !matched.includes(document.document_id)) {
     problems.push(`document_id must be the document matched to the ${spec.document_name} requirement in required_documents_present: ${titles}.`);
   }
   if (document && !read) problems.push("Read this document with get_document first.");
@@ -104,9 +110,15 @@ export function checkContents(
 
   const absentFields = spec.fields.filter((f) => !f.optional && !values.get(f.key)?.value);
   const signaturesKnown = read.signatures !== null;
+  // A signature whose role the documents API couldn't assign (e.g. "unknown") may
+  // be anyone's, so it makes up a missing signature of any role.
+  const detected = (read.signatures ?? []).map((s) => ({ ...s, role: ROLE_ALIASES[s.role] ?? s.role }));
+  const unassigned = detected.filter((s) => !ROLES.has(s.role));
   const signatures = spec.signatures.map((sig) => {
-    const found = read.signatures?.filter((s) => s.role === sig.role) ?? null;
-    return { ...sig, found: found?.length ?? null, pages: [...new Set(found?.map((s) => s.page))] };
+    if (!signaturesKnown) return { ...sig, found: null, unassigned: 0, pages: [] as number[] };
+    const found = detected.filter((s) => s.role === sig.role);
+    const filled = unassigned.splice(0, Math.max(0, sig.min - found.length));
+    return { ...sig, found: found.length + filled.length, unassigned: filled.length, pages: [...new Set([...found, ...filled].map((s) => s.page))] };
   });
   const shortSignatures = signatures.filter((s) => s.found !== null && s.found < s.min);
   const absent = [
@@ -134,17 +146,29 @@ export function checkContents(
   }
   if (problems.length) return rejected(problems);
 
-  const pages = new Set<number>([
-    ...[...values.values()].filter((v) => v.value && v.page !== undefined).map((v) => v.page as number),
-    ...signatures.flatMap((s) => s.pages),
-  ]);
-  const sources: Source[] = [...pages].sort((a, b) => a - b).map((page) => ({ document_id: document.document_id, title: document.title, page }));
+  // Each field value where it was read, the signature pages, then one source per
+  // missing field or signature, pointing at where it should be when the regions tell.
+  const at = { document_id: document.document_id, title: document.title };
+  const shown: Source[] = [
+    ...spec.fields.flatMap((f) => {
+      const v = values.get(f.key);
+      return v?.value && v.page !== undefined ? [{ ...at, page: v.page, role: "evidence", field: f.key, locate: { value: v.value, ...FIELD_REGIONS[f.key] } }] : [];
+    }),
+    ...[...new Set(signatures.flatMap((s) => s.pages))].map((page) => ({ ...at, page, role: "evidence" })),
+  ];
+  const sources: Source[] = [
+    ...shown.sort((a, b) => (a.page ?? 0) - (b.page ?? 0)),
+    ...absentFields.map((f) => ({ ...at, role: "missing_value", field: f.key, issue: f.label, locate: FIELD_REGIONS[f.key]?.parties ? FIELD_REGIONS[f.key] : {} })),
+    ...shortSignatures.map((s) => ({ ...at, role: "missing_value", issue: `${s.label} signature`, locate: { labels: ["podpisovy_blok"], parties: SIGNATURE_PARTIES[s.role] } })),
+  ];
   const expected = [
     ...spec.fields.map((f) => (f.optional ? `${f.label} (if any)` : f.label)),
     ...spec.signatures.map((s) => `${s.label} signature${s.min > 1 ? ` (${s.min})` : ""}`),
   ].join("; ");
   let found = absent.length ? `Missing: ${absent.join("; ")}` : "All mandatory contents and signatures present";
   if (signaturesUnknown) found += absent.length ? "; signatures not available" : ", but signatures not available";
+  const byUnassigned = signatures.filter((s) => s.unassigned > 0).map((s) => s.label);
+  if (byUnassigned.length) found += ` (signatures without a detected role counted as ${byUnassigned.join(", ")}; check visually)`;
   return {
     result: {
       rule_id: spec.rule_id,
@@ -155,7 +179,7 @@ export function checkContents(
       details: {
         document_id: document.document_id,
         fields: spec.fields.map((f) => ({ field: f.key, value: values.get(f.key)?.value || null, page: values.get(f.key)?.value ? values.get(f.key)?.page ?? null : null })),
-        signatures: signatures.map(({ role, min, found: count, pages: sigPages }) => ({ role, required: min, found: count, pages: sigPages })),
+        signatures: signatures.map(({ role, min, found: count, unassigned: fromUnassigned, pages: sigPages }) => ({ role, required: min, found: count, without_role: fromUnassigned, pages: sigPages })),
         confidence: read.confidence,
         pages_failed: read.pages_failed,
       },

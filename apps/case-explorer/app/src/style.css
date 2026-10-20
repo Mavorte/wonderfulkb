@@ -43,3 +43,73 @@ code {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* Live indicator of a selected evaluator run while its results are polled. */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success, #16a34a);
+  box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6);
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+
+.live-indicator.is-paused .live-dot {
+  background: var(--foreground-tertiary, #a3a3a3);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes live-pulse {
+  0% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6);
+  }
+  70% {
+    opacity: 0.4;
+    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0);
+  }
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+  }
+}
+
+/* Collapsed Clients panel: a narrow rail with the expand button. */
+.clients-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.clients-layout__side {
+  flex: 0 0 clamp(300px, 32%, 480px);
+  min-width: 0;
+}
+
+.clients-layout__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.clients-rail {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 8px;
+}
+
+.clients-rail__label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}

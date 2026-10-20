@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Eval Document Regions",
+  "description": "Returns one document's regions (labelled paragraphs and table rows with their text and position) for the case-evaluator agent (body: case_id, document_id)",
+  "method": "POST",
+  "path_slug": "eval-document-regions"
+}

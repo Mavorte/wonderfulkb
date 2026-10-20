@@ -8,7 +8,7 @@ import { RULE_IDS, type RuleId, type Status, getVerdict } from "../lib/rules";
 import type { CheckOutcome } from "../lib/rules/check";
 import { GUARANTEE, HANDOVER_PROTOCOL, INSURANCE_VINCULATION, INVOICE, PAYMENT_PROOF, PURCHASE_CONTRACT, SECURITY_TRANSFER, TECHNICAL_SPECIFICATION } from "../lib/rules/contentSpecs";
 import { checkClientStatus } from "../lib/rules/clientStatus";
-import { checkConsistency } from "../lib/rules/consistency";
+import { checkGroupedConsistency } from "../lib/rules/consistency";
 import { AMOUNTS, ASSET, CONTRACT_NUMBER, GUARANTOR, PROVIDER, RECIPIENT, SUPPLIER } from "../lib/rules/consistencySpecs";
 import { checkContents } from "../lib/rules/contents";
 import { checkLoanAgreement } from "../lib/rules/loanAgreement";
@@ -55,7 +55,7 @@ function toRun(c: EvalCase): Run {
       name: client.name, ico: client.ico, dic: client.dic, address: client.address, status: client.status, signatories: client.signatories, kyc: client.kyc,
     },
     case_metadata: CASE_METADATA,
-    documents: documents.map(({ document_id, title, label }) => ({ document_id, title, label })),
+    documents: documents.map(({ document_id, title, label }, i) => ({ document_id, ref: `D${i + 1}`, title, label })),
   };
 }
 
@@ -154,12 +154,17 @@ describe.each(withFixture.map((c) => [c.slug, c] as const))("%s answer key", (_,
   it.each(CONSISTENCY_SPECS.map(([entity, spec]) => [spec.rule_id, entity, spec] as const))("%s", (_, entity, spec) => {
     const found = mentions(entity);
     const attributes = spec.attributes.map(({ key }) => {
-      const values = found.filter((x) => x.attribute === key).map(({ document_id, page, value }) => ({ document_id, page, value }));
-      // A document shows a value once per page.
-      return { attribute: key, values: values.filter((v, i) => values.findIndex((w) => w.document_id === v.document_id && w.page === v.page && w.value === v.value) === i) };
+      // Each distinct value once, with its places as <ref>:<page>, as the agent writes them.
+      const places = new Map<string, string[]>();
+      for (const { document_id, page, value } of found.filter((x) => x.attribute === key)) {
+        const place = `${run.documents.find((d) => d.document_id === document_id)!.ref}:${page}`;
+        const list = places.get(value) ?? [];
+        if (!list.includes(place)) places.set(value, [...list, place]);
+      }
+      return { attribute: key, values: [...places].map(([value, at]) => ({ value, at })) };
     });
     const statuses: Status[] = spec.optional ? ["passed", "conflict", "cannot_verify", "not_applicable"] : ["passed", "conflict", "cannot_verify"];
-    checkKey(c, spec.rule_id, statuses, (status) => checkConsistency(spec, run, getRead, { status: status as "passed", attributes, reasoning }));
+    checkKey(c, spec.rule_id, statuses, (status) => checkGroupedConsistency(spec, run, getRead, { status: status as "passed", attributes, reasoning }));
   });
 
   it("client_status_valid", () => {

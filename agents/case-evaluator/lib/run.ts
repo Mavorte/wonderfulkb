@@ -1,6 +1,7 @@
 // State of the current evaluation run (in KV) and its rows in the
 // agent_functions tables, which the backoffice app polls.
 
+import type { Region } from "./regions";
 import { type DocumentType, RULE_IDS, type RuleId, type Status, type Verdict } from "./rules";
 
 export const EVALUATIONS_TABLE = "agent_functions.case_evaluations";
@@ -18,7 +19,9 @@ export type RunContext = {
   };
 };
 
-export type RunDocument = { document_id: string; title: string; label: string };
+// ref: the short name the agent uses for the document (D1, D2, ...), so its
+// tool calls don't repeat 36-character IDs.
+export type RunDocument = { document_id: string; ref?: string; title: string; label: string };
 
 export type Client = {
   name: string;
@@ -26,7 +29,8 @@ export type Client = {
   dic?: string;
   address?: string;
   status: string;
-  signatories?: Array<{ name: string; function?: string; authorized: boolean }>;
+  // The live client API has no authorized flag; a signatory without one counts as authorized.
+  signatories?: Array<{ name: string; function?: string; authorized?: boolean }>;
   kyc?: { status: string; checked_at?: string };
 };
 
@@ -44,7 +48,36 @@ export type Run = {
   documents: RunDocument[];
 };
 
-export type Source = { document_id: string; title: string; page?: number };
+// Where to look for a source's region: the value it shows, and the region
+// labels, parties or required document types that fit it. See lib/regions.ts.
+export type Locate = { value?: string; labels?: string[]; parties?: string[]; refers_to?: string[] };
+
+// A place in a document that a result rests on. The region fields follow the
+// evidence contract of wonderfulkb be-validator-agent/docs/regiony-dokumentu-navrh.md;
+// they are filled in from the document's regions when the result is recorded,
+// never by the agent.
+export type Source = {
+  document_id: string;
+  title: string;
+  page?: number;
+  region_id?: string;
+  // [x0, y0, x1, y1], 0-1 of the page, origin top left; narrowed to the value's lines when it can be.
+  bbox?: number[];
+  // The document's own text at that place.
+  quote?: string;
+  // evidence, compare_a / compare_b / ... (the sides of a conflict), declaration
+  // (where a document requires something), missing_value (where something should be).
+  role?: string;
+  // The field or attribute whose value is at this place, as the rule's tool names
+  // it, e.g. creditor (a *_contents field), ico (a consistency attribute), signatory.
+  field?: string;
+  // The issue this place shows, e.g. "IČO" or "faktura (daňový doklad)".
+  issue?: string;
+  // region (the value is in the region), lines (narrowed to its lines), page_only (no region found).
+  anchor?: "region" | "lines" | "page_only";
+  // Lookup hint for anchorSources; never saved.
+  locate?: Locate;
+};
 
 export type RuleResult = {
   rule_id: RuleId;
@@ -81,8 +114,16 @@ export async function startRun(ctx: RunContext, run: Omit<Run, "evaluation_id" |
   return started;
 }
 
-export function findDocument(run: Run, documentId: string): RunDocument | undefined {
-  return run.documents.find((d) => d.document_id === documentId);
+// By document_id or by ref (D1, D2, ...).
+export function findDocument(run: Run, documentId: string | undefined): RunDocument | undefined {
+  const id = documentId?.trim();
+  if (!id) return undefined;
+  return run.documents.find((d) => d.document_id === id) ?? run.documents.find((d) => d.ref?.toUpperCase() === id.toUpperCase());
+}
+
+// The document_id behind a ref, or the input as given when no document has it.
+export function resolveDocumentId(run: Run, documentId: string): string {
+  return findDocument(run, documentId)?.document_id ?? documentId.trim();
 }
 
 // What get_document saw in a document, for the *_contents rules to check the
@@ -104,6 +145,7 @@ export type TypedRequirement = { type: DocumentType; document_id: string | null 
 
 const readKey = (run: Run, documentId: string) => `case_eval_read:${run.evaluation_id}:${documentId}`;
 const requirementsKey = (run: Run) => `case_eval_requirements:${run.evaluation_id}`;
+const regionsKey = (run: Run, documentId: string) => `case_eval_regions:${run.evaluation_id}:${documentId}`;
 
 function getKey<T>(ctx: RunContext, key: string): T | null {
   try {
@@ -119,7 +161,26 @@ export function saveDocumentRead(ctx: RunContext, run: Run, documentId: string, 
 }
 
 export function getDocumentRead(ctx: RunContext, run: Run, documentId: string | undefined): DocumentRead | null {
-  return documentId ? getKey<DocumentRead>(ctx, readKey(run, documentId)) : null;
+  return documentId ? getKey<DocumentRead>(ctx, readKey(run, resolveDocumentId(run, documentId))) : null;
+}
+
+// A document's regions, loaded by get_document, for anchoring sources. If a
+// large document's regions don't fit in KV, they are kept without their lines,
+// and failing that not at all; its sources then fall back to the page.
+export function saveDocumentRegions(ctx: RunContext, run: Run, documentId: string, regions: Region[]): void {
+  try {
+    ctx.kv.set(regionsKey(run, documentId), regions);
+  } catch {
+    try {
+      ctx.kv.set(regionsKey(run, documentId), regions.map((r) => ({ ...r, lines: [] })));
+    } catch (error) {
+      console.log(`regions of ${documentId} not cached: ${error}`);
+    }
+  }
+}
+
+export function getDocumentRegions(ctx: RunContext, run: Run, documentId: string): Region[] | null {
+  return getKey<Region[]>(ctx, regionsKey(run, documentId));
 }
 
 export function saveRequirements(ctx: RunContext, run: Run, requirements: TypedRequirement[]): void {
@@ -139,7 +200,7 @@ export async function saveResult(ctx: RunContext, run: Run, result: RuleResult):
     status: result.status,
     expected: result.expected,
     found: result.found,
-    sources: JSON.stringify(result.sources),
+    sources: JSON.stringify(result.sources.map(({ locate: _, ...source }) => source)),
     details: result.details === undefined ? null : JSON.stringify(result.details),
     reasoning: result.reasoning,
     recorded_at: new Date().toISOString(),

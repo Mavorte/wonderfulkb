@@ -287,6 +287,40 @@
 }
 .app-received.app-stack { gap: var(--kb-space-2); }
 
+/* Completion message after a successful upload */
+.app-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--kb-space-4);
+  padding: var(--kb-space-12) var(--kb-space-8);
+  text-align: center;
+  outline: none;
+}
+.app-done__icon {
+  width: 64px;
+  height: 64px;
+  fill: var(--kb-success);
+}
+.app-done__title {
+  font-size: 1.75rem;
+  line-height: 2.5rem;
+  letter-spacing: -0.031rem;
+  font-weight: var(--kb-weight-semibold);
+}
+.app-done__text {
+  max-width: 36rem;
+  color: var(--kb-text-secondary);
+}
+.app-done__list {
+  width: 100%;
+  max-width: 36rem;
+  margin: var(--kb-space-2) 0;
+  padding-top: var(--kb-space-4);
+  border-top: 1px solid var(--kb-border);
+  text-align: left;
+}
+
 .app-actions {
   display: flex;
   justify-content: flex-end;
@@ -369,34 +403,10 @@
   .app-footer .app-container { flex-direction: column; align-items: flex-start; }
 }
 
-/* Desktop: the page fits the viewport. The case and client cards keep their
-   height; the documents and upload cards share the rest and scroll inside. */
-@media (min-width: 992px) and (min-height: 600px) {
-  .app-root { height: 100vh; height: 100dvh; overflow: hidden; }
-  .app-header .app-container { height: 64px; }
-  .app-header__logo { height: 28px; }
-  .app-main { flex: 1; min-height: 0; display: flex; padding: var(--kb-space-6) 0; }
-  .app-main > .app-container { display: flex; flex-direction: column; min-height: 0; }
-  .app-intro { margin-bottom: var(--kb-space-4); }
-  .app-intro h1 { font-size: 1.75rem; line-height: 2.25rem; letter-spacing: -0.031rem; }
-  .app-intro p { font-size: 1rem; line-height: 1.5rem; }
-  .app-layout,
-  .app-grid { gap: var(--kb-space-4); }
-  .app-layout { flex: 1; min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
-  .app-grid--fill { min-height: 0; }
-  .app-grid--fill > .app-card { display: flex; flex-direction: column; min-height: 0; }
-  .app-grid--fill > :only-child { grid-column: 1 / -1; }
-  .app-card { padding: var(--kb-space-5) var(--kb-space-6); }
-  .app-card__head { margin-bottom: var(--kb-space-3); }
-  .app-card__title { font-size: 1.125rem; line-height: 1.75rem; letter-spacing: -0.019rem; }
-  .app-card__body { flex: 1; min-height: 0; overflow-y: auto; align-content: start; }
-  .app-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kb-space-2) var(--kb-space-6); }
-  .app-card__body.app-list { gap: var(--kb-space-2); }
-  .app-actions { margin-top: var(--kb-space-4); }
-  .dropzone { flex-direction: row; gap: var(--kb-space-3); text-align: left; min-height: 6rem; padding: var(--kb-space-3) var(--kb-space-4); }
-  .dropzone__text { flex: 1; }
-  .app-footer .app-container { padding-top: var(--kb-space-3); padding-bottom: var(--kb-space-3); }
-  .app-footer__logo { height: 20px; }
+/* Desktop: case fields and the required documents list run in two columns. */
+@media (min-width: 992px) {
+  .app-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kb-space-4) var(--kb-space-6); }
+  .app-list--columns { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--kb-space-6); }
 }
 
 .app-list__ok { fill: var(--kb-success); }

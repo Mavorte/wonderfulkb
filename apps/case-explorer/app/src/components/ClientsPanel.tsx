@@ -43,10 +43,12 @@ export default function ClientsPanel({
   selectedClientId,
   onLoaded,
   onSelect,
+  onCollapse,
 }: {
   selectedClientId: string | null;
   onLoaded: (clients: Client[]) => void;
   onSelect: (client: Client) => void;
+  onCollapse: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Record<string, string>>({});
@@ -69,7 +71,19 @@ export default function ClientsPanel({
   return (
     <Card
       title={`Clients${result?.ok ? ` (${clients.length}${result.body?.next_token ? "+" : ""})` : ""}`}
-      actions={<Button size="small" variant="text" startIcon="arrow-clockwise" onClick={reload} />}
+      actions={
+        <Box direction="row" gap={1}>
+          <Button size="small" variant="text" startIcon="arrow-clockwise" onClick={reload} />
+          <Button
+            size="small"
+            variant="text"
+            startIcon="caret-double-left"
+            aria-label="Hide clients"
+            title="Hide clients"
+            onClick={onCollapse}
+          />
+        </Box>
+      }
       padding={4}
     >
       <Stack gap={3}>

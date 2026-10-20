@@ -4,16 +4,9 @@
 
 import type { ConsistencySpec } from "./consistency";
 
-// SGEF's own data, as its forms print it.
-export const SGEF = {
-  name: "SG Equipment Finance Czech Republic s.r.o.",
-  ico: "61061344",
-  dic: "CZ61061344",
-  bank_account: "0162710187/0100",
-};
-
 export const RECIPIENT: ConsistencySpec = {
   rule_id: "recipient_consistent",
+  regions: { labels: ["smluvni_strana"], parties: ["borrower", "buyer"] },
   entity: "recipient (příjemce financování)",
   attributes: [
     { key: "name", label: "name", kind: "text" },
@@ -30,6 +23,7 @@ export const RECIPIENT: ConsistencySpec = {
 
 export const SUPPLIER: ConsistencySpec = {
   rule_id: "supplier_consistent",
+  regions: { labels: ["smluvni_strana"], parties: ["supplier"] },
   entity: "supplier (dodavatel)",
   attributes: [
     { key: "name", label: "name", kind: "text" },
@@ -42,18 +36,19 @@ export const SUPPLIER: ConsistencySpec = {
 
 export const PROVIDER: ConsistencySpec = {
   rule_id: "provider_consistent",
-  entity: "provider (poskytovatel financování, SGEF)",
+  regions: { labels: ["smluvni_strana"], parties: ["provider"] },
+  entity: "provider (poskytovatel financování)",
   attributes: [
     { key: "name", label: "name", kind: "text" },
     { key: "ico", label: "IČO", kind: "ico" },
     { key: "dic", label: "DIČ", kind: "dic" },
     { key: "bank_account", label: "bank account", kind: "account" },
   ],
-  reference: () => ({ source: "SGEF's own data", values: SGEF }),
 };
 
 export const ASSET: ConsistencySpec = {
   rule_id: "asset_consistent",
+  regions: { labels: ["predmet", "predani", "zajisteni"] },
   entity: "financed asset (předmět financování)",
   attributes: [
     { key: "name", label: "asset name", kind: "text" },
@@ -69,6 +64,7 @@ export const ASSET: ConsistencySpec = {
 
 export const AMOUNTS: ConsistencySpec = {
   rule_id: "amounts_consistent",
+  regions: { labels: ["cena_platba"] },
   entity: "price and loan amount",
   attributes: [
     { key: "price", label: "price without VAT", kind: "amount" },
@@ -80,6 +76,7 @@ export const AMOUNTS: ConsistencySpec = {
 
 export const CONTRACT_NUMBER: ConsistencySpec = {
   rule_id: "contract_number_consistent",
+  regions: { labels: ["hlavicka", "odkaz_na_dokument", "zajisteni"] },
   entity: "loan contract number",
   attributes: [{ key: "loan_number", label: "loan contract number", kind: "id" }],
   reference: (run) => ({ source: "the case record", values: { loan_number: run.case_metadata.loan_number } }),
@@ -87,6 +84,7 @@ export const CONTRACT_NUMBER: ConsistencySpec = {
 
 export const GUARANTOR: ConsistencySpec = {
   rule_id: "guarantor_consistent",
+  regions: { labels: ["smluvni_strana", "zajisteni"], parties: ["guarantor"] },
   entity: "guarantor (ručitel)",
   attributes: [
     { key: "name", label: "name", kind: "text" },

@@ -78,6 +78,34 @@ export type UpstreamSignature = {
   similar_signatures?: Array<{ signature_id: string; document_id: string; score: number }>;
 };
 
+// validator-agent API `getDocumentRegions` item: a paragraph or table row of
+// a text-layer page. `bbox` and `lines[].bbox` are [x0, y0, x1, y1], 0-1 of the
+// page, origin top left; `lines[].start/end` are offsets into `text`.
+export type UpstreamRegion = {
+  region_id: string;
+  page: number;
+  kind?: string;
+  label?: string | null;
+  party?: string | null;
+  refers_to?: string[] | null;
+  summary?: string | null;
+  section?: string | null;
+  text: string;
+  bbox?: number[] | null;
+  lines?: Array<{ bbox: number[]; start: number; end: number }>;
+};
+
+// `status` is completed, not_run (no regions computed), failed or not_ready.
+export type UpstreamRegions = {
+  case_id: string;
+  document_id: string;
+  title?: string;
+  document_label?: string;
+  status: string;
+  pages?: Array<{ page: number; width: number; height: number; source: string }>;
+  regions?: UpstreamRegion[];
+};
+
 // errors: HTTP statuses the mock answers with instead of the data, so evals can
 // cover upstream failures. A fixture without a client has a client_id that no
 // client record has.
@@ -109,6 +137,7 @@ export type AwsApi = {
   listDocuments(caseId: string, nextToken?: string | null): Promise<Response<{ documents: UpstreamDocumentSummary[]; next_token?: string | null }>>;
   getDocument(caseId: string, documentId: string): Promise<Response<UpstreamDocument>>;
   getSignatures(caseId: string, documentId: string): Promise<Response<{ case_id: string; document_id: string; signatures: UpstreamSignature[] }>>;
+  getRegions(caseId: string, documentId: string): Promise<Response<UpstreamRegions>>;
 };
 
 export function isAwsMock(context: GlobalsContext, caseId: string): boolean {
@@ -158,6 +187,15 @@ function mockApi(): AwsApi {
       if (document.errors?.signatures) return { status: document.errors.signatures, body: null };
       return { status: 200, body: { case_id: caseId, document_id: documentId, signatures: document.signatures } };
     },
+    // Fixtures have no page geometry, so their regions are never computed.
+    async getRegions(caseId, documentId) {
+      const document = FIXTURES[caseId]?.documents.find((d) => d.document_id === documentId);
+      if (!document) return notFound;
+      return {
+        status: 200,
+        body: { case_id: caseId, document_id: documentId, title: document.title, document_label: document.label, status: "not_run", pages: [], regions: [] },
+      };
+    },
   };
 }
 
@@ -173,6 +211,8 @@ function liveApi(context: GlobalsContext): AwsApi {
     getDocument: (caseId, documentId) => getJson(`${api}/cases/${id(caseId)}/documents/${id(documentId)}`, API_SECRET),
     getSignatures: (caseId, documentId) =>
       getJson(`${api}/cases/${id(caseId)}/documents/${id(documentId)}/signatures?match_client=true&include_vectors=false`, API_SECRET),
+    getRegions: (caseId, documentId) =>
+      getJson(`${api}/cases/${id(caseId)}/documents/${id(documentId)}/regions?include_geometry=true`, API_SECRET),
   };
 }
 

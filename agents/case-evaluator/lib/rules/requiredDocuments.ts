@@ -1,5 +1,6 @@
 import { DOCUMENT_TYPES, type DocumentType } from "../rules";
 import { type Run, type Source, type TypedRequirement, findDocument } from "../run";
+import { REQUIRED_REFERS_TO } from "../regions";
 import { type CheckOutcome, rejected, requireReasoning } from "./check";
 
 export type Requirement = { description: string; type: DocumentType; document_id?: string };
@@ -40,10 +41,21 @@ export function checkRequiredDocuments(run: Run, input: RequiredDocumentsInput):
   if (problems.length) return rejected(problems);
 
   const label = (r: Requirement) => r.description.trim();
-  const sources: Source[] = input.requirements
+  const matched: Source[] = input.requirements
     .map((r) => (r.document_id ? findDocument(run, r.document_id) : undefined))
     .filter((d) => d !== undefined)
     .map((d) => ({ document_id: d.document_id, title: d.title }));
+  // Each requirement without a document points at the agreement's clause that requires it.
+  const agreement = run.documents.find((d) => d.label === "smlouva_o_uveru");
+  const declarations: Source[] = agreement
+    ? unmatched.map((r) => ({
+      document_id: agreement.document_id,
+      title: agreement.title,
+      role: "declaration",
+      issue: label(r),
+      locate: { labels: ["povinny_podklad"], ...(REQUIRED_REFERS_TO[r.type] ? { refers_to: REQUIRED_REFERS_TO[r.type] } : { value: label(r) }) },
+    }))
+    : [];
   return {
     result: {
       rule_id: "required_documents_present",
@@ -52,12 +64,12 @@ export function checkRequiredDocuments(run: Run, input: RequiredDocumentsInput):
       found: input.status === "cannot_verify"
         ? "Requirements could not be read"
         : unmatched.length ? `No document for: ${unmatched.map(label).join("; ")}` : "Every requirement has a document",
-      sources: sources.filter((s, i) => sources.findIndex((t) => t.document_id === s.document_id) === i),
+      sources: [...matched.filter((s, i) => matched.findIndex((t) => t.document_id === s.document_id) === i), ...declarations],
       details: input.requirements.map((r) => ({
         description: r.description.trim(),
         type: r.type,
-        document_id: r.document_id ?? null,
-        title: r.document_id ? findDocument(run, r.document_id)?.title ?? null : null,
+        document_id: findDocument(run, r.document_id)?.document_id ?? null,
+        title: findDocument(run, r.document_id)?.title ?? null,
       })),
       reasoning: input.reasoning,
     },

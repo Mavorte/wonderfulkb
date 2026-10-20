@@ -1,11 +1,11 @@
 // Validator shared by the *_consistent rules: one entity (recipient, supplier,
 // asset, ...) must show the same values in every document, and agree with its
-// reference record where there is one (client record, case record, SGEF's own
-// data). The agent reports the value each document shows, with its page; the
-// tool normalizes the values, compares them and checks the agent's status.
+// reference record where there is one (client record, case record). The agent
+// reports the value each document shows, with its page; the tool normalizes
+// the values, compares them and checks the agent's status.
 
 import type { RuleId } from "../rules";
-import { type DocumentRead, type Run, type Source, findDocument } from "../run";
+import { type DocumentRead, type Locate, type Run, type Source, findDocument } from "../run";
 import { type CheckOutcome, rejected, requireReasoning } from "./check";
 
 // How an attribute's values are normalized and checked for format.
@@ -23,6 +23,8 @@ export type ConsistencySpec = {
   // The entity may be absent from a case (e.g. no guarantor), so not_applicable is allowed.
   optional?: boolean;
   reference?: (run: Run) => Reference | null;
+  // Region labels and parties where the entity is named, to place each value (lib/regions.ts).
+  regions?: Locate;
 };
 
 export type ConsistencyValue = { document_id: string; page?: number; value: string };
@@ -161,12 +163,12 @@ export function checkConsistency(
         problems.push(`${at}: document_id "${v.document_id}" is not a document of this case.`);
         continue;
       }
-      const read = getRead(v.document_id);
+      const read = getRead(document.document_id);
       if (!read) problems.push(`${at}: read ${document.title} with get_document first.`);
       if (v.page === undefined) problems.push(`${at}: give the page the value is on.`);
       else if (read && (v.page < 1 || v.page > read.page_count)) problems.push(`${at}: page ${v.page} is not a page of this document (1-${read.page_count}).`);
       else if (read?.empty_pages.includes(v.page)) problems.push(`${at}: page ${v.page} has no text, so the value can't come from it.`);
-      const key = `${v.document_id}:${v.page}:${value}`;
+      const key = `${document.document_id}:${v.page}:${value}`;
       if (seen.has(key)) problems.push(`${at}: listed twice.`);
       seen.add(key);
       list.push({ source: document.title, document_id: document.document_id, page: v.page, value, normalized: normalizeValue(attributeSpec.kind, value) });
@@ -184,6 +186,9 @@ export function checkConsistency(
 
   const equivalent = new Set(input.equivalent ?? []);
   const issues: string[] = [];
+  // One source per value. The values of a differing attribute are the sides of
+  // the conflict (compare_a, compare_b, ...; a is the reference value's side).
+  const sources: Source[] = [];
   const compared: string[] = [];
   const attributes = spec.attributes.map((attribute) => {
     const referenceValue = reference?.values[attribute.key]?.trim();
@@ -201,6 +206,19 @@ export function checkConsistency(
       issues.push(`${attribute.label} differs: ${[...groups.values()].map((g) => `${g[0].value} (${g.map(where).join("; ")})`).join(" vs ")}`);
     }
     if (all.length >= 2 || invalid.length) compared.push(attribute.key);
+    const sides = [...groups.keys()];
+    for (const e of entries.get(attribute.key) ?? []) {
+      const side = differs && !tolerated && e.normalized !== null ? sides.indexOf(e.normalized) : -1;
+      sources.push({
+        document_id: e.document_id!,
+        title: e.source,
+        page: e.page,
+        role: side >= 0 ? `compare_${String.fromCharCode(97 + side)}` : "evidence",
+        field: attribute.key,
+        ...((side >= 0 || e.normalized === null) && { issue: attribute.label }),
+        locate: { value: e.value, ...spec.regions },
+      });
+    }
     return {
       attribute: attribute.key,
       reference: referenceValue ?? null,
@@ -226,14 +244,7 @@ export function checkConsistency(
   }
   if (problems.length) return rejected(problems);
 
-  const documents = new Set<string>();
-  const pages = new Map<string, Source>();
-  for (const list of entries.values()) {
-    for (const e of list) {
-      documents.add(e.document_id!);
-      pages.set(`${e.document_id}:${e.page}`, { document_id: e.document_id!, title: e.source, page: e.page });
-    }
-  }
+  const documents = new Set(sources.map((source) => source.document_id));
   const labels = spec.attributes.map((a) => a.label).join(", ");
   const referenceText = reference
     ? spec.attributes.filter((a) => reference.values[a.key]).map((a) => `${a.label} ${reference.values[a.key]}`).join(", ")
@@ -248,9 +259,46 @@ export function checkConsistency(
       found: input.status === "cannot_verify"
         ? `Nothing to compare: no ${spec.entity} value appears in two sources`
         : issues.length ? issues.join("; ") : `Consistent across ${documents.size} document${documents.size === 1 ? "" : "s"}${reference && referenceText ? ` and ${reference.source}` : ""}`,
-      sources: [...pages.values()].sort((a, b) => a.title.localeCompare(b.title) || (a.page ?? 0) - (b.page ?? 0)),
+      sources: sources.sort((a, b) => a.title.localeCompare(b.title) || (a.page ?? 0) - (b.page ?? 0)),
       details: { reference: reference && { source: reference.source, values: reference.values }, attributes },
       reasoning: input.reasoning,
     },
   };
+}
+
+// What the *_consistent tools take: each distinct value once, with every place
+// it appears as "<ref>:<page>" (e.g. "D3:1"). Much shorter than one entry per
+// document with its full document_id, which made these calls slow to write.
+export type GroupedConsistencyInput = Omit<ConsistencyInput, "attributes"> & {
+  attributes?: Array<{ attribute: string; values: Array<{ value: string; at: string[] }> }>;
+};
+
+const PLACE = /^\s*(.+?)\s*:\s*(?:p\.?\s*)?(\d+)\s*$/i;
+
+// Expands the places into checkConsistency's input. Problems with places are
+// reported together with checkConsistency's own, so one retry can fix them all.
+export function checkGroupedConsistency(
+  spec: ConsistencySpec,
+  run: Run,
+  getRead: (documentId: string) => DocumentRead | null,
+  input: GroupedConsistencyInput,
+): CheckOutcome {
+  const problems: string[] = [];
+  const attributes = (input.attributes ?? []).map((a) => ({
+    attribute: a.attribute,
+    values: a.values.flatMap(({ value, at }) => {
+      if (!at?.length) problems.push(`${a.attribute} "${value}": give the places it appears in at, as <ref>:<page>, e.g. D3:1.`);
+      return (at ?? []).flatMap((place) => {
+        const m = PLACE.exec(place);
+        if (!m) {
+          problems.push(`${a.attribute} "${value}": "${place}" is not a place; write <ref>:<page>, e.g. D3:1.`);
+          return [];
+        }
+        return [{ document_id: m[1], page: Number(m[2]), value }];
+      });
+    }),
+  }));
+  const outcome = checkConsistency(spec, run, getRead, { ...input, attributes: input.attributes && attributes });
+  if (!problems.length) return outcome;
+  return rejected([...problems, ...(outcome.problems ?? [])]);
 }

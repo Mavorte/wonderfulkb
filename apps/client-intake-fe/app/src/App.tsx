@@ -2,12 +2,13 @@ import "./style.css";
 import { useWonderful } from "@wonderful/app-sdk";
 import { useEffect, useRef, useState } from "react";
 import CaseSummary, { RequiredDocuments } from "./components/CaseSummary";
+import CompletionPanel from "./components/CompletionPanel";
 import Notice from "./components/Notice";
 import UploadPanel from "./components/UploadPanel";
 import getIntakeHash from "./getIntakeHash";
 import KbLogo from "./kb/kb-logo.svg?react";
 import KbLogoInverse from "./kb/kb-logo-inverse.svg?react";
-import type { IntakeData } from "./types";
+import type { IntakeData, UploadedDocument } from "./types";
 
 type State =
   | { status: "loading" }
@@ -39,6 +40,8 @@ function getErrorState(error: unknown): State {
 export default function App() {
   const { api, track } = useWonderful();
   const [state, setState] = useState<State>({ status: "loading" });
+  const [received, setReceived] = useState<UploadedDocument[]>([]);
+  const [isFinished, setIsFinished] = useState(false);
   const hasTrackedOpen = useRef(false);
 
   useEffect(() => {
@@ -86,13 +89,21 @@ export default function App() {
             </div>
           )}
           {state.status === "error" && <Notice variant="error" title={state.title} description={state.description} />}
-          {state.status === "ready" && (
+          {state.status === "ready" && isFinished && (
+            <CompletionPanel documents={received} onUploadMore={() => setIsFinished(false)} />
+          )}
+          {state.status === "ready" && !isFinished && (
             <div className="app-layout">
               <CaseSummary data={state.data} />
-              <div className="app-grid app-grid--fill">
-                <RequiredDocuments data={state.data} />
-                <UploadPanel data={state.data} />
-              </div>
+              <RequiredDocuments data={state.data} />
+              <UploadPanel
+                data={state.data}
+                uploaded={received}
+                onUploaded={(documents) => {
+                  setReceived((current) => [...documents, ...current]);
+                  setIsFinished(true);
+                }}
+              />
             </div>
           )}
         </div>

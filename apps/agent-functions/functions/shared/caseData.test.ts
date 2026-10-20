@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import { getCase, getDocument, getSignatures, listDocuments } from "./caseData.ts";
+import { getCase, getDocument, getRegions, getSignatures, listDocuments } from "./caseData.ts";
 
 function createContext(data: Record<string, unknown>, globals: Record<string, string> = {}) {
   let status = 200;
@@ -183,4 +183,77 @@ test("a fixture's injected errors come back as upstream failures", async () => {
   const signatures = createContext({ case_id: "mock-eval-signatures-unavailable", document_id: "ruc-01" });
   assert.deepEqual(await getSignatures(signatures), { error: "upstream", message: "documents API signatures returned 503" });
   assert.ok(!("error" in (await getDocument(createContext({ case_id: "mock-eval-signatures-unavailable", document_id: "ruc-01" })))));
+});
+
+const REGIONS_URL = "https://api.example.test/v1/cases/case-1/documents/d1/regions?include_geometry=true";
+
+test("fixture documents have no regions computed", async () => {
+  const list = await listDocuments(createContext({ case_id: "mock-unhappy" }));
+  assert.ok(!("error" in list));
+  const result = await getRegions(createContext({ case_id: "mock-unhappy", document_id: list.documents[0].document_id }));
+  assert.deepEqual(result, { case_id: "mock-unhappy", document_id: list.documents[0].document_id, is_mock: true, status: "not_run", regions: [] });
+});
+
+test("regions of an unknown document are not found", async () => {
+  const context = createContext({ case_id: "mock-unhappy", document_id: "nope" });
+  assert.deepEqual(await getRegions(context), { error: "document_not_found" });
+  assert.equal(context.getStatus(), 404);
+});
+
+test("live regions use the documents API secret and adapt the upstream items", async () => {
+  const calls = stubFetch({
+    [REGIONS_URL]: {
+      status: 200,
+      body: {
+        case_id: "case-1", document_id: "d1", status: "completed",
+        pages: [{ page: 1, width: 595, height: 842, source: "text_layer" }],
+        regions: [
+          {
+            region_id: "p1-r07", page: 1, kind: "table_row", label: "smluvni_strana", party: "guarantor", summary: "IČO a DIČ ručitele", section: "p1-r04",
+            text: "IČO / DIČ | 98001027 / CZ98001027", bbox: [0.079, 0.1717, 0.5569, 0.1819],
+            lines: [{ bbox: [0.079, 0.1717, 0.1455, 0.1812], start: 0, end: 9 }, { bbox: [0.378, 0.1718, 0.5569, 0.1819], start: 12, end: 33 }],
+          },
+          { region_id: "p2-r01", page: 2, kind: "heading", label: null, text: "Článek 2", bbox: [0.1, 0.1, 0.3, 0.12], lines: [{ bbox: [0.1, 0.1, 0.3, 0.12], start: 0, end: 8 }] },
+        ],
+      },
+    },
+  });
+  const result = await getRegions(createContext({ case_id: "case-1", document_id: "d1" }, LIVE));
+  assert.deepEqual(result, {
+    case_id: "case-1", document_id: "d1", is_mock: false, status: "completed",
+    regions: [
+      {
+        region_id: "p1-r07", page: 1, label: "smluvni_strana", party: "guarantor", refers_to: [],
+        text: "IČO / DIČ | 98001027 / CZ98001027", bbox: [0.079, 0.1717, 0.5569, 0.1819],
+        lines: [{ bbox: [0.079, 0.1717, 0.1455, 0.1812], start: 0, end: 9 }, { bbox: [0.378, 0.1718, 0.5569, 0.1819], start: 12, end: 33 }],
+      },
+      { region_id: "p2-r01", page: 2, label: null, party: null, refers_to: [], text: "Článek 2", bbox: [0.1, 0.1, 0.3, 0.12] },
+    ],
+  });
+  assert.equal(calls[0].secretName, "kb-aws-ingest-api-key");
+});
+
+test("regions that were not computed come back empty", async () => {
+  stubFetch({ [REGIONS_URL]: { status: 200, body: { case_id: "case-1", document_id: "d1", status: "not_run", regions: [{ region_id: "p1-r01", page: 1, text: "x" }] } } });
+  const result = await getRegions(createContext({ case_id: "case-1", document_id: "d1" }, LIVE));
+  assert.ok(!("error" in result));
+  assert.equal(result.status, "not_run");
+  assert.deepEqual(result.regions, []);
+});
+
+test("a document still being ingested has regions not_ready, not an error", async () => {
+  stubFetch({ [REGIONS_URL]: { status: 409, body: { error: "not ready" } } });
+  const context = createContext({ case_id: "case-1", document_id: "d1" }, LIVE);
+  const result = await getRegions(context);
+  assert.ok(!("error" in result));
+  assert.equal(result.status, "not_ready");
+  assert.equal(context.getStatus(), 200);
+});
+
+test("a live regions failure is reported as 502", async () => {
+  stubFetch({ [REGIONS_URL]: { status: 500, body: {} } });
+  const context = createContext({ case_id: "case-1", document_id: "d1" }, LIVE);
+  const result = await getRegions(context);
+  assert.equal("error" in result && result.error, "upstream");
+  assert.equal(context.getStatus(), 502);
 });

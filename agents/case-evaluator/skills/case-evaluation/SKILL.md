@@ -9,11 +9,11 @@ The task gives you a `case_id`. You check the case's documents against the busin
 
 ## Steps
 
-1. Call `start_evaluation` with the `case_id`. If it returns an `error`, stop and set the task to failed with that error; there is no run to close. Do not guess data.
+1. Call `start_evaluation` with the `case_id`. If it returns an `error`, stop and set the task to failed with that error; there is no run to close. Do not guess data. Each document in its list has a short `ref` (D1, D2, ...): pass the ref wherever a tool asks for a `document_id`.
 2. Find the loan agreement (label `smlouva_o_uveru`, or a title containing "Smlouva") and read it with `get_document`.
 3. Record the agreement rules: `loan_agreement_present`, `required_documents_present`, `recipient_matches_client`.
 4. Record the eight document contents rules. Read one matched document at a time with `get_document`, record its rule, then move on.
-5. Read the documents you haven't read yet, such as the payment agreement and the VOP. After reading each document, write down a short note of the values it shows for the consistency rules (below), with its page.
+5. Read the documents you haven't read yet, such as the payment agreement and the VOP. After reading each document, write down a short note of the values it shows for the consistency rules (below), with its ref and page.
 6. Record the eight consistency rules from your notes.
 7. Call `finish_evaluation` with a short summary. It is refused while any rule is unrecorded.
 8. Complete the task with the verdict and summary.
@@ -68,6 +68,9 @@ Each rule checks the one document that `required_documents_present` matched to i
 - `missing` if any field or signature is absent, `passed` if everything is there.
 - `cannot_verify` only if the document is too hard to read to tell: `pages_failed`, or `confidence` below 0.8. A page with empty text that isn't in `pages_failed` is blank, and what should be on it is `missing`.
 - Signatures: `get_document` lists the detected signatures by role (`provider` = SGEF, `borrower`, `supplier`, `guarantor`, `insurer`). The tool counts them itself; SGEF signs with two people. Say in `reasoning` whose signature is missing.
+  - `buyer` counts as `borrower` and `seller` as `supplier`.
+  - A signature with no assigned role (e.g. `unknown`) is not a fault. The tool counts it towards a signature that is otherwise missing, and the reviewer checks it visually.
+  - A party may sign with an attached graphic signature ("připojeným grafickým podpisem"). That is a valid way to sign, not a defect.
 
 | Rule → tool `evaluate_<rule>` | Document | What to look for |
 | --- | --- | --- |
@@ -82,8 +85,8 @@ Each rule checks the one document that `required_documents_present` matched to i
 
 ## Consistency rules
 
-Each rule compares one entity across every document that shows it (the control matrix). Give the value each document shows, exactly as written, with its `document_id` and page. List a document once per page that shows a different value, e.g. a loan number on page 1 and another on page 3. List every attribute, with an empty values list if no document shows it.
-- The tool adds the reference values itself: the client record for the recipient, the case record for the asset and the loan number, and SGEF's own data for SGEF. Don't list them.
+Each rule compares one entity across every document that shows it (the control matrix). For each attribute, list each distinct value once, exactly as written, with every place it appears in `at` as `<ref>:<page>`, e.g. `{value: "Epiroc Czech Republic s.r.o.", at: ["D1:1", "D3:2"]}`. Only values written identically (spacing aside) share an entry; any other difference, however small, is its own entry, because the tool does the comparing. List every attribute, with an empty values list if no document shows it.
+- The tool adds the reference values itself: the client record for the recipient, and the case record for the asset and the loan number. Don't list them.
 - It normalizes the values (case, spaces, diacritics, leading zeros, number formats) and compares them. Identifiers and numbers must match exactly. A malformed value, such as an IČO that is not 8 digits or `XXXXXXX`, is a `conflict`.
 - Text values that only differ in how they are written (address order, "nám." vs "náměstí", a short vs a full asset name) can be judged the same: list the attribute in `equivalent` and say why in `reasoning`. A different company name, such as Epirock vs Epiroc, is not just spelling; say in `reasoning` how you judged it.
 - `passed` if everything agrees, `conflict` if anything differs. `cannot_verify` only if no attribute appears in two sources.
@@ -95,7 +98,7 @@ Each rule compares one entity across every document that shows it (the control m
 | `recipient_consistent` → `evaluate_recipient_consistent` | name, IČO, DIČ, address | Every party block and stamp of the recipient (příjemce financování, kupující, odběratel, úvěrovaný, dlužník). |
 | `client_status_valid` → `evaluate_client_status` | — | The tool checks the client record's status and KYC. Give the name of each person who signs for the recipient, with the page. Someone not among the client's authorized signatories is a `conflict`. |
 | `supplier_consistent` → `evaluate_supplier_consistent` | name, IČO, DIČ, address, bank account | The supplier (dodavatel, prodávající) in the agreement, order, invoice, handover and payment agreement. |
-| `provider_consistent` → `evaluate_provider_consistent` | name, IČO, DIČ, bank account | SGEF (poskytovatel financování, věřitel, oprávněný z pojištění) in every document. |
+| `provider_consistent` → `evaluate_provider_consistent` | name, IČO, DIČ, bank account | The provider (poskytovatel financování, věřitel, oprávněný z pojištění) in every document. |
 | `asset_consistent` → `evaluate_asset_consistent` | name, manufacturer, serial number/VIN, year | The financed asset in the agreement, order, handover, security transfer and vinculation. |
 | `amounts_consistent` → `evaluate_amounts_consistent` | price without VAT, VAT amount, price with VAT, loan amount | List an amount only where the document states that same quantity; a guarantee's scope or an insured value is not the price. |
 | `contract_number_consistent` → `evaluate_contract_number_consistent` | loan contract number | Every reference to the loan contract (smlouva o úvěru č.), e.g. in the security transfer, vinculation, guarantee and payment agreement. |
@@ -105,6 +108,6 @@ Each rule compares one entity across every document that shows it (the control m
 
 Other findings you notice don't belong to a rule yet. Examples:
 - an uploaded document that no rule checks but that is blank or unreadable, such as an empty payment agreement;
-- text that looks inserted, such as an all-caps clause.
+- text that looks inserted, such as an all-caps clause. A line saying a party signs with an attached graphic signature ("připojeným grafickým podpisem") is normal wording; don't report it.
 
 Mention them in the `finish_evaluation` summary. Don't change a rule's status because of them.

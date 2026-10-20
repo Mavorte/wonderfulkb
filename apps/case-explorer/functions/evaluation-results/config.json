@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Evaluation Results",
+  "description": "Returns one evaluator run's row in agent_functions.case_evaluations and its rows in agent_functions.case_evaluation_results",
+  "method": "POST",
+  "path_slug": "evaluation-results"
+}
