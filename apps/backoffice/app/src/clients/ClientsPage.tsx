@@ -3,6 +3,7 @@ import { useWonderful } from "@wonderful/app-sdk";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import CaseStatusPill from "../cases/CaseStatusPill";
 import formatDate from "../cases/formatDate";
+import Skeleton from "../Skeleton";
 import listClientDirectory, { type DirectoryClient } from "./listClientDirectory";
 
 function normalize(text: string): string {
@@ -93,7 +94,7 @@ export default function ClientsPage() {
               </button>
             </div>
           ) : !clients ? (
-            <p className="bo-empty">Loading clients…</p>
+            <ClientsSkeleton />
           ) : clients.length === 0 ? (
             <p className="bo-empty">{query.trim() ? `No client matches “${query.trim()}”.` : "No clients yet."}</p>
           ) : (
@@ -142,6 +143,51 @@ export default function ClientsPage() {
         </div>
       </div>
     </>
+  );
+}
+
+function ClientsSkeleton() {
+  return (
+    <div className="bo-table-wrap" aria-busy="true" aria-label="Loading clients">
+      <table className="bo-table bo-table--clients">
+        <thead>
+          <tr>
+            <th scope="col">Client</th>
+            <th scope="col">Address</th>
+            <th scope="col">KYC</th>
+            <th scope="col" className="bo-table__num">Cases</th>
+            <th scope="col">Latest case · opened</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 8 }, (_, row) => (
+            <tr key={row}>
+              <td>
+                <div className="bo-skeleton-stack">
+                  <Skeleton width="11rem" />
+                  <Skeleton width="6rem" height="0.75rem" />
+                </div>
+              </td>
+              <td className="bo-clients__address">
+                <Skeleton width="80%" />
+              </td>
+              <td>
+                <Skeleton width="2.5rem" height="1.25rem" className="bo-skeleton--pill" />
+              </td>
+              <td className="bo-table__num">
+                <Skeleton width="1rem" className="bo-skeleton--end" />
+              </td>
+              <td>
+                <div className="bo-clients__case">
+                  <Skeleton width="6rem" height="1.25rem" className="bo-skeleton--pill" />
+                  <Skeleton width="5rem" height="0.75rem" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
