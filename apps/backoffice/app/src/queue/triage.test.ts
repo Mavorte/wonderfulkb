@@ -64,7 +64,7 @@ test("a failed run is a material finding, a missing client or KYC is blocking", 
   assert.equal(findIssues({ ...base, case_found: false, client: null, client_id: null })[0].title, "Case not in the case registry");
 });
 
-test("the queue lists decisions, waiting, processing, then completed cases", () => {
+test("the queue lists decisions, processing, waiting, then completed cases", () => {
   const queue = triage([
     { ...base, case_id: "done", status: "completed", client: null },
     { ...base, case_id: "processing", evaluation: { ...evaluation, status: "running" } },
@@ -75,8 +75,8 @@ test("the queue lists decisions, waiting, processing, then completed cases", () 
     queue.map((c) => [c.case_id, c.tier]),
     [
       ["decision", "decision"],
-      ["clarification", "waiting"],
       ["processing", "processing"],
+      ["clarification", "waiting"],
       ["done", "done"],
     ],
   );

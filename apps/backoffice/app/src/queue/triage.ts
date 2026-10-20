@@ -34,9 +34,9 @@ export type Severity = "blocking" | "material";
 export type Finding = { severity: Severity; title: string; action: string };
 
 // Listed most acute first; the queue renders tiers in this order.
-// decision: the worker's move. waiting: the client's move. processing: the
-// system's move. done: final.
-export const tiers = ["decision", "waiting", "processing", "done"] as const;
+// decision: the worker's move. processing: the system's move. waiting: the
+// client's move. done: final.
+export const tiers = ["decision", "processing", "waiting", "done"] as const;
 export type Tier = (typeof tiers)[number];
 
 export type TriagedCase = Omit<QueueCase, "status"> & { status: CaseStatus; tier: Tier; findings: Finding[] };
