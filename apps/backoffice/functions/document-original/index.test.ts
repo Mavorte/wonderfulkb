@@ -28,12 +28,12 @@ function createContext(data: unknown, user: { id: string; email: string } | null
   let status = 200;
   const context = {
     data,
-    user: user ?? undefined,
+    metadata: { user: user ?? undefined },
     response: { setStatus: (code: number) => (status = code) },
     globals: { get: () => "https://aws.test/v1" },
     secrets: { get: () => ({ header_name: "x-api-key", api_key: "k" }) },
   };
-  // The function only touches data, user, response, globals and secrets.
+  // The function only touches data, metadata, response, globals and secrets.
   return { context: context as unknown as FunctionContext, status: () => status };
 }
 
