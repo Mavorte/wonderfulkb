@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import RevealOriginalButton from "./RevealOriginalButton";
+import { useEffect, useRef, useState } from "react";
+import RevealOriginalButton, { type RevealedOriginal } from "./RevealOriginalButton";
 import StatusIcon from "./StatusIcon";
 import type { DocView, RequiredDoc } from "./evaluation";
 
@@ -31,6 +31,8 @@ export default function DocumentPanel({
   onPreviewError: () => void;
 }) {
   const doc = docs.find((d) => d.key === focus?.docKey) ?? docs[0];
+  // The revealed original replaces the masked pages until hidden or another document is opened.
+  const [original, setOriginal] = useState<(RevealedOriginal & { docKey: string }) | null>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
@@ -57,6 +59,7 @@ export default function DocumentPanel({
 
   const activePage = focus?.docKey === doc.key ? focus.page : null;
   const hasPreview = doc.pages.some(Boolean);
+  const shownOriginal = original?.docKey === doc.key ? original : null;
 
   return (
     <section className="cr-docs" aria-label="Documents" ref={sectionRef}>
@@ -129,7 +132,14 @@ export default function DocumentPanel({
               Open PDF
             </button>
           )}
-          <RevealOriginalButton key={doc.key} caseId={caseId} doc={doc} />
+          <RevealOriginalButton
+            key={doc.key}
+            caseId={caseId}
+            doc={doc}
+            revealed={!!shownOriginal}
+            onReveal={(revealed) => setOriginal({ ...revealed, docKey: doc.key })}
+            onHide={() => setOriginal(null)}
+          />
         </div>
       </header>
 
@@ -150,7 +160,18 @@ export default function DocumentPanel({
         </details>
       )}
 
-      {hasPreview ? (
+      {shownOriginal ? (
+        <div className="cr-docs__pages cr-original">
+          <p className="cr-original__note" role="status">
+            Original with readable signatures. This reveal was audited.
+          </p>
+          {shownOriginal.contentType.startsWith("image/") ? (
+            <img className="cr-original__image" src={shownOriginal.url} alt={`${shownOriginal.filename}, original`} />
+          ) : (
+            <iframe className="cr-original__frame" src={shownOriginal.url} title={`${shownOriginal.filename}, original`} />
+          )}
+        </div>
+      ) : hasPreview ? (
         <div className="cr-docs__pages" ref={scrollRef}>
           {doc.pages.map((src, i) => (
             <div
