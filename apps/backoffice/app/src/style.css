@@ -173,6 +173,18 @@
 .bo-qlist__item:hover { background: var(--kb-surface-page); }
 .bo-qlist__item[aria-current="page"] { border-color: var(--kb-accent); box-shadow: inset 3px 0 0 var(--kb-accent); background: var(--kb-surface-page); }
 .bo-qlist__item:focus-visible { outline: 2px solid var(--kb-focus-ring); outline-offset: 1px; }
+/* A row whose status just changed glows once, and its status pill pops, so the move is noticed. */
+.bo-qlist__item--changed { animation: bo-qlist-changed 2.4s var(--kb-ease); }
+.bo-qlist__item--changed .bo-status { animation: bo-qlist-status 0.6s var(--kb-ease); }
+@keyframes bo-qlist-changed {
+  0%, 30% { background: var(--kb-notice-surface); border-color: var(--kb-accent); }
+  100% { background: var(--kb-surface-card); border-color: var(--kb-border); }
+}
+@keyframes bo-qlist-status {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
 .bo-qlist__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--kb-space-2); }
 .bo-qlist__name { font-weight: var(--kb-weight-semibold); line-height: 1.5rem; }
 .bo-qlist__head .bo-status { margin-top: 2px; }

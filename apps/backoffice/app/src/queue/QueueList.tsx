@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Skeleton from "../Skeleton";
 import CaseStatusPill from "../cases/CaseStatusPill";
 import formatDate from "../cases/formatDate";
 import getCasePath from "../cases/getCasePath";
+import changedCases from "./changedCases";
 import tierTitle from "./tierTitle";
 import { tiers, type TriagedCase } from "./triage";
 import type { QueueState } from "./useQueue";
@@ -11,11 +12,36 @@ import type { QueueState } from "./useQueue";
 const matches = (c: TriagedCase, query: string) =>
   [c.client?.name, c.client?.ico, c.case_id].some((value) => value?.toLowerCase().includes(query));
 
-function QueueItem({ c, selected }: { c: TriagedCase; selected: boolean }) {
+// How long a row whose status just changed stays highlighted; matches bo-qlist-changed in style.css.
+const highlightMs = 2400;
+
+/** The cases whose status changed in the latest update of the queue, for as long as they stay highlighted. */
+function useChangedCases(queue: TriagedCase[] | undefined): Set<string> {
+  const previous = useRef<TriagedCase[] | undefined>(undefined);
+  const timer = useRef<number | undefined>(undefined);
+  const [changed, setChanged] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!queue) return;
+    const next = changedCases(previous.current, queue);
+    previous.current = queue;
+    if (next.size === 0) return;
+    setChanged(next);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setChanged(new Set()), highlightMs);
+  }, [queue]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  return changed;
+}
+
+function QueueItem({ c, selected, changed }: { c: TriagedCase; selected: boolean; changed: boolean }) {
   const [top, ...rest] = c.findings;
   return (
     <li>
-      <Link className="bo-qlist__item" to={getCasePath(c.case_id)} aria-current={selected ? "page" : undefined}>
+      <Link
+        className={changed ? "bo-qlist__item bo-qlist__item--changed" : "bo-qlist__item"}
+        to={getCasePath(c.case_id)}
+        aria-current={selected ? "page" : undefined}
+      >
         <span className="bo-qlist__head">
           <span className="bo-qlist__name">{c.client?.name ?? "Unknown client"}</span>
           <CaseStatusPill status={c.status} />
@@ -65,6 +91,7 @@ export default function QueueList({
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const shown = queue?.filter((c) => !q || matches(c, q));
+  const changed = useChangedCases(queue);
 
   return (
     <aside className="bo-qlist" aria-label="Work queue">
@@ -109,7 +136,7 @@ export default function QueueList({
                 </h2>
                 <ul className="bo-qlist__items">
                   {cases.map((c) => (
-                    <QueueItem key={c.case_id} c={c} selected={c.case_id === selectedId} />
+                    <QueueItem key={c.case_id} c={c} selected={c.case_id === selectedId} changed={changed.has(c.case_id)} />
                   ))}
                 </ul>
               </section>
