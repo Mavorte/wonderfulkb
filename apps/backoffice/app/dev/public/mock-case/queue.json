@@ -1,0 +1,304 @@
+{
+  "cases": [
+    {
+      "case_id": "SYN-A01",
+      "case_found": true,
+      "client_id": "cl-98001001",
+      "status": "open",
+      "created_at": "2026-10-18T09:12:00Z",
+      "client": {
+        "name": "Kavorin Rec s.r.o.",
+        "ico": "98001001",
+        "kyc_status": "ok"
+      },
+      "evaluation": {
+        "evaluation_id": "ev-mvfmske9-eaazghl8",
+        "status": "completed",
+        "verdict": "needs_correction",
+        "summary": "Verdict: not ready for disbursement. The loan agreement 860001/26 is present and the recipient (Kavorin Rec s.r.o., IČO 98001001) matches the client record. The insurance vinculation and the guarantee declaration are complete. Still to fix: (1) the invoice FV-A-26-0001 and the proof of the VAT payment (367 290 CZK) have not been uploaded; (2) no recipient signature was detected on the order, the handover protocol or the security transfer; (3) the security transfer is signed by only one SGEF signatory instead of two. Other observations: in the payment agreement (09_Dohoda_o_zaplaceni) only the provider's signatures were detected, and none for the seller or the buyer; this document does not count as payment proof.",
+        "started_at": "2026-10-19T19:12:19.521Z",
+        "finished_at": "2026-10-19T19:14:25.512Z",
+        "issues": [
+          {
+            "rule_id": "security_transfer_contents",
+            "status": "missing",
+            "expected": "SGEF as creditor (věřitel); recipient as debtor (příjemce financování / dlužník); secured loan agreement number (zajišťovaná smlouva); asset (předmět zajištění); asset serial number (výrobní číslo); asset value (hodnota); transfer of ownership and the terms of its duration and return; date of signing; SGEF (two signatories) signature (2); recipient signature",
+            "found": "Missing: SGEF (two signatories) signature (1 of 2); recipient signature (0 of 1)",
+            "reasoning": "All contents are present (parties, loan 860001/26, asset with serial number and value on p. 1, transfer and return terms in art. 2.2 and 3.1–3.3, signing date 23.02.2026 on p. 6). Page 6 has only one SGEF signatory block (Radovan Veleš), and only one provider signature was detected; SGEF requires two. No signature was detected for the recipient Kavorin Rec s.r.o., although its signature block is printed."
+          },
+          {
+            "rule_id": "handover_protocol_contents",
+            "status": "missing",
+            "expected": "who hands over (předávající / dodavatel); who receives (přebírající / příjemce); asset identification (předmět, výrobní číslo); handover date (datum předání / převzetí); condition or quantity (stav nebo množství); handing-over party signature; receiving party signature",
+            "found": "Missing: receiving party signature (0 of 1)",
+            "reasoning": "All fields are present (parties p. 2, asset and serial p. 1, date 21.02.2026, condition p. 3). The supplier's signature is detected (p. 4, 'Servis dodavatele'), but no signature attributable to the receiving party (Kavorin Rec s.r.o.) was detected: the two signatures on p. 3 have unknown role and the customer block on p. 4 has no detected signature."
+          },
+          {
+            "rule_id": "purchase_contract_contents",
+            "status": "missing",
+            "expected": "buyer (kupující / objednatel: name, IČO); seller (prodávající / dodavatel: name, IČO); unambiguous subject of purchase (předmět koupě); purchase price (kupní cena); buyer signature; seller (signature or confirmation) signature",
+            "found": "Missing: buyer signature (0 of 1)",
+            "reasoning": "Order OBJ-A-26-0001 shows buyer, seller, subject with serial number and price on page 1, and the supplier's confirming signature (Oskar Vranec) on page 2. The buyer block 'Objednatel' (Matěj Vřesník, 06.02.2026) on page 2 was detected only as role 'buyer', not as the recipient's (borrower) signature, so the recipient's signature is not confirmed; a reviewer should check the buyer signature visually."
+          },
+          {
+            "rule_id": "required_documents_present",
+            "status": "missing",
+            "expected": "faktura; potvrzená objednávka; předání stroje (předávací protokol); doklad o úhradě odpovídající části ceny; vinkulace pojištění; zajišťovací převod vlastnictví; ručení (Kavorin Holding a.s.)",
+            "found": "No document for: faktura; doklad o úhradě odpovídající části ceny",
+            "reasoning": "The agreement (p. 2) requires before disbursement an invoice, a confirmed order, the machine handover, proof of payment of the corresponding part of the price (VAT), insurance vinculation and the security transfer; p. 3 'Zajištění úvěru' also names guarantor Kavorin Holding a.s. No invoice (FV-A-26-0001) and no bank statement / payment confirmation were uploaded; the payment agreement (09_Dohoda_o_zaplaceni.pdf) only describes the payment procedure and is not a proof of payment. The other requirements match 10_Objednavka, 11_Predavaci_protokol, 03_Vinkulace, 02_Zajistovaci_prevod and 04_Ruceni."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "SYN-A03",
+      "case_found": true,
+      "client_id": "cl-98001043",
+      "status": "open",
+      "created_at": "2026-10-18T11:40:00Z",
+      "client": {
+        "name": "Belstra Logistics a.s.",
+        "ico": "98001043",
+        "kyc_status": "ok"
+      },
+      "evaluation": {
+        "evaluation_id": "ev-mvfm7c1z-brvs7y59",
+        "status": "completed",
+        "verdict": "needs_correction",
+        "summary": "Verdict: not ready for disbursement. Missing: the invoice FV-A-26-0003 and proof that the buyer paid the VAT (322,980 CZK). The handover protocol was uploaded but failed processing and cannot be read, so it must be uploaded again. The security transfer has only one SGEF signature (Radovan Veleš), so the second signatory must sign. On the order, the buyer's signature was not detected as the recipient's, so it needs a visual check. Loan agreement, recipient match (Zelmoris Rec s.r.o., 98001205), guarantee and insurance vinculation passed. Other observations: in the payment agreement only provider signatures were detected (seller and buyer blocks not detected), and parties, serial number HX26000003 and amounts are consistent across documents.",
+        "started_at": "2026-10-19T18:55:48.935Z",
+        "finished_at": "2026-10-19T18:57:42.341Z",
+        "issues": [
+          {
+            "rule_id": "security_transfer_contents",
+            "status": "missing",
+            "expected": "SGEF as creditor (věřitel); recipient as debtor (příjemce financování / dlužník); secured loan agreement number (zajišťovaná smlouva); asset (předmět zajištění); asset serial number (výrobní číslo); asset value (hodnota); transfer of ownership and the terms of its duration and return; date of signing; SGEF (two signatories) signature (2); recipient signature",
+            "found": "Missing: SGEF (two signatories) signature (1 of 2)",
+            "reasoning": "All contents are present: creditor, debtor, secured loan 860003/26, the asset with serial number HX26000003 and value, transfer and return terms, and the signing date 28.04.2026. On page 6, though, only one provider signatory signed (Radovan Veleš). The second SGEF signature is missing; the recipient's signature (Daniel Klevan) is there."
+          },
+          {
+            "rule_id": "purchase_contract_contents",
+            "status": "missing",
+            "expected": "buyer (kupující / objednatel: name, IČO); seller (prodávající / dodavatel: name, IČO); unambiguous subject of purchase (předmět koupě); purchase price (kupní cena); buyer signature; seller (signature or confirmation) signature",
+            "found": "Missing: buyer signature (0 of 1)",
+            "reasoning": "Order OBJ-A-26-0003 shows buyer, seller, subject with serial number and price on page 1, and the supplier's signature (Oskar Vranec) on page 2. The buyer's block \"Objednatel\" (Daniel Klevan, 11.04.2026) is detected only with role \"buyer\", not as the recipient (borrower) signature, so the recipient's signature is not confirmed by the detection; the reviewer should visually check page 2."
+          },
+          {
+            "rule_id": "required_documents_present",
+            "status": "missing",
+            "expected": "faktura; potvrzená objednávka; předání stroje (předávací protokol); doklad o úhradě odpovídající části ceny; vinkulace pojištění; zajišťovací převod vlastnictví; ručení (prohlášení ručitele Zelmoris Holding a.s.)",
+            "found": "No document for: faktura; předání stroje (předávací protokol); doklad o úhradě odpovídající části ceny",
+            "reasoning": "Page 2 of the agreement requires before disbursement an invoice, a confirmed order, the machine handover, proof of payment of the corresponding part of the price, insurance vinculation and security transfer of ownership. Page 3 (Zajištění úvěru) names guarantor Zelmoris Holding a.s. No invoice (FV-A-26-0003) and no bank statement or payment confirmation are uploaded; the payment agreement (09_Dohoda_o_zaplaceni.pdf) is not a payment proof. A file titled 11_Predavaci_protokol.pdf is uploaded, but its processing failed and get_document returns a 409 error, so it cannot be confirmed as the handover document and is left unmatched. The VOP is only listed as an annex, not as a pre-disbursement requirement."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "SYN-A02",
+      "case_found": true,
+      "client_id": "cl-98001035",
+      "status": "open",
+      "created_at": "2026-10-17T14:05:00Z",
+      "client": {
+        "name": "Morvan Agro s.r.o.",
+        "ico": "98001035",
+        "kyc_status": "ok"
+      },
+      "evaluation": {
+        "evaluation_id": "ev-mvfm32zw-u1lsh0fo",
+        "status": "failed",
+        "verdict": null,
+        "summary": "get_document keeps returning \"documents API returned 409\" for every uploaded document except the loan agreement: 10_Objednavka.pdf, 11_Predavaci_protokol.pdf, 03_Vinkulace.pdf, 02_Zajistovaci_prevod.pdf and 04_Ruceni.pdf. All of them are still in processing_status \"queued\". I retried several times over about 3 minutes. The contents rules can't be evaluated until these documents are processed. Recorded so far: loan_agreement_present passed, recipient_matches_client passed, required_documents_present missing (no invoice and no payment proof uploaded).",
+        "started_at": "2026-10-19T18:52:30.572Z",
+        "finished_at": "2026-10-19T18:56:14.107Z",
+        "issues": [
+          {
+            "rule_id": "required_documents_present",
+            "status": "missing",
+            "expected": "faktura (daňový doklad); potvrzená objednávka; předání stroje (předávací protokol); doklad o úhradě odpovídající části ceny (DPH); vinkulace pojištění; zajišťovací převod vlastnictví; prohlášení o ručení (ručitel Nuvrenda Holding a.s.)",
+            "found": "No document for: faktura (daňový doklad); doklad o úhradě odpovídající části ceny (DPH)",
+            "reasoning": "Page 2 requires before disbursement: faktura, potvrzená objednávka, předání stroje, doklad o úhradě odpovídající části ceny (DPH), vinkulace pojištění and zajišťovací převod vlastnictví; page 3 (Zajištění úvěru) names the guarantor Nuvrenda Holding a.s. No invoice was uploaded, and no payment proof was uploaded: 09_Dohoda_o_zaplaceni.pdf is a payment agreement, not a bank statement or payment confirmation. The VOP is referenced but not listed as a pre-disbursement document, so it is not counted."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "mock-unhappy",
+      "case_found": true,
+      "client_id": "cl-04606812",
+      "status": "open",
+      "created_at": "2026-10-16T08:30:00Z",
+      "client": {
+        "name": "SOLOM Rec s.r.o.",
+        "ico": "04606812",
+        "kyc_status": null
+      },
+      "evaluation": {
+        "evaluation_id": "ev-mvflp30j-5x2l02fa",
+        "status": "completed",
+        "verdict": "needs_correction",
+        "summary": "Verdict: not ready for disbursement. Not uploaded: the supplier's invoice with its specification including the serial number, the bank statement proving the VAT payment of 340 200 CZK, and the confirmation that the supplier has been paid apart from the loan amount. The agreement's recipient IČ is the placeholder \"YYYYYYY\". Deficient documents: the handover certificate has no parties, date, condition or signatures; the order is mostly illegible (confidence 0.55) and not confirmed by the supplier; the security transfer has empty party blocks and no contract number, asset, serial number or value; the guarantee has no body text (secured contract, scope, commitment) and only one SGEF signature. Other observations, not counted in any rule: the agreement names the provider \"SGX Finance Czech Republic s.r.o.\" with DIČ \"XXXXXXX\"; the supplier appears as \"Epirock s.r.o.\" (IČ 06493399) in the agreement but \"EPORIC Czech republic s.r.o.\" (IČ 06493394) in the order; the order is issued in the name of \"SMOLO Recycling s.r.o.\" (IČ 04606884) and shows a different bank account; Petr Fiala signs for the recipient, while the client record lists only Jiří Labuda as authorized; the payment agreement is blank; an insurance vinculation was uploaded although the agreement does not require one.",
+        "started_at": "2026-10-19T18:41:37.411Z",
+        "finished_at": "2026-10-19T18:43:31.097Z",
+        "issues": [
+          {
+            "rule_id": "guarantee_contents",
+            "status": "missing",
+            "expected": "guarantor (ručitel); SGEF as creditor (věřitel); recipient as main debtor (příjemce financování); secured contract or debt (zajištěná smlouva); scope of the guarantee (rozsah ručení); guarantor's commitment to pay (závazek ručitele plnit); date; guarantor signature; SGEF (two signatories) signature (2)",
+            "found": "Missing: secured contract or debt (zajištěná smlouva); scope of the guarantee (rozsah ručení); guarantor's commitment to pay (závazek ručitele plnit); SGEF (two signatories) signature (1 of 2)",
+            "reasoning": "The declaration names the guarantor (SOLOM a.s.), SGEF as creditor and SOLOM Rec s.r.o. as main debtor, and is dated 12.9.2025. The body of the declaration is missing: the text jumps from the debtor block on page 2 straight to \"třemi rozhodci\" on page 3. As a result, the secured contract number, the scope and the guarantor's commitment to pay are absent. The guarantor's signature (Herbert Jitka) is there, but SGEF signed with only one person (Jan Kovák); the second SGEF signature is missing."
+          },
+          {
+            "rule_id": "security_transfer_contents",
+            "status": "missing",
+            "expected": "SGEF as creditor (věřitel); recipient as debtor (příjemce financování / dlužník); secured loan agreement number (zajišťovaná smlouva); asset (předmět zajištění); asset serial number (výrobní číslo); asset value (hodnota); transfer of ownership and the terms of its duration and return; date of signing; SGEF (two signatories) signature (2); recipient signature",
+            "found": "Missing: secured loan agreement number (zajišťovaná smlouva); asset (předmět zajištění); asset serial number (výrobní číslo); asset value (hodnota)",
+            "reasoning": "The identification blocks for the provider and the recipient on page 1 are empty. The parties appear only in the signature block on page 10. The secured contract is referred to only as \"v záhlaví definovanou zajišťovanou smlouvu\", with no number, and the asset, its serial number and its value are not shown anywhere. The transfer terms (čl. 3), the date 12.9.2025 and the signatures (two for SGEF, one for the recipient) are present."
+          },
+          {
+            "rule_id": "handover_protocol_contents",
+            "status": "missing",
+            "expected": "who hands over (předávající / dodavatel); who receives (přebírající / příjemce); asset identification (předmět, výrobní číslo); handover date (datum předání / převzetí); condition or quantity (stav nebo množství); handing-over party signature; receiving party signature",
+            "found": "Missing: who hands over (předávající / dodavatel); who receives (přebírající / příjemce); handover date (datum předání / převzetí); condition or quantity (stav nebo množství); handing-over party signature (0 of 1); receiving party signature (0 of 1)",
+            "reasoning": "The \"Předávací certifikát\" names only the asset, written by hand as CC 3100 with serial DGR 240020 on page 1. Page 2 is general instructions, and pages 3 and 4 are blank (not failed). It does not show who hands over or who receives, the handover date, or the condition. No signatures were detected: both the supplier's and the recipient's are missing."
+          },
+          {
+            "rule_id": "purchase_contract_contents",
+            "status": "cannot_verify",
+            "expected": "buyer (kupující / objednatel: name, IČO); seller (prodávající / dodavatel: name, IČO); unambiguous subject of purchase (předmět koupě); purchase price (kupní cena); buyer signature; seller (signature or confirmation) signature",
+            "found": "Missing: seller (signature or confirmation) signature (0 of 1)",
+            "reasoning": "The order (no. 124 207) was extracted with low confidence (0.55). Key passages are marked [nečitelné], including the subject, part of the price and the signature captions. The supplier's confirmation block (Dodavatel: jméno, razítko, podpis) is empty, and every detected signature belongs to the buyer side, so the order does not appear to be confirmed by the seller. The low confidence means the contents cannot be verified reliably."
+          },
+          {
+            "rule_id": "recipient_matches_client",
+            "status": "conflict",
+            "expected": "SOLOM Rec s.r.o., IČO 04606812",
+            "found": "SOLOM Rec s.r.o., IČO YYYYYYY",
+            "reasoning": "The recipient name in the agreement, SOLOM Rec s.r.o., matches the client record. The IČ is the placeholder \"YYYYYYY\" instead of the client's 04606812, so the IČO does not match. The DIČ CZ04606812 does match."
+          },
+          {
+            "rule_id": "required_documents_present",
+            "status": "missing",
+            "expected": "kopie daňového dokladu dodavatele (faktura); detailní specifikace předmětu financování včetně výrobního čísla (na daňovém dokladu); kupní smlouva nebo dodavatelem potvrzená objednávka; oboustranně podepsaný doklad o předání a převzetí (dodací list, předávací protokol); výpis z účtu prokazující úhradu DPH 340 200,00 CZK na účet dodavatele; podepsané prohlášení o ručení (SOLOM a.s.); smlouva o zajišťovacím převodu vlastnického práva; průkazné potvrzení o úhradě dluhů dodavateli kromě výše úvěru",
+            "found": "No document for: kopie daňového dokladu dodavatele (faktura); detailní specifikace předmětu financování včetně výrobního čísla (na daňovém dokladu); výpis z účtu prokazující úhradu DPH 340 200,00 CZK na účet dodavatele; průkazné potvrzení o úhradě dluhů dodavateli kromě výše úvěru",
+            "reasoning": "Page 2 of the agreement lists the documents due before disbursement: the supplier's tax document with a detailed specification including the serial number, the purchase contract or confirmed order, a handover document signed by both parties, a bank statement proving the VAT payment of 340 200,00 CZK, the guarantee declaration and the security transfer. Page 3 also asks for proof that the recipient has paid the supplier everything except the loan amount. No invoice is uploaded, so the specification that must be on it is also missing. There is no bank statement or payment proof, and nothing confirms the recipient's payment to the supplier. The uploaded \"Dohoda o zaplacení kupní ceny\" (beae4f) is a payment agreement, not a payment proof or confirmation, and it is blank in any case. The agreement does not ask for an insurance vinculation or for the VOP to be submitted."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "mock-solom-rec",
+      "case_found": true,
+      "client_id": "cl-04606812",
+      "status": "open",
+      "created_at": "2026-10-15T10:00:00Z",
+      "client": {
+        "name": "SOLOM Rec s.r.o.",
+        "ico": "04606812",
+        "kyc_status": "ok"
+      },
+      "evaluation": {
+        "evaluation_id": "ev-mvfi2hkp-800s0qbz",
+        "status": "completed",
+        "verdict": "needs_correction",
+        "summary": "Verdict: not ready for disbursement. Two required documents are missing: the supplier tax document/invoice (item a) and the bank statement proving payment of 340 200,00 CZK VAT (item d). The loan agreement is present and the recipient (SOLOM Rec s.r.o., IČO 04606812) matches the client record. Other discrepancies to review: (1) the supplier is \"Epirock s.r.o.\" (IČ 06493399, C 283051) in the agreement but \"Epiroc Czech Republic s.r.o.\" (IČ 06493394, C 283050) in the payment agreement; (2) the payment agreement and the guarantee declaration refer to loan no. 17023644/25, not 170170/25; (3) Petr Fiala signs for the recipient with no function stated, but the client record lists Jiří Labuda (jednatel) as the authorised signatory, and the guarantee for SOLOM a.s. is signed by Herbert Jitka (\"Vedoucí\"); (4) the handover protocol has no readable text and the order's text is sparse, so their contents could not be verified.",
+        "started_at": "2026-10-19T17:00:04.345Z",
+        "finished_at": "2026-10-19T17:00:51.526Z",
+        "issues": [
+          {
+            "rule_id": "required_documents_present",
+            "status": "missing",
+            "expected": "a) kopie daňového dokladu dodavatele s detailní specifikací předmětu financování (vč. výrobního čísla); b) kopie kupní smlouvy nebo dodavatelem potvrzené objednávky; c) kopie oboustranně podepsaného dokladu o předání a převzetí předmětu (dodací list, předávací protokol); d) kopie výpisu z účtu prokazující úhradu DPH 340 200,00 CZK na účet dodavatele; e) podepsané prohlášení o ručení uvedených osob; f) smlouva o zajišťovacím převodu vlastnického práva; zajištění 1) zajištění: smlouva o zajišťovacím převodu vlastnického práva k předmětu financování (pododst. 6.1.1 VOP); zajištění 2) zajištění: ručitelské prohlášení SOLOM a.s., IČ 04086400",
+            "found": "No document for: a) kopie daňového dokladu dodavatele s detailní specifikací předmětu financování (vč. výrobního čísla); d) kopie výpisu z účtu prokazující úhradu DPH 340 200,00 CZK na účet dodavatele",
+            "reasoning": "Matched b) to the order (56f4d3), c) to the handover protocol (d86cde), e) and the SOLOM a.s. guarantee to the guarantee declaration (c9e639), and f) and the security item to the security transfer agreement (f0ba5b). No supplier tax document/invoice (a) and no bank statement or payment confirmation for the VAT of 340 200,00 CZK (d) were uploaded. The payment agreement (47da15) does not count as payment proof. Borderline: the handover protocol has no readable text, and the order's text is sparse (confidence 0.5), so their contents could not be checked."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "SYN-B04",
+      "case_found": true,
+      "client_id": "cl-98001108",
+      "status": "awaiting_clarification",
+      "created_at": "2026-10-17T09:00:00Z",
+      "client": {
+        "name": "Hradec Metal a.s.",
+        "ico": "98001108",
+        "kyc_status": "ok"
+      },
+      "evaluation": {
+        "evaluation_id": "ev-syn-b04",
+        "status": "completed",
+        "verdict": null,
+        "summary": null,
+        "started_at": "2026-10-17T09:00:00Z",
+        "finished_at": null,
+        "issues": []
+      }
+    },
+    {
+      "case_id": "SYN-B05",
+      "case_found": true,
+      "client_id": "cl-98001116",
+      "status": "intake_in_progress",
+      "created_at": "2026-10-20T07:45:00Z",
+      "client": {
+        "name": "Lumio Energy s.r.o.",
+        "ico": "98001116",
+        "kyc_status": "ok"
+      },
+      "evaluation": {
+        "evaluation_id": "ev-syn-b05",
+        "status": "running",
+        "verdict": null,
+        "summary": null,
+        "started_at": "2026-10-20T07:45:00Z",
+        "finished_at": null,
+        "issues": []
+      }
+    },
+    {
+      "case_id": "SYN-B06",
+      "case_found": true,
+      "client_id": "cl-98001124",
+      "status": "evaluating",
+      "created_at": "2026-10-20T08:10:00Z",
+      "client": {
+        "name": "Pivovar Ostrá s.r.o.",
+        "ico": "98001124",
+        "kyc_status": "ok"
+      },
+      "evaluation": {
+        "evaluation_id": "ev-syn-b06",
+        "status": "running",
+        "verdict": null,
+        "summary": null,
+        "started_at": "2026-10-20T08:10:00Z",
+        "finished_at": null,
+        "issues": []
+      }
+    },
+    {
+      "case_id": "SYN-B07",
+      "case_found": true,
+      "client_id": "cl-98001132",
+      "status": "completed",
+      "created_at": "2026-10-12T13:20:00Z",
+      "client": {
+        "name": "Nordal Textil a.s.",
+        "ico": "98001132",
+        "kyc_status": "ok"
+      },
+      "evaluation": {
+        "evaluation_id": "ev-syn-b07",
+        "status": "completed",
+        "verdict": null,
+        "summary": null,
+        "started_at": "2026-10-12T13:20:00Z",
+        "finished_at": null,
+        "issues": []
+      }
+    }
+  ],
+  "truncated": false
+}
