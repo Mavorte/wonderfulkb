@@ -3,6 +3,8 @@ import { useWonderful } from "@wonderful/app-sdk";
 import { isRunning, type EvaluationPayload, type EvaluationRow, type ResultRow } from "./evaluation";
 
 const pollMs = 4000;
+// A case without a run is waiting for the client's upload, which takes minutes, not seconds.
+const waitingPollMs = 10000;
 
 type State =
   | { status: "loading" }
@@ -51,14 +53,17 @@ export default function useEvaluation({ caseId, evaluationId }: EvaluationReques
     let cancelled = false;
     let timer: number | undefined;
     let loaded = false;
-    // While the agent is still recording results, refetch quietly so the page fills in live.
+    // While the agent is still recording results, or the case waits for its first run,
+    // refetch quietly so the page fills in live.
     const fetchOnce = () =>
       load({ caseId, evaluationId })
         .then((payload) => {
           if (cancelled) return;
           loaded = true;
           setState({ status: "ready", payload });
-          if (payload.evaluation && isRunning(payload.evaluation)) timer = window.setTimeout(fetchOnce, pollMs);
+          if (payload.evaluation ? isRunning(payload.evaluation) : caseId && !evaluationId) {
+            timer = window.setTimeout(fetchOnce, payload.evaluation ? pollMs : waitingPollMs);
+          }
         })
         .catch((e: unknown) => {
           if (cancelled) return;

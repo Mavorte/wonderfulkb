@@ -25,6 +25,7 @@ import {
   type SourceRef,
 } from "./evaluation";
 import { rawStatusLabel } from "./ruleLabels";
+import CaseStatusPill from "../cases/CaseStatusPill";
 import formatDate from "../cases/formatDate";
 import getCasePath from "../cases/getCasePath";
 import useQueueContext from "../queue/useQueueContext";
@@ -610,6 +611,79 @@ function ReviewSkeleton() {
   );
 }
 
+const waitingCopy: Record<string, { title: string; lead: string }> = {
+  open: {
+    title: "Waiting for the client's documents",
+    lead: "The client hasn't uploaded the requested documents yet. The agent starts checking the case as soon as they arrive.",
+  },
+  intake_in_progress: {
+    title: "Documents are arriving",
+    lead: "The client has started uploading. The agent starts checking the case once the upload is complete.",
+  },
+  evaluating: {
+    title: "The agent is starting",
+    lead: "The documents are in. The agent is opening the case and its results will appear here shortly.",
+  },
+};
+
+/** A case the agent has not evaluated yet: it waits for the client to upload the documents. */
+function CaseWaiting({ caseId }: { caseId: string }) {
+  const { queue } = useQueueContext();
+  const queued = queue?.find((c) => c.case_id === caseId);
+  const title = queued?.client?.name ?? `Case ${shortId(caseId)}`;
+  const meta = [
+    queued?.client?.ico && `IČO ${queued.client.ico}`,
+    queued?.created_at && `opened ${formatDate(queued.created_at)}`,
+  ].filter(Boolean);
+  const copy = waitingCopy[queued?.status ?? "open"] ?? waitingCopy.open;
+
+  return (
+    <div className="cr">
+      <header className="cr-header">
+        <nav aria-label="Breadcrumb">
+          <ol className="kb-breadcrumb cr-crumbs">
+            <li>
+              <Link to="/queue">Work queue</Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page">{title}</li>
+          </ol>
+        </nav>
+        <div className="cr-header__row">
+          <div>
+            <h1 className="cr-title" title={`Case ${caseId}`}>
+              {title}
+            </h1>
+            {meta.length > 0 && <p className="cr-header__meta">{meta.join(" · ")}</p>}
+          </div>
+          {queued && <CaseStatusPill status={queued.status} />}
+        </div>
+      </header>
+
+      <section className="cr-action cr-action--none cr-waiting" aria-live="polite">
+        <div>
+          <p className="cr-eyebrow">No evaluation yet</p>
+          <h2 className="cr-action__title">{copy.title}</h2>
+          <p className="cr-action__rationale">{copy.lead}</p>
+          <ol className="cr-action__list">
+            <li>The client uploads the documents through the client portal.</li>
+            <li>The agent reads them and checks every rule of the checklist.</li>
+            <li>
+              <span>
+                The case moves to <strong>Needs your decision</strong> with the agent's recommendation.
+              </span>
+            </li>
+          </ol>
+        </div>
+        <div className="cr-action__side">
+          <p className="cr-live">Checking for uploads</p>
+          <p className="cr-muted">This page updates by itself, there is no need to refresh.</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function CaseReviewPage() {
   const caseId = useParams<{ caseId: string }>().caseId ?? null;
   const evaluationId = useSearchParams()[0].get("evaluation");
@@ -626,8 +700,9 @@ export default function CaseReviewPage() {
   if (state.status === "loading") return <ReviewSkeleton />;
   if (state.status === "error") return <p className="cr-state cr-state--error">Couldn't load the evaluation: {state.message}</p>;
   if (!view) {
-    const missing = evaluationId ? `Evaluation ${evaluationId} not found.` : caseId ? `Case ${caseId} has no evaluation yet. It is waiting for the client's documents.` : "No evaluation yet.";
-    return <p className="cr-state">{missing}</p>;
+    if (evaluationId) return <p className="cr-state">Evaluation {evaluationId} not found.</p>;
+    if (caseId) return <CaseWaiting caseId={caseId} />;
+    return <p className="cr-state">No evaluation yet.</p>;
   }
   // "/cases" shows the latest run; give it its case's address so the link can be shared.
   if (!caseId) return <Navigate to={getCasePath(view.evaluation.case_id)} replace />;
