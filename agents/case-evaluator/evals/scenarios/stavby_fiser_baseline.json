@@ -38,6 +38,7 @@
       ],
       "expected_final_status": "completed",
       "max_execution_time_seconds": 900,
+      "timeout_per_scenario_seconds": 900,
       "expected_behavior": "Calls start_evaluation for mock-stavby-fiser and reads the loan agreement (Stavby Fišer a.s., supplier PWA s.r.o., BOMAG BW 154). Records recipient_matches_client as passed (IČO 25317688). Records required_documents_present as missing, with the supplier tax document/invoice having no document; the agreement also asks for payment proof, the supplier's confirmation of the title transfer and the security transfer. Records invoice_contents as missing (required, but not uploaded) and checks the payment confirmation with payment_proof_contents. Records every rule with reasoning. Records contract_number_consistent as conflict: the agreement's first page shows 17171/25 and the security transfer 171171/25, while the case record and the agreement's later pages show 17026014/25. finish_evaluation is accepted with the verdict needs_correction, and the task completes with a summary stating the verdict.",
       "table_assertions": [
         {
@@ -111,7 +112,7 @@
           "status": "completed",
           "verdict": "ready",
           "summary": "Seed row so the eval table copy knows its columns.",
-          "rules_total": 3,
+          "rules_total": 19,
           "is_mock": true,
           "started_at": "2026-10-19T00:00:00Z",
           "finished_at": "2026-10-19T00:00:01Z"
@@ -122,6 +123,7 @@
           "evaluation_id": "ev-fixture-seed",
           "rule_id": "loan_agreement_present",
           "case_id": "fixture-seed",
+          "category": "completeness",
           "status": "passed",
           "expected": "Smlouva o úvěru",
           "found": "seed.pdf",

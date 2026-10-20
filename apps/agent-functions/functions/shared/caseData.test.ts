@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import { getCase, getDocument, getRegions, getSignatures, listDocuments } from "./caseData.ts";
+import { getCase, getDocument, getRegions, getSignatures, listDocuments, setCaseStatus } from "./caseData.ts";
 
 function createContext(data: Record<string, unknown>, globals: Record<string, string> = {}) {
   let status = 200;
@@ -256,4 +256,54 @@ test("a live regions failure is reported as 502", async () => {
   const result = await getRegions(context);
   assert.equal("error" in result && result.error, "upstream");
   assert.equal(context.getStatus(), 502);
+});
+
+test("setting a fixture case's status returns it with the new status and stores nothing", async () => {
+  const result = await setCaseStatus(createContext({ case_id: "mock-solom-rec", status: "awaiting_decision" }, LIVE));
+  assert.ok(!("error" in result));
+  assert.equal(result.is_mock, true);
+  assert.equal(result.case.status, "awaiting_decision");
+  const again = await getCase(createContext({ case_id: "mock-solom-rec" }, LIVE));
+  assert.ok(!("error" in again));
+  assert.equal(again.case.status, "open");
+});
+
+test("an unknown status or a missing parameter is rejected before calling AWS", async () => {
+  const calls = stubFetch({});
+  const bad = createContext({ case_id: "case-1", status: "done" }, LIVE);
+  assert.equal((await setCaseStatus(bad) as { error: string }).error, "invalid_status");
+  assert.equal(bad.getStatus(), 400);
+  const missing = createContext({ case_id: "case-1" }, LIVE);
+  assert.equal((await setCaseStatus(missing) as { error: string }).error, "missing_parameter");
+  assert.equal(missing.getStatus(), 400);
+  assert.equal(calls.length, 0);
+});
+
+test("live mode PUTs the status with the API secret", async () => {
+  const requests: Array<{ url: string; method?: string; body?: string; secretName?: string }> = [];
+  globalThis.fetch = (async (url: string, init: { method?: string; body?: string; secretName?: string }) => {
+    requests.push({ url, method: init.method, body: init.body, secretName: init.secretName });
+    return new Response(JSON.stringify({ case_id: "case-1", client_id: "c1", status: "awaiting_decision", created_at: "2026-10-19T09:00:00Z" }), { status: 200 });
+  }) as typeof fetch;
+  const result = await setCaseStatus(createContext({ case_id: "case-1", status: "awaiting_decision" }, LIVE));
+  assert.ok(!("error" in result));
+  assert.equal(result.is_mock, false);
+  assert.equal(result.case.status, "awaiting_decision");
+  assert.deepEqual(requests, [{
+    url: "https://api.example.test/v1/cases/case-1/status",
+    method: "PUT",
+    body: '{"status":"awaiting_decision"}',
+    secretName: "kb-aws-ingest-api-key",
+  }]);
+});
+
+test("setting the status of an unknown live case is not found, an upstream failure is 502", async () => {
+  stubFetch({ "https://api.example.test/v1/cases/nope/status": { status: 404, body: { error: "Case not found" } } });
+  const missing = createContext({ case_id: "nope", status: "approved" }, LIVE);
+  assert.deepEqual(await setCaseStatus(missing), { error: "case_not_found" });
+  assert.equal(missing.getStatus(), 404);
+  stubFetch({ "https://api.example.test/v1/cases/case-1/status": { status: 500, body: {} } });
+  const failing = createContext({ case_id: "case-1", status: "approved" }, LIVE);
+  assert.equal((await setCaseStatus(failing) as { error: string }).error, "upstream");
+  assert.equal(failing.getStatus(), 502);
 });

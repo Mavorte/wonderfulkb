@@ -126,3 +126,35 @@ test("evidence boxes show only for the selected rule; problems of failing rules 
   assert.equal(visibleMarks(loanDoc.marks, 2, null).length, 1);
   assert.match(clause.label, /faktura[\s\S]*doklad o úhradě/);
 });
+
+test("pending rows show in their category's group but count nowhere else", () => {
+  const pending = (rule_id: string, category: string): ResultRow => ({ ...row(rule_id, "pending", []), category, sources: null });
+  const running: EvaluationRow = { ...evaluation, status: "running", rules_total: 4 };
+  const view = createCaseView(running, [
+    { ...conflict, category: "consistency" },
+    pending("client_status_valid", "client_status"),
+    pending("supplier_consistent", "consistency"),
+    pending("invoice_contents", "supplier"),
+  ]);
+  assert.deepEqual(view.groups.map((g) => g.title), [
+    "Document completeness and validity",
+    "Consistency across documents",
+    "Client status and signatories",
+    "Supplier and purchase-document verification",
+  ]);
+  assert.deepEqual(view.groups.map((g) => [g.id, g.done, g.rules.length, g.status]), [
+    [1, 0, 0, "na"],
+    [2, 1, 2, "fail"],
+    [3, 0, 1, "pending"],
+    [4, 0, 1, "pending"],
+  ]);
+  // Checklist order within a group, whatever order the rows come in.
+  assert.deepEqual(view.groups[1].rules.map((r) => r.id), ["recipient_consistent", "supplier_consistent"]);
+  assert.deepEqual(view.rules.map((r) => r.id), ["recipient_consistent"]);
+  assert.deepEqual(view.fixes.map((f) => f.ruleId), ["recipient_consistent"]);
+});
+
+test("rows without a category are filed by rule id", () => {
+  const view = createCaseView(evaluation, [row("client_status_valid", "passed", []), row("some_new_rule", "passed", []), transfer]);
+  assert.deepEqual(view.groups.map((g) => g.rules.map((r) => r.id)), [["security_transfer_contents", "some_new_rule"], [], ["client_status_valid"], []]);
+});

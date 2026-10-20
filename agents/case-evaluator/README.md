@@ -17,7 +17,7 @@ The tools call the Functions in the `agent-functions` app (`repos/agent-function
 | `evaluate_recipient_match` | Records that rule. |
 | `evaluate_<type>_contents` (8 tools) | Each records one document contents rule (see below). |
 | `evaluate_<entity>_consistent` (7 tools), `evaluate_client_status` | Each records one consistency rule (see below). |
-| `finish_evaluation(summary)` | Refused while any rule is unrecorded. Then computes the verdict and marks the run `completed`. |
+| `finish_evaluation(summary)` | Refused while any rule is unrecorded. Then computes the verdict, sets the case status to `awaiting_decision` through `agent-functions/case-status-set` (if that fails the run stays open and the call is refused), and marks the run `completed`. |
 | `fail_evaluation(reason)` | Marks the run `failed` when it can't be finished. |
 
 The `evaluate_*` tools take typed inputs plus a required `reasoning`. The tool checks the chosen status against the inputs and the run; for example, it rejects `passed` when the IČO differs. A rejected call writes nothing and returns `{accepted: false, problems}`. An accepted call upserts one row in `case_evaluation_results`. Recording a rule again replaces its row.
@@ -50,7 +50,9 @@ The tables are declared in `repos/agent-functions/tables/`, which documents thei
 - `agent_functions.case_evaluations`: one row per run.
 - `agent_functions.case_evaluation_results`: one row per rule per run.
 
-To follow a case, read the latest `case_evaluations` row for its `case_id` (by `started_at`), then its `case_evaluation_results` rows. Progress is the number of result rows out of `rules_total`.
+`start_evaluation` writes a `pending` result row for every rule, with an empty `reasoning` and no `recorded_at`, so the checklist is known from the start. Recording a rule replaces its row. Each row has the rule's `category`, the backoffice checklist group it is shown under (`RULE_CATEGORIES` in `lib/rules.ts`): `completeness`, `consistency`, `client_status` or `supplier`.
+
+To follow a case, read the latest `case_evaluations` row for its `case_id` (by `started_at`), then its `case_evaluation_results` rows. Progress is the number of rows whose status is not `pending`, out of `rules_total`; per group, the same count within a `category`. A failed run keeps the rows it never recorded as `pending`.
 
 ## Phase 1 rules
 

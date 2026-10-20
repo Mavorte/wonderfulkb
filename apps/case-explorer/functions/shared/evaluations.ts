@@ -44,10 +44,12 @@ export function listCaseRows(
 }
 
 // Deletes page by page from offset 0 until nothing matches; returns the count.
-export async function deleteCaseRows(context: FunctionContext, table: string, caseId: string): Promise<number> {
+// Without a case ID it deletes every row of the table.
+export async function deleteCaseRows(context: FunctionContext, table: string, caseId?: string): Promise<number> {
   let deleted = 0;
+  const filters = caseId ? byColumn("case_id", caseId) : [];
   for (let page = 0; page < MAX_PAGES; page++) {
-    const { rows } = await context.tables.filter(table, byColumn("case_id", caseId), PAGE_SIZE, 0);
+    const { rows } = await context.tables.filter(table, filters, PAGE_SIZE, 0);
     if (!rows.length) break;
     await Promise.all(rows.map((row) => context.tables.deleteRow(table, row.id)));
     deleted += rows.length;

@@ -2,7 +2,8 @@
 // what the client must fix in backoffice.correction_calls, then has the
 // correction-caller agent call the client. The agent picks the row up by the
 // number it dials, verifies the surname stored here and emails the findings with
-// the upload link (mocked).
+// the upload link (mocked). Once the call is placed, the case moves to
+// awaiting_clarification; the client's upload moves it back to intake_in_progress.
 //
 // Configuration (globals):
 // - `correction_call_destination`: the number to call and text (demo: one number for every case).
@@ -14,6 +15,7 @@
 import type { FunctionContext } from "@wonderful/types";
 import { getErrorMessage } from "../lib/awsApi.ts";
 import { buildIntakeLink, generateHash } from "../case-create/ids.ts";
+import { isAwaitingDecision, setCaseStatus } from "../lib/caseStatus.ts";
 
 const CALLS_TABLE = "backoffice.correction_calls";
 const LINKS_TABLE = "client_intake.intake_links";
@@ -24,15 +26,15 @@ const MAX_TEXT = 500;
 type Finding = { label: string; found: string | null };
 
 type EvalCase = {
-  case?: { metadata?: { client_name?: string } };
+  case?: { status?: string; metadata?: { client_name?: string } };
   client?: { name?: string; signatories?: { name?: string }[] } | null;
   error?: string;
 };
 
 export type CorrectionCallResponse =
-  | { request_id: string; status: "calling"; phone_number: string; communication_id: string | null }
+  | { request_id: string; status: "calling"; phone_number: string; communication_id: string | null; case_status_error?: string }
   | {
-      error: "bad_request" | "not_configured" | "case_not_found" | "no_contact" | "no_upload_link" | "call_failed";
+      error: "bad_request" | "not_configured" | "case_not_found" | "not_awaiting_decision" | "no_contact" | "no_upload_link" | "call_failed";
       message?: string;
     };
 
@@ -84,13 +86,18 @@ export async function userFunction(context: FunctionContext): Promise<Correction
 
   let evalCase: EvalCase;
   try {
-    evalCase = (await context.functions.run({ slug: CASE_FUNCTION, params: { case_id: caseId } })).result as EvalCase;
+    const { result } = await context.functions.run({ slug: CASE_FUNCTION, params: { case_id: caseId } });
+    evalCase = (result as EvalCase | null) ?? { error: "empty response" };
   } catch (error) {
     evalCase = { error: getErrorMessage(error) };
   }
   if (evalCase.error) {
     context.response.setStatus(evalCase.error === "case_not_found" ? 404 : 502);
     return { error: evalCase.error === "case_not_found" ? "case_not_found" : "call_failed", message: evalCase.error };
+  }
+  if (!isAwaitingDecision(evalCase.case?.status)) {
+    context.response.setStatus(409);
+    return { error: "not_awaiting_decision", message: `The case is ${evalCase.case?.status ?? "without a status"}, not awaiting_decision.` };
   }
   const lastName = getContactLastName(evalCase);
   if (!lastName) {
@@ -124,7 +131,16 @@ export async function userFunction(context: FunctionContext): Promise<Correction
       body: { from, to, call_purpose: `Request corrections for case ${caseId}${companyName ? ` (${companyName})` : ""}.` },
     });
     const communicationId = response?.communication_id ?? response?.id ?? null;
-    return { request_id: requestId, status: "calling", phone_number: to, communication_id: communicationId };
+    // The call is placed either way, so a failed status update is reported, not an error.
+    const statusError = await setCaseStatus(context, caseId, "awaiting_clarification");
+    if (statusError) console.log(`case ${caseId} status update failed: ${statusError}`);
+    return {
+      request_id: requestId,
+      status: "calling",
+      phone_number: to,
+      communication_id: communicationId,
+      ...(statusError ? { case_status_error: statusError } : {}),
+    };
   } catch (error) {
     console.log(`outbound call for case ${caseId} failed: ${getErrorMessage(error)}`);
     await context.tables.update(CALLS_TABLE, row.id, { status: "call_failed" });

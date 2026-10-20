@@ -2,19 +2,26 @@
 // document_id) on a reviewer's explicit action. The AWS API audits the call
 // under this app's API key, so this Function adds an audit line naming the
 // signed-in user by the id and email the platform puts on context.metadata.user.
-// The link is presigned for 60 s and is never logged.
+// The links (the file and its readable page renders) are presigned for 60 s and are never logged.
 
 import type { FunctionContext } from "@wonderful/types";
 import { getErrorMessage, requestAwsApi } from "../lib/awsApi.ts";
 import { parseRequest } from "../document-pages/pages.ts";
 
 /** Body of GET /cases/{case_id}/documents/{document_id}/original (be-document-processing/contracts/openapi-validator-agent.yaml). */
-type UpstreamDocumentOriginal = { filename: string; content_type: string; url: string; expires_in: number };
+type UpstreamDocumentOriginal = {
+  filename: string;
+  content_type: string;
+  url: string;
+  expires_in: number;
+  pages?: { page: number; url: string | null }[];
+};
 
 type Outcome = "revealed" | "not_found" | "error";
 
 type DocumentOriginalResponse =
-  | { filename: string; contentType: string; url: string; expiresIn: number }
+  // pages[i] is page i + 1, null while that page has no render; the same size as the masked pages, so the boxes fit.
+  | { filename: string; contentType: string; url: string; expiresIn: number; pages: (string | null)[] }
   | { error: "bad_request" | "unauthenticated" | "not_found" | "upstream" };
 
 type Caller = FunctionContext["metadata"]["user"];
@@ -45,8 +52,16 @@ export async function userFunction(context: FunctionContext): Promise<DocumentOr
     const response = await requestAwsApi<UpstreamDocumentOriginal>(context, path);
     if (response.ok && response.body?.url) {
       outcome = "revealed";
-      const { filename, content_type, url, expires_in } = response.body;
-      return { filename, contentType: content_type, url, expiresIn: expires_in };
+      const { filename, content_type, url, expires_in, pages = [] } = response.body;
+      const byPage = new Map(pages.map((p) => [p.page, p.url]));
+      const count = Math.max(0, ...byPage.keys());
+      return {
+        filename,
+        contentType: content_type,
+        url,
+        expiresIn: expires_in,
+        pages: Array.from({ length: count }, (_, i) => byPage.get(i + 1) ?? null),
+      };
     }
     if (response.status === 404) {
       outcome = "not_found";

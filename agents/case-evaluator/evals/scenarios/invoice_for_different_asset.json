@@ -38,6 +38,7 @@
       ],
       "expected_final_status": "completed",
       "max_execution_time_seconds": 900,
+      "timeout_per_scenario_seconds": 900,
       "expected_behavior": "Calls start_evaluation for mock-eval-invoice-different-asset and reads the invoice. The invoice bills a Kolové rypadlo Volvo EW160E with serial VCEW160EX00098765, while the agreement finances a Pásové rypadlo Volvo EC220E with serial VCEC220EV00312345. Records asset_consistent as conflict for the asset name and serial number. finish_evaluation is accepted with the verdict needs_correction, and the summary names the mismatch.",
       "table_assertions": [
         {
@@ -231,7 +232,7 @@
           "status": "completed",
           "verdict": "ready",
           "summary": "Seed row so the eval table copy knows its columns.",
-          "rules_total": 3,
+          "rules_total": 19,
           "is_mock": true,
           "started_at": "2026-10-19T00:00:00Z",
           "finished_at": "2026-10-19T00:00:01Z"
@@ -242,6 +243,7 @@
           "evaluation_id": "ev-fixture-seed",
           "rule_id": "loan_agreement_present",
           "case_id": "fixture-seed",
+          "category": "completeness",
           "status": "passed",
           "expected": "Smlouva o úvěru",
           "found": "seed.pdf",

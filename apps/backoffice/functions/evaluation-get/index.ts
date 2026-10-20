@@ -1,5 +1,6 @@
 // Returns one case-evaluator run (body: evaluation_id, else the latest run of
-// case_id, else the latest run overall) with its per-rule results.
+// case_id, else the latest run overall) with its per-rule results, or
+// `evaluation: null` when there is none.
 // Both tables are owned by the agent-functions app and linked to this one.
 
 import type { FunctionContext } from "@wonderful/types";
@@ -23,18 +24,16 @@ export async function userFunction(context: FunctionContext) {
     0,
     [{ column: "started_at", direction: "desc" }],
   );
+  // A case still waiting for documents has no run yet; that is not an error.
   const evaluation = latest.rows[0]?.data;
-  if (!evaluation) {
-    context.response.setStatus(404);
-    return { error: "evaluation_not_found" };
-  }
+  if (!evaluation) return { evaluation: null, results: [] };
 
+  // Unordered: pending rows have no recorded_at, so the app sorts them by its checklist.
   const results = await context.tables.filter(
     RESULTS_TABLE,
     [{ column: "evaluation_id", operator: "eq", value: String(evaluation.evaluation_id) }],
     RESULTS_LIMIT,
     0,
-    [{ column: "recorded_at", direction: "asc" }],
   );
 
   return { evaluation, results: results.rows.map((row) => row.data) };

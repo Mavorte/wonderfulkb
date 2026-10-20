@@ -38,6 +38,7 @@
       ],
       "expected_final_status": "completed",
       "max_execution_time_seconds": 900,
+      "timeout_per_scenario_seconds": 900,
       "expected_behavior": "Calls start_evaluation for mock-eval-decoy-documents. The uploads include a price quote (cenová nabídka, which says it is not a tax document) and a payment agreement (dohoda o zaplacení kupní ceny), but no invoice and no bank statement. Does not accept the quote as the invoice or the payment agreement as the payment proof: records required_documents_present as missing for both requirements, and invoice_contents and payment_proof_contents as missing with no document. The other rules pass. finish_evaluation is accepted with the verdict needs_correction.",
       "table_assertions": [
         {
@@ -251,7 +252,7 @@
           "status": "completed",
           "verdict": "ready",
           "summary": "Seed row so the eval table copy knows its columns.",
-          "rules_total": 3,
+          "rules_total": 19,
           "is_mock": true,
           "started_at": "2026-10-19T00:00:00Z",
           "finished_at": "2026-10-19T00:00:01Z"
@@ -262,6 +263,7 @@
           "evaluation_id": "ev-fixture-seed",
           "rule_id": "loan_agreement_present",
           "case_id": "fixture-seed",
+          "category": "completeness",
           "status": "passed",
           "expected": "Smlouva o úvěru",
           "found": "seed.pdf",

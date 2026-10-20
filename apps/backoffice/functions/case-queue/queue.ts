@@ -47,7 +47,8 @@ export type QueueCase = {
   evaluation: QueueEvaluation | null;
 };
 
-const CLEAN_RESULTS = new Set(["passed", "not_applicable"]);
+// Not issues; pending rules are not recorded yet.
+const CLEAN_RESULTS = new Set(["passed", "not_applicable", "pending"]);
 
 /** The newest evaluator run per case; mock runs are test data and never count. */
 export function latestEvaluations(evaluations: EvaluationRow[]): Map<string, EvaluationRow> {

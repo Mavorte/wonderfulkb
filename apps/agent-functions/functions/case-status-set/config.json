@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Case Status Set",
+  "description": "Sets a case's status in the AWS case API (body: case_id, status). Called by the case-evaluator agent and the backoffice app",
+  "method": "POST",
+  "path_slug": "case-status-set"
+}

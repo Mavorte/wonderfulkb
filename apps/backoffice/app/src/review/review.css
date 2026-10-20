@@ -58,7 +58,7 @@
 .cr-ref:focus-visible { outline: 2px solid var(--kb-focus-ring); outline-offset: 1px; }
 
 .cr-action__side { display: grid; gap: var(--kb-space-4); align-content: start; }
-.cr-score__bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.cr-score__bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; }
 .cr-score__seg { height: 8px; border-radius: var(--kb-radius-3xs); }
 .cr-score__seg--pass { background: var(--kb-success); }
 .cr-score__seg--fail { background: var(--kb-error); }
@@ -397,6 +397,15 @@
 .cr-rule--disabled .cr-rule__head { cursor: not-allowed; }
 .cr-rule--disabled .cr-rule__head:hover { background: none; }
 .cr-finding--na { background: transparent; }
+
+/* Rules the agent hasn't recorded yet */
+.cr-status-icon--pending { fill: var(--kb-border-strong); }
+.cr-raw--pending { background: var(--kb-surface-subtle); color: var(--kb-text-muted); }
+.cr-finding--pending { background: transparent; color: var(--kb-text-secondary); }
+.cr-finding--pending .cr-finding__more { display: none; }
+.cr-score__seg--pending { background: var(--kb-surface-subtle); }
+.cr-count--done { color: var(--kb-text); font-weight: var(--kb-weight-medium); }
+.cr-count--done::before { display: none; }
 
 .cr-finding__more { margin-top: var(--kb-space-1); display: grid; gap: var(--kb-space-1); }
 .cr-finding__more .cr-finding__detail { margin: 0; color: var(--kb-text); font-size: 0.875rem; line-height: 1.5rem; }

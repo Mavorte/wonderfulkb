@@ -68,6 +68,9 @@ export default function DocumentPanel({
 
   const activePage = focus?.docKey === doc.key ? focus.page : null;
   const shownOriginal = original?.docKey === doc.key ? original : null;
+  // The original's page renders take the masked pages' place, boxes included; without renders the file itself is shown.
+  const originalPages = shownOriginal?.pages.some(Boolean) ? shownOriginal.pages : null;
+  const pages = originalPages ?? doc.pages;
 
   return (
     <section className="cr-docs" aria-label="Documents" ref={sectionRef}>
@@ -148,7 +151,7 @@ export default function DocumentPanel({
               <OpenIcon />
             </button>
           )}
-          {hasPreview && !shownOriginal && (
+          {(originalPages || (hasPreview && !shownOriginal)) && (
             <button
               type="button"
               className={`kb-btn kb-btn--tertiary kb-btn--small cr-icon-btn${magnifier ? " is-hover" : ""}`}
@@ -188,7 +191,7 @@ export default function DocumentPanel({
         </details>
       )}
 
-      {shownOriginal ? (
+      {shownOriginal && !originalPages ? (
         <div className="cr-docs__pages cr-original">
           <p className="cr-original__note" role="status">
             Original with readable signatures. This reveal was audited.
@@ -199,9 +202,14 @@ export default function DocumentPanel({
             <iframe className="cr-original__frame" src={shownOriginal.url} title={`${shownOriginal.filename}, original`} />
           )}
         </div>
-      ) : hasPreview ? (
-        <div className="cr-docs__pages" ref={scrollRef}>
-          {doc.pages.map((src, i) => (
+      ) : originalPages || hasPreview ? (
+        <div className={`cr-docs__pages${originalPages ? " cr-original" : ""}`} ref={scrollRef}>
+          {originalPages && (
+            <p className="cr-original__note" role="status">
+              Original with readable signatures. This reveal was audited.
+            </p>
+          )}
+          {pages.map((src, i) => (
             <div
               key={i}
               className={`cr-page${doc.referencedPages.includes(i + 1) ? " is-cited" : ""}${activePage === i + 1 ? " is-active" : ""}`}
@@ -213,9 +221,11 @@ export default function DocumentPanel({
                 <>
                   <img
                     src={src}
-                    alt={`${doc.title}, page ${i + 1}`}
-                    loading={i < 3 || activePage === i + 1 ? "eager" : "lazy"}
-                    onError={onPreviewError}
+                    alt={`${doc.title}, page ${i + 1}${originalPages ? ", original" : ""}`}
+                    // The original's links expire after 60 s, so all of its pages load at once.
+                    loading={originalPages || i < 3 || activePage === i + 1 ? "eager" : "lazy"}
+                    // A refresh brings new masked links only; the original is revealed again by hand.
+                    onError={originalPages ? undefined : onPreviewError}
                     // The page's real height is known only now; re-aim at the box, unless a later link refresh reloads it.
                     onLoad={activePage === i + 1 ? () => focus && Date.now() - focus.nonce < 5000 && scrollToFocus() : undefined}
                   />
@@ -242,7 +252,7 @@ export default function DocumentPanel({
               )}
               <span className="cr-page__no">
                 {doc.referencedPages.includes(i + 1) && "Cited · "}
-                {i + 1} / {doc.pages.length}
+                {i + 1} / {pages.length}
               </span>
             </div>
           ))}

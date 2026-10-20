@@ -9,8 +9,11 @@ Wonderful Functions and tables used by the `case-evaluator` backoffice agent. Th
 | `eval-document-get` | `case_id`, `document_id` | Document with its text split into numbered `pages`. |
 | `eval-document-signatures` | `case_id`, `document_id` | Signatures detected in the document: `page`, `role`, `evidence` (the text next to the signature), `copy_suspicion`. Upstream: `GET .../documents/{id}/signatures?match_client=true&include_vectors=false`. |
 | `eval-document-regions` | `case_id`, `document_id` | Regions of the document (labelled paragraphs and table rows of text-layer pages): `region_id` (`p{page}-r{nn}`), `page`, `label`, `party`, `refers_to`, `text`, `bbox` (0–1 of the page, top left), and `lines` (bbox plus character range in `text`) when there are several. `status` is `completed`, `not_run`, `failed` or `not_ready`; regions are empty unless `completed`. Fixtures are always `not_run`. Upstream: `GET .../documents/{id}/regions?include_geometry=true`. |
+| `case-status-set` | `case_id`, `status` | `{ case_id, is_mock, case }` with the case as the AWS API returns it after the update. `status` is one of the seven case statuses (`architecture/case-statuses.md` in wonderfulkb): `open`, `intake_in_progress`, `evaluating`, `awaiting_decision`, `awaiting_clarification`, `approved`, `completed`. Upstream: `PUT /cases/{case_id}/status` with `{"status": "..."}`. The API does not check transitions, so neither does the Function. Mock mode returns the case with the new status but stores nothing. |
 
-Errors come back as `{ error, message? }` with an HTTP status: `missing_parameter` (400), `case_not_found` / `document_not_found` (404), `upstream` (502).
+Called by the case-evaluator (`finish_evaluation` sets `awaiting_decision`) and the backoffice app.
+
+Errors come back as `{ error, message? }` with an HTTP status: `missing_parameter` / `invalid_status` (400), `case_not_found` / `document_not_found` (404), `upstream` (502).
 
 ## Live or mock
 
@@ -51,14 +54,15 @@ The case-evaluator writes these tables directly from its tools while it works. T
 | Column | Meaning |
 | --- | --- |
 | `case_id` | |
-| `status` | `passed`, `missing`, `conflict`, `cannot_verify` or `not_applicable`. |
+| `category` | The backoffice checklist group of the rule: `completeness`, `consistency`, `client_status` or `supplier`. Empty on rows written before it existed. |
+| `status` | `pending` until the rule is recorded, then `passed`, `missing`, `conflict`, `cannot_verify` or `not_applicable`. |
 | `expected`, `found` | Short readable values. |
 | `sources` | JSON `[{document_id, title, page, region_id?, bbox?, quote?, role?, issue?, anchor?}]`. The region fields locate a finding in the document; see the case-evaluator README. |
 | `details` | Rule-specific JSON, e.g. the requirement → document mapping. |
-| `reasoning` | The agent's explanation. |
-| `recorded_at` | |
+| `reasoning` | The agent's explanation; empty while pending. |
+| `recorded_at` | Empty while pending. |
 
-To follow a case, read the latest `case_evaluations` row for the `case_id` (by `started_at`), then its result rows. Progress is the number of result rows out of `rules_total`.
+To follow a case, read the latest `case_evaluations` row for the `case_id` (by `started_at`), then its result rows. The case-evaluator writes a `pending` row for every rule when the run starts, and replaces it when it records the rule. Progress is the number of rows whose status is not `pending`, out of `rules_total`.
 
 ## Fixtures
 

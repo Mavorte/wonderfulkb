@@ -138,6 +138,7 @@ export type AwsApi = {
   getDocument(caseId: string, documentId: string): Promise<Response<UpstreamDocument>>;
   getSignatures(caseId: string, documentId: string): Promise<Response<{ case_id: string; document_id: string; signatures: UpstreamSignature[] }>>;
   getRegions(caseId: string, documentId: string): Promise<Response<UpstreamRegions>>;
+  setCaseStatus(caseId: string, status: string): Promise<Response<UpstreamCase>>;
 };
 
 export function isAwsMock(context: GlobalsContext, caseId: string): boolean {
@@ -196,6 +197,11 @@ function mockApi(): AwsApi {
         body: { case_id: caseId, document_id: documentId, title: document.title, document_label: document.label, status: "not_run", pages: [], regions: [] },
       };
     },
+    // Nothing is stored: the fixture keeps its status, so evals stay repeatable.
+    async setCaseStatus(caseId, status) {
+      const fixture = FIXTURES[caseId];
+      return fixture ? { status: 200, body: { ...fixture.case, status } } : notFound;
+    },
   };
 }
 
@@ -213,6 +219,7 @@ function liveApi(context: GlobalsContext): AwsApi {
       getJson(`${api}/cases/${id(caseId)}/documents/${id(documentId)}/signatures?match_client=true&include_vectors=false`, API_SECRET),
     getRegions: (caseId, documentId) =>
       getJson(`${api}/cases/${id(caseId)}/documents/${id(documentId)}/regions?include_geometry=true`, API_SECRET),
+    setCaseStatus: (caseId, status) => putJson(`${api}/cases/${id(caseId)}/status`, { status }, API_SECRET),
   };
 }
 
@@ -227,9 +234,23 @@ async function getJson<T>(url: string, secretName: string): Promise<Response<T>>
 }
 
 async function getJsonOnce<T>(url: string, secretName: string): Promise<Response<T>> {
+  return requestJson(url, { method: "GET" }, secretName);
+}
+
+// Setting a status is idempotent, so a PUT is retried once after a throw like a GET.
+async function putJson<T>(url: string, body: unknown, secretName: string): Promise<Response<T>> {
+  const init = { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) };
+  try {
+    return await requestJson<T>(url, init, secretName);
+  } catch {
+    return requestJson<T>(url, init, secretName);
+  }
+}
+
+async function requestJson<T>(url: string, init: { method: string; headers?: Record<string, string>; body?: string }, secretName: string): Promise<Response<T>> {
   const response = await fetch(url, {
-    method: "GET",
-    headers: { accept: "application/json" },
+    ...init,
+    headers: { accept: "application/json", ...init.headers },
     secretName,
     timeoutMs: TIMEOUT_MS,
   } as RequestInit);

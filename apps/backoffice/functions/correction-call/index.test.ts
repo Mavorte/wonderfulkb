@@ -14,26 +14,33 @@ const GLOBALS: Row = {
 
 const CASE = {
   case_id: "C1",
-  case: { metadata: { client_name: "Plastovra Výroba s.r.o." } },
+  case: { status: "awaiting_decision", metadata: { client_name: "Plastovra Výroba s.r.o." } },
   client: { name: "Plastovra Výroba s.r.o.", signatories: [{ name: "Dalibor Křemeník", function: "jednatel" }] },
 };
 
 const FINDINGS = [{ label: "Invoice", found: "Buyer is a different company" }];
 
 // Stands in for globals, tables, the case Function and the platform API; records the outbound calls.
-function createContext(options: { data: Row; globals?: Row; evalCase?: Row; links?: Row[]; callFails?: boolean }) {
+function createContext(options: { data: Row; globals?: Row; evalCase?: Row; links?: Row[]; callFails?: boolean; statusResult?: Row }) {
   let status = 200;
   const tables: Record<string, { id: string; data: Row }[]> = {
     "client_intake.intake_links": (options.links ?? []).map((data) => ({ id: String(data.hash), data })),
     "backoffice.correction_calls": [],
   };
   const calls: Row[] = [];
+  const statusSets: Row[] = [];
   const context = {
     data: options.data,
     metadata: { user: { id: "u1", email: "reviewer@kb.example" } },
     response: { setStatus: (code: number) => (status = code) },
     globals: { get: (name: string) => (options.globals ?? GLOBALS)[name] },
-    functions: { run: () => ({ result: options.evalCase ?? CASE }) },
+    functions: {
+      run: ({ slug, params }: { slug: string; params: Row }) => {
+        if (slug === "agent-functions/eval-case-get") return { result: options.evalCase ?? CASE };
+        statusSets.push({ slug, ...params });
+        return { result: options.statusResult ?? { case_id: params.case_id, case: { status: params.status } } };
+      },
+    },
     tables: {
       filter: async (table: string, filters: Filter[]) => ({
         rows: tables[table].filter((row) => filters.every((f) => row.data[f.column] === f.value)),
@@ -61,6 +68,7 @@ function createContext(options: { data: Row; globals?: Row; evalCase?: Row; link
     context: context as unknown as FunctionContext,
     status: () => status,
     calls,
+    statusSets,
     requests: () => tables["backoffice.correction_calls"].map((r) => r.data),
     links: () => tables["client_intake.intake_links"].map((r) => r.data),
   };
@@ -88,6 +96,25 @@ test("correction-call records the request and calls the configured number from t
   assert.deepEqual(JSON.parse(String(request.findings)), FINDINGS);
   assert.equal(request.requested_by, "reviewer@kb.example");
   assert.equal(env.links().length, 1, "the existing intake link is reused");
+  assert.deepEqual(env.statusSets, [{ slug: "agent-functions/case-status-set", case_id: "C1", status: "awaiting_clarification" }]);
+});
+
+test("correction-call reports a failed status update without failing the placed call", async () => {
+  const env = createContext({ data: { case_id: "C1", findings: FINDINGS }, statusResult: { error: "upstream" } });
+  const body = await userFunction(env.context);
+  assert.equal(env.status(), 200);
+  assert.equal((body as { status: string }).status, "calling");
+  assert.equal((body as { case_status_error?: string }).case_status_error, "upstream");
+});
+
+test("correction-call refuses a case that is not awaiting a decision", async () => {
+  for (const status of ["evaluating", "awaiting_clarification", "approved", "completed"]) {
+    const env = createContext({ data: { case_id: "C1", findings: FINDINGS }, evalCase: { ...CASE, case: { ...CASE.case, status } } });
+    assert.equal(((await userFunction(env.context)) as { error: string }).error, "not_awaiting_decision");
+    assert.equal(env.status(), 409);
+    assert.equal(env.calls.length, 0);
+    assert.equal(env.statusSets.length, 0);
+  }
 });
 
 test("correction-call gives a case without an intake link a new one", async () => {
@@ -104,6 +131,7 @@ test("correction-call marks the request failed when the call cannot be placed", 
   assert.equal(env.status(), 502);
   assert.equal((body as { error: string }).error, "call_failed");
   assert.equal(env.requests()[0].status, "call_failed");
+  assert.equal(env.statusSets.length, 0, "the case keeps its status");
 });
 
 test("correction-call rejects bad input and missing configuration before calling", async () => {

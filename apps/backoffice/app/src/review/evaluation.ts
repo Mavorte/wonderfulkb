@@ -3,7 +3,8 @@
 
 import { ruleLabels } from "./ruleLabels.ts";
 
-export type CheckStatus = "pass" | "fail" | "warn" | "na";
+// pending: the agent hasn't recorded the rule yet.
+export type CheckStatus = "pass" | "fail" | "warn" | "na" | "pending";
 
 export interface EvaluationRow {
   evaluation_id: string;
@@ -22,6 +23,8 @@ export interface ResultRow {
   evaluation_id: string;
   rule_id: string;
   case_id: string;
+  // The checklist group: completeness, consistency, client_status or supplier. Absent on older rows.
+  category?: string | null;
   status: string;
   expected?: string | null;
   found?: string | null;
@@ -114,9 +117,13 @@ export interface RuleGroup {
   id: number;
   title: string;
   description: string;
+  // Recorded and pending rules.
   rules: RuleView[];
+  // Rules recorded so far.
+  done: number;
   // False when the evaluator has no rules for this checklist item yet.
   evaluated: boolean;
+  // pending until the group's first rule is recorded.
   status: CheckStatus;
 }
 
@@ -151,6 +158,7 @@ export interface FixItem {
 export interface CaseView {
   evaluation: EvaluationRow;
   groups: RuleGroup[];
+  // Recorded rules only; pending ones are in their groups.
   rules: RuleView[];
   docs: DocView[];
   missingDocs: RequiredDoc[];
@@ -170,12 +178,15 @@ const statusMap: Record<string, CheckStatus> = {
   failed: "fail",
   cannot_verify: "warn",
   not_applicable: "na",
+  pending: "pending",
 };
 
-// The business-rules checklist; evaluator rules are filed under the item they serve.
-const checklist: { id: number; title: string; description: string; ruleIds: string[] }[] = [
+// The business-rules checklist. Rows are filed by their category; ruleIds files
+// rows written before the evaluator recorded one, and sets the order within a group.
+const checklist: { id: number; category: string; title: string; description: string; ruleIds: string[] }[] = [
   {
     id: 1,
+    category: "completeness",
     title: "Document completeness and validity",
     description:
       "All required documents are present, readable, signed where necessary, and within the bank's accepted age or expiry limits.",
@@ -192,40 +203,45 @@ const checklist: { id: number; title: string; description: string; ruleIds: stri
   },
   {
     id: 2,
+    category: "consistency",
     title: "Consistency across documents",
     description:
       "Company name, registration number, address and applicant details match across the application, registry extract, accounts and purchase documents.",
-    ruleIds: ["recipient_matches_client"],
+    ruleIds: [
+      "recipient_matches_client",
+      "recipient_consistent",
+      "supplier_consistent",
+      "provider_consistent",
+      "asset_consistent",
+      "amounts_consistent",
+      "contract_number_consistent",
+      "guarantor_consistent",
+    ],
   },
   {
     id: 3,
-    title: "Company existence and status",
-    description:
-      "The business exists in an official register and its legal status permits borrowing; flag dissolution, liquidation or insolvency.",
-    ruleIds: [],
+    category: "client_status",
+    title: "Client status and signatories",
+    description: "The client is active with valid KYC, and the people signing for the recipient are its authorized signatories.",
+    ruleIds: ["client_status_valid"],
   },
   {
     id: 4,
-    title: "Ownership and control",
-    description:
-      "Trace ownership to the ultimate beneficial owners, verify relevant identities and reconcile discrepancies with ownership records.",
-    ruleIds: [],
-  },
-  {
-    id: 5,
-    title: "Sanctions and financial-crime screening",
-    description:
-      "Screen the business and relevant individuals for sanctions, politically exposed person status and adverse information.",
-    ruleIds: [],
-  },
-  {
-    id: 6,
+    category: "supplier",
     title: "Supplier and purchase-document verification",
     description:
       "The supplier is legitimate; quotation or invoice names the correct buyer, identifies the equipment and supports the requested amount.",
     ruleIds: ["purchase_contract_contents", "invoice_contents"],
   },
 ];
+
+const ruleOrder = checklist.flatMap((c) => c.ruleIds);
+
+// Rows in checklist order; rules it doesn't know go last.
+function byChecklist(a: { rule_id: string }, b: { rule_id: string }): number {
+  const rank = (id: string) => (ruleOrder.includes(id) ? ruleOrder.indexOf(id) : ruleOrder.length);
+  return rank(a.rule_id) - rank(b.rule_id);
+}
 
 // Rendered pages exist only for the SOLOM pack used by the mock-solom-rec case,
 // served from dev/public, so previews are a local-development aid only.
@@ -324,8 +340,9 @@ export function toSource(raw: RawSource, ruleId: string, index: number): SourceR
   };
 }
 
-const severity: Record<CheckStatus, number> = { na: 0, pass: 1, warn: 2, fail: 3 };
+const severity: Record<CheckStatus, number> = { pending: -1, na: 0, pass: 1, warn: 2, fail: 3 };
 
+// Pending rules don't count; an empty list is na.
 export function worst(statuses: CheckStatus[]): CheckStatus {
   return statuses.reduce<CheckStatus>((w, s) => (severity[s] > severity[w] ? s : w), "na");
 }
@@ -441,21 +458,25 @@ const verdicts: Record<string, { decision: CaseView["decision"]; headline: strin
 };
 
 export function createCaseView(evaluation: EvaluationRow, results: ResultRow[]): CaseView {
-  const rules = results.map(toRule);
+  // Filed by the row's category, else by the checklist's rule ids; rules it doesn't know go under completeness.
+  const filed = [...results].sort(byChecklist).map((row) => ({
+    rule: toRule(row),
+    group: checklist.find((c) => c.category === row.category) ?? checklist.find((c) => c.ruleIds.includes(row.rule_id)) ?? checklist[0],
+  }));
+  const rules = filed.map((f) => f.rule).filter((r) => r.status !== "pending");
   const byId = new Map(rules.map((r) => [r.id, r]));
-  const filed = new Set(checklist.flatMap((c) => c.ruleIds));
 
   const groups: RuleGroup[] = checklist.map((c) => {
-    const groupRules = c.ruleIds.map((id) => byId.get(id)).filter((r): r is RuleView => !!r);
-    // Rules the checklist doesn't know yet still show up under completeness.
-    if (c.id === 1) groupRules.push(...rules.filter((r) => !filed.has(r.id)));
+    const groupRules = filed.filter((f) => f.group === c).map((f) => f.rule);
+    const recorded = groupRules.filter((r) => r.status !== "pending");
     return {
       id: c.id,
       title: c.title,
       description: c.description,
       rules: groupRules,
-      evaluated: c.ruleIds.length > 0 && groupRules.length > 0,
-      status: worst(groupRules.map((r) => r.status)),
+      done: recorded.length,
+      evaluated: groupRules.length > 0,
+      status: recorded.length ? worst(recorded.map((r) => r.status)) : groupRules.length ? "pending" : "na",
     };
   });
 
