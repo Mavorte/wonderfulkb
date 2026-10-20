@@ -128,28 +128,36 @@ export default function DocumentPanel({
         <div className="cr-docs__actions">
           {doc.pdf ? (
             <a
-              className="kb-btn kb-btn--tertiary kb-btn--small"
+              className="kb-btn kb-btn--tertiary kb-btn--small cr-icon-btn"
               href={doc.pdf}
               target="_blank"
               rel="noreferrer"
-              title="Masked copy: signatures are blacked out"
+              title="Open PDF (masked copy: signatures are blacked out)"
+              aria-label="Open PDF"
             >
-              Open PDF
+              <OpenIcon />
             </a>
           ) : (
-            <button type="button" className="kb-btn kb-btn--tertiary kb-btn--small" disabled title="No masked PDF for this document">
-              Open PDF
+            <button
+              type="button"
+              className="kb-btn kb-btn--tertiary kb-btn--small cr-icon-btn"
+              disabled
+              title="No masked PDF for this document"
+              aria-label="Open PDF"
+            >
+              <OpenIcon />
             </button>
           )}
           {hasPreview && !shownOriginal && (
             <button
               type="button"
-              className={`kb-btn kb-btn--tertiary kb-btn--small${magnifier ? " is-hover" : ""}`}
+              className={`kb-btn kb-btn--tertiary kb-btn--small cr-icon-btn${magnifier ? " is-hover" : ""}`}
               aria-pressed={magnifier}
+              aria-label="Magnifier"
               onClick={() => setMagnifier((on) => !on)}
-              title="Enlarge the page under the mouse"
+              title={`Magnifier ${magnifier ? "on" : "off"}: enlarge the page under the mouse`}
             >
-              Magnifier {magnifier ? "on" : "off"}
+              <MagnifierIcon />
             </button>
           )}
           <RevealOriginalButton
@@ -258,5 +266,21 @@ export default function DocumentPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function OpenIcon() {
+  return (
+    <svg className="kb-icon kb-icon--16" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+    </svg>
+  );
+}
+
+function MagnifierIcon() {
+  return (
+    <svg className="kb-icon kb-icon--16" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3Zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm-1 2h2v2h2v2h-2v2H9v-2H7V9h2V7Z" />
+    </svg>
   );
 }
