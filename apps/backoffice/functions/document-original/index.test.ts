@@ -24,7 +24,7 @@ function captureLogs() {
   return { lines, restore: () => (console.log = original) };
 }
 
-function createContext(data: unknown, user: { id: string } | null = { id: "u1" }) {
+function createContext(data: unknown, user: { id: string; email: string } | null = { id: "u1", email: "reviewer@kb.test" }) {
   let status = 200;
   const context = {
     data,
@@ -52,7 +52,7 @@ test("document-original returns the short-lived link and audits the user", async
   assert.equal(status(), 200);
   assert.deepEqual(body, { filename: "0_Smlouva.pdf", contentType: "application/pdf", url: "https://s3/o.pdf?sig", expiresIn: 60 });
   assert.deepEqual(paths, [ORIGINAL]);
-  assert.deepEqual(JSON.parse(logs.lines[0]), { event: "document_reveal", user_id: "u1", case_id: "C1", document_id: "d1", outcome: "revealed" });
+  assert.deepEqual(JSON.parse(logs.lines[0]), { event: "document_reveal", user_id: "u1", user_email: "reviewer@kb.test", case_id: "C1", document_id: "d1", outcome: "revealed" });
   assert.ok(logs.lines.every((l) => !l.includes("https://s3")));
 });
 
