@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 import core
+import regions_api
 
 API = None
 INDEX = None
@@ -29,6 +30,9 @@ class Handler(BaseHTTPRequestHandler):
                 status, body = 403, {"error": "Špatný API klíč"}
             else:
                 status, body = 200, INDEX
+        elif regions_api.matches(core.strip_base(u.path)):
+            status, body = regions_api.handle(self.command, core.strip_base(u.path), parse_qs(u.query),
+                                              dict(self.headers), api=API)
         else:
             status, body = core.handle(self.command, u.path, parse_qs(u.query), dict(self.headers), api=API)
         if isinstance(body, core.Binary):

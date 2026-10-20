@@ -1,4 +1,4 @@
-"""Thin adapters over the sibling modules classify/, embed/ and the signature module.
+"""Thin adapters over the sibling modules classify/, embed/, regions/ and the signature module.
 
 Each one imports lazily and raises StepUnavailable with a clear message when the module is not there yet,
 so the pipeline can run without them (`--skip` / PIPELINE_SKIP) or report the step as failed."""
@@ -18,7 +18,9 @@ def _ensure_path():
     # classify/ and embed/ live next to pipeline/; make them importable even without the .pth from setup.sh
     # signatures/ holds the package signature_pipeline, so that directory goes on the path too
     # privacy/ holds the package signature_privacy (encryption, redaction)
-    for folder in (VALIDATOR_AGENT, VALIDATOR_AGENT / "signatures", VALIDATOR_AGENT / "privacy"):
+    # regions/ holds the package region_pipeline (paragraph regions with bbox and labels)
+    for folder in (VALIDATOR_AGENT, VALIDATOR_AGENT / "signatures", VALIDATOR_AGENT / "privacy",
+                   VALIDATOR_AGENT / "regions"):
         if str(folder) not in sys.path:
             sys.path.append(str(folder))
 
@@ -110,6 +112,25 @@ def sign_crops(pdf_bytes, items, case_id, document_id, store):
 
 def write_signature_vectors(case_id, document_id, crops, label=None):
     return _load("embed", "write_signature_vectors")(case_id, document_id, crops, label=label)
+
+
+_REGIONS_LLM = {}
+
+
+def regions(pdf_bytes, doc_label=None, use_llm=True):
+    """Regions of the (masked) PDF in the shape of regions.json, labelled; returns (result, stats).
+    The model backend and its rate limiter are created once per process (REGIONS_BACKEND, REGIONS_MAX_RPM)."""
+    segment = _load("region_pipeline.segment", "regions_for_pdf")
+    label = _load("region_pipeline.labels", "label_regions")
+    backend = limiter = None
+    if use_llm:
+        if not _REGIONS_LLM:
+            _REGIONS_LLM["backend"] = _load("region_pipeline.llm", "make_backend")()
+            _REGIONS_LLM["limiter"] = _load("region_pipeline.llm", "default_limiter")()
+        backend, limiter = _REGIONS_LLM["backend"], _REGIONS_LLM["limiter"]
+    result = segment(bytes(pdf_bytes))
+    stats = label(result, backend=backend, doc_label=doc_label, limiter=limiter)
+    return result, stats
 
 
 def dedup(attribute):

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: wonderfulkb API (klienti, case, dokumenty pro validačního agenta)
-  version: 0.4.0
+  version: 0.5.0
   description: |
     Jedno API (Lambda `wonderfulkb-agent-api`, HTTP API, stage `v1`) pro klienty a case (dříve samostatné
     Case & Client API, Lambda `wonderfulkb-case-client`, smazaná 19. 10. 2026) a pro vstupy, kterými Wonderful
@@ -22,6 +22,7 @@ info:
     | Ukázat člověku čitelný podpis (jen lidská kontrola, auditováno) | `revealSignatureImage` |
     | Zobrazit dokument po stranách se zamaskovanými podpisy (např. vyznačit `bbox` na straně) | `getDocumentPages` |
     | Ukázat člověku čitelný originál dokumentu (jen lidská kontrola, auditováno) | `revealDocumentOriginal` |
+    | Kde v dokumentu je ustanovení, položka nebo řádek, na který nález ukazuje (text, strana, `bbox`, štítek)? | `getDocumentRegions`, `getCaseRegions` |
 
     ## Doporučený postup agenta
 
@@ -86,6 +87,8 @@ tags:
     description: Podpisy nalezené v dokumentu, jejich role, podezření na kopii, zkreslený náhled a odkrytí výřezu
   - name: view
     description: Zobrazení dokumentu člověku – stránky zamaskované kopie (náhled) a čitelný originál (odkrytí, auditováno)
+  - name: regions
+    description: Regiony dokumentu (odstavce, položky výčtu, řádky tabulek) s polohou, textem a štítkem, na které nález ukazuje
 
 paths:
   /clients:
@@ -631,6 +634,132 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/Error'}
 
+  /cases/{case_id}/regions:
+    get:
+      tags: [regions]
+      operationId: getCaseRegions
+      summary: Regiony napříč všemi dokumenty case podle štítku, strany nebo textu
+      description: |
+        Pro porovnání a hledání v celém case: „dodavatel ve všech dokumentech“ (`label=smluvni_strana&party=supplier`),
+        „co smlouva vyžaduje doložit“ (`label=povinny_podklad`), „kde je výrobní číslo“ (`q=VV2600000005`). Každý region
+        nese `document_id` a `title` svého dokumentu, takže nález může ukázat na dva regiony ve dvou dokumentech.
+
+        **Pro agenta:** cituj `region_id` + `document_id` a doslovný citát z `text`; souřadnice neposílej, UI si je
+        vezme z `getDocumentRegions`. Štítek je odhad (model, záloha regexy): „žádný region se štítkem X“ neznamená,
+        že informace v dokumentu není; projdi `outline` dokumentu nebo filtruj přes `q`.
+        `documents_without_regions` vyjmenuje dokumenty, které regiony nemají (nezpracované, skeny bez textové vrstvy,
+        chyba): pro ně prázdný výsledek nic netvrdí.
+
+        Vyžaduje aspoň jeden z filtrů `label`, `party`, `kind`, `q` (jinak 400). Bez `include_geometry=true` se
+        souřadnice nevracejí.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/RegionLabel'
+        - $ref: '#/components/parameters/RegionParty'
+        - $ref: '#/components/parameters/RegionKind'
+        - $ref: '#/components/parameters/RegionQuery'
+        - $ref: '#/components/parameters/RegionOutline'
+        - name: include_geometry
+          in: query
+          description: Přidat `bbox` a `lines` (pro UI). Výchozí ne.
+          schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: Nalezené regiony
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CaseRegions'}
+              example:
+                case_id: 7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90
+                regions:
+                  - {document_id: d2f4a1, title: 00_Smlouva_o_uveru.pdf, document_label: smlouva_o_uveru,
+                     region_id: p1-r18, page: 1, kind: table_row, label: smluvni_strana, party: supplier,
+                     summary: Identifikace dodavatele stroje., section: p1-r14,
+                     text: "Dodavatel | Valdorin Stroje s.r.o."}
+                  - {document_id: e9b7c2, title: 10_Objednavka.pdf, document_label: objednavka,
+                     region_id: p1-r11, page: 1, kind: table_row, label: smluvni_strana, party: supplier,
+                     summary: Identifikace dodavatele a prodávajícího., section: p1-r04,
+                     text: "Dodavatel / prodávající | Valdorin Stroje s.r.o."}
+                documents_without_regions:
+                  - {document_id: 0c5d19, title: 11_Protokol.pdf, status: not_run}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+
+  /cases/{case_id}/documents/{document_id}/regions:
+    get:
+      tags: [regions]
+      operationId: getDocumentRegions
+      summary: Regiony dokumentu – přehled, vybrané regiony nebo vše s polohou
+      description: |
+        Dokument rozřezaný na regiony (odstavce, položky výčtu a), b)…, řádky tabulek, nadpisy). Každý má `region_id`
+        (`p{strana}-r{pořadí}`, stabilní pro stejný obsah), stranu, text a štítek; s geometrií navíc `bbox`
+        (`[x0, y0, x1, y1]`, 0–1, počátek vlevo nahoře, stejně jako u podpisů a stránek z `getDocumentPages`) a `lines`
+        (řádky s rozsahem znaků v `text`, pro zúžení obdélníku na citát).
+
+        **Pro agenta:** nejdřív `outline=true` (id, štítek, strana smlouvy, popis, začátek textu; levné), pak plný text
+        jen vybraných regionů přes `ids=` s `include_geometry=false`. Nález cituje `region_id` a doslovný citát.
+
+        **Pro UI:** bez parametrů (vše s geometrií) a obdélník nad stránku z `getDocumentPages` v procentech.
+
+        `status`: `completed` = regiony jsou; `not_run` = dokument se na regiony nezpracoval (prázdné pole NENÍ
+        důkaz, že v dokumentu nic není); `failed` = soubor regionů je poškozený; `not_ready` = dokument se ještě
+        zpracovává (`processing_status`). Strany skenu bez textové vrstvy jsou v `pages` se `source: no_text_layer`
+        a regiony zatím nemají.
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/RegionOutline'
+        - name: ids
+          in: query
+          description: Jen tyto regiony (čárkami, nejvýš 200); neznámá id jsou v `missing_ids`
+          schema: {type: string, example: 'p2-r19,p4-r09'}
+        - name: page
+          in: query
+          schema: {type: integer, minimum: 1}
+        - $ref: '#/components/parameters/RegionLabel'
+        - $ref: '#/components/parameters/RegionParty'
+        - $ref: '#/components/parameters/RegionKind'
+        - $ref: '#/components/parameters/RegionQuery'
+        - name: include_geometry
+          in: query
+          description: Přidat `bbox` a `lines`. Výchozí ano; agent má vypnout. S `outline=true` se geometrie nevrací.
+          schema: {type: boolean, default: true}
+      responses:
+        '200':
+          description: Regiony dokumentu
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DocumentRegions'}
+              example:
+                case_id: 7b0e5c1a-3f42-4d8e-9a61-2c5d8e4f1b90
+                document_id: d2f4a1
+                title: 00_Smlouva_o_uveru.pdf
+                document_label: smlouva_o_uveru
+                status: completed
+                pages: [{page: 1, width: 595.3, height: 841.9, source: text_layer}]
+                regions:
+                  - region_id: p2-r19
+                    page: 2
+                    kind: paragraph
+                    label: povinny_podklad
+                    refers_to: [faktura, objednavka, predavaci_protokol, uhrada_kupni_ceny]
+                    summary: Seznam povinných podkladů před čerpáním.
+                    section: p2-r15
+                    text: "Před čerpáním musí být doložena faktura, potvrzená objednávka, předání stroje, …"
+                    bbox: [0.0672, 0.5131, 0.9328, 0.5612]
+                    lines: [{bbox: [0.0672, 0.5131, 0.93, 0.5258], start: 0, end: 98}]
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409':
+          description: Dokument je jen v ingestu, zpracování ještě nezačalo (`processing_status` v těle chyby)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NotReady'}
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -664,6 +793,33 @@ components:
       required: true
       description: Identifikátor dokumentu, stejný jako `blob_id` z uploadu (Ingest API) a `document_id` ze seznamu
       schema: {type: string}
+    RegionLabel:
+      name: label
+      in: query
+      description: |
+        Štítek regionu, víc hodnot čárkami: `povinny_podklad`, `odkaz_na_dokument`, `smluvni_strana`, `predmet`,
+        `cena_platba`, `zajisteni`, `predani`, `termin_misto`, `hlavicka`, `podpisovy_blok`, `obecne_ustanoveni`, `jine`
+      schema: {type: string, example: smluvni_strana}
+    RegionParty:
+      name: party
+      in: query
+      description: Strana smlouvy (u `smluvni_strana` a `podpisovy_blok`), víc hodnot čárkami
+      schema: {type: string, example: supplier}
+    RegionKind:
+      name: kind
+      in: query
+      description: Druh regionu, víc hodnot čárkami (`paragraph`, `list_item`, `table_row`, `heading`, `page_header`, `page_footer`)
+      schema: {type: string}
+    RegionQuery:
+      name: q
+      in: query
+      description: Hledaný text v regionu (bez ohledu na diakritiku a velikost písmen), 1–200 znaků
+      schema: {type: string, example: VV2600000005}
+    RegionOutline:
+      name: outline
+      in: query
+      description: Přehled bez textu a souřadnic (`excerpt` = prvních 80 znaků textu)
+      schema: {type: boolean, default: false}
   responses:
     BadRequest:
       description: Neplatný parametr (case_id, limit, next_token, hodnota filtru)
@@ -1057,3 +1213,101 @@ components:
           type: array
           items: {$ref: '#/components/schemas/Signature'}
           description: Prázdné pole znamená „žádný podpis nenalezen", ne chybu
+    RegionLine:
+      type: object
+      required: [bbox, start, end]
+      properties:
+        bbox:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items: {type: number, minimum: 0, maximum: 1}
+        start: {type: integer, minimum: 0, description: Index prvního znaku řádku v `text`}
+        end: {type: integer, minimum: 0, description: Index za posledním znakem řádku v `text`}
+    Region:
+      type: object
+      required: [region_id, page, kind]
+      properties:
+        region_id: {type: string, description: '`p{strana}-r{pořadí}`, stabilní pro stejný obsah (i po znovupoužití analýzy)'}
+        page: {type: integer, minimum: 1}
+        kind: {type: string, enum: [paragraph, list_item, table_row, heading, page_header, page_footer]}
+        label:
+          type: string
+          nullable: true
+          enum: [povinny_podklad, odkaz_na_dokument, smluvni_strana, predmet, cena_platba, zajisteni, predani,
+                 termin_misto, hlavicka, podpisovy_blok, obecne_ustanoveni, jine, null]
+          description: Štítek obsahu (model, nebo regexová záloha); odhad, ne jistota
+        party:
+          type: string
+          enum: [provider, borrower, buyer, supplier, guarantor, insurer, unknown]
+          description: Jen u `smluvni_strana` a `podpisovy_blok`
+        refers_to:
+          type: array
+          items: {type: string}
+          description: Jen u `povinny_podklad` a `odkaz_na_dokument`; štítky dokumentů z taxonomy.yaml, které odstavec vyžaduje nebo zmiňuje
+        summary: {type: string, description: Jedna věta od modelu (chybí u regexové zálohy)}
+        excerpt: {type: string, description: 'Jen s `outline=true`: začátek textu'}
+        section: {type: string, nullable: true, description: '`region_id` posledního nadpisu nad regionem'}
+        text: {type: string, description: 'Text regionu; buňky řádku tabulky dělí ` | `. Chybí s `outline=true`'}
+        bbox:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items: {type: number, minimum: 0, maximum: 1}
+          description: '[x0, y0, x1, y1] relativně ke straně (jen s geometrií)'
+        lines:
+          type: array
+          items: {$ref: '#/components/schemas/RegionLine'}
+    RegionPage:
+      type: object
+      required: [page, source]
+      properties:
+        page: {type: integer, minimum: 1}
+        width: {type: number}
+        height: {type: number}
+        source: {type: string, enum: [text_layer, no_text_layer], description: '`no_text_layer` = sken, regiony zatím nemá'}
+    DocumentRegions:
+      type: object
+      required: [case_id, document_id, title, status, pages, regions]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        title: {type: string}
+        document_label: {type: string, nullable: true}
+        status: {type: string, enum: [completed, not_run, failed, not_ready]}
+        processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
+        pages:
+          type: array
+          items: {$ref: '#/components/schemas/RegionPage'}
+        regions:
+          type: array
+          items: {$ref: '#/components/schemas/Region'}
+        missing_ids:
+          type: array
+          items: {type: string}
+          description: Jen s `ids=`; požadovaná id, která dokument nemá
+    CaseRegions:
+      type: object
+      required: [case_id, regions, documents_without_regions]
+      properties:
+        case_id: {type: string}
+        regions:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Region'
+              - type: object
+                required: [document_id, title]
+                properties:
+                  document_id: {type: string}
+                  title: {type: string}
+                  document_label: {type: string, nullable: true}
+        documents_without_regions:
+          type: array
+          items:
+            type: object
+            required: [document_id, status]
+            properties:
+              document_id: {type: string}
+              title: {type: string}
+              status: {type: string, enum: [not_run, failed, not_ready]}

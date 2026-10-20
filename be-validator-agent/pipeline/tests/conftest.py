@@ -9,6 +9,8 @@ from moto import mock_aws
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # infra/validator-agent
+# Region labels never call Bedrock in tests (regex labels); Settings read this when they are created.
+os.environ["PIPELINE_REGIONS_LLM"] = "0"
 
 from pipeline import Options, Settings  # noqa: E402
 
@@ -104,7 +106,9 @@ def make_options(aws_env):
     def make(vision=None, skip=("classify", "embed", "signatures"), redact=False, **kwargs):
         # redact=False keeps the older tests on the plain path (they test text, labels, status); test_redaction.py
         # runs with redact=True, which is the default of Settings
-        return Options(settings=Settings(skip=frozenset(skip), redact=redact), vision=vision or FakeVision(), **kwargs)
+        # regions_llm=False: region labels from regexes, the tests never call Bedrock
+        return Options(settings=Settings(skip=frozenset(skip), redact=redact, regions_llm=False),
+                       vision=vision or FakeVision(), **kwargs)
     return make
 
 

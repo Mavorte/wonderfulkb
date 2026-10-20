@@ -3,11 +3,16 @@ import os
 from dataclasses import dataclass, field
 
 PIPELINE_VERSION = "1.0.0"
-STEPS = ("classify", "embed", "signatures", "copy")
+STEPS = ("classify", "embed", "signatures", "copy", "regions")
 
 
 def _skip_from_env():
     return frozenset(s.strip() for s in os.environ.get("PIPELINE_SKIP", "").split(",") if s.strip())
+
+
+def _regions_llm_from_env():
+    """PIPELINE_REGIONS_LLM, on by default: region labels from the model (Haiku 4.5), off = regex labels only."""
+    return os.environ.get("PIPELINE_REGIONS_LLM", "1").strip().lower() not in ("0", "false", "no", "off")
 
 
 def _redact_from_env():
@@ -32,3 +37,4 @@ class Settings:
     max_pdf_bytes: int = 50 * 1024 * 1024
     skip: frozenset = field(default_factory=_skip_from_env)  # subset of STEPS
     redact: bool = field(default_factory=_redact_from_env)   # mask signatures before anything else reads the PDF
+    regions_llm: bool = field(default_factory=_regions_llm_from_env)  # label regions with the model, else regexes

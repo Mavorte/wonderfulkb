@@ -370,3 +370,25 @@ def run_document_masked_expecting_fallback(w):
     from pipeline import run as run_module
     return run_module._try_reuse(options, report, "case-b", "doc-b", "x.pdf", hashes_of(PDF), None) or (
         report["reuse"]["status"] == "source_not_redacted" and None)
+
+
+def test_regions_are_copied_with_the_new_identity(world):
+    w = world
+    original = process_original(w)
+    source = json.loads(s3_text(w, original["regions_s3_key"]))
+    w.ingest("case-b", "doc-b", filename="faktura-b.pdf")
+    row = run_document("case-b", "doc-b", options=w.options())
+    assert row["reused_from"] == {"case_id": "case-a", "document_id": "doc-a"}
+    assert row["regions_s3_key"] == "cases/case-b/analysis/doc-b/regions.json"
+    copied = json.loads(s3_text(w, row["regions_s3_key"]))
+    assert (copied["case_id"], copied["document_id"], copied["title"]) == ("case-b", "doc-b", "faktura-b.pdf")
+    assert copied["regions"] == source["regions"]  # stejný obsah = stejná id a polohy, citace platí i tady
+    run = json.loads(s3_text(w, "cases/case-b/analysis/doc-b/run.json"))
+    assert run["reuse"]["regions_copied"] is True
+
+
+def test_broken_source_regions_are_not_copied():
+    assert reuse._regions_body(b"not json", "c", "d", "t") is None
+    assert reuse._regions_body(b'{"regions": "x"}', "c", "d", "t") is None
+    body = json.loads(reuse._regions_body(b'{"case_id": "a", "regions": []}', "c", "d", "t"))
+    assert body == {"case_id": "c", "document_id": "d", "title": "t", "regions": []}

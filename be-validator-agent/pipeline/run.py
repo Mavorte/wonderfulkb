@@ -287,15 +287,16 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
         row["pages_failed"] = set(failed)
     _classify(options, report, row, previous, text, title, len(pages), vision_label)
     _embed(options, report, row, text, pngs)
+    _regions(options, report, row, data, prefix)
     if redaction is None:
         _signatures(options, report, row, case_id, document_id, data, prefix)
     else:
         redaction.apply_to_row(row)
         _embed_signature_crops(options, report, row, redaction)
 
-    # Signature detection and the copy check never change the document status (an empty finding is valid as well).
-    degraded = bool(failed) or any(s["status"] in ("failed", "unavailable")
-                                   for name, s in report["steps"].items() if name not in ("signatures", "copy_check"))
+    # Signature detection, regions and the copy check never change the document status (an empty finding is valid).
+    degraded = bool(failed) or any(s["status"] in ("failed", "unavailable") for name, s in report["steps"].items()
+                                   if name not in ("signatures", "copy_check", "regions"))
     if failed and len(failed) == len(pages):
         row["processing_status"] = "failed"
     else:
@@ -358,6 +359,7 @@ def _finish_reused(options, report, reused, started, register, sha256):
     aws = options.get_aws()
     case_id, document_id = row["case_id"], row["document_id"]
     report["steps"]["reuse"] = {"status": "ok", "reused_from": info["reused_from"]}
+    _regions_for_reused(options, report, row)
     if not options.defer_copy_check:
         _copy_check(options, report, case_id)  # copy_suspicion of the copied signatures is recomputed within this case
     report.update(finished_at=row["updated_at"], seconds=round(time.monotonic() - started, 1),
@@ -411,6 +413,91 @@ def _embed(options, report, row, text, pngs):
         return
     _step(report, "embed", lambda: adapters.write_vectors(row["case_id"], row["document_id"], text, pngs,
                                                          label=row.get("label")))
+
+
+def _regions(options, report, row, data, prefix):
+    """Paragraph regions (bbox, text, label) of the masked PDF into analysis/<doc>/regions.json; the row points to it.
+    Never changes the document status. With `--skip regions` an existing regions.json is kept and referenced."""
+    aws = options.get_aws()
+    key = prefix + "regions.json"
+    if "regions" in options.settings.skip:
+        if aws.get_bytes_or_none(key) is not None:
+            row["regions_s3_key"] = key
+        report["steps"]["regions"] = {"status": "skipped"}
+        return
+
+    def work():
+        result, stats = adapters.regions(data, row.get("label"), use_llm=options.settings.regions_llm)
+        body = {"case_id": row["case_id"], "document_id": row["document_id"], "title": row.get("title"),
+                "document_label": row.get("label"), **result}
+        aws.put_bytes(key, json.dumps(body, ensure_ascii=False).encode(), "application/json")
+        row["regions_s3_key"] = key
+        return stats
+
+    stats = _step(report, "regions", work)
+    if stats is not None:
+        report["steps"]["regions"]["labels"] = stats
+
+
+def _regions_for_reused(options, report, row):
+    """A reused analysis whose source had no regions.json: build regions from this document's own masked copy
+    (no Textract, no vision; only the labelling model). Without a masked copy the document stays without regions."""
+    if row.get("regions_s3_key") or "regions" in options.settings.skip or not row.get("redacted_s3_key"):
+        return
+    aws = options.get_aws()
+    data = aws.get_bytes_or_none(row["redacted_s3_key"])
+    if data is not None:
+        _regions(options, report, row, data, analysis_prefix(row["case_id"], row["document_id"]))
+
+
+def regions_case(case_id, options=None, document_ids=None):
+    """Only the `regions` step for already processed documents of a case: regions.json from each document's masked
+    copy (`redacted_s3_key`), `regions_s3_key` set on the row (UpdateItem, nothing else in the row changes) and
+    `steps.regions` in run.json. Text, labels, vectors and signatures are not recomputed. A document without a masked
+    copy is skipped (`not_redacted`): regions never come from the readable original. Returns one entry per document."""
+    options = options or Options()
+    aws = options.get_aws()
+    from boto3.dynamodb.conditions import Key
+    rows, kwargs = [], {"KeyConditionExpression": Key("case_id").eq(case_id)}
+    while True:
+        page = aws.analysis.query(**kwargs)
+        rows += page["Items"]
+        if "LastEvaluatedKey" not in page:
+            break
+        kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+    out = []
+    for row in sorted(rows, key=lambda r: (r.get("title", ""), r["document_id"])):
+        document_id = row["document_id"]
+        if document_ids and document_id not in document_ids:
+            continue
+        entry = {"document_id": document_id, "title": row.get("title")}
+        out.append(entry)
+        if row.get("processing_status") not in ("completed", "partial"):
+            entry["status"] = "not_ready"
+            continue
+        if not row.get("redacted_s3_key"):
+            entry["status"] = "not_redacted"
+            continue
+        prefix = analysis_prefix(case_id, document_id)
+        report = {"steps": {}}
+        work = {k: row[k] for k in ("case_id", "document_id", "title", "label") if k in row}
+        data = aws.get_bytes(row["redacted_s3_key"])
+        _regions(options, report, work, data, prefix)
+        step = report["steps"]["regions"]
+        entry.update(status=step["status"], **({"error": step["error"]} if "error" in step else {}),
+                     **({"labels": step["labels"]} if "labels" in step else {}))
+        if work.get("regions_s3_key"):
+            aws.analysis.update_item(Key={"case_id": case_id, "document_id": document_id},
+                                     UpdateExpression="SET regions_s3_key = :k", ConditionExpression="attribute_exists(case_id)",
+                                     ExpressionAttributeValues={":k": work["regions_s3_key"]})
+            entry["regions_s3_key"] = work["regions_s3_key"]
+        raw = aws.get_bytes_or_none(prefix + "run.json")
+        if raw is not None:
+            run = json.loads(raw)
+            run.setdefault("steps", {})["regions"] = dict(step, at=now(), via="regions_case")
+            aws.put_bytes(prefix + "run.json", json.dumps(run, ensure_ascii=False, indent=1, default=str).encode(),
+                          "application/json")
+    return out
 
 
 def _embed_signature_crops(options, report, row, redaction):
