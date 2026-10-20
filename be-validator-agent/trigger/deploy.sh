@@ -11,7 +11,8 @@
 # MaxConcurrency, BedrockRpm, WorkerMemory as environment variables of the same name (see template.yaml).
 # The KMS key ARN of the signature crops is read from alias/wonderfulkb-signatures (read only).
 set -euo pipefail
-cd "$(dirname "$0")"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 export AWS_PROFILE="${AWS_PROFILE:-hackathon}" AWS_REGION=eu-central-1 AWS_DEFAULT_REGION=eu-central-1 SAM_CLI_TELEMETRY=0
 TABLES_STACK=wonderfulkb-documents-table
 TRIGGER_STACK=wonderfulkb-trigger
@@ -19,7 +20,7 @@ ECR_STACK=wonderfulkb-trigger-ecr
 DOCS_TABLE=wonderfulkb-uw-documents
 ANALYSIS_TABLE=wonderfulkb-uw-document-analysis
 RAW_BUCKET=wonderfulkb-raw-document-storage
-ORIGINAL_TEMPLATE=../../documents-table/template.yaml
+ORIGINAL_TEMPLATE="$(cd "$SCRIPT_DIR/../../be-intake/documents-table" && pwd)/template.yaml"
 PY=.venv/bin/python; [ -x "$PY" ] || PY=python3
 SAM=.venv-lint/bin/sam; [ -x "$SAM" ] || SAM=$(command -v sam || true)
 LINT=.venv-lint/bin/cfn-lint; [ -x "$LINT" ] || LINT=$(command -v cfn-lint || true)

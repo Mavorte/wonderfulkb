@@ -5,6 +5,16 @@ Parameters:
   RawBucket:
     Type: String
     Default: wonderfulkb-raw-document-storage
+  AuditTableName:
+    Type: String
+    Default: wonderfulkb-uw-document-processing-audit
+  MonitorAuthSecretArn:
+    Type: String
+    Default: ""
+    Description: Dedicated server-owned monitoring SERVICE policy secret ARN (never its value)
+
+Conditions:
+  HasMonitorAuth: !Not [!Equals [!Ref MonitorAuthSecretArn, ""]]
 
 Resources:
   ApiKeySecret:
@@ -20,6 +30,10 @@ Resources:
 
   InstanceRole:
     Type: AWS::IAM::Role
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Existing intake instance role supports the separate audit store and fresh server-owned SERVICE grants.
+        must: Audit access is PutItem/Query on the separate table; monitoring policy read is GetSecretValue on the exact optional secret ARN. Preserve existing upload permissions.
     Properties:
       RoleName: wonderfulkb-ingest-instance
       AssumeRolePolicyDocument:
@@ -55,9 +69,23 @@ Resources:
                 Action: [dynamodb:Query, dynamodb:UpdateItem]
                 Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wonderfulkb-uw-content-hashes"
               - Effect: Allow
+                Action: [dynamodb:PutItem, dynamodb:Query]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AuditTableName}"
+              - Effect: Allow
                 Action: secretsmanager:GetSecretValue
                 Resource: !Ref ApiKeySecret
+        - !If
+          - HasMonitorAuth
+          - PolicyName: monitoring-service-policy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action: secretsmanager:GetSecretValue
+                  Resource: !Ref MonitorAuthSecretArn
+          - !Ref AWS::NoValue
 
 Outputs:
+  MonitorAuthSecretArn: {Value: !Ref MonitorAuthSecretArn}
   SecretArn: {Value: !Ref ApiKeySecret}
   InstanceRoleArn: {Value: !GetAtt InstanceRole.Arn}

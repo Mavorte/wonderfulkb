@@ -15,6 +15,7 @@ from . import adapters, pdf as pdfmod, redaction_step
 from .aws import Aws
 from .config import PIPELINE_VERSION, STEPS, Settings
 from .vision import MantleVision, VisionError, split_label_reply
+from document_processing.audit.audit_listener import ExecutionAudit, from_env
 
 log = logging.getLogger("pipeline")
 DOC_NAMESPACE = uuid.UUID("5d3f0a52-7c1e-4a8b-9b36-6f1c2e0d7a11")  # same as the ingest service
@@ -37,6 +38,7 @@ class Options:
     aws: Aws = None
     key_provider: object = None    # signature_privacy KeyProvider for the crops; default: PRIVACY_KMS_KEY_ID / WKB_LOCAL_MASTER_KEY
     signature_detector: object = None  # anything with detect(pymupdf doc) -> [Detection]; default: Textract chain
+    audit_listener_factory: object = from_env  # dependency only; execution identity stays local to each call
 
     def get_aws(self):
         if self.aws is None:
@@ -129,20 +131,27 @@ def label_tools_for(options, pages, previous):
         return None
 
 
-def transcribe_scans(pages, pdf, options, report, label_tools=None):
+def transcribe_scans(pages, pdf, options, report, label_tools=None, audit=None):
     """Visual transcription of pages without a usable text layer, cached in S3 per model and page.
     Returns (failed page numbers, label dict from the last visual call or None)."""
     settings, aws = options.settings, options.get_aws()
     failed, label, vision_pages = [], None, [p for p in pages if p.needs_vision]
     labelled = vision_pages[-1].number if label_tools and vision_pages else None
     for page in vision_pages:
+        page_started = time.monotonic()
         if options.no_vision:
             failed.append(page.number)
             report["pages"][page.number - 1].update(method="failed", error="VISION_DISABLED")
+            if audit is not None:
+                audit.emit("PageFailed", stage="page_transcription", page_number=page.number,
+                           error_code="PAGE_TRANSCRIPTION_FAILED", duration_ms=(time.monotonic() - page_started) * 1000)
             continue
         if len(vision_pages) > settings.max_vision_pages and page.number > settings.max_vision_pages:
             failed.append(page.number)
             report["pages"][page.number - 1].update(method="failed", error="TOO_MANY_PAGES_FOR_VISION")
+            if audit is not None:
+                audit.emit("PageFailed", stage="page_transcription", page_number=page.number,
+                           error_code="PAGE_TRANSCRIPTION_FAILED", duration_ms=(time.monotonic() - page_started) * 1000)
             continue
         ask_label = page.number == labelled
         try:
@@ -162,6 +171,8 @@ def transcribe_scans(pages, pdf, options, report, label_tools=None):
                     context = "\f".join(p.text for p in pages[:page.number - 1])
                     request = {"section": section, "schema": schema, "pages": len(pages),
                                "context": context[:LABEL_CONTEXT_CHARS]}
+                if audit is not None:
+                    audit.emit("StepStarted", stage="page_transcription", page_number=page.number)
                 raw = options.get_vision().transcribe(png, label=request)
                 aws.put_bytes(cache_key, raw.encode("utf-8"), "text/plain; charset=utf-8")
                 report["vision_calls"] += 1
@@ -172,12 +183,23 @@ def transcribe_scans(pages, pdf, options, report, label_tools=None):
             else:
                 page.text = raw
             report["pages"][page.number - 1].update(method="vision", chars=len(page.text))
+            if audit is not None:
+                if report["pages"][page.number - 1].get("cached"):
+                    audit.emit("PageCacheReused", stage="page_transcription", page_number=page.number,
+                               cached_status="completed", cached_method="vision", cached_model=settings.vision_model)
+                else:
+                    audit.emit("PageCompleted", stage="page_transcription", page_number=page.number,
+                               method="vision", model=settings.vision_model,
+                               duration_ms=(time.monotonic() - page_started) * 1000)
         except Exception as error:  # noqa: BLE001 - one bad page must not lose the document
             code = error.code if isinstance(error, VisionError) else type(error).__name__
             log.warning("page %s: visual transcription failed: %s", page.number, code)
             page.text = ""
             failed.append(page.number)
             report["pages"][page.number - 1].update(method="failed", error=code)
+            if audit is not None:
+                audit.emit("PageFailed", stage="page_transcription", page_number=page.number,
+                           error_code="PAGE_TRANSCRIPTION_FAILED", duration_ms=(time.monotonic() - page_started) * 1000)
     return failed, label
 
 
@@ -195,14 +217,21 @@ def _step(report, name, function):
     return None
 
 
-def run_document(case_id, document_id=None, *, source=None, options=None):
+def run_document(case_id, document_id=None, *, source=None, options=None, execution_context=None,
+                 audit_listener_factory=None):
     """Process one document and return the analysis row (also written to DynamoDB).
 
     Raises DocumentNotFound when the document is unknown; every other failure ends as processing_status
     `failed` / `partial` in the row, with details in analysis/<document_id>/run.json."""
     options = options or Options()
+    audit = ExecutionAudit(execution_context, audit_listener_factory or options.audit_listener_factory)
+    if execution_context is not None and (execution_context.case_id != case_id or
+                                          execution_context.document_id != document_id):
+        raise ValueError("execution context document mismatch")
     settings, aws = options.settings, options.get_aws()
     started = time.monotonic()
+    source_started = time.monotonic()
+    audit.emit("StepStarted", stage="source_validation")
     if document_id is None and source is None:
         raise ValueError("document_id is required unless a direct S3 source is given")
     if source is not None:
@@ -223,9 +252,13 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
     try:
         data = aws.get_bytes(key)
     except Exception as error:  # noqa: BLE001
-        return _fail(aws, case_id, document_id, title, f"DOWNLOAD_FAILED: {type(error).__name__}")
+        audit.emit("StepFailed", stage="source_validation", error_code="SOURCE_VALIDATION_FAILED",
+                   duration_ms=(time.monotonic() - source_started) * 1000)
+        return _fail(aws, case_id, document_id, title, f"DOWNLOAD_FAILED: {type(error).__name__}", audit=audit)
     if len(data) > settings.max_pdf_bytes:
-        return _fail(aws, case_id, document_id, title, "PDF_TOO_LARGE")
+        audit.emit("StepFailed", stage="source_validation", error_code="SOURCE_VALIDATION_FAILED",
+                   duration_ms=(time.monotonic() - source_started) * 1000)
+        return _fail(aws, case_id, document_id, title, "PDF_TOO_LARGE", audit=audit)
     if not document_id:
         document_id = derive_document_id(case_id, data)
         previous, done = begin(document_id)
@@ -239,14 +272,16 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
     sha256 = hashlib.sha256(data).hexdigest()
     reused = _try_reuse(options, report, case_id, document_id, title, sha256, previous)
     if reused is not None:
-        return _finish_reused(options, report, reused, started, source is None, sha256)
+        return _finish_reused(options, report, reused, started, source is None, sha256, audit=audit)
     redaction = None
     if settings.redact:
         # the readable original goes no further than this step: everything below reads the masked copy
         try:
             redaction = redaction_step.run(options, case_id, document_id, key, data)
         except redaction_step.RedactionError as error:
-            return _fail(aws, case_id, document_id, title, error.code)
+            audit.emit("StepFailed", stage="source_validation", error_code="SOURCE_VALIDATION_FAILED",
+                       duration_ms=(time.monotonic() - source_started) * 1000)
+            return _fail(aws, case_id, document_id, title, error.code, audit=audit)
         data = redaction.redacted
         report["redaction"] = redaction.info
         report["redacted"] = True
@@ -257,7 +292,12 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
     try:
         pdf = pdfmod.open_pdf(data)
     except pdfmod.InvalidPdf as error:
-        return _fail(aws, case_id, document_id, title, str(error))
+        audit.emit("StepFailed", stage="source_validation", error_code="SOURCE_VALIDATION_FAILED",
+                   duration_ms=(time.monotonic() - source_started) * 1000)
+        return _fail(aws, case_id, document_id, title, str(error), audit=audit)
+    audit.emit("StepFinished", stage="source_validation", duration_ms=(time.monotonic() - source_started) * 1000)
+    extraction_started = time.monotonic()
+    audit.emit("StepStarted", stage="extraction")
     try:
         pages = pdfmod.extract_pages(pdf, data)
         if options.force_vision:
@@ -268,12 +308,18 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
                             ("blank" if p.reason == "BLANK_PAGE" else "text_layer"),
                             "reason": p.reason, "chars": len(p.text)} for p in pages]
         vision_label = None
-        failed, vision_label = transcribe_scans(pages, pdf, options, report, label_tools_for(options, pages, previous))
+        for page in pages:
+            if not page.needs_vision:
+                audit.emit("PageCompleted", stage="page_transcription", page_number=page.number, method="native")
+        failed, vision_label = transcribe_scans(pages, pdf, options, report, label_tools_for(options, pages, previous), audit=audit)
         pngs = [pdfmod.render_png(pdf, i, settings.page_dpi, settings.max_pixels) for i in range(len(pdf))]
     except Exception as error:  # noqa: BLE001
         pdf.close()
-        return _fail(aws, case_id, document_id, title, f"EXTRACTION_FAILED: {type(error).__name__}: {error}")
+        audit.emit("StepFailed", stage="extraction", error_code="EXTRACTION_FAILED",
+                   duration_ms=(time.monotonic() - extraction_started) * 1000)
+        return _fail(aws, case_id, document_id, title, f"EXTRACTION_FAILED: {type(error).__name__}: {error}", audit=audit)
     pdf.close()
+    audit.emit("StepFinished", stage="extraction", duration_ms=(time.monotonic() - extraction_started) * 1000)
 
     text = "\f".join(p.text for p in pages)
     text_key = prefix + "text.txt"
@@ -289,7 +335,7 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
     _embed(options, report, row, text, pngs)
     _regions(options, report, row, data, prefix)
     if redaction is None:
-        _signatures(options, report, row, case_id, document_id, data, prefix)
+        _signatures(options, report, row, case_id, document_id, data, prefix, audit=audit)
     else:
         redaction.apply_to_row(row)
         _embed_signature_crops(options, report, row, redaction)
@@ -306,8 +352,7 @@ def run_document(case_id, document_id=None, *, source=None, options=None):
         _copy_check(options, report, case_id)
     report.update(finished_at=row["updated_at"], seconds=round(time.monotonic() - started, 1),
                   processing_status=row["processing_status"], pages_failed=sorted(failed))
-    aws.put_bytes(prefix + "run.json", json.dumps(report, ensure_ascii=False, indent=1).encode(), "application/json")
-    _put_row(aws, row)
+    _publish_result(aws, row, prefix + "run.json", json.dumps(report, ensure_ascii=False, indent=1).encode(), audit)
     if source is None:
         _register_hash(report, case_id, document_id, sha256, row.get("label"))
     return row
@@ -354,7 +399,7 @@ def _try_reuse(options, report, case_id, document_id, title, sha256, previous):
     return row, info
 
 
-def _finish_reused(options, report, reused, started, register, sha256):
+def _finish_reused(options, report, reused, started, register, sha256, audit=None):
     row, info = reused
     aws = options.get_aws()
     case_id, document_id = row["case_id"], row["document_id"]
@@ -364,12 +409,42 @@ def _finish_reused(options, report, reused, started, register, sha256):
         _copy_check(options, report, case_id)  # copy_suspicion of the copied signatures is recomputed within this case
     report.update(finished_at=row["updated_at"], seconds=round(time.monotonic() - started, 1),
                   processing_status=row["processing_status"], pages_failed=[])
-    aws.put_bytes(analysis_prefix(case_id, document_id) + "run.json",
-                  json.dumps(report, ensure_ascii=False, indent=1, default=str).encode(), "application/json")
-    _put_row(aws, row)
+    _publish_result(aws, row, analysis_prefix(case_id, document_id) + "run.json",
+                    json.dumps(report, ensure_ascii=False, indent=1, default=str).encode(), audit,
+                    publication_complete=info.get("pages_copied") == row.get("page_count"))
     if register:
         _register_hash(report, case_id, document_id, sha256, row.get("label"))
     return row
+
+
+def _publish_result(aws, row, key, body, audit, publication_complete=True):
+    started = time.monotonic()
+    if audit is not None:
+        audit.emit("StepStarted", stage="result_publishing")
+    try:
+        aws.put_bytes(key, body, "application/json")
+        _put_row(aws, row)
+    except Exception:
+        if audit is not None:
+            audit.emit("StepFailed", stage="result_publishing", error_code="RESULT_PUBLISHING_FAILED",
+                       duration_ms=(time.monotonic() - started) * 1000)
+        raise
+    if not publication_complete:
+        # The reuse owner tolerates missing copies in the business row. That is
+        # not proof of a complete owned publication; never upgrade its audit.
+        if audit is not None:
+            audit.emit("StepFailed", stage="result_publishing", error_code="RESULT_PUBLISHING_FAILED",
+                       duration_ms=(time.monotonic() - started) * 1000)
+        return
+    if audit is not None:
+        audit.emit("StepFinished", stage="result_publishing", duration_ms=(time.monotonic() - started) * 1000)
+    _published(audit, row)
+
+
+def _published(audit, row):
+    if audit is not None:
+        audit.emit("ResultPublished", result_status=row["processing_status"])
+        audit.emit("RunFinished", run_status=row["processing_status"])
 
 
 def _register_hash(report, case_id, document_id, sha256, label):
@@ -514,7 +589,7 @@ def _embed_signature_crops(options, report, row, redaction):
         redaction.drop_crops()
 
 
-def _signatures(options, report, row, case_id, document_id, data, prefix):
+def _signatures(options, report, row, case_id, document_id, data, prefix, audit=None):
     aws = options.get_aws()
     key = prefix + "signatures.json"
     if aws.get_bytes_or_none(key) is not None:
@@ -541,7 +616,16 @@ def _signatures(options, report, row, case_id, document_id, data, prefix):
         aws.put_bytes(key, json.dumps(body, ensure_ascii=False).encode(), "application/json")
         row["signatures_s3_key"] = key
 
+    started = time.monotonic()
+    if audit is not None:
+        audit.emit("StepStarted", stage="signature_detection")
     _step(report, "signatures", work)
+    if audit is not None:
+        if report["steps"]["signatures"]["status"] == "ok":
+            audit.emit("StepFinished", stage="signature_detection", duration_ms=(time.monotonic() - started) * 1000)
+        else:
+            audit.emit("StepFailed", stage="signature_detection", error_code="SIGNATURE_DETECTION_FAILED",
+                       duration_ms=(time.monotonic() - started) * 1000)
 
 
 def _copy_check(options, report, case_id):
@@ -555,7 +639,7 @@ def _copy_check(options, report, case_id):
     return result
 
 
-def _fail(aws, case_id, document_id, title, reason):
+def _fail(aws, case_id, document_id, title, reason, audit=None):
     log.error("%s/%s failed: %s", case_id, document_id, reason)
     if not document_id:
         raise RuntimeError(reason)
@@ -563,7 +647,9 @@ def _fail(aws, case_id, document_id, title, reason):
     aws.put_bytes(analysis_prefix(case_id, document_id) + "run.json",
                   json.dumps({"processing_status": "failed", "error": reason, "failed_at": now(),
                               "pipeline_version": PIPELINE_VERSION}).encode(), "application/json")
-    return aws.analysis.get_item(Key={"case_id": case_id, "document_id": document_id})["Item"]
+    row = aws.analysis.get_item(Key={"case_id": case_id, "document_id": document_id})["Item"]
+    _published(audit, row)
+    return row
 
 
 def _final_copy_check(case_id, options):

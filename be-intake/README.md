@@ -3,7 +3,7 @@
 Stav: **služba běží na App Runner; adresu a API klíč dostanete od nás.** Formální popis: [openapi-ingest.yaml](openapi-ingest.yaml). Navazuje na API případů ([openapi-validator-agent.yaml](../be-document-processing/contracts/openapi-validator-agent.yaml), `POST /cases`): case musí existovat (zakládá se přes `POST /cases`).
 
 - Base URL: `<UPLOAD_URL>` (tvar `https://<id>.<region>.awsapprunner.com/v1`, všechny cesty níže jsou pod `/v1`). **Je to jiná adresa než u API případů a dokumentů (`wonderfulkb-agent-api`).** Upload běží jako samostatný kontejner, protože API Gateway a Lambda by 4–5 MB soubory nezvládly s rezervou.
-- Autentizace: hlavička `x-api-key: <klíč>` u každého volání pod `/v1`. **Je to stejný klíč jako u API případů a dokumentů (`wonderfulkb-agent-api`)**, jeden klíč pro obě služby. Klíč kontroluje sama služba, ne API Gateway. Klíč nikam nezapisujte do repozitáře ani do kódu prohlížeče, volejte ho z backendu.
+- Autentizace upload/list: hlavička `x-api-key: <klíč>`. **Je to stejný klíč jako u API případů a dokumentů (`wonderfulkb-agent-api`)**, jeden klíč pro obě služby. Monitoring `/processing/documents/.../events` má samostatnou SERVICE Bearer autorizaci popsanou níže. Klíče kontroluje služba, ne API Gateway; patří pouze na backend.
 - Kontrola dostupnosti: `GET /healthz` (bez `/v1`, bez klíče) vrací `200 {"status": "ok"}`.
 - Formát: nahrání je `multipart/form-data`, ostatní odpovědi jsou JSON (UTF-8), časy v ISO 8601 (UTC).
 - Chyby: `{"error": "popis"}` s kódem 400 (špatný požadavek, např. chybí `files`, neplatné `case_id`, parametr mimo rozsah), 401 (chybí klíč), 403 (špatný klíč), 404 (case neexistuje), 413 (moc velké), 415 (není PDF), 5xx (zkuste znovu). Kód 429 tu není, služba nemá usage plán. Klíč se kontroluje před čtením těla, takže bez platného klíče se nic nenahraje.
@@ -63,3 +63,167 @@ Všechny parametry jsou volitelné. Řazeno podle času přijetí (`received_at`
 ## Co zatím neplatí
 - Adresu a klíč vám předáme my, nejsou součástí repozitáře ani dokumentace.
 - Mazání dokumentů a stav jejich zpracování přijdou později.
+
+## Lokální build image
+
+Z kořene repozitáře (build context zahrnuje interní Python package):
+
+```bash
+docker build --platform linux/amd64 -f be-intake/app/Dockerfile -t wonderfulkb-ingest:filereceived-local .
+```
+
+Image instaluje wheel `wonderfulkb-document-processing` bez worker dependencies;
+audit používá intake boto3/botocore. `AUDIT_TABLE_NAME` zapíná best-effort
+FileReceived po úspěšném S3 + metadata commitu; prázdná hodnota jej vypíná.
+Build/import a konfigurační kontrakt: [file-received-build-contract.md](../plans/monitoring/file-received-build-contract.md).
+## Document-events SERVICE authorization
+
+`GET /v1/cases/{case_id}/processing/documents/{document_id}/events` accepts a
+server-only `Authorization: Bearer <credential>` over HTTPS. Upload API keys,
+browser claims, case existence and continuation tokens never grant monitoring
+access. The monitoring credential grants no upload/list access.
+
+Set `PROCESSING_MONITOR_AUTHORIZATION_SECRET_ARN` to the dedicated eu-central-1
+Secrets Manager ARN and use that same ARN for the existing `MonitorAuthSecretArn`
+template parameter. Its optional IAM statement grants only GetSecretValue on
+that exact ARN; it does not change the upload secret or its policy. This is an
+ARN reference in ordinary App Runner environment configuration, not an injected
+secret value: AWSCURRENT is read anew on every monitoring request.
+
+The versioned server-owned JSON is:
+
+```json
+{
+  "version": 1,
+  "credentials": [{"sha256": "<64 lowercase hex SHA-256>", "principal_id": "monitor-synthetic"}],
+  "principals": [{"id": "monitor-synthetic", "type": "SERVICE", "enabled": true,
+                  "case_ids": ["explicit-existing-synthetic-case-id"]}],
+  "retained_documents": []
+}
+```
+
+Generate raw credentials with a cryptographically secure generator using at
+least 32 random bytes (256 bits). Store only digests in this policy. Deliver the
+raw credential only via the existing secure operator channel; never put it,
+policy contents or credential digests in deployment evidence. Provision only
+the explicitly approved existing synthetic case; empty grants revoke access,
+and wildcards, duplicate bindings and malformed entries are rejected.
+
+Membership is checked with a strongly consistent exact case/document GetItem;
+no case business row is required. Only when that document row is absent may an
+exact retained record establish membership:
+`{"case_id":"...","document_id":"...","source_revision":"verified-commit-reference","verified_at":"2026-10-20T10:00:00Z"}`.
+The operator must derive this record from previously verified committed
+metadata and retain its real source revision/verification provenance. A guessed
+key or an audit event is not evidence. A read failure never falls back to this
+record, and the current case grant is still mandatory.
+
+Rotation: add a second digest bound to the same principal, securely switch the
+caller and verify it, then remove the old digest. Revoke by removing a digest,
+disabling the principal or removing its case grant. Use an idempotency token and
+expected old VersionId when moving AWSCURRENT; abort on version drift. No
+process restart or last-known-good authorization cache is involved.
+
+Responses always carry `Cache-Control: private, no-store`. Missing/forged identity
+or revoked/ungranted case returns 403 before membership/audit I/O; unknown or
+foreign document 404; invalid scope/limit/cursor 400; required authorization,
+membership, audit configuration/read/decoding failure 503. Empty history is 200
+only after successful authorization, membership and a successful bounded read.
+The DTO is `{items,next_token,observed_at,coverage}` with `coverage: partial`.
+Limit is 1–100 (default 50); tokens are document/operation-bound, max 4096 chars.
+
+**Unresolved contract gate:** the existing one-Query reader continues in
+`EVENT#event_id` order. It is neither a snapshot nor a globally chronological
+timeline; sorting individual pages cannot make it chronological. The proposal's
+`occurred_at,event_id` requirement has not been waived. This implementation does
+not claim chronological acceptance or deployed/live success pending resolution
+by the contract owner. Refresh begins from the first page; late inserts may be
+missed during an old continuation.
+
+For AWS TEST delivery, inspect current ownership/revision/config and fixture
+processing routing first. Retain a verified recovery image/config, acquire the
+execution lock, recheck revision/config immediately before mutation, preserve
+all unrelated configuration and deploy the verified immutable artifact via the
+existing owner procedure. Verify the actual deployed digest and bounded
+upload→post-commit FileReceived→GET tuple. Do not upload until the existing
+fixture's no-provider path has been verified. Task-local evidence and budgets:
+`plans/monitoring/task-cf441015-6bba-4862-8200-b2c0047f6905-http-evidence.md`.
+
+### Existing lifecycle policy compatibility
+
+The shared authorization module also normalizes the existing lifecycle policy
+below into the same credential/grant/membership checks. Legacy document grants
+remain exact document allowlists. `MONITOR_AUTH_SECRET_ARN` is a fallback only
+when the new ARN is unset; configuring both selects the new policy for all
+monitoring authorization. Lifecycle routes retain their additional intake-key
+guard. They reuse the shared adapter and do not implement another secret reader.
+
+The lifecycle HTTP routes require both the existing `x-api-key` and an additional
+server-only `Authorization: Bearer <monitoring credential>` header over HTTPS.
+Do not send this credential to browsers or log either header. Client principal
+claims and cursor contents never grant access.
+
+Configure `MONITOR_AUTH_SECRET_ARN` on the App Runner service and pass that same
+ARN as the `MonitorAuthSecretArn` CloudFormation parameter. The instance role
+gets only `secretsmanager:GetSecretValue` on that exact secret. Preserve all
+existing environment variables, secret references and instance configuration
+when updating App Runner. `AUDIT_TABLE_NAME` binds the bounded read table as well
+as the independent fail-open upload audit writer.
+
+The dedicated secret's `AWSCURRENT` JSON schema is:
+
+```json
+{
+  "schema_version": 1,
+  "credentials": [{
+    "credential_id": "monitor-v1",
+    "sha256": "<64 lowercase hex SHA-256 of the bearer credential>",
+    "state": "active",
+    "principal_type": "SERVICE",
+    "principal_id": "monitor-synthetic",
+    "grants": [{
+      "case_id": "synthetic-case-id",
+      "documents": [{"document_id": "synthetic-document-id", "membership": "current"}]
+    }]
+  }]
+}
+```
+
+Use a cryptographically random credential. The placeholder digest above must be
+replaced. IDs are exact opaque IDs, never wildcards. Current membership is checked
+with a consistent document GetItem after the explicit grant check. Retained
+audit-only membership uses `membership: retained` and an additional server-owned
+`provenance` object with exact keys `record_id`, `verified_by`, `verified_at`
+(UTC ISO timestamp). An operator must verify the original case/document ownership
+before issuing this retained record; audit rows are not membership evidence.
+Do not grant real business documents to synthetic test credentials.
+
+Each request retrieves and validates the current secret with bounded SDK timeouts
+and one attempt; there is no stale grant fallback. The shared adapter fails
+closed before audit reads. The legacy lifecycle facade retains its own public
+error mapping; the document-events status contract is specified above.
+
+For rotation, retain the prior recoverable secret version securely, read the
+current VersionId, create a candidate version with an explicit idempotency token,
+and move AWSCURRENT with the expected old version (`RemoveFromVersionId`) as a
+concurrency guard. During a bounded overlap the policy may list two distinct
+active credential versions. Verify the new version through an entitled read,
+then mark the old credential `revoked` in a guarded successor version. Read back
+VersionId and verify the next request using the old credential is denied. Never
+put raw credentials or policy bodies in deployment evidence. Abort on version or
+service-revision drift; preserve recovery material outside the repository.
+
+### Run event observations
+
+`GET /v1/cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/events`
+uses the same authorization, membership, reader and safe event DTO as document
+events. `limit` (1–100, default 50) bounds evaluated document events, not matching
+run events. Exactly one document Query is performed; no Scan or fill-page loop.
+FileReceived without run identity and other runs are excluded. Empty `items` can
+have a `next_token`; an unobserved run is not declared nonexistent. Every response
+has `coverage: partial`, UTC `observed_at`, and `Cache-Control: private, no-store`.
+The opaque token (maximum 8192 characters) binds operation/case/document/run and
+resumes from the last evaluated event position. Invalid/cross-scope cursors are
+400; each continuation repeats current authorization (403) and membership (404).
+Read/decoder/DTO failures are 503. Technical `EVENT#event_id` ordering is neither
+global chronology nor a snapshot; this endpoint makes no completeness claim.

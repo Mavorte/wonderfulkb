@@ -16,7 +16,9 @@ def test_insert_creates_queued_row_and_one_message(ctx):
     row = ctx.get_row(CASE, "d1")
     assert row["processing_status"] == "queued" and row["title"] == "Smlouva.pdf"
     assert {"label_status", "description", "page_count", "pipeline_version", "updated_at"} <= set(row)
-    assert bodies(drain(ctx)) == [{"v": 1, "type": "document", "case_id": CASE, "document_id": "d1"}]
+    sent = bodies(drain(ctx))
+    assert len(sent) == 1 and sent[0]["v"] == 2 and sent[0]["document_id"] == "d1"
+    assert sent[0]["run_id"] == ctx.execution.get_item(Key={"pk": f"CASE#{CASE}#DOC#d1", "sk": "STATE"})["Item"]["run_id"]
 
 
 def test_only_inserts_start_work(ctx):

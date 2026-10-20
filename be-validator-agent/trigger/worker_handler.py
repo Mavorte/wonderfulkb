@@ -8,6 +8,8 @@ import json
 import logging
 import resource
 import sys
+import time
+from document_processing.audit.audit_listener import ExecutionAudit
 
 from . import case_step, common
 
@@ -52,26 +54,50 @@ def dead_letter(ctx, body, reason):
                          MessageAttributes={"reason": {"DataType": "String", "StringValue": reason[:200]}})
 
 
-def process_document(ctx, message):
+def process_document(ctx, message, execution_context=None):
     case_id, document_id = message["case_id"], message["document_id"]
     if ctx.get_document(case_id, document_id) is None:
         log.error("%s/%s is not in %s, message dropped", case_id, document_id, ctx.documents_name)
         common.emit_metric("UnknownDocument")
         return "unknown"
-    outcome = common.claim_document(ctx, case_id, document_id)
+    if execution_context is not None:
+        message = {**message, "run_id": execution_context.run_id,
+                   "generation": execution_context.generation}
+    if "run_id" not in message:
+        # A legacy delivery can only claim an explicitly bootstrapped legacy generation;
+        # it must never claim a newer owner-issued generation.
+        from .processing_execution_claims import legacy_binding
+        binding = legacy_binding(ctx, case_id, document_id)
+        if binding is None:
+            return "stale"
+        message = {**message, **binding}
+    outcome = common.claim_document(ctx, case_id, document_id, message["run_id"], message["generation"])
     if outcome != "claimed":
         log.info("%s/%s: %s, nothing to do", case_id, document_id, outcome)
         return outcome
+    audit = ExecutionAudit(outcome.execution_context, lambda: ctx.audit_listener)
+    started = time.monotonic()
     try:
-        row = _pipeline_run()(case_id, document_id, options=options())
+        row = _pipeline_run()(case_id, document_id, options=options(),
+                               execution_context=outcome.execution_context,
+                               audit_listener_factory=lambda: ctx.audit_listener)
     except Exception as error:
         _remember(ctx, case_id, document_id, f"{type(error).__name__}: {error}")
+        audit.emit("AttemptFinished", attempt_status="failed", error_code="PROCESSING_FAILED",
+                   duration_ms=(time.monotonic() - started) * 1000)
         raise
     status = row.get("processing_status")
     rss_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024 * 1024 if sys.platform == "darwin" else 1024)
     log.info("%s/%s: %s (max rss %d MB)", case_id, document_id, status, rss_mb)
-    if status in common.TERMINAL and common.case_ready(ctx, case_id):
-        common.queue_case(ctx, case_id)
+    try:
+        if status in common.TERMINAL and common.case_ready(ctx, case_id):
+            common.queue_case(ctx, case_id)
+    except Exception:
+        audit.emit("AttemptFinished", attempt_status="failed", error_code="PROCESSING_FAILED",
+                   duration_ms=(time.monotonic() - started) * 1000)
+        raise
+    if status in common.TERMINAL:
+        audit.emit("AttemptFinished", attempt_status=status, duration_ms=(time.monotonic() - started) * 1000)
     return status
 
 

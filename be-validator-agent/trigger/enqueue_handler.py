@@ -45,7 +45,11 @@ def handler(event, _context=None):
                 log.error("stream record %s has no usable keys, dropped", sequence)
                 common.emit_metric("BadStreamRecord")
                 continue
-            outcome = common.enqueue_document(ctx, case_id, document_id, image.get("filename"))
+            source = record.get("eventSourceARN") or "documents-stream"
+            if not sequence:
+                raise ValueError("stream INSERT missing stable SequenceNumber")
+            outcome = common.enqueue_document(ctx, case_id, document_id, image.get("filename"),
+                                              request_key=f"stream:{source}:{sequence}:{case_id}:{document_id}")
             log.info("%s/%s: %s", case_id, document_id, outcome)
             if outcome == "queued":
                 mark_intake(ctx, case_id)

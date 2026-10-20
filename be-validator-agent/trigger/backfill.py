@@ -63,6 +63,7 @@ def main(argv=None):
     ap.add_argument("--rate", type=float, default=30, help="messages per minute (default 30; the workers set the real pace)")
     ap.add_argument("--max", type=int, default=0, help="queue at most this many documents (0 = all)")
     ap.add_argument("--force", action="store_true", help="also rerun completed documents (needs --case)")
+    ap.add_argument("--command-key", help="stable command identity; reuse on retry (required for --apply)")
     ap.add_argument("--queue-url", help="default: look up the queue wonderfulkb-trigger-documents")
     args = ap.parse_args(argv)
     statuses = {s.strip() for s in args.statuses.split(",") if s.strip()}
@@ -72,6 +73,8 @@ def main(argv=None):
         sys.exit("--force needs --case")
     if args.rate <= 0:
         sys.exit("--rate must be positive")
+    if args.apply and not args.command_key:
+        sys.exit("--apply needs --command-key (reuse the same key on retries)")
 
     ctx = common.Context()
     queue_url = args.queue_url
@@ -96,7 +99,8 @@ def main(argv=None):
     pause, result = 60.0 / args.rate, {"queued": 0, "completed": 0, "processing": 0, "failed": 0}
     for number, (case_id, document_id, filename, _) in enumerate(todo, start=1):
         try:
-            outcome = common.enqueue_document(ctx, case_id, document_id, filename, force=args.force)
+            outcome = common.enqueue_document(ctx, case_id, document_id, filename, force=args.force,
+                                              request_key=f"backfill:{args.command_key}:{case_id}:{document_id}")
         except Exception as error:  # noqa: BLE001 - keep going, the failures are listed at the end
             outcome = "failed"
             print(f"  FAILED {case_id}/{document_id}: {type(error).__name__}: {error}", file=sys.stderr)

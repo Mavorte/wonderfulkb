@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from decimal import Decimal
 
 import pytest
@@ -8,6 +9,14 @@ from pipeline import DocumentNotFound, Source, adapters, run_case, run_document
 from .conftest import BUCKET, FakeVision, analysis_row, mixed_pdf, scan_pdf, text_pdf
 
 LONG = ["Kupni smlouva c. 2026/001 mezi prodavajicim a kupujicim", "Cena plneni cini 1 250 000 Kc bez DPH"]
+
+
+def test_worker_audit_capabilities_document_actual_context_blockers():
+    contract = Path(__file__).resolve().parents[3] / "plans/monitoring/worker-instrumentation-contract.md"
+    text = contract.read_text()
+    assert "unsupported" in text.lower()
+    assert "run_id" in text and "attempt_no" in text
+    assert "process_document" in text and "run_document" in text
 
 
 def s3_text(s3, key):

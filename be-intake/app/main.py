@@ -22,6 +22,14 @@ from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException
 
 import content_hashes
+from processing_monitor_lifecycle_routes import router as lifecycle_router
+from processing_monitor_authorization import ServiceDocumentAuthorizer
+from processing_monitor_authorization import AuthorizationSecretSource, authorize_case
+from processing_monitor_routes import router as monitor_router
+from processing_monitor_page_routes import router as page_router
+from processing_monitor_step_routes import router as step_router
+from document_processing.audit.audit_storage import AuditStore
+from document_processing.audit.audit_listener import AuditListener, from_env as audit_from_env
 
 API_KEY = os.environ["API_KEY"]
 BUCKET = os.environ["RAW_BUCKET"]
@@ -46,6 +54,31 @@ s3 = boto3.client("s3", region_name=REGION, endpoint_url=f"https://s3.{REGION}.a
                   config=Config(signature_version="s3v4"))
 
 app = FastAPI(title="wonderfulkb-ingest", docs_url=None, redoc_url=None, openapi_url=None)
+app.state.audit_listener = audit_from_env()
+monitor_config = Config(connect_timeout=1, read_timeout=2, retries={"total_max_attempts": 1})
+monitor_secret_arn = os.environ.get("MONITOR_AUTH_SECRET_ARN", "").strip()
+monitor_secrets = None
+try:
+    if monitor_secret_arn:
+        monitor_secrets = boto3.client("secretsmanager", region_name=REGION, config=monitor_config)
+except Exception:
+    pass  # Configured but unavailable remains fail-closed without payload logging.
+monitor_documents = docs
+app.state.lifecycle_audit_table = None
+try:
+    monitor_ddb = boto3.resource("dynamodb", region_name=REGION, config=monitor_config)
+    monitor_documents = monitor_ddb.Table(os.environ.get("DOCS_TABLE", "wonderfulkb-uw-documents"))
+    audit_table_name = os.environ.get("AUDIT_TABLE_NAME", "").strip()
+    if audit_table_name:
+        app.state.lifecycle_audit_table = monitor_ddb.Table(audit_table_name)
+except Exception:
+    monitor_documents = None
+app.state.lifecycle_authorize_read = ServiceDocumentAuthorizer(monitor_secrets, monitor_secret_arn, monitor_documents)
+app.state.processing_monitor_authorization_source = AuthorizationSecretSource.from_env()
+if not app.state.processing_monitor_authorization_source.arn and monitor_secret_arn:
+    app.state.processing_monitor_authorization_source = AuthorizationSecretSource(monitor_secret_arn, monitor_secrets)
+app.state.processing_monitor_audit_store = AuditStore.from_env()
+app.state.processing_monitor_documents = monitor_documents
 router = APIRouter(prefix="/v1")
 
 
@@ -119,13 +152,30 @@ async def validation_error(_, exc):
 @app.middleware("http")
 async def guard(request: Request, call_next):
     """Auth and size limit run before the body is parsed, so unauthenticated uploads are never read."""
+    monitor = re.match(r"^/v1/cases/([^/]+)/processing/documents(?:/|$)", request.url.path)
+    async def respond(response):
+        if monitor:
+            response.headers["Cache-Control"] = "private, no-store"
+        return response
     if request.url.path == "/healthz":
         return await call_next(request)
+    lifecycle = re.match(r"^/v1/cases/[^/]+/processing/documents/[^/]+/(?:runs(?:/[^/]+)?|audit)/?$", request.url.path)
+    if monitor and not lifecycle:
+        try:
+            request.state.processing_monitor_access = await run_in_threadpool(
+                authorize_case, request.app.state.processing_monitor_authorization_source,
+                request.headers.get("authorization"), monitor.group(1),
+            )
+            return await respond(await call_next(request))
+        except HTTPException as exc:
+            return await respond(err(exc.status_code, str(exc.detail)))
+        except Exception:
+            return await respond(err(500, "internal error"))
     key = request.headers.get("x-api-key")
     if not key:
-        return err(401, "missing x-api-key")
+        return await respond(err(401, "missing x-api-key"))
     if not hmac.compare_digest(key.encode(), API_KEY.encode()):
-        return err(403, "invalid API key")
+        return await respond(err(403, "invalid API key"))
     match = CASE_DOCS_PATH_RE.match(request.url.path)
     if match:  # unknown case_id is rejected before the (possibly 100 MB) body is read
         try:
@@ -135,7 +185,7 @@ async def guard(request: Request, call_next):
     length = request.headers.get("content-length")
     if request.method == "POST" and length and length.isdigit() and int(length) > MAX_TOTAL_BYTES + 1024 * 1024:
         return err(413, f"request too large (limit {MAX_TOTAL_BYTES} bytes of files)")
-    return await call_next(request)
+    return await respond(await call_next(request))
 
 
 @app.get("/healthz")
@@ -216,7 +266,7 @@ def register_hashes(case_id, entries):
 
 
 def store_and_commit(case_id, uploaded_by, pending, items, ours, existing, received_at):
-    """Steps 2 and 3 of upload(): S3 objects, then one DynamoDB transaction. Fills items, ours and existing."""
+    """S3 then metadata; fill items/ours/existing and return only rows committed by this request."""
     for document_id, (upload_file, size, sha) in pending.items():
         key = f"cases/{case_id}/original/{document_id}.pdf"
         filename = clean_filename(upload_file.filename)
@@ -242,6 +292,7 @@ def store_and_commit(case_id, uploaded_by, pending, items, ours, existing, recei
     # 3) commit point: all new rows in ONE DynamoDB transaction, so the case lists all new documents or none.
     #    If a concurrent identical upload wins some row, the transaction is cancelled as a whole; we then
     #    treat the winners as duplicates and retry with the rest.
+    committed = []
     for _ in range(3):
         todo = [item for document_id, item in items.items() if document_id not in existing]
         if not todo:
@@ -250,6 +301,7 @@ def store_and_commit(case_id, uploaded_by, pending, items, ours, existing, recei
             ddb.meta.client.transact_write_items(TransactItems=[
                 {"Put": {"TableName": docs.name, "Item": item,  # the resource client serializes native values itself
                          "ConditionExpression": "attribute_not_exists(document_id)"}} for item in todo])
+            committed = todo
             break
         except ClientError as e:
             reasons = e.response.get("CancellationReasons", [])
@@ -263,6 +315,7 @@ def store_and_commit(case_id, uploaded_by, pending, items, ours, existing, recei
                     existing[item["document_id"]] = row
     else:
         raise HTTPException(409, "concurrent upload, please retry")
+    return committed
 
 
 def remove_uncommitted(case_id, ours):
@@ -279,7 +332,7 @@ def remove_uncommitted(case_id, ours):
 
 
 @router.post("/cases/{case_id}/documents", status_code=201)
-def upload(case_id: str, files: List[UploadFile] = File(...), uploaded_by: Optional[str] = Form(None),
+def upload(case_id: str, request: Request, files: List[UploadFile] = File(...), uploaded_by: Optional[str] = Form(None),
            include_also_in: bool = Query(False)):
     if uploaded_by is not None and len(uploaded_by) > 255:
         raise HTTPException(400, "uploaded_by is longer than 255 characters")
@@ -313,10 +366,14 @@ def upload(case_id: str, files: List[UploadFile] = File(...), uploaded_by: Optio
     items, ours = {}, {}  # ours: document_id -> S3 version this request created (deleted again if the request fails)
     received_at = now_iso()
     try:
-        store_and_commit(case_id, uploaded_by, pending, items, ours, existing, received_at)
+        committed = store_and_commit(case_id, uploaded_by, pending, items, ours, existing, received_at)
     except BaseException:
         remove_uncommitted(case_id, ours)
         raise
+
+    audit: AuditListener = request.app.state.audit_listener
+    for row in committed:
+        audit.file_received(case_id=row["case_id"], document_id=row["document_id"], occurred_at=row["received_at"])
 
     # 4) stejný obsah v jiných případech (jen informace; index nikdy nesmí způsobit selhání) a registrace v indexu
     shas = {document_id: sha for document_id, _, _, sha in plan}
@@ -372,4 +429,8 @@ def list_documents(case_id: str, limit: int = Query(50, ge=1, le=100), next_toke
 
 
 app.include_router(router)
+app.include_router(lifecycle_router)
+app.include_router(monitor_router)
+app.include_router(page_router)
+app.include_router(step_router)
 app.add_middleware(BodyLimit)

@@ -41,6 +41,11 @@ def aws():
         ddb.create_table(TableName="wonderfulkb-uw-cases", BillingMode="PAY_PER_REQUEST",
                          AttributeDefinitions=[{"AttributeName": "case_id", "AttributeType": "S"}],
                          KeySchema=[{"AttributeName": "case_id", "KeyType": "HASH"}])
+        ddb.create_table(TableName="wonderfulkb-trigger-execution", BillingMode="PAY_PER_REQUEST",
+                         AttributeDefinitions=[{"AttributeName": "pk", "AttributeType": "S"},
+                                               {"AttributeName": "sk", "AttributeType": "S"}],
+                         KeySchema=[{"AttributeName": "pk", "KeyType": "HASH"},
+                                    {"AttributeName": "sk", "KeyType": "RANGE"}])
         boto3.client("s3", region_name=REGION).create_bucket(
             Bucket=BUCKET, CreateBucketConfiguration={"LocationConstraint": REGION})
         sqs = boto3.client("sqs", region_name=REGION)

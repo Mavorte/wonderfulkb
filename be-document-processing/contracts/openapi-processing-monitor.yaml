@@ -1,982 +1,579 @@
 openapi: 3.0.3
 info:
-  title: WonderfulKB Document Processing Monitor API — návrh
-  version: 0.3.2
+  title: WonderfulKB bounded processing observations
+  version: 1.0.0
   description: |
-    Návrh čtecího rozhraní, nikoli implementované nebo nasazené API.
-    Autoritou business struktury je aktuální AWS, nikoli starší pk/sk/payload adapter.
-    Výchozí známá pole odpovídají průzkumu 19. 10. 2026; před implementací ověřit aktuální
-    schéma a upravit mapování. Kontrakt je uspořádán podle entit, ne podle DynamoDB itemů.
-    Existující business data se tímto kontraktem nemění. Audit je interní package stejné služby.
-    Žádný upload, retry, cancel, reprocess nebo business zápis není součástí tohoto API.
-    Revize 0.3.2: historický run_context schválen 19. 10. 20:30; primární auditní zápis je runtime Event navázaný na existující business ID.
-    Document/Upload/Analysis jsou read-through business pohledy, nikoli znovu ukládané auditní entity.
-    Run/Attempt/Step/Page/AuditSnapshot jsou čtecí projekce událostí, nikoli požadavek
-    paralelně ukládat plné snapshoty. Pouze doložené bounded dotazy mohou vyžádat malý
-    rebuildable runtime index bez business dat. Statické business atributy se do auditu nekopírují.
-    Historické vstupní/výstupní reference a minimální tehdejší runtime kontext patří jednou
-    k příslušné události, ne do každé události ani do nového business manifestu.
-    Historie vyžaduje nové auditní zápisy; existující snapshot ji nedokazuje.
-    Potvrzený scope zahrnuje také FileReceived (Soubor přijat) navázaný na case/document před runem.
-    Potvrzená hranice FileReceived je úspěšné uložení souboru do S3 a zároveň potvrzený zápis
-    dokumentových metadat; samotný request/upload ani S3 bez metadat událost nevyvolá.
-    Duplicita vracející existující dokument bez nového přijetí ani neúspěšný příjem bez
-    potvrzeného nového dokumentu další FileReceived nevyvolají. Neomezuje to failure/retry eventy.
-    Schváleno 19. 10. 20:17: dokumentová časová osa /{document_id}/events, FileReceived bez
-    run_id; události zpracování run_id vyžadují. Run endpoint je výřez téhož deníku.
-    Ukládá se pouze occurred_at, čas vzniku akce na hooku, nikoli čas zápisu/doručení auditu.
-    Sequence je technické pořadí, ne čas nebo kauzální záruka. Bounded cursor/refresh musí
-    ještě doložit práci s pozdními zápisy bez trvalého přeskočení. Nevytvářet umělé run ID.
-    Živý průběh uploadu, jeho začátek, procenta a doba přenosu nejsou součástí návrhu.
-    Bez nové uploadové korelace nebo čtení rozpracovaných uploadů; FileReceived zůstává.
-    Bez usage, ceny, původního run/attempt cache, queue wait a periodického heartbeat.
-    Všechny auditní zápisy jsou nekritické best-effort/fail-open. Chyba auditu nesmí ovlivnit
-    business upload, odpověď, zpracování, publish, retry ani lease; izoluje ji auditní rozhraní.
-    Bez durable outboxu, auditní retry/recovery fronty, replay a garance pozdějšího doručení.
-    Zápis má konečný krátký timeout bez auditní retry smyčky; nečeká na obnovu sinku.
-    Ztráta eventů je přijatelná a nemusí být zjistitelná; absence není důkaz neprovedení akce.
-    RunQueued (potvrzeno 19. 10.) znamená úspěšné předání frontě, ne samotné vytvoření jobu
-    ani začátek práce workeru; odkazuje na existující case/document/run bez kopie business dat.
-    AttemptStarted (potvrzeno 19. 10.) vzniká až po úspěšném claimu a zvýšení čísla pokusu;
-    pouhé doručení, odmítnutý claim ani vyčerpání limitu bez inkrementu nový pokus nezakládají.
-    source_validation (potvrzeno 19. 10.) je jeden krok ověření konfigurace, konkrétní verze vstupu,
-    hashe a otevření PDF; StepStarted a StepFinished nebo zachycený StepFailed s bezpečným kódem.
-    Bez eventu pro každou kontrolu a bez obsahu dokumentu; nezachycený konec zůstává unknown.
-    PageCacheReused (potvrzeno 19. 10.) až po úspěšném načtení a validaci výsledku stránky;
-    číslo stránky a reference výsledku, stav z validovaného Page, ne z pouhé existence cache.
-    Není nová inference ani další započítání stránky; původní run/attempt cache nejsou doložené.
-    Nové page_transcription (potvrzeno 19. 10.) má stránkový StepStarted a pozorovaný
-    PageCompleted nebo PageFailed, číslo stránky, měřené trvání kroku, skutečně doloženou
-    metodu a bezpečný error. Selhání neprokazuje model call; text není v auditu.
-    Reference jen na potvrzený výstup; žádné dvojí započítání, nepozorovaný konec unknown.
-    Uživatel 19. 10. 2026 ve 20:02 schválil celou sadu 13 typů a jejich popsané hranice:
-    FileReceived/RunQueued/AttemptStarted/StepStarted/StepFinished/StepFailed/PageCacheReused/
-    PageCompleted/PageFailed/ResultPublished/RetryEnqueued/AttemptFinished/RunFinished.
-    Zahrnuje extraction, result_publishing, retry, konec pokusu/běhu i signature_detection
-    přes společné Step typy. Podpisový krok pouze při zapnutém detectoru, outcome ze statusu
-    sekce, ne z pouhé absence výjimky; bez podpisových hodnot/citací a bez změny OCR stavu.
-    Schválení návrhu není implementace/deploy. Historický run_context a jeho omezení byly schváleny 20:30;
-    document-scope obálka/čtení a historické reference jsou schválené 20:17. Upload progress mimo scope.
-    Page outcome uzavírá stránkový krok bez duplicitního finish; zdrojová mapa je v proposalu.
-
-    Úplná cesta = server /v1 + path /cases/...; nekombinovat dva prefixy /v1.
-    Neexistující case/document/run vrací 404; nepřístupná identita 403 nebo konzistentně
-    maskovanou 404 dle politiky brány. Chyba zdroje není prázdný seznam ani chybějící data.
-    Při nedostupnosti zdroje nutného pro úplnou odpověď vrátit 503; ne tichý partial 200.
-    Chybějící volitelné business atributy vynechat, explicitní null znamená neznámou hodnotu;
-    auditní reference a měření mohou být null. Nula není náhrada za neznámé měření.
-    Nová pole odpovědí klient ignoruje, neznámé doménové stavy zobrazí jako neznámý stav
-    a zachová původní řetězec. Identifikátory jsou opaque, nikoli nutně UUID.
-
-    Každá odpověď je case-scoped a autorizovaná serverem. x-api-key je serverový credential,
-    nikoli uživatelská autorizace případu: používá jej autentizovaná backoffice proxy.
-    Klíč nepatří do browseru. Produkční host/routing a způsob předání důvěryhodného case
-    oprávnění musí být dohodnuty při integraci; placeholder server není nasazený endpoint.
-    Data i inference zůstávají v eu-central-1; tyto čtecí operace inference nevolají.
-    Všechny odpovědi mají Cache-Control: private, no-store (i kde není hlavička
-    opakovaně rozepsána). Neznámý attempt_no nebo run_id je 404, ne prázdná kolekce.
-    Audit jako celek může být explicitně ještě nenakonfigurován: pak union používá
-    business zdroje a audit availability=unavailable/not_configured, žádný pokus o čtení
-    neexistující tabulky. Konfigurovaný ale rozbitý auditní zdroj znamená 503.
-  x-proposal-id: proposal-20261019-150954-c8891f
-  x-proposal-file: ../../docs/proposals/proposal-20261019-150954-c8891f_monitoring-zpracovani-dokumentu-prubeh-mezivysledky-a-audit.md
-  x-design-guide: ../PROCESSING-MONITOR-API.md
-  x-contract-status: design-only
+    Required API contract; it is not evidence that these operations have been delivered or deployed.
+    All reads require a server-authenticated SERVICE principal and explicit server-owned
+    case grant. The intake x-api-key/shared API key never establishes monitoring case permission.
+    Credentials and policy remain server-only. Authorization source failure is fail-closed
+    before audit access. 403 denies access; 404 masks missing or
+    unauthorized case/document/run according to existing policy; 400 rejects invalid parameters
+    or operation-bound tokens; 503 means a required read failed. All responses including errors
+    use Cache-Control: private, no-store. No route/deployment is asserted.
+    Each request reads one bounded observation window, limit 1–100. This is not a snapshot,
+    incremental feed, complete history, or latest-state guarantee. No totals or historical
+    aggregation. Opaque next_token encodes the last evaluated position and is bound to the
+    exact operation and explicit case/document/run/attempt scope. Empty items may accompany
+    a continuation token. Coverage is partial where required; absence never synthesizes starts,
+    attempts or statuses. Content, raw errors, S3 keys and artifact-content paths are excluded.
 servers:
   - url: https://{host}/v1
-    description: Návrhový host existující dokumentové služby, nikoli nová aplikace.
     variables:
       host:
-        default: REPLACE_WITH_DOCUMENT_API_HOST
+        default: REPLACE_WITH_EXISTING_DOCUMENT_SERVICE_HOST
 security:
-  - ApiKeyAuth: []
-tags:
-  - name: documents
-    description: Sjednocená identita dokumentu v případu.
-  - name: audit
-    description: Vedlejší pozorování, běhy, pokusy a mezivýsledky; nová instrumentace.
-  - name: artifacts
-    description: Autorizované reference originálů a výsledků bez veřejných S3 klíčů.
+  - MonitoringServiceBearer: []
 paths:
-  /cases/{case_id}/processing/documents:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-    get:
-      tags: [documents]
-      operationId: listProcessingDocuments
-      summary: Dokumenty případu ze sjednocených zdrojů
-      description: |
-        Union upload, analysis a audit dokumentových identit, nikoli inner join.
-        Jeden document_id právě jednou, vzestupně lexikograficky podle document_id.
-        Žádný full-table Scan. Query zdrojů po case_id, bounded merge a opaque next_token
-        držící pozice/buffer všech zdrojů. Neemitovat další ID, dokud jsou všechny zdroje
-        známy alespoň po toto ID. Nevyčerpaný zdroj při budgetu: vrátit dosavadní prefix
-        a next_token, případně prázdnou stránku s next_token; není to konec seznamu.
-        Token je svázaný s case, filtry, řazením, oprávněním a expirací; není auth.
-        Mezi stránkami nejde o transakční snapshot. Nový dokument s nižším ID může být
-        vidět až po refresh od první stránky. Při expiraci 400, ne restart skrytě od začátku.
-        Filtry jsou nad sjednoceným dokumentem, mohou vrátit méně než limit výsledků;
-        next_token=null pouze když jsou všechny zdroje vyčerpány. summary/count není
-        součástí odpovědi, aby počet stránky nevypadal jako počet všech dokumentů.
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/NextToken'
-        - name: processing_status
-          in: query
-          description: Přesná hodnota business analysis.processing_status; unknown pro chybějící stav. Není to odhad z auditu.
-          schema: {type: string, minLength: 1, maxLength: 100}
-        - name: relationship
-          in: query
-          schema: {type: string, enum: [matched, upload_only, analysis_only, audit_only]}
-      responses:
-        '200':
-          description: Stránka dokumentů bez velkých textů a URL.
-          headers:
-            Cache-Control: {$ref: '#/components/headers/PrivateCache'}
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/DocumentList'}
-              example:
-                observed_at: '2026-10-19T15:30:00Z'
-                case_id: case-demo
-                documents:
-                  - case_id: case-demo
-                    document_id: doc-demo
-                    display_name: smlouva.pdf
-                    relationship: matched
-                    processing_status: completed
-                    label: smlouva
-                    page_count: 4
-                    updated_at: '2026-10-19T15:00:00Z'
-                    audit:
-                      state: unavailable
-                      reason: not_instrumented
-                      active_run_id: null
-                      published_run_id: null
-                      projection_revision: null
-                next_token: null
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-    get:
-      tags: [documents]
-      operationId: getProcessingDocument
-      summary: Identita, současná business data a dostupnost auditu
-      description: |
-        Funguje i před dokončením zpracování a pro analysis_only/upload_only/audit_only.
-        upload nebo analysis je null jen při potvrzené absenci, nikoli chybě čtení.
-        Business analysis.processing_status a audit.processing_status se neslučují
-        do jednoho neprokazatelného stavu. Rozpor je v UI viditelný.
-      responses:
-        '200':
-          description: Aktuální detail dokumentu bez obsahů artefaktů.
-          headers:
-            Cache-Control: {$ref: '#/components/headers/PrivateCache'}
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/DocumentDetail'}
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/audit:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-    get:
-      tags: [audit]
-      operationId: getProcessingAudit
-      summary: Dostupnost, čerstvost a aktuální auditní projekce
-      description: |
-        Neinstrumentovaný legacy dokument vrací unavailable/not_instrumented, žádný
-        syntetický run ani completed kroky. observed_at je čas přečtení, nikoli heartbeat.
-        projection_revision je monotónní pouze v rámci této dokumentové auditní projekce,
-        ne revize business tabulek nebo konzistentní transakce mezi zdroji.
-      responses:
-        '200':
-          description: Aktuální audit dokumentu nebo explicitně nedostupná historie.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/AuditResponse'}
-              example:
-                observed_at: '2026-10-19T15:30:00Z'
-                case_id: case-demo
-                document_id: doc-demo
-                state: unavailable
-                reason: not_instrumented
-                active_run_id: null
-                published_run_id: null
-                projection_revision: null
-                freshness: unknown
-                last_activity_at: null
-                coverage: {state: unknown, gaps_known: null, reason: not_instrumented}
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/runs:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-    get:
-      tags: [audit]
-      operationId: listProcessingRuns
-      summary: Běhy dokumentu
-      description: |
-        Řazení created_at sestupně, run_id jako tie-breaker. Toto pořadí nemusí
-        odpovídat fyzickému RUN#uuid klíči; úložiště/projekce musí bounded query podpořit.
-        Run vzniká vědomým novým zpracováním, retry workeru je další attempt téhož runu.
-        unavailable + items=[] neznamená pozorovanou prázdnou historii.
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/NextToken'
-      responses:
-        '200':
-          description: Dostupnost historie a stránka běhů.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/RunList'}
-              examples:
-                legacy:
-                  summary: Historie není dostupná, nikoli potvrzeně prázdná.
-                  value:
-                    observed_at: '2026-10-19T15:30:00Z'
-                    state: unavailable
-                    reason: not_instrumented
-                    coverage: {state: unknown, gaps_known: null, reason: not_instrumented}
-                    items: []
-                    next_token: null
-                observedEmpty:
-                  summary: Audit je k dispozici, nebyl pozorován žádný běh.
-                  value:
-                    observed_at: '2026-10-19T15:30:00Z'
-                    state: available
-                    reason: null
-                    coverage: {state: complete, gaps_known: false, reason: null}
-                    items: []
-                    next_token: null
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-      - $ref: '#/components/parameters/RunId'
-    get:
-      tags: [audit]
-      operationId: getProcessingRun
-      summary: Běh odvozený z událostí a minimální historický runtime kontext
-      description: Nevrací všechny stránky ani události v jednom JSON. Neznámý run nebo cizí příslušnost vrací 404 dle auth politiky.
-      responses:
-        '200':
-          description: Doložený běh.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/RunResponse'}
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/attempts:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-      - $ref: '#/components/parameters/RunId'
-    get:
-      tags: [audit]
-      operationId: listProcessingAttempts
-      summary: Pokusy workeru v běhu
-      description: Řazení attempt_no vzestupně. Není to SQS delivery count; mezery nejsou synteticky doplněny.
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/NextToken'
-      responses:
-        '200':
-          description: Stránka pokusů a úplnost pozorování.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/AttemptList'}
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/steps:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-      - $ref: '#/components/parameters/RunId'
-    get:
-      tags: [audit]
-      operationId: listProcessingSteps
-      summary: Fáze a jejich stavy v konkrétním pokusu
-      description: attempt_no je povinné, žádné implicitní smíchání posledních pokusů. Řazení sequence,step_id vzestupně.
-      parameters:
-        - $ref: '#/components/parameters/AttemptNo'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/NextToken'
-      responses:
-        '200':
-          description: Stránka kroků.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/StepList'}
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/pages:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-      - $ref: '#/components/parameters/RunId'
-    get:
-      tags: [audit]
-      operationId: listProcessingPages
-      summary: Stránky, mezivýsledky a cache reuse konkrétního pokusu
-      description: |
-        page_number je 1-based, řazení vzestupně. Dostupné i před koncem běhu.
-        Text/náhledy jen přes artifact reference, ne velký obsah v poll odpovědi.
-        Nevytvářet pending stránku jen z absence auditního záznamu. Neznámý attempt 404;
-        potvrzený attempt bez coverage vrátí unavailable, ne pozorovanou prázdnou sadu.
-      parameters:
-        - $ref: '#/components/parameters/AttemptNo'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/NextToken'
-      responses:
-        '200':
-          description: Stránka stránkových mezivýsledků.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/PageList'}
-              example:
-                observed_at: '2026-10-19T15:30:00Z'
-                state: available
-                reason: null
-                coverage: {state: partial, gaps_known: true, reason: delivery_gap}
-                items:
-                  - run_id: run-demo
-                    attempt_no: 2
-                    page_number: 1
-                    status: completed
-                    method: native
-                    cache_hit: true
-                    text_artifact_id: page-text-demo
-                  - run_id: run-demo
-                    attempt_no: 2
-                    page_number: 2
-                    status: failed
-                    method: vision
-                    cache_hit: false
-                    error: {code: provider_timeout, message_safe: Přepis stránky překročil časový limit., retryable: true}
-                next_token: null
-        default: {$ref: '#/components/responses/Failure'}
   /cases/{case_id}/processing/documents/{document_id}/events:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
+    parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}]
     get:
-      tags: [audit]
       operationId: listDocumentProcessingEvents
-      summary: Dokumentová časová osa včetně přijetí před runem
-      description: |
-        Jeden deník zahrnuje FileReceived bez run_id a události všech doložených běhů.
-        Oprávnění se ověřuje na case/document stejně jako u run výřezu.
-        Časová osa podle occurred_at,event_id; pouze čas vzniku akce, ne čas zápisu.
-        Sequence a next_token jsou technické čtecí údaje, nikoli causalita nebo úplnost.
-        Bounded cursor/refresh musí doložit opožděné zápisy bez trvalého přeskočení;
-        nejde o garantované doručení auditu ani nový replay/recovery mechanismus.
-        Historie bez eventů se nevyrábí ze současných business dat.
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/NextToken'
+      description: One bounded event window. FileReceived has no run scope (no run_id field); other events with run scope require run_id. Coverage is partial. Empty items with next_token is valid continuation. PageCompleted and PageFailed are the only page terminal observations; cache reuse is not a new inference; publication does not automatically terminate a run.
+      parameters: [{$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
       responses:
-        '200':
-          description: Stránka dokumentových událostí a coverage.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/EventList'}
-        default: {$ref: '#/components/responses/Failure'}
+        '200': {$ref: '#/components/responses/DocumentEvents'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/ReadFailure'}
   /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/events:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-      - $ref: '#/components/parameters/RunId'
+    parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}, {$ref: '#/components/parameters/RunId'}]
     get:
-      tags: [audit]
       operationId: listProcessingEvents
-      summary: Časová osa významných událostí
-      description: |
-        Výřez dokumentové časové osy podle run_id, stejná data bez kopie deníku.
-        Časová osa podle occurred_at,event_id; sequence je jen technické čtecí pořadí.
-        Čas zápisu/doručení auditu se neukládá. Pozdní zápisy nesmějí být trvale přeskočeny
-        stránkováním/refresh; konkrétní bounded cursor kontrakt ověřit před implementací.
-        Pořadí ani chybějící sequence nedokazují causalitu, ztrátu nebo business chybu.
-        Primární auditní fakta jsou události; ostatní runtime GET jsou jejich projekce.
-        Chybějící události se nevyrábějí z aktuálního business snapshotu; periodický heartbeat není MVP.
+      description: >-
+        One bounded evaluated document-event window filtered to run_id, with no
+        additional reads to fill the page. Technical EVENT#event_id order is not
+        global chronology or a snapshot. FileReceived without run identity is
+        excluded. Coverage is partial; empty items may have next_token and do not
+        establish that a run is absent or history complete. Continuation binds
+        operation, case, document and run and advances from the last evaluated
+        position. Every request rechecks current SERVICE authorization (403) and
+        document membership (404); authorization, membership and audit read
+        failures are 503, never an empty successful history.
       parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/NextToken'
+        - {$ref: '#/components/parameters/Limit'}
+        - {name: next_token, in: query, description: Opaque run-events scoped continuation., schema: {type: string, minLength: 1, maxLength: 8192}}
       responses:
-        '200':
-          description: Stránka událostí a coverage.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/EventList'}
-              example:
-                observed_at: '2026-10-19T15:30:00Z'
-                state: available
-                reason: null
-                coverage: {state: partial, gaps_known: true, reason: delivery_gap}
-                items:
-                  - schema_version: '1.0'
-                    case_id: case-demo
-                    document_id: document-demo
-                    run_id: run-demo
-                    event_id: evt-demo-7
-                    sequence: 7
-                    type: PageCacheReused
-                    occurred_at: '2026-10-19T15:00:00Z'
-                    attempt_no: 2
-                    stage: page_transcription
-                    page_number: 1
-                    artifact_ids: [cache-page-demo]
-                    details: {cache_hit: true, outcome: completed}
-                next_token: null
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/artifacts:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
+        '200': {$ref: '#/components/responses/RunEvents'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/ReadFailure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/attempts:
+    parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}, {$ref: '#/components/parameters/RunId'}]
     get:
-      tags: [artifacts]
-      operationId: listProcessingArtifacts
-      summary: Originál, současné výsledky a doložené mezivýsledky
-      description: |
-        Bez run_id vrací jen document-level originál a současné business reference;
-        nikoli neomezenou historii. S run_id jen artefakty s prokázaným vztahem k běhu.
-        Aktuální legacy text nesmí být přiřazen libovolnému runu. Filtrovaná nedostupná
-        historie je unavailable, ne důkaz, že nebyly artefakty. Řazení artifact_id vzestupně.
-      parameters:
-        - name: run_id
-          in: query
-          schema: {type: string, minLength: 1, maxLength: 256}
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/NextToken'
+      operationId: listProcessingAttempts
+      description: Observed AttemptStarted attempts only; no synthetic attempts. One bounded window; coverage partial.
+      parameters: [{$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
       responses:
-        '200':
-          description: Stránka metadat bez download URL.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ArtifactList'}
-        default: {$ref: '#/components/responses/Failure'}
-  /cases/{case_id}/processing/documents/{document_id}/artifacts/{artifact_id}:
-    parameters:
-      - $ref: '#/components/parameters/CaseId'
-      - $ref: '#/components/parameters/DocumentId'
-      - name: artifact_id
-        in: path
-        required: true
-        schema: {type: string, minLength: 1, maxLength: 512}
+        '200': {$ref: '#/components/responses/Attempts'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/ReadFailure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/steps:
+    parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}, {$ref: '#/components/parameters/RunId'}]
     get:
-      tags: [artifacts]
-      operationId: getProcessingArtifactAccess
-      summary: Metadata artefaktu a krátkodobý autorizovaný přístup
-      description: |
-        Ověřit case/document/run/version vlastnictví serverem, nikdy nepřijmout bucket,
-        key či libovolnou URL od klienta. Samostatné oprávnění ke čtení obsahu.
-        Metadata-only bez práva obsahu neznamená download URL; 403 pro toto volání.
-        Odkaz jen na serverem zvolený objekt/verzi, krátká expirace, ne do DB/logů.
-        State pending/missing/unavailable vrací 200 a access=null, ne prázdný obsah.
-        Chyba čtení/signování 503, ne missing. Pro nedůvěryhodný obsah preferovat attachment;
-        náhled jen v bezpečně izolovaném rendereru. Nikdy nespouštět HTML nebo instrukce textu.
+      operationId: listProcessingSteps
+      security: [{MonitoringServiceBearer: []}]
+      description: One evaluated document Query filtered to allowlisted source_validation, extraction and executed page facts for explicit run_id and attempt_no. Technical event-identity order, not chronology. Coverage is partial; missing observations do not prove work was not performed. No start, terminal, duration or success is inferred; terminal-only fragments and empty continuation are valid. Extraction has no page_number or document values. StepFinished proves neither complete fields, a model call nor run completion. Refresh starts at the beginning without snapshot or incremental guarantees.
+      parameters: [{$ref: '#/components/parameters/AttemptNo'}, {$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
       responses:
-        '200':
-          description: Metadata a GET URL jen pro ready artefakt.
-          headers:
-            Cache-Control: {$ref: '#/components/headers/PrivateCache'}
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ArtifactAccessResponse'}
-              example:
-                observed_at: '2026-10-19T15:30:00Z'
-                artifact:
-                  case_id: case-demo
-                  document_id: doc-demo
-                  artifact_id: artifact-text-demo
-                  kind: analysis_text
-                  state: ready
-                  content_type: text/plain
-                  version_id: version-demo
-                access:
-                  url: https://example.invalid/short-lived-artifact
-                  method: GET
-                  expires_at: '2026-10-19T15:35:00Z'
-        default: {$ref: '#/components/responses/Failure'}
+        '200': {$ref: '#/components/responses/Steps'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/ReadFailure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/pages:
+    parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}, {$ref: '#/components/parameters/RunId'}]
+    get:
+      operationId: listProcessingPages
+      description: >-
+        One bounded document Query evaluated window filtered to page observations for explicit
+        run_id and attempt_no; coverage partial. Empty items with next_token are valid; the cursor
+        preserves the last evaluated position and is bound to case/document/run/operation=pages/attempt_no.
+        Technical event-identity order is not chronology, a snapshot or an incremental guarantee.
+        Multiple observations of one page remain distinct; no totals, completion count or latest
+        page status is inferred. PageCacheReused is the same stored observation exposed in events,
+        not new work, a PageCompleted or an executed step. Missing starts or cache origin evidence
+        do not discard reuse; origin and content availability remain unknown/unavailable without evidence.
+        No current cache lookup or provider call is performed.
+      parameters: [{$ref: '#/components/parameters/AttemptNo'}, {$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
+      responses:
+        '200': {$ref: '#/components/responses/Pages'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/ReadFailure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs:
+    parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}]
+    get:
+      operationId: listObservedProcessingRuns
+      description: Required brief 24 bounded lifecycle read, not a complete run registry. Unknown, ambiguous and partial remain explicit; no synthetic starts, attempts or statuses. Empty items may have continuation. This operation is specified, not delivery evidence.
+      parameters: [{$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
+      responses:
+        '200': {$ref: '#/components/responses/RunSummaries'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/ReadFailure'}
+  /cases/{case_id}/processing/documents/{document_id}/runs/{run_id}:
+    parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}, {$ref: '#/components/parameters/RunId'}]
+    get:
+      operationId: getObservedProcessingRun
+      description: Required brief 24 bounded detail. Unknown or ambiguous lifecycle stays explicit; result publication is separate from run terminal status; empty observations may have continuation. Specified, not delivery evidence.
+      parameters: [{$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
+      responses:
+        '200': {$ref: '#/components/responses/RunDetail'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/ReadFailure'}
+  /cases/{case_id}/processing/documents/{document_id}/audit:
+    parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}]
+    get:
+      operationId: getObservedDocumentAudit
+      description: Required brief 24 bounded lifecycle observation, partial/unknown where evidence is incomplete; never whole-history aggregation. Empty items may have continuation. Specified, not delivery evidence.
+      parameters: [{$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
+      responses:
+        '200': {$ref: '#/components/responses/DocumentAudit'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/ReadFailure'}
 components:
   securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: x-api-key
-      description: Server-to-server klíč existující proxy; případová autorizace je další povinná serverová kontrola.
+    MonitoringServiceBearer: {type: http, scheme: bearer, description: 'Server-only SERVICE credential bound to explicit server-owned case grants; never a browser claim or upload API key.'}
+    ApiKeyAuth: {type: apiKey, in: header, name: x-api-key, description: 'Service authentication only, not case authorization.'}
   parameters:
-    CaseId:
-      name: case_id
-      in: path
-      required: true
-      schema: {type: string, minLength: 1, maxLength: 256}
-    DocumentId:
-      name: document_id
-      in: path
-      required: true
-      schema: {type: string, minLength: 1, maxLength: 256}
-    RunId:
-      name: run_id
-      in: path
-      required: true
-      schema: {type: string, minLength: 1, maxLength: 256}
-    AttemptNo:
-      name: attempt_no
-      in: query
-      required: true
-      schema: {type: integer, minimum: 1}
-    Limit:
-      name: limit
-      in: query
-      schema: {type: integer, minimum: 1, maximum: 100, default: 50}
-    NextToken:
-      name: next_token
-      in: query
-      description: Opaque expirovatelný token svázaný se scope a filtry; null v odpovědi znamená vyčerpání.
-      schema: {type: string, minLength: 1, maxLength: 16384}
+    CaseId: {name: case_id, in: path, required: true, schema: {type: string, minLength: 1}}
+    DocumentId: {name: document_id, in: path, required: true, schema: {type: string, minLength: 1}}
+    RunId: {name: run_id, in: path, required: true, schema: {type: string, minLength: 1}}
+    AttemptNo: {name: attempt_no, in: query, required: true, schema: {type: integer, minimum: 1}}
+    Limit: {name: limit, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+    NextToken: {name: next_token, in: query, required: false, description: Opaque operation-bound last-evaluated continuation token; empty items may continue., schema: {type: string, minLength: 1}}
   headers:
-    PrivateCache:
-      description: Citlivá odpověď ani podepsaný odkaz se nesdílejí přes cache.
-      schema: {type: string, example: 'private, no-store'}
+    PrivateCache: {description: Sensitive response is never stored or shared, schema: {type: string, enum: ['private, no-store']}}
   responses:
-    Failure:
-      description: |
-        Jednotný error tvar. 400 neplatný parametr/token, 403 credential nebo oprávnění,
-        404 neexistující identita (případně bezpečně maskovaná), 429 rate limit,
-        500 interní chyba, 503 nedostupný zdroj. Retry-After u 429/503 podle situace.
-        Nikdy stack trace, dokumentové hodnoty, credentials nebo raw provider odpověď.
-      headers:
-        Retry-After:
-          description: Počet sekund do dalšího pokusu, pokud je opakování vhodné.
-          schema: {type: integer, minimum: 1}
-        Cache-Control: {$ref: '#/components/headers/PrivateCache'}
-      content:
-        application/json:
-          schema: {$ref: '#/components/schemas/Error'}
-          example: {error: Zdroj je dočasně nedostupný., code: source_unavailable, retryable: true}
+    DocumentEvents: {description: Bounded document event observations., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/DocumentEventCollection'}}}}
+    RunEvents: {description: Bounded run event observations., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/RunEventCollection'}}}}
+    Attempts: {description: Bounded observed attempts., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/AttemptCollection'}}}}
+    Steps: {description: Bounded step observations., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/StepCollection'}}}}
+    Pages: {description: Bounded page observations., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/PageCollection'}}}}
+    RunSummaries: {description: Bounded run lifecycle observations., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/RunSummaryCollection'}}}}
+    RunDetail: {description: Bounded run detail observation., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/RunDetailCollection'}}}}
+    DocumentAudit: {description: Bounded document audit observation., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/DocumentAuditCollection'}}}}
+    BadRequest: {description: Invalid request or operation-bound token., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    Forbidden: {description: Missing or forged SERVICE identity or absent/revoked case grant., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    NotFound: {description: Missing or unauthorized resource masked according to existing policy., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    ReadFailure: {description: Required observation read failed., headers: {Cache-Control: {$ref: '#/components/headers/PrivateCache'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
   schemas:
+    ObservationCollection:
+      type: object
+      additionalProperties: false
+      required: [items, next_token, observed_at, coverage]
+      properties:
+        items: {type: array, items: {type: object}}
+        next_token: {type: string, nullable: true}
+        observed_at: {type: string, format: date-time}
+        coverage: {type: string, enum: [partial]}
+    DocumentEventCollection: {allOf: [{$ref: '#/components/schemas/ObservationCollection'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/DocumentEvent'}}}}]}
+    RunEventCollection: {allOf: [{$ref: '#/components/schemas/ObservationCollection'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/RunEvent'}}}}]}
+    AttemptCollection: {allOf: [{$ref: '#/components/schemas/ObservationCollection'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/AttemptObservation'}}}}]}
+    StepCollection: {allOf: [{$ref: '#/components/schemas/ObservationCollection'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/StepObservation'}}}}]}
+    PageCollection: {allOf: [{$ref: '#/components/schemas/ObservationCollection'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/PageObservation'}}}}]}
+    RunSummaryCollection: {allOf: [{$ref: '#/components/schemas/ObservationCollection'}, {type: object, properties: {items: {type: array, items: {$ref: '#/components/schemas/RunSummary'}}}}]}
+    RunDetailCollection: {allOf: [{$ref: '#/components/schemas/ObservationCollection'}, {type: object, properties: {items: {type: array, minItems: 0, maxItems: 1, items: {$ref: '#/components/schemas/RunDetail'}}}}]}
+    DocumentAuditCollection: {allOf: [{$ref: '#/components/schemas/ObservationCollection'}, {type: object, properties: {items: {type: array, minItems: 0, maxItems: 1, items: {$ref: '#/components/schemas/DocumentAudit'}}}}]}
+    ObservationItem:
+      oneOf:
+        - {$ref: '#/components/schemas/FileReceived'}
+        - {$ref: '#/components/schemas/RunQueued'}
+        - {$ref: '#/components/schemas/AttemptStarted'}
+        - {$ref: '#/components/schemas/StepStarted'}
+        - {$ref: '#/components/schemas/StepFinished'}
+        - {$ref: '#/components/schemas/StepFailed'}
+        - {$ref: '#/components/schemas/PageCacheReused'}
+        - {$ref: '#/components/schemas/PageCompleted'}
+        - {$ref: '#/components/schemas/PageFailed'}
+        - {$ref: '#/components/schemas/ResultPublished'}
+        - {$ref: '#/components/schemas/RetryEnqueued'}
+        - {$ref: '#/components/schemas/AttemptFinished'}
+        - {$ref: '#/components/schemas/RunFinished'}
+    FileReceived:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [FileReceived]}
+        occurred_at: {type: string, format: date-time}
+    RunQueued:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [RunQueued]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+    AttemptStarted:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [AttemptStarted]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+    StepStarted:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no, stage]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [StepStarted]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        stage: {type: string, enum: [source_validation, page_transcription, extraction, signature_detection, result_publishing]}
+    StepFinished:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no, stage]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [StepFinished]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        stage: {type: string, enum: [source_validation, page_transcription, extraction, signature_detection, result_publishing]}
+        duration_ms: {type: number, minimum: 0}
+    StepFailed:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no, stage, error_code]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [StepFailed]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        stage: {type: string, enum: [source_validation, page_transcription, extraction, signature_detection, result_publishing]}
+        duration_ms: {type: number, minimum: 0}
+        error_code: {type: string, enum: [PIPELINE_CONFIG_CHANGED, SOURCE_HASH_MISMATCH, PROCESSING_FAILED, EXTRACTION_FAILED]}
+    PageCacheReused:
+      type: object
+      description: Observed reuse of a stored page result; not a new completion, executed step or provider call in this attempt.
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no, page_number, stage, cached_status]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [PageCacheReused]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        page_number: {type: integer, minimum: 1}
+        stage: {type: string, enum: [page_transcription]}
+        cached_status: {type: string, enum: [completed, failed], description: Stored cached result status; not business or latest page status.}
+        cached_method: {type: string, enum: [native, vision], description: Known method of the cached result; omitted if unknown and does not imply current inference.}
+        cached_model: {type: string, description: Known model of the cached result; omitted if unknown and does not imply a current provider call.}
+        artifact_ids: {type: array, items: {type: string}, description: Known opaque artifact references only; no storage keys or content availability guarantee.}
+    PageCompleted:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no, page_number, stage]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [PageCompleted]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        page_number: {type: integer, minimum: 1}
+        stage: {type: string, enum: [page_transcription]}
+        duration_ms: {type: number, minimum: 0}
+        method: {type: string}
+        model: {type: string}
+    PageFailed:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no, page_number, stage, error_code]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [PageFailed]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        page_number: {type: integer, minimum: 1}
+        stage: {type: string, enum: [page_transcription]}
+        error_code: {type: string, minLength: 1}
+    ResultPublished:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no, result_status]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [ResultPublished]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        result_status: {type: string, enum: [completed, partial, failed]}
+        artifact_ids: {type: array, items: {type: string}}
+    RetryEnqueued:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [RetryEnqueued]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        reason_code: {type: string, enum: [RETRYABLE_FAILURE, RETRY_EXHAUSTED, PROCESSING_FAILED]}
+    AttemptFinished:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, attempt_no, attempt_status]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [AttemptFinished]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        attempt_status: {type: string, enum: [completed, partial, failed]}
+        duration_ms: {type: number, minimum: 0}
+        error_code: {type: string, enum: [PROCESSING_FAILED]}
+    RunFinished:
+      type: object
+      additionalProperties: false
+      required: [event_id, type, occurred_at, run_id, run_status]
+      properties:
+        case_id: {type: string}
+        document_id: {type: string}
+        event_id: {type: string}
+        sequence: {type: integer, minimum: 0}
+        type: {type: string, enum: [RunFinished]}
+        occurred_at: {type: string, format: date-time}
+        run_id: {type: string}
+        attempt_no: {type: integer, minimum: 1}
+        run_status: {type: string, enum: [completed, partial, failed]}
+        error_code: {type: string, enum: [RETRY_EXHAUSTED, PROCESSING_FAILED]}
+    DocumentEvent: {oneOf: [{$ref: '#/components/schemas/FileReceived'}, {$ref: '#/components/schemas/RunQueued'}, {$ref: '#/components/schemas/AttemptStarted'}, {$ref: '#/components/schemas/StepStarted'}, {$ref: '#/components/schemas/StepFinished'}, {$ref: '#/components/schemas/StepFailed'}, {$ref: '#/components/schemas/PageCacheReused'}, {$ref: '#/components/schemas/PageCompleted'}, {$ref: '#/components/schemas/PageFailed'}, {$ref: '#/components/schemas/ResultPublished'}, {$ref: '#/components/schemas/RetryEnqueued'}, {$ref: '#/components/schemas/AttemptFinished'}, {$ref: '#/components/schemas/RunFinished'}]}
+    RunEvent: {oneOf: [{$ref: '#/components/schemas/RunQueued'}, {$ref: '#/components/schemas/AttemptStarted'}, {$ref: '#/components/schemas/StepStarted'}, {$ref: '#/components/schemas/StepFinished'}, {$ref: '#/components/schemas/StepFailed'}, {$ref: '#/components/schemas/PageCacheReused'}, {$ref: '#/components/schemas/PageCompleted'}, {$ref: '#/components/schemas/PageFailed'}, {$ref: '#/components/schemas/ResultPublished'}, {$ref: '#/components/schemas/RetryEnqueued'}, {$ref: '#/components/schemas/AttemptFinished'}, {$ref: '#/components/schemas/RunFinished'}]}
+    AttemptObservation: {oneOf: [{$ref: '#/components/schemas/AttemptStarted'}]}
+    StepObservation:
+      oneOf:
+        - {$ref: '#/components/schemas/SourceValidationStartedObservation'}
+        - {$ref: '#/components/schemas/SourceValidationFinishedObservation'}
+        - {$ref: '#/components/schemas/SourceValidationFailedObservation'}
+        - {$ref: '#/components/schemas/ExtractionStartedObservation'}
+        - {$ref: '#/components/schemas/ExtractionFinishedObservation'}
+        - {$ref: '#/components/schemas/ExtractionFailedObservation'}
+        - {$ref: '#/components/schemas/PageStartedObservation'}
+        - {$ref: '#/components/schemas/PageCompletedObservation'}
+        - {$ref: '#/components/schemas/PageFailedObservation'}
+    SourceValidationStartedObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no]
+      properties: &sourceValidationFacts
+        event_id: {type: string, minLength: 1}
+        sequence: {type: integer, minimum: 0}
+        occurred_at: {type: string, format: date-time}
+        type: {type: string, enum: [StepStarted]}
+        stage: {type: string, enum: [source_validation]}
+        run_id: {type: string, minLength: 1}
+        attempt_no: {type: integer, minimum: 1}
+    SourceValidationFinishedObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no]
+      properties:
+        <<: *sourceValidationFacts
+        type: {type: string, enum: [StepFinished]}
+        duration_ms: {type: number, minimum: 0}
+    SourceValidationFailedObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no, error_code]
+      properties:
+        <<: *sourceValidationFacts
+        type: {type: string, enum: [StepFailed]}
+        duration_ms: {type: number, minimum: 0}
+        error_code: {type: string, enum: [PIPELINE_CONFIG_CHANGED, SOURCE_HASH_MISMATCH, SOURCE_VALIDATION_FAILED, EXTRACTION_FAILED, PAGE_TRANSCRIPTION_FAILED, RESULT_PUBLISHING_FAILED, SIGNATURE_DETECTION_FAILED]}
+    ExtractionStartedObservation:
+      type: object
+      additionalProperties: false
+      description: Observed extraction boundary only; not evidence of a model call or complete extracted fields.
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no]
+      properties: &extractionFacts
+        <<: *sourceValidationFacts
+        stage: {type: string, enum: [extraction]}
+    ExtractionFinishedObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no]
+      properties:
+        <<: *extractionFacts
+        type: {type: string, enum: [StepFinished]}
+        duration_ms: {type: number, minimum: 0}
+    ExtractionFailedObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no, error_code]
+      properties:
+        <<: *extractionFacts
+        type: {type: string, enum: [StepFailed]}
+        duration_ms: {type: number, minimum: 0}
+        error_code: {type: string, enum: [PIPELINE_CONFIG_CHANGED, SOURCE_HASH_MISMATCH, SOURCE_VALIDATION_FAILED, EXTRACTION_FAILED, PAGE_TRANSCRIPTION_FAILED, RESULT_PUBLISHING_FAILED, SIGNATURE_DETECTION_FAILED]}
+    PageObservation:
+      description: Partial observations in evaluated order, not chronological/latest state. Reuse preserves its own identity and cached result semantics without counting new work.
+      oneOf:
+        - {$ref: '#/components/schemas/PageStartedObservation'}
+        - {$ref: '#/components/schemas/PageCompletedObservation'}
+        - {$ref: '#/components/schemas/PageFailedObservation'}
+        - {$ref: '#/components/schemas/PageCacheReusedObservation'}
+    PageStartedObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no, page_number]
+      properties: &pageFacts
+        event_id: {type: string, minLength: 1}
+        sequence: {type: integer, minimum: 0}
+        occurred_at: {type: string, format: date-time}
+        type: {type: string, enum: [StepStarted]}
+        stage: {type: string, enum: [page_transcription]}
+        run_id: {type: string, minLength: 1}
+        attempt_no: {type: integer, minimum: 1}
+        page_number: {type: integer, minimum: 1}
+    PageCompletedObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no, page_number]
+      properties:
+        <<: *pageFacts
+        type: {type: string, enum: [PageCompleted]}
+        duration_ms: {type: number, minimum: 0}
+        method: {type: string, enum: [native, vision]}
+        model: {type: string, minLength: 1}
+    PageFailedObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no, page_number, error_code]
+      properties:
+        <<: *pageFacts
+        type: {type: string, enum: [PageFailed]}
+        duration_ms: {type: number, minimum: 0}
+        method: {type: string, enum: [native, vision]}
+        model: {type: string, minLength: 1}
+        error_code: {type: string, enum: [PIPELINE_CONFIG_CHANGED, SOURCE_HASH_MISMATCH, SOURCE_VALIDATION_FAILED, EXTRACTION_FAILED, PAGE_TRANSCRIPTION_FAILED, RESULT_PUBLISHING_FAILED, SIGNATURE_DETECTION_FAILED]}
+    PageCacheReusedObservation:
+      type: object
+      additionalProperties: false
+      description: A reuse fragment needs no observed run/attempt start or original cache event. It is not a new inference or completed page.
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no, page_number, cached_status]
+      properties:
+        <<: *pageFacts
+        type: {type: string, enum: [PageCacheReused]}
+        cached_status: {type: string, enum: [completed, failed], description: Stored cached result status; not business or latest page status.}
+        cached_method: {type: string, enum: [native, vision], description: Known cached method; omitted if unknown and not a current provider call.}
+        cached_model: {type: string, minLength: 1, description: Known cached model; omitted if unknown and not a current provider call.}
+        artifact_ids: {type: array, items: {type: string}, description: Known opaque references only; no internal storage keys or content.}
+    RunSummary:
+      type: object
+      additionalProperties: false
+      required: [run_id, state, evidence]
+      properties:
+        run_id: {type: string}
+        state: {type: string, enum: [unknown, ambiguous, finished, completed, partial, failed]}
+        evidence: {type: array, items: {$ref: '#/components/schemas/LifecycleEvidence'}}
+    RunDetail:
+      type: object
+      additionalProperties: false
+      required: [run_id, state, evidence, attempts, published_results]
+      properties:
+        run_id: {type: string}
+        state: {type: string, enum: [unknown, ambiguous, finished, completed, partial, failed]}
+        evidence: {type: array, items: {$ref: '#/components/schemas/LifecycleEvidence'}}
+        attempts: {type: array, items: {$ref: '#/components/schemas/LifecycleAttempt'}}
+        published_results: {type: array, items: {$ref: '#/components/schemas/LifecyclePublication'}}
+    DocumentAudit:
+      type: object
+      additionalProperties: false
+      required: [document_id, runs, attempts, published_results, unscoped_evidence, conflicts]
+      properties:
+        document_id: {type: string}
+        runs: {type: array, items: {$ref: '#/components/schemas/RunSummary'}}
+        attempts: {type: array, items: {$ref: '#/components/schemas/LifecycleAttempt'}}
+        published_results: {type: array, items: {$ref: '#/components/schemas/LifecyclePublication'}}
+        unscoped_evidence: {type: array, items: {$ref: '#/components/schemas/LifecycleEvidence'}}
+        conflicts: {type: array, items: {type: object, additionalProperties: false, required: [evidence], properties: {evidence: {type: array, items: {$ref: '#/components/schemas/LifecycleEvidence'}}}}}
+    LifecycleEvidence:
+      type: object
+      additionalProperties: false
+      required: [event_id, sequence, event_type]
+      properties:
+        event_id: {type: string}
+        sequence: {type: integer}
+        event_type: {type: string}
+    LifecycleAttempt:
+      type: object
+      additionalProperties: false
+      required: [run_id, attempt_id, attempt_number, terminal_state, evidence]
+      properties:
+        run_id: {type: string}
+        attempt_id: {type: integer}
+        attempt_number: {type: integer}
+        terminal_state: {type: string, enum: [unknown, ambiguous, finished, completed, partial, failed]}
+        evidence: {type: array, items: {$ref: '#/components/schemas/LifecycleEvidence'}}
+    LifecyclePublication:
+      type: object
+      additionalProperties: false
+      required: [run_id, publication_id, evidence]
+      properties:
+        run_id: {type: string, nullable: true}
+        publication_id: {type: string}
+        evidence: {type: array, items: {$ref: '#/components/schemas/LifecycleEvidence'}}
     Error:
       type: object
-      required: [error, code, retryable]
-      properties:
-        error: {type: string}
-        code: {type: string}
-        retryable: {type: boolean}
-        correlation_id: {type: string}
-    Observation:
-      type: object
-      required: [observed_at]
-      properties:
-        observed_at:
-          type: string
-          format: date-time
-          description: UTC čas čtení/projekce, nikoli čas posledního zpracování.
-    Pagination:
-      type: object
-      required: [next_token]
-      properties:
-        next_token: {type: string, nullable: true}
-    Availability:
-      type: object
-      required: [state, reason]
-      description: |
-        available = data/sada je čitelná, může být legitimně prázdná.
-        absent = potvrzeně chybí business snapshot. unavailable = funkce/historie
-        není dostupná (neinstrumentována, retence, neznámá provenance); není to chyba sítě.
-        Auditní collections nepoužívají absent; výpadek povinného zdroje vrací 503.
-      properties:
-        state: {type: string, enum: [available, absent, unavailable]}
-        reason:
-          type: string
-          nullable: true
-          description: Např. not_created, not_instrumented, history_expired, provenance_unknown. null pro available bez zvláštního důvodu.
-    Coverage:
-      type: object
-      required: [state, gaps_known]
-      properties:
-        state: {type: string, enum: [complete, partial, unknown]}
-        gaps_known:
-          type: boolean
-          nullable: true
-          description: null pokud nelze posoudit; false není záruka regulatorně úplného auditu.
-        reason: {type: string, nullable: true}
-    Relationship:
-      type: string
-      enum: [matched, upload_only, analysis_only, audit_only]
-      description: matched=upload+analysis; audit přítomnost je samostatná. audit_only znamená potvrzenou absenci obou business snapshotů.
-    ProcessingStatus:
-      type: string
-      nullable: true
-      description: |
-        Aktuální zdrojová hodnota bez uzavřeného enumu. Známé awaiting_upload, queued,
-        processing, completed, partial, failed. null pokud chybí; žádné dovozování queued
-        z existence uploadu. Budoucí neznámé hodnoty musí klient bezpečně zobrazit.
-      example: completed
-    Upload:
-      type: object
-      nullable: true
-      required: [case_id, document_id]
-      description: |
-        Read-through existujících ingest metadata, ne nový auditní zápis.
-        Dnešní AWS atributy, nikoli povinná budoucí DB struktura. Pole kromě identity
-        jsou volitelná a nullable; absence/null se zachová. Interní s3_key je záměrně
-        nahrazen autorizovaným artifact ID. Další DB pole se nevystavují automaticky.
-      properties:
-        case_id: {type: string}
-        document_id: {type: string}
-        filename: {type: string, nullable: true}
-        content_type: {type: string, nullable: true}
-        size_bytes: {type: integer, format: int64, minimum: 0, nullable: true}
-        sha256: {type: string, nullable: true}
-        received_at: {type: string, format: date-time, nullable: true}
-        uploaded_by: {type: string, nullable: true, description: Jen role oprávněná vidět identitu; sdílený API klient není ověřená osoba.}
-        source_artifact_id: {type: string, nullable: true}
-    Analysis:
-      type: object
-      nullable: true
-      required: [case_id, document_id]
-      description: |
-        Read-through současné AWS analýzy, ne nový auditní zápis. Nevyžaduje source DocumentResult, OCR blocks,
-        fields nebo run_id. Nové atributy pouze po explicitním safe mappingu, žádný
-        otevřený raw DB dump. confidence znamená klasifikaci, ne přesnost OCR.
-      properties:
-        case_id: {type: string}
-        document_id: {type: string}
-        title: {type: string, nullable: true}
-        description: {type: string, nullable: true}
-        label: {type: string, nullable: true}
-        label_status: {type: string, nullable: true, description: Dnes predicted/verified; neuzavírat novým hodnotám.}
-        confidence: {type: number, nullable: true, description: 'Zdrojové klasifikační skóre, ne kalibrovaná pravděpodobnost ani OCR kvalita.'}
-        processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
-        page_count: {type: integer, minimum: 0, nullable: true}
-        pipeline_version: {type: string, nullable: true}
-        updated_at: {type: string, format: date-time, nullable: true}
-        text_artifact_id: {type: string, nullable: true}
-    AuditSnapshot:
-      description: Odvozený runtime přehled, nikoli primární zapisovaná business entita. Případná materializace jen pro doložený bounded dotaz bez business dat.
-      allOf:
-        - $ref: '#/components/schemas/Availability'
-        - type: object
-          required: [active_run_id, published_run_id, projection_revision]
-          properties:
-            active_run_id: {type: string, nullable: true}
-            published_run_id: {type: string, nullable: true}
-            published_attempt_no: {type: integer, minimum: 1, nullable: true}
-            projection_revision: {type: integer, minimum: 0, nullable: true}
-            processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
-            stage: {type: string, nullable: true}
-            attempt_no: {type: integer, minimum: 1, nullable: true}
-            freshness: {type: string, enum: [fresh, stale, unknown]}
-            last_activity_at: {type: string, format: date-time, nullable: true, description: 'Poslední zachycená hranice existujícího toku; žádný pravidelný heartbeat nebo důkaz živosti.'}
-            coverage: {$ref: '#/components/schemas/Coverage'}
-            pages: {$ref: '#/components/schemas/PageCounters'}
-    PageCounters:
-      type: object
-      description: |
-        Počty vzájemně disjunktních aktuálních stavů ve zvoleném pokusu, nikoli součet
-        historických pokusů. cache_hit je příznak completed, ne další kategorie.
-        Počty jsou jen pozorované; neúplnou sadu nelze vydávat za skutečný počet všech stavů.
-        total jen ze zdroje doloženého pro tento run, ne z libovolné současné analysis.
-        pending vyplnit pouze při známém total, úplné coverage a explicitně doložené
-        množině čekajících stránek; nikdy jako rozdíl total minus pozorované outcome.
-      properties:
-        total: {type: integer, minimum: 0, nullable: true}
-        completed: {type: integer, minimum: 0, nullable: true}
-        failed: {type: integer, minimum: 0, nullable: true}
-        running: {type: integer, minimum: 0, nullable: true}
-        pending: {type: integer, minimum: 0, nullable: true, description: 'Bez explicitní evidence čekajících stránek a úplné coverage null/vynecháno.'}
-    DocumentSummary:
-      type: object
-      required: [case_id, document_id, display_name, relationship, processing_status, audit]
-      properties:
-        case_id: {type: string}
-        document_id: {type: string}
-        display_name: {type: string, description: 'Neprázdné analysis.title, jinak neprázdné upload.filename, jinak document_id; není vstup klasifikace.'}
-        relationship: {$ref: '#/components/schemas/Relationship'}
-        processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
-        label: {type: string, nullable: true}
-        page_count: {type: integer, minimum: 0, nullable: true}
-        updated_at: {type: string, format: date-time, nullable: true}
-        audit: {$ref: '#/components/schemas/AuditSnapshot'}
-    DocumentList:
-      allOf:
-        - $ref: '#/components/schemas/Observation'
-        - $ref: '#/components/schemas/Pagination'
-        - type: object
-          required: [case_id, documents]
-          properties:
-            case_id: {type: string}
-            documents: {type: array, items: {$ref: '#/components/schemas/DocumentSummary'}}
-    DocumentDetail:
-      allOf:
-        - $ref: '#/components/schemas/Observation'
-        - $ref: '#/components/schemas/DocumentSummary'
-        - type: object
-          required: [upload, analysis]
-          properties:
-            upload: {$ref: '#/components/schemas/Upload'}
-            analysis: {$ref: '#/components/schemas/Analysis'}
-    AuditResponse:
-      allOf:
-        - $ref: '#/components/schemas/Observation'
-        - $ref: '#/components/schemas/AuditSnapshot'
-        - type: object
-          required: [case_id, document_id]
-          properties:
-            case_id: {type: string}
-            document_id: {type: string}
-    Timing:
-      type: object
-      properties:
-        created_at: {type: string, format: date-time, nullable: true}
-        started_at: {type: string, format: date-time, nullable: true}
-        finished_at: {type: string, format: date-time, nullable: true}
-        duration_ms: {type: number, minimum: 0, nullable: true, description: 'Měřené trvání, ne domněnka z updated_at.'}
-    SafeFailure:
-      type: object
-      nullable: true
-      required: [code, message_safe, retryable]
-      properties:
-        code: {type: string}
-        message_safe: {type: string}
-        retryable: {type: boolean, nullable: true}
-    Run:
-      description: Čtecí projekce událostí běhu; pole historického runtime kontextu jsou schválené 20:30, nikoli kopie celého jobu/config nebo nový business záznam.
-      allOf:
-        - $ref: '#/components/schemas/Timing'
-        - type: object
-          required: [case_id, document_id, run_id, processing_status, coverage]
-          properties:
-            case_id: {type: string}
-            document_id: {type: string}
-            run_id: {type: string}
-            job_id: {type: string, nullable: true}
-            processing_status: {$ref: '#/components/schemas/ProcessingStatus'}
-            mode: {type: string, nullable: true, description: 'Dnes auto/visual, konfigurace není skutečná metoda každé stránky.'}
-            pipeline_version: {type: string, nullable: true, description: 'Deklarovaná verze, nikoli hash zdrojového kódu.'}
-            prompt_version: {type: string, nullable: true, description: 'Deklarovaná verze, nikoli hash obsahu promptu.'}
-            config_hash: {type: string, nullable: true}
-            source_artifact_id: {type: string, nullable: true}
-            provider: {type: string, nullable: true}
-            model: {type: string, nullable: true, description: Jen doložená konfigurace runu; per-stage model může být jiný.}
-            api: {type: string, nullable: true}
-            region: {type: string, nullable: true}
-            coverage: {$ref: '#/components/schemas/Coverage'}
-            error: {$ref: '#/components/schemas/SafeFailure'}
-    Attempt:
-      description: Čtecí projekce událostí úspěšného claimu a dalších hranic pokusu, nikoli druhý execution owner.
-      allOf:
-        - $ref: '#/components/schemas/Timing'
-        - type: object
-          required: [run_id, attempt_no, status]
-          properties:
-            run_id: {type: string}
-            attempt_no: {type: integer, minimum: 1}
-            status: {type: string, description: Např. queued/running/succeeded/partial/failed; otevřená množina.}
-            retry_reason: {type: string, nullable: true, description: 'Jen zachycený error code při rozhodnutí/requeue předchozího pokusu; lease expiry bez známé příčiny není provider chyba.'}
-            last_activity_at: {type: string, format: date-time, nullable: true, description: 'Poslední zachycená hranice existujícího toku; žádný pravidelný heartbeat nebo důkaz živosti.'}
-            error: {$ref: '#/components/schemas/SafeFailure'}
-    Step:
-      description: Čtecí projekce start/end/failure událostí, nikoli požadavek na samostatný zápis STEP objektu.
-      allOf:
-        - $ref: '#/components/schemas/Timing'
-        - type: object
-          required: [run_id, attempt_no, step_id, sequence, stage, status]
-          properties:
-            run_id: {type: string}
-            attempt_no: {type: integer, minimum: 1}
-            step_id: {type: string}
-            sequence: {type: integer, minimum: 0}
-            stage: {type: string, description: Např. source_validation/queued/page_transcription/extraction/result_publishing; otevřená množina.}
-            status: {type: string, description: pending/running/succeeded/failed/skipped a budoucí stavy. not_instrumented není succeeded.}
-            provider: {type: string, nullable: true}
-            model: {type: string, nullable: true}
-            metrics: {$ref: '#/components/schemas/Metrics'}
-            artifact_ids: {type: array, items: {type: string}}
-            error: {$ref: '#/components/schemas/SafeFailure'}
-    Metrics:
-      type: object
-      description: Jen skutečně měřené/vrácené hodnoty. Neznámé null/vynecháno, ne 0. Nové metriky jen explicitním kontraktem.
-      properties:
-        client_call_duration_ms: {type: number, minimum: 0, nullable: true, description: 'Nový monotónní wrapper kolem existujícího BedrockClient.complete; zahrnuje lokální práci a SDK retries, není čistou provider latencí.'}
-        unknown_reason: {type: string, nullable: true}
-    Page:
-      description: Čtecí runtime průběh stránky z událostí; obsah a statické údaje uložené stránky se připojují z potvrzené existující reference, nekopírují se do auditu.
-      allOf:
-        - $ref: '#/components/schemas/Timing'
-        - type: object
-          required: [run_id, attempt_no, page_number, status]
-          properties:
-            run_id: {type: string}
-            attempt_no: {type: integer, minimum: 1}
-            page_number: {type: integer, minimum: 1}
-            status: {type: string, description: Např. pending/running/completed/failed; absence eventu není pending.}
-            method: {type: string, nullable: true, description: Doložená skutečná cesta native/vision nebo budoucí hodnota.}
-            model: {type: string, nullable: true}
-            cache_hit: {type: boolean, nullable: true, description: 'Hook až po úspěšném načtení a validaci Page cache; cache nedokládá původní run ani attempt.'}
-            fallback_reason: {type: string, nullable: true, description: 'Známý warning z PdfFirstOcr.transcribe, nikoli domněnka z method=vision.'}
-            warning_codes: {type: array, items: {type: string}}
-            preview_artifact_id: {type: string, nullable: true}
-            text_artifact_id: {type: string, nullable: true}
-            structured_artifact_id: {type: string, nullable: true}
-            error: {$ref: '#/components/schemas/SafeFailure'}
-    Event:
-      type: object
-      description: |
-        Jediná primární zapisovaná auditní entita, zde její bezpečná veřejná projekce.
-        Neměnná fakta runtime přechodu, ne kopie dokumentu/uploadu/analýzy.
-        details je allowlist podle type, nikoli obecný business payload. Pole mimo typ se nevyplňují.
-        Dokumentový scope, FileReceived bez run_id; ostatní schválené typy run_id vyžadují.
-        Pouze čas vzniku occurred_at, žádný ukládaný čas zápisu/doručení auditu.
-        Historický runtime kontext jen návrh v RunQueued; artefaktové vazby jsou opaque.
-      required: [schema_version, case_id, document_id, event_id, sequence, type, occurred_at]
-      oneOf:
-        - properties:
-            type: {enum: [FileReceived]}
-          not: {required: [run_id]}
-        - required: [run_id]
-          properties:
-            type:
-              enum: [RunQueued, AttemptStarted, StepStarted, StepFinished, StepFailed, PageCacheReused, PageCompleted, PageFailed, ResultPublished, RetryEnqueued, AttemptFinished, RunFinished]
-      properties:
-        schema_version: {type: string, enum: ['1.0']}
-        case_id: {type: string}
-        document_id: {type: string}
-        run_id: {type: string}
-        event_id: {type: string}
-        sequence: {type: integer, minimum: 0, description: Technické pořadí čtení; nikoli čas zápisu nebo kauzální důkaz.}
-        type: {type: string, description: Sémantická runtime událost např. PageCacheReused/PageCompleted/RetryEnqueued/ResultPublished.}
-        occurred_at: {type: string, format: date-time, description: Čas vzniku akce zachycený producentem na hooku; ne čas zápisu listenerem.}
-        attempt_no: {type: integer, minimum: 1, nullable: true}
-        stage: {type: string, nullable: true}
-        page_number: {type: integer, minimum: 1, nullable: true}
-        correlation_id: {type: string, nullable: true}
-        artifact_ids: {type: array, items: {type: string}}
-        error: {$ref: '#/components/schemas/SafeFailure'}
-        details:
-          type: object
-          additionalProperties: false
-          description: |
-            Pracovní sjednocený allowlist, ne povinnost všech polí pro všechny eventy.
-            outcome/duration pro finish/failure; cache_hit pouze pro cache reuse/provedenou stránku;
-            method/model jen skutečně provedená cesta/volání, ne model aktuálně nastavený v prostředí.
-            RunQueued může jednou nést historický runtime kontext, nikdy celý config/job objekt.
-            Přesný type-to-fields kontrakt musí být potvrzen před implementací.
-          properties:
-            outcome: {type: string}
-            duration_ms: {type: number, minimum: 0}
-            client_call_duration_ms: {type: number, minimum: 0}
-            cache_hit: {type: boolean}
-            method: {type: string}
-            model: {type: string}
-            fallback_reason: {type: string}
-            warning_codes: {type: array, items: {type: string}}
-            run_context:
-              type: object
-              additionalProperties: false
-              description: Parametry a omezení schválené uživatelem 19. 10. 2026 ve 20:30. Pouze jednou pro RunQueued ze známých hodnot uloženého jobu, ne aktuálního prostředí workeru; mode/pipeline_version/prompt_version/ocr_model/extraction_model tvoří minimum pokud známé, provider/api/region jsou schválené, job_id/config_hash volitelná diagnostika. Neměnná reference má přednost před kopií. Konkrétní vstup přes autorizovanou source artifact referenci v artifact_ids, interně známá verze/hash jen podle potřeby. Konfigurace nedokazuje volání modelu ani úplnou reprodukovatelnost; signature config v dnešním job.config není.
-              properties:
-                job_id: {type: string}
-                config_hash: {type: string}
-                mode: {type: string}
-                pipeline_version: {type: string}
-                prompt_version: {type: string}
-                provider: {type: string}
-                api: {type: string}
-                region: {type: string}
-                ocr_model: {type: string}
-                extraction_model: {type: string}
-    Artifact:
-      description: Čtecí metadata existujícího potvrzeného artefaktu; audit uchovává jen vazbu/reference, nikoli kopii obsahu nebo všech těchto metadat.
-      type: object
-      required: [case_id, document_id, artifact_id, kind, state]
-      properties:
-        case_id: {type: string}
-        document_id: {type: string}
-        artifact_id: {type: string}
-        kind: {type: string, description: 'source/preview/page_text/analysis_text/structured_result/extraction pouze nad potvrzeným existujícím artefaktem. Budoucí typy jsou kompatibilita klienta, ne slíbená persistence. Žádný nový auditní manifest.'}
-        state: {type: string, enum: [ready, pending, missing, unavailable]}
-        reason: {type: string, nullable: true}
-        run_id: {type: string, nullable: true}
-        attempt_no: {type: integer, minimum: 1, nullable: true}
-        page_number: {type: integer, minimum: 1, nullable: true}
-        content_type: {type: string, nullable: true}
-        size_bytes: {type: integer, minimum: 0, nullable: true}
-        sha256: {type: string, nullable: true, description: 'Jen skutečně známý hash odkazovaného business artefaktu; ETag není SHA-256. Žádný manifest se kvůli hashi nevytváří.'}
-        version_id: {type: string, nullable: true, description: Jen skutečně známá verze; historický obsah nabídnout pouze s doloženou nezaměnitelnou referencí. Samotná cesta ani dnešní obsah nejsou důkaz tehdejšího výstupu; jinak unavailable.}
-        created_at: {type: string, format: date-time, nullable: true}
-    Collection:
-      allOf:
-        - $ref: '#/components/schemas/Observation'
-        - $ref: '#/components/schemas/Pagination'
-        - $ref: '#/components/schemas/Availability'
-        - type: object
-          required: [coverage]
-          description: unavailable vyžaduje reason, items=[],next_token=null; available může být prázdné. Rozpor stav/data je chyba kontraktu.
-          properties:
-            coverage: {$ref: '#/components/schemas/Coverage'}
-    RunList:
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-          required: [items]
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/Run'}}
-    RunResponse:
-      allOf:
-        - $ref: '#/components/schemas/Observation'
-        - type: object
-          required: [data]
-          properties:
-            data: {$ref: '#/components/schemas/Run'}
-    AttemptList:
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-          required: [items]
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/Attempt'}}
-    StepList:
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-          required: [items]
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/Step'}}
-    PageList:
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-          required: [items]
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/Page'}}
-    EventList:
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-          required: [items]
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/Event'}}
-    ArtifactList:
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-          required: [items]
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/Artifact'}}
-    ArtifactAccessResponse:
-      allOf:
-        - $ref: '#/components/schemas/Observation'
-        - type: object
-          required: [artifact, access]
-          properties:
-            artifact: {$ref: '#/components/schemas/Artifact'}
-            access:
-              type: object
-              nullable: true
-              required: [url, method, expires_at]
-              properties:
-                url: {type: string, format: uri}
-                method: {type: string, enum: [GET]}
-                expires_at: {type: string, format: date-time}
+      additionalProperties: false
+      required: [error]
+      properties: {error: {type: string}}

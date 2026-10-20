@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
-# Kopie infra/documents-table/template.yaml se zapnutym DynamoDB Streamem (NEW_IMAGE) pro trigger.
+# Kopie be-intake/documents-table/template.yaml se zapnutym DynamoDB Streamem (NEW_IMAGE) pro trigger.
 # 19. 10. 2026: pridano DeletionPolicy/UpdateReplacePolicy Retain (smazani stacku ani nahrazeni tabulku nesmaze),
 # point-in-time recovery a tag project=wonderfulkb. Vse jsou zmeny bez nahrazeni tabulky (No interruption).
 # Komentare bez diakritiky: CloudFormation je pri ulozeni sablony poskodil.
-Description: wonderfulkb-uw-documents table (uploaded documents per case). Clients and cases tables are managed separately (part 1).
+Description: Uploaded documents and a separate content-free processing audit table. Clients and cases tables are managed separately (part 1).
 
 Resources:
   DocumentsTable:
@@ -26,6 +26,30 @@ Resources:
       Tags:
         - {Key: project, Value: wonderfulkb}
 
+  AuditTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Separate append-only FileReceived audit; business documents retain their own schema.
+        must: Keep stable document/event keys, retain data on replacement, and do not enable TTL.
+    Properties:
+      TableName: wonderfulkb-uw-document-processing-audit
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+        - {AttributeName: pk, AttributeType: S}
+        - {AttributeName: sk, AttributeType: S}
+      KeySchema:
+        - {AttributeName: pk, KeyType: HASH}
+        - {AttributeName: sk, KeyType: RANGE}
+
 Outputs:
+  AuditTableName:
+    Value: !Ref AuditTable
+  AuditTableArn:
+    Value: !GetAtt AuditTable.Arn
   StreamArn:
     Value: !GetAtt DocumentsTable.StreamArn

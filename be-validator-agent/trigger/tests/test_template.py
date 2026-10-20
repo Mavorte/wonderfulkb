@@ -115,12 +115,27 @@ def test_dlq_has_alarms(template):
 
 
 def test_stream_copy_of_the_table_template_differs_only_by_the_stream():
-    original = yaml.safe_load((HERE.parents[1] / "documents-table" / "template.yaml").read_text())
+    original = yaml.load((HERE.parents[1] / "be-intake" / "documents-table" / "template.yaml").read_text(), Loader=Loader)
     copy = yaml.load((HERE / "documents-table-with-stream.yaml").read_text(), Loader=Loader)
     table = copy["Resources"]["DocumentsTable"]["Properties"]
     assert table.pop("StreamSpecification") == {"StreamViewType": "NEW_IMAGE"}
     assert copy["Resources"] == original["Resources"]
-    assert set(copy["Outputs"]) == {"StreamArn"}
+    assert set(original["Outputs"]).issubset(copy["Outputs"])
+    assert set(copy["Outputs"]) - set(original["Outputs"]) <= {"StreamArn"}
+
+
+def test_deploy_rollback_template_path_is_script_relative():
+    script = HERE / "deploy.sh"
+    assignments = [
+        line for line in script.read_text().splitlines()
+        if line.startswith(("SCRIPT_DIR=", "ORIGINAL_TEMPLATE="))
+    ]
+    assignments = [line.replace('${BASH_SOURCE[0]}', str(script)) for line in assignments]
+    result = subprocess.run(
+        ["bash", "-c", "\n".join(assignments) + '\nprintf "%s" "$ORIGINAL_TEMPLATE"'],
+        cwd=HERE.parent, capture_output=True, text=True, check=True,
+    )
+    assert Path(result.stdout) == HERE.parents[1] / "be-intake/documents-table/template.yaml"
 
 
 @pytest.mark.skipif(not (HERE / ".venv-lint/bin/cfn-lint").exists() and not shutil.which("cfn-lint"), reason="cfn-lint not installed")

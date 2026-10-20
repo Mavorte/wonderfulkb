@@ -19,6 +19,7 @@ Parameters:
       Secrets Manager secret {"url": ..., "secret": ...} of the Wonderful webhook that starts the evaluation agent
       once the documents of a case are processed (trigger/wonderful_webhook.py). Empty = no webhook, the case stays
       intake_in_progress.
+  AuditTable: {Type: String, Default: wonderfulkb-uw-document-processing-audit}
   RawBucket: {Type: String, Default: wonderfulkb-raw-document-storage}
   VectorBucket: {Type: String, Default: wonderfulkb-vectors}
   MaxConcurrency:
@@ -60,6 +61,8 @@ Globals:
     Environment:
       Variables:
         ANALYSIS_TABLE: !Ref AnalysisTable
+        EXECUTION_TABLE: !Ref ExecutionTable
+        AUDIT_TABLE_NAME: !Ref AuditTable
         DOCUMENTS_TABLE: !Ref DocumentsTable
         CASES_TABLE: !Ref CasesTable
         RAW_BUCKET: !Ref RawBucket
@@ -67,6 +70,22 @@ Globals:
         DLQ_URL: !Ref DeadLetterQueue
 
 Resources:
+  ExecutionTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: wonderfulkb-trigger-execution
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: pk, AttributeType: S}
+        - {AttributeName: sk, AttributeType: S}
+      KeySchema:
+        - {AttributeName: pk, KeyType: HASH}
+        - {AttributeName: sk, KeyType: RANGE}
+      PointInTimeRecoverySpecification: {PointInTimeRecoveryEnabled: true}
+      Tags:
+        - {Key: project, Value: wonderfulkb}
   # ---- queues -------------------------------------------------------------------------------------------------
   DeadLetterQueue:
     Type: AWS::SQS::Queue
@@ -132,6 +151,22 @@ Resources:
                 Effect: Allow
                 Action: dynamodb:UpdateItem
                 Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
+              - Sid: ExecutionLedger
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem]
+                Resource: !GetAtt ExecutionTable.Arn
+              - Sid: AtomicQueue
+                Effect: Allow
+                Action: dynamodb:UpdateItem
+                Resource: !GetAtt ExecutionTable.Arn
+              - Sid: AtomicWrite
+                Effect: Allow
+                Action: dynamodb:TransactWriteItems
+                Resource: [!GetAtt ExecutionTable.Arn, !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"]
+              - Sid: AppendAudit
+                Effect: Allow
+                Action: dynamodb:PutItem
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AuditTable}"
               - Sid: Send
                 Effect: Allow
                 Action: sqs:SendMessage
@@ -222,6 +257,14 @@ Resources:
                 Effect: Allow
                 Action: secretsmanager:GetSecretValue
                 Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:wonderfulkb/wonderful-webhook-*"
+              - Sid: ExecutionLedger
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:TransactWriteItems]
+                Resource: [!GetAtt ExecutionTable.Arn, !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"]
+              - Sid: AppendAudit
+                Effect: Allow
+                Action: dynamodb:PutItem
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AuditTable}"
               - Sid: ReadOriginalsMaskedCopiesAndOwnOutput
                 Effect: Allow
                 Action: s3:GetObject

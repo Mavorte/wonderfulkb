@@ -8,7 +8,7 @@ from .conftest import add_document, bodies, drain
 
 def run(ctx, *argv):
     """backfill.main against the moto account; `Context()` is the one the script builds from the environment."""
-    return backfill.main(["--queue-url", ctx.queue_url, "--rate", "6000", *argv])
+    return backfill.main(["--queue-url", ctx.queue_url, "--rate", "6000", "--command-key", "fixture", *argv])
 
 
 @pytest.fixture

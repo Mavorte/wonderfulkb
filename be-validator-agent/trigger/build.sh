@@ -11,8 +11,13 @@ SRC=..
 rm -rf build
 mkdir -p build/light/trigger build/pkg/trigger build/pkg/signatures build/pkg/privacy build/pkg/regions
 COMMON=(--exclude __pycache__ --exclude '*.pyc' --exclude tests --exclude .venv --exclude '.pytest_cache')
-for f in __init__ common enqueue_handler dlq_handler; do cp "$f.py" build/light/trigger/; done
-for f in __init__ common enqueue_handler dlq_handler worker_handler case_step wonderful_webhook; do cp "$f.py" build/pkg/trigger/; done
+for f in __init__ common enqueue_handler dlq_handler processing_execution_context processing_execution_claims; do cp "$f.py" build/light/trigger/; done
+for f in __init__ common enqueue_handler dlq_handler worker_handler case_step wonderful_webhook processing_execution_context processing_execution_claims; do cp "$f.py" build/pkg/trigger/; done
+mkdir -p build/light/document_processing/audit build/pkg/document_processing/audit
+cp ../../be-document-processing/src/document_processing/__init__.py build/light/document_processing/
+cp ../../be-document-processing/src/document_processing/__init__.py build/pkg/document_processing/
+rsync -a "${COMMON[@]}" ../../be-document-processing/src/document_processing/audit/ build/light/document_processing/audit/
+rsync -a "${COMMON[@]}" ../../be-document-processing/src/document_processing/audit/ build/pkg/document_processing/audit/
 rsync -a "${COMMON[@]}" --exclude runs --exclude '*.sh' --exclude '*.yaml' --exclude '*.md' --exclude 'requirements*.txt' \
   --exclude pytest.ini --exclude measure.py "$SRC/pipeline/" build/pkg/pipeline/
 rsync -a "${COMMON[@]}" --exclude evaluate.py "$SRC/classify/" build/pkg/classify/

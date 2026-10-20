@@ -1,9 +1,4 @@
-"""Shared by the enqueue Lambda, the worker, the DLQ marker and backfill.py: queue messages and row states.
-
-The analysis row is the only state. A document moves queued -> processing -> completed / partial / failed.
-Every step here is a conditional write, so the same message or stream record can arrive twice (SQS and
-DynamoDB Streams are at-least-once) and nothing is processed or marked twice.
-"""
+"""Shared queue and business-row operations; owner-only execution identity lives in the ledger."""
 import json
 import logging
 import os
@@ -14,6 +9,8 @@ from datetime import datetime, timedelta, timezone
 import boto3
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
+from . import processing_execution_claims as execution
+from .processing_execution_context import EnqueueResult
 
 log = logging.getLogger("trigger")
 
@@ -42,9 +39,11 @@ def iso(moment):
     return moment.strftime("%Y-%m-%dT%H:%M:%SZ")  # the format of the pipeline; compares lexicographically
 
 
-def make_message(kind, case_id, document_id=None, force=False):
+def make_message(kind, case_id, document_id=None, force=False, run_id=None, generation=None):
     body = {"v": MESSAGE_VERSION, "type": kind, "case_id": case_id}
     if kind == "document":
+        if run_id is not None:
+            body.update(v=2, run_id=run_id, generation=generation)
         body["document_id"] = document_id
         if force:
             body["force"] = True
@@ -61,7 +60,7 @@ def parse_message(body):
         data = json.loads(body)
     except (TypeError, ValueError) as error:
         raise BadMessage(f"not JSON: {error}") from None
-    if not isinstance(data, dict) or data.get("v") != MESSAGE_VERSION:
+    if not isinstance(data, dict) or data.get("v") not in (1, 2):
         raise BadMessage("unknown message version")
     kind = data.get("type")
     if kind not in ("document", "case"):
@@ -73,6 +72,12 @@ def parse_message(body):
         if not _valid_id(data.get("document_id")):
             raise BadMessage("invalid document_id")
         out["document_id"] = data["document_id"]
+        if data["v"] == 2:
+            if not _valid_id(data.get("run_id")) or type(data.get("generation")) is not int or data["generation"] < 1:
+                raise BadMessage("invalid execution identity")
+            out.update(run_id=data["run_id"], generation=data["generation"])
+    elif data["v"] != 1:
+        raise BadMessage("unknown case message version")
     return out
 
 
@@ -88,7 +93,8 @@ class Context:
     """boto3 handles and names, created lazily from the environment (tests pass their own)."""
 
     def __init__(self, region=None, analysis_table=None, documents_table=None, bucket=None, queue_url=None,
-                 dlq_url=None, ddb=None, sqs=None, s3=None, cases_table=None):
+                 dlq_url=None, ddb=None, sqs=None, s3=None, cases_table=None,
+                 execution_table=None, audit=None):
         self.region = region or os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "eu-central-1"
         self.analysis_name = analysis_table or os.environ.get("ANALYSIS_TABLE", "wonderfulkb-uw-document-analysis")
         self.documents_name = documents_table or os.environ.get("DOCUMENTS_TABLE", "wonderfulkb-uw-documents")
@@ -96,6 +102,8 @@ class Context:
         self.bucket = bucket or os.environ.get("RAW_BUCKET", "wonderfulkb-raw-document-storage")
         self.queue_url = queue_url or os.environ.get("QUEUE_URL", "")
         self.dlq_url = dlq_url or os.environ.get("DLQ_URL", "")
+        self.execution_name = execution_table or os.environ.get("EXECUTION_TABLE", "wonderfulkb-trigger-execution")
+        self.audit = audit
         self._ddb, self._sqs, self._s3 = ddb, sqs, s3
 
     @property
@@ -129,7 +137,20 @@ class Context:
         return self.ddb.Table(self.cases_name)
 
     def get_case(self, case_id):
-        return self.cases.get_item(Key={"case_id": case_id}, ConsistentRead=True).get("Item")
+        return self.cases.get_item(
+            Key={"case_id": case_id}, ConsistentRead=True
+        ).get("Item")
+
+    @property
+    def execution(self):
+        return self.ddb.Table(self.execution_name)
+
+    @property
+    def audit_listener(self):
+        if self.audit is None:
+            from document_processing.audit.audit_listener import from_env
+            self.audit = from_env()
+        return self.audit
 
     def get_document(self, case_id, document_id):
         return self.documents.get_item(Key={"case_id": case_id, "document_id": document_id}).get("Item")
@@ -148,89 +169,57 @@ class Context:
                                       ConsistentRead=True).get("Item")
 
     def send(self, body):
-        self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=body)
+        response = self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=body)
+        if not response.get("MessageId"):
+            raise RuntimeError("ambiguous SQS send: no MessageId")
+        return response["MessageId"]
 
 
 def _conditional_failed(error):
     return error.response["Error"]["Code"] == "ConditionalCheckFailedException"
 
 
-def enqueue_document(ctx, case_id, document_id, title=None, force=False):
-    """Make the document visible as `queued` and put it on the queue.
-
-    Returns "queued", "completed" (nothing to do) or "processing" (a worker holds it). The row is written
-    before the message: if the send fails the caller retries and finds the row `queued`, which still sends.
-    Messages may therefore be duplicated, never lost; the worker's claim makes duplicates harmless."""
-    key = {"case_id": case_id, "document_id": document_id}
-    stamp = iso(now_dt())
-    for _ in range(3):
-        try:  # same attributes as pipeline._mark creates for a missing row
-            ctx.analysis.put_item(
-                Item={**key, "title": title or document_id, "page_count": 0, "processing_status": "queued",
-                      "label_status": "predicted", "description": "", "pipeline_version": "pending",
-                      "updated_at": stamp},
-                ConditionExpression="attribute_not_exists(case_id)")
-            break
-        except ClientError as error:
-            if not _conditional_failed(error):
-                raise
-        allowed = ["queued", "failed", "partial"] + (["completed"] if force else [])
-        values = {":q": "queued", ":t": stamp, ":stale": iso(now_dt() - timedelta(seconds=LEASE_SECONDS)),
-                  ":proc": "processing"}
-        values.update({f":a{i}": s for i, s in enumerate(allowed)})
-        names = ", ".join(f":a{i}" for i in range(len(allowed)))
-        try:  # an existing row keeps its other attributes (label, text key) until the new run replaces them
-            ctx.analysis.update_item(
-                Key=key, UpdateExpression="SET processing_status = :q, updated_at = :t REMOVE failure_reason",
-                ConditionExpression=f"attribute_exists(case_id) AND (processing_status IN ({names}) OR "
-                                    f"(processing_status = :proc AND updated_at < :stale))",
-                ExpressionAttributeValues=values)
-            break
-        except ClientError as error:
-            if not _conditional_failed(error):
-                raise
-        row = ctx.get_row(case_id, document_id)
-        if row is None:  # deleted between the two writes: try the create again
-            continue
-        return "completed" if row.get("processing_status") == "completed" else "processing"
-    else:
-        raise RuntimeError(f"cannot queue {case_id}/{document_id}: row keeps changing")
-    ctx.send(make_message("document", case_id, document_id, force))
-    return "queued"
-
-
-def claim_document(ctx, case_id, document_id):
-    """Move the row from `queued` to `processing` for this worker. Returns "claimed" or the status that stopped it.
-
-    Only `queued` is claimable (plus a dead `processing` claim older than the lease): a `completed`, `partial` or
-    `failed` row means the document was already handled, so a late duplicate message does nothing. Anything that
-    wants a document processed again (the stream, backfill.py, also with --force) first sets the row to `queued`
-    in enqueue_document. A missing row is created first, so a worker never writes a sparse item."""
-    key = {"case_id": case_id, "document_id": document_id}
-    if ctx.get_row(case_id, document_id) is None:
-        doc = ctx.get_document(case_id, document_id) or {}
-        try:
-            ctx.analysis.put_item(
-                Item={**key, "title": doc.get("filename") or document_id, "page_count": 0,
-                      "processing_status": "queued", "label_status": "predicted", "description": "",
-                      "pipeline_version": "pending", "updated_at": iso(now_dt())},
-                ConditionExpression="attribute_not_exists(case_id)")
-        except ClientError as error:
-            if not _conditional_failed(error):
-                raise
+def enqueue_document(ctx, case_id, document_id, title=None, force=False, request_key=None):
+    """Atomically queue the row and owner generation; send the same generation on ambiguous retry."""
+    # Direct callers must retain the returned request key across ambiguous retries; stream and
+    # backfill pass stable keys explicitly. A queued row always reuses its current generation.
+    request_key = request_key or f"direct:{case_id}:{document_id}"
+    result = execution.allocate(ctx, case_id, document_id, title, force, request_key,
+                                iso(now_dt()), iso(now_dt() - timedelta(seconds=LEASE_SECONDS)))
+    if result != "queued":
+        return result
     try:
-        ctx.analysis.update_item(
-            Key=key, UpdateExpression="SET processing_status = :proc, updated_at = :t",
-            ConditionExpression="attribute_exists(case_id) AND (processing_status = :q OR "
-                                "(processing_status = :proc AND updated_at < :stale))",
-            ExpressionAttributeValues={":proc": "processing", ":q": "queued", ":t": iso(now_dt()),
-                                       ":stale": iso(now_dt() - timedelta(seconds=LEASE_SECONDS))})
-        return "claimed"
+        ctx.send(make_message("document", case_id, document_id, force, result.run_id, result.generation))
     except ClientError as error:
-        if not _conditional_failed(error):
-            raise
-    row = ctx.get_row(case_id, document_id)
-    return row.get("processing_status", "unknown") if row else "unknown"
+        code = error.response["Error"]["Code"]
+        if code in ("InvalidMessageContents", "InvalidParameterValue", "AWS.SimpleQueueService.NonExistentQueue"):
+            raise SendRejected(code) from error
+        raise SendAmbiguous(code) from error
+    except Exception as error:
+        raise SendAmbiguous("send outcome unknown") from error
+    from document_processing.audit.audit_listener import dispatch
+    dispatch(lambda: ctx.audit_listener, "run_queued", case_id=case_id, document_id=document_id, run_id=result.run_id,
+                                  occurred_at=iso(now_dt()))
+    return EnqueueResult("queued", result.run_id, result.generation, "confirmed")
+
+
+def claim_document(ctx, case_id, document_id, run_id=None, generation=None):
+    """Commit the business claim and its owner-issued attempt ordinal in one transaction."""
+    result = execution.claim(ctx, case_id, document_id, run_id, generation)
+    if result == "claimed":
+        from document_processing.audit.audit_listener import dispatch
+        dispatch(lambda: ctx.audit_listener, "attempt_started", case_id=case_id, document_id=document_id,
+            run_id=result.execution_context.run_id, attempt_no=result.attempt_no,
+            occurred_at=iso(now_dt()))
+    return result
+
+
+class SendRejected(RuntimeError):
+    """Known non-acceptance by SQS."""
+
+
+class SendAmbiguous(RuntimeError):
+    """Acceptance cannot be determined; retry with the same request key."""
 
 
 def set_case_status(ctx, case_id, status, from_statuses):
