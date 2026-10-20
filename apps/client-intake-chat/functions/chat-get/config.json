@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Chat Get",
+  "description": "Resolves an intake link hash to its case through the Client Intake app's intake-get, and returns it with the settings the page needs to embed the Intake Chat agent",
+  "method": "POST",
+  "path_slug": "chat-get"
+}

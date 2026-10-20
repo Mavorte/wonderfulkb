@@ -6,8 +6,6 @@ import uploadDocuments, { MAX_FILE_BYTES, type UploadProgress } from "../uploadD
 import KbIcon from "./KbIcon";
 import Notice from "./Notice";
 
-type Outcome = { ok: true; count: number; at: Date } | { ok: false; message: string };
-
 type FileStatus = "waiting" | "sending" | "sent" | "failed";
 
 const STATUS_LABELS: Record<FileStatus, string> = {
@@ -65,7 +63,15 @@ function UploadProgressBar({ progress, total }: { progress: UploadProgress; tota
   );
 }
 
-export default function UploadPanel({ data }: { data: IntakeData }) {
+export default function UploadPanel({
+  data,
+  uploaded,
+  onUploaded,
+}: {
+  data: IntakeData;
+  uploaded: UploadedDocument[];
+  onUploaded: (documents: UploadedDocument[]) => void;
+}) {
   const { api, track } = useWonderful();
   const inputRef = useRef<HTMLInputElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
@@ -74,23 +80,21 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [rejected, setRejected] = useState<string[]>([]);
   const [tooLarge, setTooLarge] = useState<string[]>([]);
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [failedFile, setFailedFile] = useState<File | null>(null);
-  const [uploaded, setUploaded] = useState<UploadedDocument[]>([]);
   const isUploading = progress !== null;
 
-  // The upload card scrolls inside on desktop, so bring the progress or result
-  // into view when an upload starts and when it ends.
+  // Bring the progress or error into view when an upload starts and when it fails.
   useEffect(() => {
     statusRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [isUploading, outcome]);
+  }, [isUploading, error]);
 
   const addFiles = (incoming: FileList | null) => {
     if (!incoming || isUploading) return;
     const list = Array.from(incoming);
     setRejected(list.filter((f) => !isPdf(f)).map((f) => f.name));
     setTooLarge(list.filter((f) => isPdf(f) && f.size > MAX_FILE_BYTES).map((f) => f.name));
-    setOutcome((current) => (current?.ok ? current : null));
+    setError(null);
     setFailedFile(null);
     setFiles((current) => {
       const names = new Set(current.map((f) => f.name));
@@ -106,7 +110,7 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
 
   const onUpload = async () => {
     if (!data.can_upload || files.length === 0) return;
-    setOutcome(null);
+    setError(null);
     setFailedFile(null);
     setProgress({ phase: "staging", index: 0 });
     track("upload_started", { file_count: files.length });
@@ -114,12 +118,22 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
     setProgress(null);
     if (result.ok) {
       track("upload_completed", { file_count: result.documents.length });
-      setUploaded((current) => [...result.documents, ...current]);
-      setOutcome({ ok: true, count: result.documents.length || files.length, at: new Date() });
+      // Ingest normally lists what it stored; fall back to the sent files.
+      const receivedAt = new Date().toISOString();
+      const documents = result.documents.length
+        ? result.documents
+        : files.map((file) => ({
+            document_id: file.name,
+            filename: file.name,
+            received_at: receivedAt,
+            content_type: file.type,
+            size_bytes: file.size,
+          }));
       setFiles([]);
+      onUploaded(documents);
     } else {
       track("upload_failed");
-      setOutcome({ ok: false, message: result.message });
+      setError(result.message);
       setFailedFile(result.failedFile ?? null);
     }
   };
@@ -137,7 +151,7 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
           </span>
         )}
       </div>
-      <div className="app-stack app-card__body">
+      <div className="app-stack">
         {!data.can_upload && (
           <Notice
             variant="warning"
@@ -146,21 +160,14 @@ export default function UploadPanel({ data }: { data: IntakeData }) {
           />
         )}
 
-        {(progress || outcome) && (
-          <div ref={statusRef} className="app-stack app-status" key={outcome ? "outcome" : "progress"}>
+        {(progress || error) && (
+          <div ref={statusRef} className="app-stack app-status" key={error ? "error" : "progress"}>
             {progress && <UploadProgressBar progress={progress} total={files.length} />}
-            {outcome?.ok === false && (
+            {error && (
               <Notice
                 variant="error"
                 title="Upload failed, your documents were not sent"
-                description={`${outcome.message} Your files are still listed below.`}
-              />
-            )}
-            {outcome?.ok && (
-              <Notice
-                variant="success"
-                title={`Thank you, we received ${outcome.count === 1 ? "your document" : `your ${outcome.count} documents`}`}
-                description={`Received at ${outcome.at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}. You can upload more files at any time using this link.`}
+                description={`${error} Your files are still listed below.`}
               />
             )}
           </div>

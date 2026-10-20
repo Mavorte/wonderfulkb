@@ -16,7 +16,7 @@ type DocumentsResult = {
 export default w.tool({
   name: "start_evaluation",
   description:
-    "Start evaluating a case. Loads the case, the client record from the bank's system and the list of uploaded documents (without their text), and opens an evaluation run that the evaluate_* tools write to. Call this first.",
+    "Start evaluating a case. Loads the case, the client record from the bank's system and the list of uploaded documents (without their text), and opens an evaluation run that the evaluate_* tools write to. Each document has a short ref (D1, D2, ...): pass it wherever a tool asks for a document_id. Call this first.",
   params: s.object({
     case_id: s.string().describe("Case ID from the task payload, e.g. mock-solom-rec. Pass it exactly as given."),
   }),
@@ -34,7 +34,7 @@ export default w.tool({
         asset: caseData.case.metadata?.asset,
         serial_number: caseData.case.metadata?.serial_number,
       },
-      documents: list.documents.map(({ document_id, title, label }) => ({ document_id, title, label })),
+      documents: list.documents.map(({ document_id, title, label }, i) => ({ document_id, ref: `D${i + 1}`, title, label })),
     });
     return {
       evaluation_id: run.evaluation_id,
@@ -47,7 +47,8 @@ export default w.tool({
         asset: caseData.case.metadata?.asset,
         serial_number: caseData.case.metadata?.serial_number,
       },
-      documents: list.documents,
+      // The agent sees only the refs: full document IDs made its tool calls long and slow to write.
+      documents: list.documents.map(({ document_id: _, ...document }, i) => ({ ref: `D${i + 1}`, ...document })),
       rules_to_record: RULES,
     };
   },

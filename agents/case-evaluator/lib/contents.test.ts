@@ -31,7 +31,7 @@ describe("checkContents", () => {
   it("passes a complete, signed document and cites its pages", () => {
     const { result } = guarantee({});
     expect(result).toMatchObject({ rule_id: "guarantee_contents", status: "passed", found: "All mandatory contents and signatures present" });
-    expect(result?.sources.map((s) => s.page)).toEqual([1, 2]);
+    expect([...new Set(result?.sources.map((s) => s.page))]).toEqual([1, 2]);
     expect(result?.details).toMatchObject({ signatures: [{ role: "guarantor", required: 1, found: 1 }, { role: "provider", required: 2, found: 2 }] });
   });
 
@@ -112,5 +112,23 @@ describe("checkContents", () => {
     const signed = { ...read, signatures: [{ role: "borrower", page: 1 }] };
     const outcome = checkContents(PURCHASE_CONTRACT, run, REQUIREMENTS, signed, { status: "missing", document_id: "ord", fields: order, reasoning });
     expect(outcome.result?.found).toBe("Missing: seller (signature or confirmation) signature (0 of 1)");
+  });
+
+  it("counts buyer as the borrower and seller as the supplier", () => {
+    const order = PURCHASE_CONTRACT.fields.map((f) => ({ field: f.key, value: "x", page: 1 }));
+    const read = { ...READ, empty_pages: [], signatures: [{ role: "buyer", page: 2 }, { role: "seller", page: 2 }] };
+    const { result } = checkContents(PURCHASE_CONTRACT, run, REQUIREMENTS, read, { status: "passed", document_id: "ord", fields: order, reasoning });
+    expect(result?.found).toBe("All mandatory contents and signatures present");
+  });
+
+  it("lets signatures without a role make up missing ones, and says so", () => {
+    const order = PURCHASE_CONTRACT.fields.map((f) => ({ field: f.key, value: "x", page: 1 }));
+    const read = { ...READ, empty_pages: [], signatures: [{ role: "unknown", page: 2 }, { role: "supplier", page: 2 }] };
+    const { result } = checkContents(PURCHASE_CONTRACT, run, REQUIREMENTS, read, { status: "passed", document_id: "ord", fields: order, reasoning });
+    expect(result?.found).toBe("All mandatory contents and signatures present (signatures without a detected role counted as buyer; check visually)");
+    expect(result?.details).toMatchObject({ signatures: [{ role: "borrower", found: 1, without_role: 1 }, { role: "supplier", found: 1, without_role: 0 }] });
+    const one = { ...read, signatures: [{ role: "unknown", page: 2 }] };
+    const missing = checkContents(PURCHASE_CONTRACT, run, REQUIREMENTS, one, { status: "missing", document_id: "ord", fields: order, reasoning });
+    expect(missing.result?.found).toMatch(/^Missing: seller \(signature or confirmation\) signature \(0 of 1\) \(signatures without a detected role counted as buyer/);
   });
 });

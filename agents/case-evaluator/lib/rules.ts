@@ -16,7 +16,7 @@ export const RULES = {
   recipient_consistent: "The recipient's name, IČO, DIČ and address are the same in every document and in the client record.",
   client_status_valid: "The client is active with valid KYC, and the people signing for the recipient are its authorized signatories.",
   supplier_consistent: "The supplier's name, IČO, DIČ, address and bank account are the same in every document.",
-  provider_consistent: "SGEF's name, IČO, DIČ and bank account are written correctly in every document.",
+  provider_consistent: "The provider's name, IČO, DIČ and bank account are the same in every document.",
   asset_consistent: "The financed asset's name, manufacturer, serial number/VIN and year are the same in every document and in the case record.",
   amounts_consistent: "The price, VAT and loan amount are the same in every document.",
   contract_number_consistent: "The loan contract number is the same in every document and in the case record.",

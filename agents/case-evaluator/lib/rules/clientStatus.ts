@@ -35,7 +35,7 @@ export function checkClientStatus(run: Run, getRead: (documentId: string) => Doc
       problems.push(`${at}: document_id "${s.document_id}" is not a document of this case.`);
       continue;
     }
-    const read = getRead(s.document_id);
+    const read = getRead(document.document_id);
     if (!read) problems.push(`${at}: read ${document.title} with get_document first.`);
     if (s.page === undefined) problems.push(`${at}: give the page the name is on.`);
     else if (read && (s.page < 1 || s.page > read.page_count)) problems.push(`${at}: page ${s.page} is not a page of ${document.title} (1-${read.page_count}).`);
@@ -57,7 +57,7 @@ export function checkClientStatus(run: Run, getRead: (documentId: string) => Doc
     };
   }
 
-  const authorized = (client.signatories ?? []).filter((s) => s.authorized);
+  const authorized = (client.signatories ?? []).filter((s) => s.authorized !== false);
   const authorizedNames = new Set(authorized.map((s) => normalizePerson(s.name)));
   const names = [...new Set(input.signatories.map((s) => s.name.trim()))];
   const unauthorized = names.filter((n) => !authorizedNames.has(normalizePerson(n)));
@@ -80,11 +80,19 @@ export function checkClientStatus(run: Run, getRead: (documentId: string) => Doc
   }
   if (problems.length) return rejected(problems);
 
-  const sources = new Map<string, Source>();
-  for (const s of input.signatories) {
-    const title = findDocument(run, s.document_id)!.title;
-    sources.set(`${s.document_id}:${s.page}`, { document_id: s.document_id, title, page: s.page });
-  }
+  // Each signatory's name where it was read, in a signature or party block.
+  const sources: Source[] = input.signatories.map((s) => {
+    const document = findDocument(run, s.document_id)!;
+    return {
+      document_id: document.document_id,
+      title: document.title,
+      page: s.page,
+      role: "evidence",
+      field: "signatory",
+      ...(unauthorized.includes(s.name.trim()) && { issue: "unauthorized signatory" }),
+      locate: { value: s.name.trim(), labels: ["podpisovy_blok", "smluvni_strana"], parties: ["borrower", "buyer"] },
+    };
+  });
   return {
     result: {
       rule_id: "client_status_valid",
@@ -93,12 +101,12 @@ export function checkClientStatus(run: Run, getRead: (documentId: string) => Doc
       found: issues.length
         ? issues.join("; ")
         : names.length ? `Active, KYC ok, signed by ${names.join(", ")}` : "Active, KYC ok; no signatory names in the documents",
-      sources: [...sources.values()],
+      sources,
       details: {
         client_status: client.status,
         kyc: client.kyc ?? null,
         authorized_signatories: authorized.map((s) => s.name),
-        signatories: input.signatories.map((s) => ({ ...s, authorized: authorizedNames.has(normalizePerson(s.name)) })),
+        signatories: input.signatories.map((s) => ({ ...s, document_id: findDocument(run, s.document_id)!.document_id, authorized: authorizedNames.has(normalizePerson(s.name)) })),
       },
       reasoning: input.reasoning,
     },

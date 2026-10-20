@@ -1,7 +1,7 @@
-// Handlers behind the eval-case-get, eval-documents-list, eval-document-get and
-// eval-document-signatures functions. They take a minimal context so tests can pass a fake one.
+// Handlers behind the eval-case-get, eval-documents-list, eval-document-get,
+// eval-document-signatures and eval-document-regions functions. They take a minimal context so tests can pass a fake one.
 
-import { type AwsApi, type UpstreamCase, type UpstreamClient, type UpstreamDocument, type UpstreamSignature, getAwsApi } from "./aws.ts";
+import { type AwsApi, type UpstreamCase, type UpstreamClient, type UpstreamDocument, type UpstreamRegion, type UpstreamSignature, getAwsApi } from "./aws.ts";
 import { type GlobalsContext, getErrorMessage } from "./config.ts";
 
 export type HandlerContext = GlobalsContext & {
@@ -32,6 +32,24 @@ export type EvalDocument = EvalDocumentSummary & {
 export type EvalSignature = { page: number; role: string; evidence: string; copy_suspicion: string };
 
 export type EvalSignatures = { case_id: string; document_id: string; is_mock: boolean; signatures: EvalSignature[] };
+
+// A labelled paragraph or table row with its position, so a finding can point
+// at the exact place in the document. `lines` is kept only when the region has
+// more than one line: a single line adds nothing to `bbox`.
+export type EvalRegion = {
+  region_id: string;
+  page: number;
+  label: string | null;
+  party: string | null;
+  refers_to: string[];
+  text: string;
+  bbox: number[] | null;
+  lines?: Array<{ bbox: number[]; start: number; end: number }>;
+};
+
+// `regions` is empty unless `status` is completed. not_run, failed and
+// not_ready (still ingesting) say nothing about the document's content.
+export type EvalRegions = { case_id: string; document_id: string; is_mock: boolean; status: string; regions: EvalRegion[] };
 
 function getParam(context: HandlerContext, name: string): string {
   return String(context.data?.[name] ?? "").trim();
@@ -70,6 +88,20 @@ export function toEvalSignature(signature: UpstreamSignature): EvalSignature {
     role: signature.role,
     evidence: signature.role_evidence ?? "",
     copy_suspicion: signature.copy_suspicion?.level ?? "none",
+  };
+}
+
+export function toEvalRegion(region: UpstreamRegion): EvalRegion {
+  const lines = region.lines ?? [];
+  return {
+    region_id: region.region_id,
+    page: region.page,
+    label: region.label ?? null,
+    party: region.party ?? null,
+    refers_to: region.refers_to ?? [],
+    text: region.text ?? "",
+    bbox: region.bbox ?? null,
+    ...(lines.length > 1 && { lines }),
   };
 }
 
@@ -153,6 +185,27 @@ export async function getSignatures(context: HandlerContext): Promise<EvalSignat
     return { case_id: caseId, document_id: documentId, is_mock: api.isMock, signatures: (response.body.signatures ?? []).map(toEvalSignature) };
   } catch (error) {
     console.log(`documents API signatures request failed: ${getErrorMessage(error)}`);
+    return fail(context, 502, "upstream", getErrorMessage(error));
+  }
+}
+
+export async function getRegions(context: HandlerContext): Promise<EvalRegions | ErrorResult> {
+  const caseId = getParam(context, "case_id");
+  const documentId = getParam(context, "document_id");
+  if (!caseId || !documentId) return fail(context, 400, "missing_parameter", "case_id and document_id are required");
+  const api = getAwsApi(context, caseId);
+  const empty = (status: string): EvalRegions => ({ case_id: caseId, document_id: documentId, is_mock: api.isMock, status, regions: [] });
+  try {
+    const response = await api.getRegions(caseId, documentId);
+    if (response.status === 404) return fail(context, 404, "document_not_found");
+    // 409: the document is still being ingested.
+    if (response.status === 409) return empty("not_ready");
+    if (response.status !== 200 || !response.body) return failUpstream(context, "documents API regions", response.status);
+    const status = response.body.status ?? "not_run";
+    if (status !== "completed") return empty(status);
+    return { ...empty(status), regions: (response.body.regions ?? []).map(toEvalRegion) };
+  } catch (error) {
+    console.log(`documents API regions request failed: ${getErrorMessage(error)}`);
     return fail(context, 502, "upstream", getErrorMessage(error));
   }
 }

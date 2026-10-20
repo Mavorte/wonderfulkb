@@ -59,10 +59,12 @@ export default function CasePanel({
   caseId,
   onOpenClient,
   onRunEvaluator,
+  onClose,
 }: {
   caseId: string;
   onOpenClient: (clientId: string) => void;
   onRunEvaluator: (caseId: string) => void;
+  onClose: () => void;
 }) {
   const caseResult = useFunctionResult<Case>("case-get", { case_id: caseId });
   const documents = useFunctionResult<DocumentList>("documents-list", { case_id: caseId });
@@ -78,9 +80,12 @@ export default function CasePanel({
       <Card
         title={`Case ${caseId}`}
         actions={
-          <Button size="small" color="primary" startIcon="play" onClick={() => onRunEvaluator(caseId)}>
-            Run evaluator
-          </Button>
+          <Box direction="row" gap={1}>
+            <Button size="small" color="primary" startIcon="play" onClick={() => onRunEvaluator(caseId)}>
+              Run evaluator
+            </Button>
+            <Button size="small" variant="text" startIcon="x" aria-label="Close case" title="Close case" onClick={onClose} />
+          </Box>
         }
         padding={4}
       >

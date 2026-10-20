@@ -1,4 +1,4 @@
-import { type Run, findDocument } from "../run";
+import { type Run, type RunDocument, type Source, findDocument } from "../run";
 import { type CheckOutcome, rejected, requireReasoning } from "./check";
 
 export type RecipientMatchInput = {
@@ -57,9 +57,26 @@ export function checkRecipientMatch(run: Run, input: RecipientMatchInput): Check
       status: input.status,
       expected: client ? `${client.name}, IČO ${client.ico}` : "Client record",
       found: name || ico ? `${name || "?"}, IČO ${ico || "?"}` : "Recipient not readable in the agreement",
-      sources: document ? [{ document_id: document.document_id, title: document.title, page: input.page }] : [],
+      sources: document ? recipientSources(document, input, client ? { name: !nameMatches, ico: !icoMatches } : null) : [],
       details: { name_matches: nameMatches, ico_matches: icoMatches },
       reasoning: input.reasoning,
     },
   };
+}
+
+// The agreement's name and IČO where they were read, located in its recipient block.
+function recipientSources(document: RunDocument, input: RecipientMatchInput, differs: { name: boolean; ico: boolean } | null): Source[] {
+  const at = { document_id: document.document_id, title: document.title, page: input.page };
+  const shown = [
+    { field: "agreement_name", value: input.agreement_name?.trim(), issue: differs?.name && "name" },
+    { field: "agreement_ico", value: input.agreement_ico?.trim(), issue: differs?.ico && "IČO" },
+  ].filter((v) => v.value);
+  if (!shown.length) return [at];
+  return shown.map((v) => ({
+    ...at,
+    role: "evidence",
+    field: v.field,
+    ...(v.issue && { issue: v.issue }),
+    locate: { value: v.value, labels: ["smluvni_strana"], parties: ["borrower", "buyer"] },
+  }));
 }

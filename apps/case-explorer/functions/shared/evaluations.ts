@@ -14,30 +14,40 @@ const MAX_PAGES = 20;
 
 export type TableRow = { id: string; data: Record<string, unknown> };
 
-function byCase(caseId: string) {
-  return [{ column: "case_id", operator: "eq", value: caseId }];
+function byColumn(column: string, value: string) {
+  return [{ column, operator: "eq", value }];
 }
 
-export async function listCaseRows(
+export async function listRowsBy(
   context: FunctionContext,
   table: string,
-  caseId: string,
+  column: string,
+  value: string,
   orderBy: Array<{ column: string; direction?: "asc" | "desc" }>,
 ): Promise<TableRow[]> {
   const rows: TableRow[] = [];
   for (let page = 0; page < MAX_PAGES; page++) {
-    const result = await context.tables.filter(table, byCase(caseId), PAGE_SIZE, page * PAGE_SIZE, orderBy);
+    const result = await context.tables.filter(table, byColumn(column, value), PAGE_SIZE, page * PAGE_SIZE, orderBy);
     rows.push(...result.rows);
     if (result.rows.length < PAGE_SIZE) break;
   }
   return rows;
 }
 
+export function listCaseRows(
+  context: FunctionContext,
+  table: string,
+  caseId: string,
+  orderBy: Array<{ column: string; direction?: "asc" | "desc" }>,
+): Promise<TableRow[]> {
+  return listRowsBy(context, table, "case_id", caseId, orderBy);
+}
+
 // Deletes page by page from offset 0 until nothing matches; returns the count.
 export async function deleteCaseRows(context: FunctionContext, table: string, caseId: string): Promise<number> {
   let deleted = 0;
   for (let page = 0; page < MAX_PAGES; page++) {
-    const { rows } = await context.tables.filter(table, byCase(caseId), PAGE_SIZE, 0);
+    const { rows } = await context.tables.filter(table, byColumn("case_id", caseId), PAGE_SIZE, 0);
     if (!rows.length) break;
     await Promise.all(rows.map((row) => context.tables.deleteRow(table, row.id)));
     deleted += rows.length;

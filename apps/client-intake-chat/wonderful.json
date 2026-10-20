@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "name": "Client Intake Chat",
+  "slug": "client-intake-chat",
+  "description": "Client-facing chat intake: the Intake Chat agent collects and checks the loan documents for a case and sends them to AWS ingest",
+  "analytics_events": [
+    {
+      "key": "intake_chat_opened",
+      "feature_key": "client_intake_chat",
+      "stage": "opened",
+      "label": "Intake chat page opened"
+    },
+    {
+      "key": "intake_chat_started",
+      "feature_key": "intake_chat",
+      "stage": "started",
+      "label": "Intake chat shown"
+    },
+    {
+      "key": "intake_chat_unavailable",
+      "feature_key": "intake_chat",
+      "stage": "failed",
+      "label": "Intake chat not configured"
+    }
+  ]
+}

@@ -7,6 +7,9 @@ import UpstreamStatus from "./UpstreamStatus";
 
 type EvaluationList = { case_id: string; evaluations: Evaluation[]; results: EvaluationResult[] };
 type DeleteResult = { case_id: string; deleted: { evaluations: number; results: number } };
+type RunResults = { evaluation_id: string; evaluation: Evaluation | null; results: EvaluationResult[] };
+
+const POLL_MS = 3000;
 
 const STATUS_COLORS: Record<string, BadgeColor> = {
   completed: "green",
@@ -78,13 +81,64 @@ const resultColumns: ColumnDef<EvaluationResult, unknown>[] = [
   },
 ];
 
+// One run's results, polled every few seconds while it is selected. Unmounting stops the polling.
+function RunResults({ evaluationId, onClose }: { evaluationId: string; onClose: () => void }) {
+  const run = useFunctionResult<RunResults>("evaluation-results", { evaluation_id: evaluationId }, { pollMs: POLL_MS });
+  const evaluation = run.result?.body?.evaluation;
+  const results = run.result?.body?.results ?? [];
+  const isLive = run.result?.ok ?? true;
+
+  return (
+    <Stack gap={3}>
+      <Box direction="row" gap={2} align="center" justify="between" isWrapping>
+        <Box direction="row" gap={2} align="center" isWrapping>
+          <Text variant="caption" color="tertiary">
+            case_evaluation_results for run
+          </Text>
+          <RunId id={evaluationId} />
+          <StatusBadge value={evaluation?.status} />
+          {evaluation?.verdict && <StatusBadge value={evaluation.verdict} />}
+          <span className={`live-indicator${isLive ? "" : " is-paused"}`} title={`Polling every ${POLL_MS / 1000} s`}>
+            <span className="live-dot" />
+            <Text variant="caption" color={isLive ? "success" : "secondary"}>
+              {isLive ? "Live" : "Poll failed, retrying"}
+              {run.lastLoadedAt ? ` · updated ${run.lastLoadedAt.toLocaleTimeString()}` : ""}
+            </Text>
+          </span>
+        </Box>
+        <Button size="small" variant="text" startIcon="x" aria-label="Unselect run" title="Unselect run" onClick={onClose} />
+      </Box>
+      <Table
+        data={results}
+        columns={resultColumns}
+        rowKey={(r) => `${r.evaluation_id}/${r.rule_id}`}
+        isLoading={run.isLoading && !run.result}
+        isCompact
+        emptyContent={
+          run.result?.ok ? (
+            <Text variant="body-sm" color="secondary">
+              No rule results for this run yet.
+            </Text>
+          ) : null
+        }
+        aria-label="Run evaluation results"
+      />
+      <UpstreamStatus result={run.result} />
+    </Stack>
+  );
+}
+
 // The case's rows in agent_functions.case_evaluations and case_evaluation_results,
-// with a button that deletes all of them. Raw shows every column, including sources and details.
+// with a button that deletes all of them. Selecting a run shows only its results, live. Raw shows every column, including sources and details.
 export default function EvaluationsPanel({ caseId }: { caseId: string }) {
   const call = useExplorerApi();
   const list = useFunctionResult<EvaluationList>("evaluations-list", { case_id: caseId });
   const [deletion, setDeletion] = useState<UpstreamResult<DeleteResult> | null>(null);
-  useEffect(() => setDeletion(null), [caseId]);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  useEffect(() => {
+    setDeletion(null);
+    setSelectedRunId(null);
+  }, [caseId]);
 
   const evaluations = list.result?.body?.evaluations ?? [];
   const results = list.result?.body?.results ?? [];
@@ -99,6 +153,7 @@ export default function EvaluationsPanel({ caseId }: { caseId: string }) {
     setDeletion(result);
     setIsDeleting(false);
     setIsConfirmOpen(false);
+    setSelectedRunId(null);
     list.reload();
   };
 
@@ -162,23 +217,31 @@ export default function EvaluationsPanel({ caseId }: { caseId: string }) {
           data={evaluations}
           columns={evaluationColumns}
           rowKey={(e) => e.evaluation_id}
+          activeRowKey={selectedRunId ?? undefined}
+          onRowClick={(e) => setSelectedRunId((id) => (id === e.evaluation_id ? null : e.evaluation_id))}
           isLoading={list.isLoading && !list.result}
           isCompact
           emptyContent={emptyContent("No evaluator runs for this case.")}
           aria-label="Case evaluations"
         />
-        <Text variant="caption" color="tertiary">
-          case_evaluation_results
-        </Text>
-        <Table
-          data={results}
-          columns={resultColumns}
-          rowKey={(r) => `${r.evaluation_id}/${r.rule_id}`}
-          isLoading={list.isLoading && !list.result}
-          isCompact
-          emptyContent={emptyContent("No rule results for this case.")}
-          aria-label="Case evaluation results"
-        />
+        {selectedRunId ? (
+          <RunResults evaluationId={selectedRunId} onClose={() => setSelectedRunId(null)} />
+        ) : (
+          <>
+            <Text variant="caption" color="tertiary">
+              case_evaluation_results (all runs; select a run to see its results live)
+            </Text>
+            <Table
+              data={results}
+              columns={resultColumns}
+              rowKey={(r) => `${r.evaluation_id}/${r.rule_id}`}
+              isLoading={list.isLoading && !list.result}
+              isCompact
+              emptyContent={emptyContent("No rule results for this case.")}
+              aria-label="Case evaluation results"
+            />
+          </>
+        )}
         <UpstreamStatus result={list.result} />
       </Stack>
     </Card>
