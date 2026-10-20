@@ -1,7 +1,7 @@
 import { s, w } from "@wonderful/types/schema";
 import { MAX_ATTEMPTS, findPending, setState, updateRow } from "../../lib/request";
 
-const UNKNOWN_CALL = "Dobrý den, jsem AI asistent Komerční banky. Omlouvám se, k tomuto hovoru nemám podklady, ozveme se znovu.";
+const UNKNOWN_CALL = "Hello, I'm an AI assistant calling from Komerční banka. Sorry, I don't have the details for this call, we'll be in touch again.";
 
 export default w.tool({
   name: "open_correction_call",
@@ -29,8 +29,8 @@ export default w.tool({
       console.log(`transcriber hints not applied: ${error instanceof Error ? error.message : String(error)}`);
     }
     ctx.agent.announce(
-      `Dobrý den, jsem AI asistent oddělení kontroly úvěrů Komerční banky. Volám kvůli žádosti o úvěr${company ? ` společnosti ${company}` : ""}. ` +
-        "Nejdřív vás musím ověřit. Jaké je vaše příjmení?",
+      `Hello, I'm an AI assistant from the loan review team at Komerční banka, calling about the loan application${company ? ` for ${company}` : ""}. ` +
+        "First I need to verify who I'm speaking with. What is your last name?",
     );
     return {
       found: true,

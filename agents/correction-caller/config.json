@@ -5,7 +5,7 @@
     "display_name": "Correction Caller",
     "description": "Calls the client after a back-office reviewer requests corrections: verifies the last name, explains what to fix and sends an SMS with the upload link.",
     "mode": "conversational",
-    "locale": "cs-CZ",
+    "locale": "en-US",
     "timezone": "Europe/Prague",
     "gender": "male"
   },
@@ -13,7 +13,7 @@
     "orchestrator_type": "traditional",
     "tts": {
       "priority": [
-        "marek_cz"
+        "wren_male"
       ],
       "failure_threshold": 2,
       "synthesis_timeout_seconds": 3,
@@ -26,7 +26,7 @@
         "soniox": {
           "provider": "soniox",
           "model": "stt-rt-v4",
-          "language": "cs-CZ",
+          "language": "en-US",
           "smart_format": false,
           "punctuate": false,
           "endpointing": 0,
@@ -81,7 +81,7 @@
       "fluent_chunking": true
     },
     "language": {
-      "main": "cs-CZ",
+      "main": "en-US",
       "enabled": [],
       "switch_mode": "auto_detect",
       "auto_detect": {
