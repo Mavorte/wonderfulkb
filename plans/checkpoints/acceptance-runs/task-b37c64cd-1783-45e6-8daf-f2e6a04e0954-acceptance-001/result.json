@@ -1,0 +1,67 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The caller-required TDD cycle must provide valid RED-to-GREEN proof for the focused page-observation mapper.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The supplied proof explicitly says the GREEN phase is missing; its only RED command exited 4 while importing conftest because pymupdf was unavailable, and the task checkpoint leaves test creation, implementation, and GREEN capture incomplete.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "With tddRequired=true, a RED-only environment failure and no GREEN phase do not establish the mandatory implementation-led RED-to-GREEN cycle.",
+      "required": "Provide canonical focused TDD evidence containing an implementation-specific RED followed by a successful GREEN for the same page-observation test command.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-b37c64cd-1783-45e6-8daf-f2e6a04e0954.red-green-proof.md:1-20"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-b37c64cd-1783-45e6-8daf-f2e6a04e0954.checkpoint.md:1-13"
+        }
+      ]
+    },
+    {
+      "claim": "The supplied review material must expose enough of the target implementation and focused test to assess the page-observation mapping goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller declares diff visibility incomplete and lists the target focused test as omitted while the delivered diff is truncated with audit_storage.py partial; omitted paths were not reviewed under the visibility contract.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Because omitted material may contain the target implementation or tests, semantic correctness cannot be established or rejected from the supplied artifacts, and the catalog has no more specific incomplete-visibility finding.",
+      "required": "Supply a complete task-scoped review artifact for the target mapper and focused test, or another canonical artifact that makes their delivered behavior fully reviewable.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-parallel-page-observation-mapping.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: \u010dist\u00e9 mapov\u00e1n\u00ed omezen\u00e9ho okna page observations"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954"
+}

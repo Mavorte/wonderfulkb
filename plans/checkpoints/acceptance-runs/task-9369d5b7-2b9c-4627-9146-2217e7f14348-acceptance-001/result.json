@@ -1,0 +1,42 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material must expose the four target conflict-resolution files sufficiently to evaluate the requested semantic union.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract is complete=false and lists all four authorized target files under omittedPaths: be-validator-agent/trigger/build.sh, common.py, template.yaml, and tests/conftest.py. The delivered diff therefore does not expose their resolutions; the checkpoint's prose assertion is not verdict data.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Because every implementation path that defines goal-001 is omitted, semantic correctness cannot be established from caller-supplied material. The visibility contract explicitly requires incomplete evidence/visibility finalization and prohibits ACCEPT or implementation-absence findings.",
+      "required": "Supply a complete run-scoped diff or equivalent caller-supplied artifacts containing the resolved contents of all four target files for semantic review.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-9369d5b7-2b9c-4627-9146-2217e7f14348.checkpoint.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Resolve four trigger integration conflicts preserving both features"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-9369d5b7-2b9c-4627-9146-2217e7f14348-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-9369d5b7-2b9c-4627-9146-2217e7f14348"
+}

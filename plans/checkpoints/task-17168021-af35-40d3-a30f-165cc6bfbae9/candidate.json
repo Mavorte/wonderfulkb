@@ -1,0 +1,1164 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "wonderfulkb document trigger - DynamoDB Stream of wonderfulkb-uw-documents -> SQS -> pipeline worker",
+  "Parameters": {
+    "StreamArn": {
+      "Type": "String",
+      "Description": "Stream of wonderfulkb-uw-documents (deploy.sh reads it from describe-table after the stream is enabled)",
+      "AllowedPattern": "^arn:aws:dynamodb:eu-central-1:[0-9]{12}:table/wonderfulkb-uw-documents/stream/.+$"
+    },
+    "DocumentsTable": {
+      "Type": "String",
+      "Default": "wonderfulkb-uw-documents"
+    },
+    "AnalysisTable": {
+      "Type": "String",
+      "Default": "wonderfulkb-uw-document-analysis"
+    },
+    "CasesTable": {
+      "Type": "String",
+      "Default": "wonderfulkb-uw-cases"
+    },
+    "WonderfulWebhookSecretName": {
+      "Type": "String",
+      "Default": "",
+      "AllowedValues": [
+        "",
+        "wonderfulkb/wonderful-webhook"
+      ],
+      "Description": "Secrets Manager secret {\"url\": ..., \"secret\": ...} of the Wonderful webhook that starts the evaluation agent once the documents of a case are processed (trigger/wonderful_webhook.py). Empty = no webhook, the case stays intake_in_progress."
+    },
+    "RawBucket": {
+      "Type": "String",
+      "Default": "wonderfulkb-raw-document-storage"
+    },
+    "VectorBucket": {
+      "Type": "String",
+      "Default": "wonderfulkb-vectors"
+    },
+    "MaxConcurrency": {
+      "Type": "Number",
+      "Default": 2,
+      "MinValue": 2,
+      "MaxValue": 10,
+      "Description": "Workers running at the same time (event source mapping limit; the account allows no reserved concurrency, because it only has 10 in total). Each worker spends BedrockRpm requests a minute."
+    },
+    "BedrockRpm": {
+      "Type": "Number",
+      "Default": 12,
+      "MinValue": 1,
+      "MaxValue": 25,
+      "Description": "Bedrock requests per minute per worker and step (vision, classify, embed run one after another). The team limit is 50 a minute."
+    },
+    "WorkerMemory": {
+      "Type": "Number",
+      "Default": 3008,
+      "MinValue": 1024,
+      "MaxValue": 10240
+    },
+    "SignatureKmsKeyArn": {
+      "Type": "String",
+      "AllowedPattern": "^arn:aws:kms:eu-central-1:[0-9]{12}:key/.+$",
+      "Description": "KMS key of the encrypted signature crops (alias wonderfulkb-signatures; deploy.sh resolves the key ARN from the alias). Required: the pipeline masks signatures by default (PIPELINE_REDACT=1) and encrypts the crops. The worker may only GenerateDataKey with it, never Decrypt."
+    },
+    "HashesTable": {
+      "Type": "String",
+      "Default": "wonderfulkb-uw-content-hashes"
+    },
+    "AlarmTopicArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "SNS topic for the alarms. Empty = the alarms only change state."
+    }
+  },
+  "Conditions": {
+    "HasAlarmTopic": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "AlarmTopicArn"
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
+  "Globals": {
+    "Function": {
+      "Tags": {
+        "project": "wonderfulkb",
+        "component": "trigger"
+      },
+      "Environment": {
+        "Variables": {
+          "ANALYSIS_TABLE": {
+            "Ref": "AnalysisTable"
+          },
+          "DOCUMENTS_TABLE": {
+            "Ref": "DocumentsTable"
+          },
+          "CASES_TABLE": {
+            "Ref": "CasesTable"
+          },
+          "RAW_BUCKET": {
+            "Ref": "RawBucket"
+          },
+          "QUEUE_URL": {
+            "Ref": "DocumentQueue"
+          },
+          "DLQ_URL": {
+            "Ref": "DeadLetterQueue"
+          }
+        }
+      }
+    }
+  },
+  "Resources": {
+    "DeadLetterQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "wonderfulkb-trigger-documents-dlq",
+        "VisibilityTimeout": 120,
+        "MessageRetentionPeriod": 1209600,
+        "SqsManagedSseEnabled": true,
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      },
+      "Metadata": {
+        "SamResourceId": "DeadLetterQueue"
+      }
+    },
+    "DocumentQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "wonderfulkb-trigger-documents",
+        "VisibilityTimeout": 1200,
+        "MessageRetentionPeriod": 345600,
+        "SqsManagedSseEnabled": true,
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "DeadLetterQueue",
+              "Arn"
+            ]
+          },
+          "maxReceiveCount": 3
+        },
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      },
+      "Metadata": {
+        "SamResourceId": "DocumentQueue"
+      }
+    },
+    "EnqueueLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/wonderfulkb-trigger-enqueue",
+        "RetentionInDays": 14,
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      },
+      "Metadata": {
+        "SamResourceId": "EnqueueLogGroup"
+      }
+    },
+    "EnqueueRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "wonderfulkb-trigger-enqueue",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "enqueue",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "ReadStream",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:DescribeStream",
+                    "dynamodb:GetRecords",
+                    "dynamodb:GetShardIterator"
+                  ],
+                  "Resource": {
+                    "Ref": "StreamArn"
+                  }
+                },
+                {
+                  "Sid": "ListStreams",
+                  "Effect": "Allow",
+                  "Action": "dynamodb:ListStreams",
+                  "Resource": "*"
+                },
+                {
+                  "Sid": "QueuedRow",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+                  }
+                },
+                {
+                  "Sid": "CaseIntake",
+                  "Effect": "Allow",
+                  "Action": "dynamodb:UpdateItem",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
+                  }
+                },
+                {
+                  "Sid": "Send",
+                  "Effect": "Allow",
+                  "Action": "sqs:SendMessage",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "DocumentQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Sid": "DiscardedBatches",
+                  "Effect": "Allow",
+                  "Action": "sqs:SendMessage",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "DeadLetterQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Sid": "Logs",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${EnqueueLogGroup.Arn}:*"
+                  }
+                },
+                {
+                  "Sid": "ExecutionLedger",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "ExecutionTable",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Sid": "ExecutionConditionCheck",
+                  "Effect": "Allow",
+                  "Action": "dynamodb:ConditionCheckItem",
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "ExecutionTable",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "AppendAudit",
+                  "Effect": "Allow",
+                  "Action": "dynamodb:PutItem",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wonderfulkb-uw-document-processing-audit"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      },
+      "Metadata": {
+        "SamResourceId": "EnqueueRole"
+      }
+    },
+    "EnqueueFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "FunctionName": "wonderfulkb-trigger-enqueue",
+        "Description": "New document row (stream INSERT) -> analysis row queued + SQS message",
+        "CodeUri": "s3://aws-sam-cli-managed-default-samclisourcebucket-kfknna27nqpn/ed67b93450f247c97a1660ad54d3d3d0",
+        "Runtime": "python3.14",
+        "Architectures": [
+          "arm64"
+        ],
+        "Handler": "trigger.enqueue_handler.handler",
+        "MemorySize": 256,
+        "Timeout": 60,
+        "Role": {
+          "Fn::GetAtt": [
+            "EnqueueRole",
+            "Arn"
+          ]
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "EnqueueLogGroup"
+          }
+        },
+        "Events": {
+          "Documents": {
+            "Type": "DynamoDB",
+            "Properties": {
+              "Stream": {
+                "Ref": "StreamArn"
+              },
+              "StartingPosition": "LATEST",
+              "BatchSize": 10,
+              "MaximumBatchingWindowInSeconds": 1,
+              "MaximumRetryAttempts": 5,
+              "MaximumRecordAgeInSeconds": 3600,
+              "BisectBatchOnFunctionError": true,
+              "FunctionResponseTypes": [
+                "ReportBatchItemFailures"
+              ],
+              "FilterCriteria": {
+                "Filters": [
+                  {
+                    "Pattern": "{\"eventName\": [\"INSERT\"]}"
+                  }
+                ]
+              },
+              "DestinationConfig": {
+                "OnFailure": {
+                  "Type": "SQS",
+                  "Destination": {
+                    "Fn::GetAtt": [
+                      "DeadLetterQueue",
+                      "Arn"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Environment": {
+          "Variables": {
+            "EXECUTION_TABLE": {
+              "Ref": "ExecutionTable"
+            },
+            "AUDIT_TABLE_NAME": "wonderfulkb-uw-document-processing-audit"
+          }
+        }
+      },
+      "Metadata": {
+        "SamResourceId": "EnqueueFunction"
+      }
+    },
+    "WorkerLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/wonderfulkb-trigger-worker",
+        "RetentionInDays": 14,
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      },
+      "Metadata": {
+        "SamResourceId": "WorkerLogGroup"
+      }
+    },
+    "WorkerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "wonderfulkb-trigger-worker",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "worker",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "ReadDocuments",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:Query"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DocumentsTable}"
+                  }
+                },
+                {
+                  "Sid": "Analysis",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:Query"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+                  }
+                },
+                {
+                  "Sid": "CaseEvaluating",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
+                  }
+                },
+                {
+                  "Sid": "WonderfulWebhookSecret",
+                  "Effect": "Allow",
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:wonderfulkb/wonderful-webhook-*"
+                  }
+                },
+                {
+                  "Sid": "ReadOriginalsMaskedCopiesAndOwnOutput",
+                  "Effect": "Allow",
+                  "Action": "s3:GetObject",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/original/*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/redacted/*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "WriteMaskedCopyAndOwnOutput",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:PutObjectTagging"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/redacted/*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "ListForMissingKeys",
+                  "Effect": "Allow",
+                  "Action": "s3:ListBucket",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:s3:::${RawBucket}"
+                  },
+                  "Condition": {
+                    "StringLike": {
+                      "s3:prefix": [
+                        "cases/*"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "Sid": "WriteVectors",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3vectors:PutVectors",
+                    "s3vectors:GetVectors",
+                    "s3vectors:QueryVectors",
+                    "s3vectors:ListVectors",
+                    "s3vectors:DeleteVectors"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-text"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-image"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:s3vectors:${AWS::Region}:${AWS::AccountId}:bucket/${VectorBucket}/index/wonderfulkb-signatures"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "ContentHashIndex",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:Query"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${HashesTable}"
+                  }
+                },
+                {
+                  "Sid": "Embeddings",
+                  "Effect": "Allow",
+                  "Action": "bedrock:InvokeModel",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed-text-v2:0"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed-image-v1"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "ClassifyConverse",
+                  "Effect": "Allow",
+                  "Action": "bedrock:InvokeModel",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "VisionAndClassifyMantle",
+                  "Effect": "Allow",
+                  "Action": "bedrock-mantle:CreateInference",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:bedrock-mantle:${AWS::Region}:${AWS::AccountId}:project/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "bedrock-mantle:Model": "qwen.qwen3-vl-235b-a22b-instruct"
+                    }
+                  }
+                },
+                {
+                  "Sid": "Textract",
+                  "Effect": "Allow",
+                  "Action": "textract:AnalyzeDocument",
+                  "Resource": "*",
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestedRegion": {
+                        "Ref": "AWS::Region"
+                      }
+                    }
+                  }
+                },
+                {
+                  "Sid": "ReadQueue",
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes",
+                    "sqs:ChangeMessageVisibility"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "DocumentQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Sid": "SendCaseAndMalformed",
+                  "Effect": "Allow",
+                  "Action": "sqs:SendMessage",
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "DocumentQueue",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::GetAtt": [
+                        "DeadLetterQueue",
+                        "Arn"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "Sid": "Logs",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${WorkerLogGroup.Arn}:*"
+                  }
+                },
+                {
+                  "Sid": "EncryptSignatureCrops",
+                  "Effect": "Allow",
+                  "Action": [
+                    "kms:GenerateDataKey",
+                    "kms:DescribeKey"
+                  ],
+                  "Resource": {
+                    "Ref": "SignatureKmsKeyArn"
+                  },
+                  "Condition": {
+                    "ForAllValues:StringEquals": {
+                      "kms:EncryptionContextKeys": [
+                        "case_id",
+                        "document_id",
+                        "signature_id"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "Sid": "ExecutionLedger",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "ExecutionTable",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Sid": "ExecutionConditionCheck",
+                  "Effect": "Allow",
+                  "Action": "dynamodb:ConditionCheckItem",
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "ExecutionTable",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "AppendAudit",
+                  "Effect": "Allow",
+                  "Action": "dynamodb:PutItem",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/wonderfulkb-uw-document-processing-audit"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      },
+      "Metadata": {
+        "SamResourceId": "WorkerRole"
+      }
+    },
+    "WorkerFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "FunctionName": "wonderfulkb-trigger-worker",
+        "Description": "SQS message -> pipeline.run_document for one document (or the case step for one case)",
+        "PackageType": "Image",
+        "Architectures": [
+          "x86_64"
+        ],
+        "ImageConfig": {
+          "Command": [
+            "trigger.worker_handler.handler"
+          ]
+        },
+        "MemorySize": {
+          "Ref": "WorkerMemory"
+        },
+        "Timeout": 900,
+        "EphemeralStorage": {
+          "Size": 2048
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "WorkerRole",
+            "Arn"
+          ]
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WorkerLogGroup"
+          }
+        },
+        "Environment": {
+          "Variables": {
+            "PIPELINE_BEDROCK_RPM": {
+              "Ref": "BedrockRpm"
+            },
+            "CLASSIFY_MAX_RPM": {
+              "Ref": "BedrockRpm"
+            },
+            "WONDERFULKB_BEDROCK_RPM": {
+              "Ref": "BedrockRpm"
+            },
+            "PYTHONUNBUFFERED": "1",
+            "PIPELINE_REDACT": "1",
+            "PRIVACY_KMS_KEY_ID": {
+              "Ref": "SignatureKmsKeyArn"
+            },
+            "DEDUP_HASHES_TABLE": {
+              "Ref": "HashesTable"
+            },
+            "WONDERFUL_WEBHOOK_SECRET": {
+              "Ref": "WonderfulWebhookSecretName"
+            },
+            "EXECUTION_TABLE": {
+              "Ref": "ExecutionTable"
+            },
+            "AUDIT_TABLE_NAME": "wonderfulkb-uw-document-processing-audit"
+          }
+        },
+        "Events": {
+          "Documents": {
+            "Type": "SQS",
+            "Properties": {
+              "Queue": {
+                "Fn::GetAtt": [
+                  "DocumentQueue",
+                  "Arn"
+                ]
+              },
+              "BatchSize": 1,
+              "FunctionResponseTypes": [
+                "ReportBatchItemFailures"
+              ],
+              "ScalingConfig": {
+                "MaximumConcurrency": {
+                  "Ref": "MaxConcurrency"
+                }
+              }
+            }
+          }
+        },
+        "ImageUri": "609394381050.dkr.ecr.eu-central-1.amazonaws.com/wonderfulkb-trigger-worker:workerfunction-8d5eefda655e-latest"
+      },
+      "Metadata": {
+        "DockerContext": "/Users/kuku/Desktop/hackaton_kb/wonderfulkb-case-status/be-validator-agent/trigger/build/pkg",
+        "DockerTag": "latest",
+        "Dockerfile": "Dockerfile",
+        "SamResourceId": "WorkerFunction"
+      }
+    },
+    "DlqLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/wonderfulkb-trigger-dlq",
+        "RetentionInDays": 14,
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      },
+      "Metadata": {
+        "SamResourceId": "DlqLogGroup"
+      }
+    },
+    "DlqRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "wonderfulkb-trigger-dlq",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "dlq",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "ReadDlq",
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "DeadLetterQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Sid": "MarkFailed",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:BatchGetItem",
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+                  }
+                },
+                {
+                  "Sid": "CaseComplete",
+                  "Effect": "Allow",
+                  "Action": "dynamodb:Query",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DocumentsTable}"
+                  }
+                },
+                {
+                  "Sid": "QueueCase",
+                  "Effect": "Allow",
+                  "Action": "sqs:SendMessage",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "DocumentQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Sid": "Logs",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${DlqLogGroup.Arn}:*"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      },
+      "Metadata": {
+        "SamResourceId": "DlqRole"
+      }
+    },
+    "DlqFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "FunctionName": "wonderfulkb-trigger-dlq",
+        "Description": "Dead-lettered document -> analysis row failed (with reason), metric DeadLettered",
+        "CodeUri": "s3://aws-sam-cli-managed-default-samclisourcebucket-kfknna27nqpn/ed67b93450f247c97a1660ad54d3d3d0",
+        "Runtime": "python3.14",
+        "Architectures": [
+          "arm64"
+        ],
+        "Handler": "trigger.dlq_handler.handler",
+        "MemorySize": 256,
+        "Timeout": 60,
+        "Role": {
+          "Fn::GetAtt": [
+            "DlqRole",
+            "Arn"
+          ]
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "DlqLogGroup"
+          }
+        },
+        "Events": {
+          "Dead": {
+            "Type": "SQS",
+            "Properties": {
+              "Queue": {
+                "Fn::GetAtt": [
+                  "DeadLetterQueue",
+                  "Arn"
+                ]
+              },
+              "BatchSize": 5,
+              "FunctionResponseTypes": [
+                "ReportBatchItemFailures"
+              ]
+            }
+          }
+        }
+      },
+      "Metadata": {
+        "SamResourceId": "DlqFunction"
+      }
+    },
+    "DeadLetteredAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "wonderfulkb-trigger-dead-lettered",
+        "AlarmDescription": "A document (or a message) went to the DLQ; the row is marked failed. Re-queue with backfill.py after the cause is fixed.",
+        "Namespace": "wonderfulkb/Trigger",
+        "MetricName": "DeadLettered",
+        "Statistic": "Sum",
+        "Period": 300,
+        "EvaluationPeriods": 1,
+        "Threshold": 1,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": {
+          "Fn::If": [
+            "HasAlarmTopic",
+            [
+              {
+                "Ref": "AlarmTopicArn"
+              }
+            ],
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        }
+      },
+      "Metadata": {
+        "SamResourceId": "DeadLetteredAlarm"
+      }
+    },
+    "DlqNotEmptyAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "wonderfulkb-trigger-dlq-not-empty",
+        "AlarmDescription": "Messages stay in the DLQ (the DLQ marker cannot handle them).",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "DeadLetterQueue",
+                "QueueName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Maximum",
+        "Period": 300,
+        "EvaluationPeriods": 2,
+        "Threshold": 1,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": {
+          "Fn::If": [
+            "HasAlarmTopic",
+            [
+              {
+                "Ref": "AlarmTopicArn"
+              }
+            ],
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        }
+      },
+      "Metadata": {
+        "SamResourceId": "DlqNotEmptyAlarm"
+      }
+    },
+    "QueueStuckAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "wonderfulkb-trigger-queue-stuck",
+        "AlarmDescription": "The oldest message waited more than 4 hours (workers do not keep up or are failing).",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateAgeOfOldestMessage",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "DocumentQueue",
+                "QueueName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Maximum",
+        "Period": 300,
+        "EvaluationPeriods": 1,
+        "Threshold": 14400,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": {
+          "Fn::If": [
+            "HasAlarmTopic",
+            [
+              {
+                "Ref": "AlarmTopicArn"
+              }
+            ],
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        }
+      },
+      "Metadata": {
+        "SamResourceId": "QueueStuckAlarm"
+      }
+    },
+    "ExecutionTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "TableName": "wonderfulkb-trigger-execution",
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "pk",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "sk",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "pk",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "sk",
+            "KeyType": "RANGE"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "project",
+            "Value": "wonderfulkb"
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "QueueUrl": {
+      "Value": {
+        "Ref": "DocumentQueue"
+      }
+    },
+    "QueueName": {
+      "Value": {
+        "Fn::GetAtt": [
+          "DocumentQueue",
+          "QueueName"
+        ]
+      }
+    },
+    "DeadLetterQueueUrl": {
+      "Value": {
+        "Ref": "DeadLetterQueue"
+      }
+    },
+    "WorkerFunction": {
+      "Value": {
+        "Ref": "WorkerFunction"
+      }
+    }
+  }
+}

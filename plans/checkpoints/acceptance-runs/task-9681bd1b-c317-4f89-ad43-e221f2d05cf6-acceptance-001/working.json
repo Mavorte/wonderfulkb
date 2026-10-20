@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility before this implementation can be accepted.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract reports complete=false and truncated=true, with omittedPaths including opencode.json and partialPaths including the monitoring proposal; those omitted portions were not reviewed.",
+      "rationale": "The visible implementation and TDD proof do not establish correctness for material explicitly withheld by the bounded review contract. Per the caller instruction, absence from supplied artifacts cannot support an implementation finding, but incomplete visibility must prevent ACCEPT.",
+      "required": "Provide a complete caller-supplied diff visibility contract, or a subsequent bounded acceptance run containing all previously omitted and partial material, for semantic review.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: FileReceived po potvrzen\u00e9m uploadu"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6"
+}

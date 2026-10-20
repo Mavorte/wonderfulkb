@@ -1,0 +1,15 @@
+---
+title: "Monitoring MVP: čisté mapování omezeného okna page observations"
+type: implementation
+---
+# Monitoring MVP: čisté mapování omezeného okna page observations
+## Goal
+Implementovat skutečnou čistou read-domain část stránkového API: explicitní content-free mapping jednoho již omezeného event okna. Vstupní sémantika: `plans/tasks/2026-10-20_monitor-mvp-12-page-outcome-events.md`, `13-attempt-pages-get.md`, `14-cache-reused-event.md`, `15-cache-reused-read.md`. Bez routeru/I/O; skutečné HTTP napojení a povinný deployment zůstávají v existujících read zadáních, nejsou tímto taskem dokončené.
+## Interface a scope
+Jediný nový doménový modul `be-document-processing/src/document_processing/audit/audit_page_observations.py`, jediný focused test `be-document-processing/tests/test_monitor_page_observations.py`, vlastní proof/plán/learning. Čistá funkce přijímá konečný Sequence[Mapping[str, object]] již validovaných content-free event observations + explicitní run_id a kladný attempt_no; vrací page observation items. Nevyžaduje neexistující event třídy. Caller převádí skutečné typované events přes to_item; nepřidávej druhý reader, registry/framework nebo fallback na business stav.
+## Behavior
+Explicitní allowlist StepStarted stage=page_transcription, PageCompleted/PageFailed a PageCacheReused. Zachovat skutečné event_id/type/sequence/occurred_at/run_id/attempt_no/page_number/stage a pouze doložené duration_ms/method/model/error_code či cached_status/cached_method/cached_model/opaque artifact_ids podle kontraktů. Cache reuse není nová inference ani nový completion. Filtr run/attempt, zachovat pořadí pozorovaného okna a terminal-only fragments. Žádná agregace latest/complete/total, vytvořené pending/start/terminal, timestamp-derived duration, business Page, text/prompt/S3 key/URL/raw exception. Absence unknown, nikoli failed. Unknown typy/stages bezpečně nepublikovat. Vstup neměnit; vracet nové allowlisted mappings. Malformed scope bezpečně odmítnout, nepřevést neplatnou observation na úspěch.
+## Boundaries
+Pouze wonderfulkb a výše uvedený modul/test. Neměň audit_events.py, audit_storage.py, audit_queries.py, audit_listener.py, __init__.py, společný conftest/dependencies, business worker/intake, OpenAPI ani build/deploy. Žádný cloud/provider call nebo syntetický worker proof. Názvy doménové, ne pages.py/state.py/utils.py. Žádný uložený projection/index, I/O nebo cyklus načítající další okna. Next_token zůstává u skutečného readeru/callera; toto je pouze pure item mapping.
+## Verification
+Implement the TDD cycle using skill:tdd. Tabulkové testy completed/failed, unknown method/model před budget-call, cached completed/failed, dvě pages/runs/attempts, terminal-only, různé observations stejné stránky bez latest inference, žádná duplicitní StepFinished událost. Přesný output allowlist a input immutability, bez business fields. Testy nad kontraktními mappings nejsou fake store ani live worker. Focused pytest a plné registrované gates zachovat; evidence skutečný RED→GREEN. Výstup není tvrzení o dokončení deployed pages GET.

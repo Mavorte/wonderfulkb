@@ -1,0 +1,104 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The task requires an in-place Python deployment to the existing test API and a completed live DynamoDB integration cycle.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The complete supplied diff contains no be-case-client/tools/case_client_test_deploy.py or be-case-client/tests/integration/case_client_api_integration.py, and the supplied checkpoint states deployment attempts: 0, HTTP business requests: 0, fixtures: 0, with the task blocked before source changes.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "The primary deliverable is a functioning deployed service, not only source-level contract changes; neither the required deployment tooling nor the authorized deploy and live integration behavior was delivered.",
+      "required": "Implement the scoped deploy tool and HTTP integration runner, complete the authorized in-place build-deploy-live-debug cycle, and leave the Python service functioning against the existing API and DynamoDB within the task constraints.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-19_case-client-deploy-live-integration.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-19_task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f_case-client-nasadit-n-python-na-existuj-c-testovac-api-a.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f.checkpoint.md"
+        }
+      ]
+    },
+    {
+      "claim": "The task explicitly requires sanitized evidence of the tested deployment and live HTTP/DynamoDB scenarios.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "No live-integration deployment manifest or scenario results were supplied; the checkpoint states that no deployment or HTTP business requests occurred and that no live proof exists. The canonical Test Gate status is not run and supplies no substitute evidence.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "Without the required deployment identity, tested code hash, backend verification, scenario outcomes, and retained synthetic IDs, the claimed live result cannot be verified from the caller-supplied artifacts.",
+      "required": "After completing the authorized live cycle, provide the sanitized deployment manifest and scenario-level live results required by the task, including tested hash/configuration, DynamoDB backend identity, deploy attempts, outcomes, retained fixture IDs, and rollback status without secrets.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-19_case-client-deploy-live-integration.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f.checkpoint.md"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "status:not-run"
+        }
+      ]
+    },
+    {
+      "claim": "The run manifest declares TDD proof mandatory for this task.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "No TDD proof was supplied, and the checkpoint explicitly says that no RED/GREEN proof exists because implementation stopped before focused failing tests and proof capture.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The caller-declared mandatory TDD provenance is absent, so the implementation cannot satisfy the run's required development evidence contract.",
+      "required": "Provide genuine focused RED and GREEN evidence for the required deploy-target and write-opt-in behavior, captured according to the task's TDD procedure before and after the corresponding implementation.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f.checkpoint.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-19_task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f_case-client-nasadit-n-python-na-existuj-c-testovac-api-a.md"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/acceptance-runs/task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f-acceptance-001/manifest.json:28"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Case & Client: nasadit n\u00e1\u0161 Python na existuj\u00edc\u00ed testovac\u00ed API a odladit \u017eivou DB integraci"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f"
+}

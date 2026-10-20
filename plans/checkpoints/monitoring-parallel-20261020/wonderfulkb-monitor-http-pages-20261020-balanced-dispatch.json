@@ -1,0 +1,15 @@
+{
+  "changedTaskIds": [
+    "task-164adaf3-99df-429e-86b4-c565e5461be0"
+  ],
+  "command": "task.start",
+  "log": "/tmp/opencode-quick-peak-2048.log",
+  "message": "started: task-164adaf3-99df-429e-86b4-c565e5461be0",
+  "modelUsed": "openai/gpt-6-luna",
+  "ok": true,
+  "operation": "start",
+  "phase": "plan",
+  "pid": 70933,
+  "sessionId": "quick-peak-2048",
+  "taskId": "task-164adaf3-99df-429e-86b4-c565e5461be0"
+}

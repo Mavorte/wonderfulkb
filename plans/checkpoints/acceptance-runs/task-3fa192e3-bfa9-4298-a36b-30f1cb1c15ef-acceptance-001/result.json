@@ -1,0 +1,16 @@
+{
+  "classification": "ACCEPT",
+  "findings": [],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "MET",
+      "summary": "[acceptance-fix] [acceptance-fix] Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test mati"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-3fa192e3-bfa9-4298-a36b-30f1cb1c15ef-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-3fa192e3-bfa9-4298-a36b-30f1cb1c15ef"
+}

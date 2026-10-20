@@ -1,0 +1,104 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The lifecycle runs, run-detail, and document-audit routes must return authorized bounded lifecycle observations through the canonical reader and reducer.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The supplied route module registers all three paths but every handler unconditionally returns 403; the task evidence explicitly labels SOURCE partial and states that no authorized lifecycle 200 endpoint or promised bounded observations exist.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "Fail-closed denial is appropriate while the trusted authorization seam is absent, but it does not deliver the goal's functional bounded HTTP routes, operation-scoped continuation, reducer output, read-error handling, or publication observations.",
+      "required": "Integrate the trusted caller-to-case and document-scope authorization seam, perform one bounded audit read per request, map the canonical lifecycle reducer into the required partial responses for all three routes, and preserve operation-bound cursors, no-store errors, and 503 behavior.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-intake/app/processing_monitor_lifecycle_routes.py:17-32"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/monitoring/task-a67c7b62-949e-4720-b1a2-51fcc3502cec-lifecycle-http-evidence.md:5-15"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-a67c7b62-949e-4720-b1a2-51fcc3502cec.checkpoint.md:3-12"
+        }
+      ]
+    },
+    {
+      "claim": "The task explicitly requires guarded deployment to the existing AWS test target and direct authenticated live HTTP verification of the changed lifecycle behavior, with artifact and revision provenance.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied evidence states DEPLOYED no and LIVE-FUNCTION-VERIFIED no, with no cloud HTTP calls, no synthetic fixture IDs, no target revision or recovery artifact, and no verified deployment workflow; only a local Docker image was built.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "Local image import and TestClient denial do not satisfy the task's mandatory runtime acceptance, and no canonical Test Gate evidence exists to supply that missing deployment/live proof.",
+      "required": "After functional routes and trusted authorization exist, record the guarded in-place deployment, source-to-image digest, target and resulting revision, recovery artifact/config, authorized synthetic fixture ledger, and bounded direct HTTP assertions for the changed routes including scope/auth/no-store behavior.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/monitoring/task-a67c7b62-949e-4720-b1a2-51fcc3502cec-lifecycle-http-evidence.md:3-15"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-a67c7b62-949e-4720-b1a2-51fcc3502cec.checkpoint.md:7-12"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-lifecycle-http-routes-0908.md:mandatory-deployment-and-live-verification"
+        }
+      ]
+    },
+    {
+      "claim": "Because TDD is caller-required, the RED/GREEN proof must exercise the task's functional bounded lifecycle HTTP behavior rather than only route registration and fail-closed denial.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "The supplied proof uses identical RED/GREEN argv and is structurally credible, but its sole GREEN test asserts that each route returns 403 and contains no runs; the task evidence expressly says this GREEN proves denial only and that no functional 200 route exists.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The proof validates a safe blocker boundary, not the required authorized runs, run-detail, and audit responses, bounded reader/reducer semantics, continuation, or error mappings. Therefore the mandatory TDD proof for the evaluation goal remains absent.",
+      "required": "Capture a genuine task-scoped RED and GREEN with identical focused argv for the implemented authorized bounded lifecycle responses and required cursor/read-error semantics, preserving the existing denial proof as historical evidence.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-a67c7b62-949e-4720-b1a2-51fcc3502cec.red-green-proof.md:1-78"
+        },
+        {
+          "kind": "file",
+          "reference": "be-intake/tests/test_processing_monitor_lifecycle_views.py:5-23"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/monitoring/task-a67c7b62-949e-4720-b1a2-51fcc3502cec-lifecycle-http-evidence.md:17-24"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-a67c7b62-949e-4720-b1a2-51fcc3502cec-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-a67c7b62-949e-4720-b1a2-51fcc3502cec"
+}

@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied review material must expose enough of the task-owned implementation and focused test changes to evaluate the lifecycle semantics goal.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and explicitly omits be-document-processing/src/document_processing/audit/audit_lifecycle_observations.py and be-document-processing/tests/test_monitor_lifecycle_observations.py; only unrelated included paths and a partial OpenAPI path are visible. The supplied RED/GREEN proof demonstrates the focused command outcome but does not expose the delivered reducer and test semantics for review.",
+      "rationale": "Because both exact task-owned paths are omitted, semantic acceptance cannot establish whether canonical attempt identity, terminal reconciliation, ambiguity, scope, availability, and bounded-window behavior satisfy the contract. Omission proves only incomplete visibility, not missing or incorrect implementation.",
+      "required": "Provide a complete task-scoped diff or equivalent caller-supplied review artifact covering the owned reducer and focused test paths, then perform semantic acceptance against that material.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-audit-lifecycle-semantics-0818.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5.red-green-proof.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring lifecycle: opravit skute\u010dnou attempt identitu, termin\u00e1ly a ambiguity matici"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5"
+}

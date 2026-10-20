@@ -1,0 +1,20 @@
+# Completion + independent parallel lanes — latest user1561984114297540670
+
+Latest explicit 08:07 Prague request supersedes cancellation/redundancy disposition and prior exactly-five-balanced or single-queue scheduling. Preserve completion roots, at least five independent active lanes, order consumers after real producers. No additional duplicate task registrations.
+
+## Work retained/restored
+- Lifecycle completion422c4f83 returned to own lifecycle-domain batch slot2; existing plan preserved; original1e8311a4 done administrative superseded, original failure evidence unchanged. Actual implementation launched public task.start bold-dune8950/PID79884.
+- Pages completion97212f63 restored from cancellation via public reset --force with reason, SAME ID/brief; own pages-domain batch slot2 active, planning dispatched by normal owner. Originalb37c64cd remains cancelled history, not green.
+- Runtime completion535479cc returned to own runtime-context batch slot2; batch active, public task.start swift-dune6200/PID79949. Original626722a4 done administrative superseded by explicit07:57+08:07 authority; source/identity-interface blocker NOT declared fixed or waived. No execution schema/counter/outbox authority inferred.
+- OpenAPI completionb96084af restored SAME ID via public reset --force; remains backlog/default in original batch slot4. Public move/reorder both reject executed terminal history despite reset, preserved guard. batch.start rejects active circuit breaker on historical RunQueueddb71cc4e. DO NOT bypass/clear/force-complete that unrelated failure merely to claim dispatch. No replacement duplicate task, no source/instruction/config changes.
+
+## Parallel scheduling
+Five existing event lanes retained active with current attempts/plans untouched:08 attempt;10 validation→20 publication;12 page→14 cache;16 extraction→18 signature;22 terminals. Three completion domain lanes active alongside them = EIGHT active batches, not eight guaranteed live processes at each instant. Some registry PIDs already exited awaiting normal settlement; no manual reset from dead PID. Actual lifecycle/runtime/extraction/terminal process identities independently visible in ps at collection. Additional active queue state is scheduler evidence only, not source readiness.
+
+## Dependency order actually enforced
+All twelve still-unstarted consumers moved publicly into existing BLOCKED base/OpenAPI continuation, ordinary default holds, zero PID. Existing executed historical slots1–4 immutable. Then04 uploadsmoke→07 runHTTP→09 attemptsHTTP→11 stepsHTTP→13 pagesHTTP→15 cacheHTTP→17 extractionHTTP→19 signatureHTTP→21 publicationHTTP→24 lifecycleHTTP→26 workerhooks→27 finalproof (slots5–16). Each read keeps own deployment/live/tuning obligations. This consolidates only dependent delivery, NOT five parallel event or three pure/context implementation lanes.
+
+03 trusted-case-auth/common HTTP seam is not implemented, old03/06 failed and not superseded by current four-task instruction. Known base circuit breaker therefore currently protects every consumer; this request is NOT successful delivery of those prerequisites. Before any future release of that existing blocked queue, inspect actual shared source/event, page/reducer, runtime identity and acceptance/test evidence. Cross-batch dependency engine absent: eight active states alone do not implement inter-batch success gates. Preserve this blocked continuation until source-specific inputs are verified; don't clear old circuit breaker as generic scheduling convenience. Final integration after actual hooks+HTTP, not before them. AppRunner source/revision/rollout window remains serialized with real gate evidence.
+
+## Evidence / operations
+completion-parallel-0807-verified.json captures membership/phases/pause/runtime evidence before final two append-only moves; /tmp/wkb-0820-consumer-moves.jsonl ten public consumer moves. Public final moves26/27 appended15/16. Public snapshots confirm no task duplicate, no raw DB/internal setters, no code or config edited. Each new completion parentTaskId=null. Existing historical failures/proof preserved; no ACCEPT/registered gate fabricated.

@@ -1,0 +1,71 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material must provide sufficient visibility to assess the lifecycle read implementation against goal-001.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract has complete=false and omits the lifecycle implementation, audit query/reducer, router integration, and focused lifecycle test paths; the supplied OpenAPI path is also partial.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Acceptance cannot establish the required implementation semantics from omitted or partial paths, and the caller explicitly requires an incomplete-evidence/visibility finalization rather than ACCEPT when complete=false.",
+      "required": "Provide a complete caller-scoped review bundle covering the lifecycle route implementation, bounded reader/reducer integration, focused tests, and the complete owned OpenAPI changes, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-24-lifecycle-read.md"
+        }
+      ]
+    },
+    {
+      "claim": "Because the manifest declares tddRequired=true, the task must provide a valid ordered RED/GREEN TDD proof for the focused lifecycle implementation.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied proof contains only a RED phase and explicitly states 'missing GREEN Phase' and 'phase order is incomplete'; the checkpoint also leaves GREEN proof capture incomplete.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "A RED-only artifact does not demonstrate the mandatory test-first cycle through a passing implementation-specific GREEN phase.",
+      "required": "Complete the implementation-specific GREEN phase and provide a valid ordered RED/GREEN proof artifact for the focused lifecycle test command.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-57f572d9-1dda-45cd-b37c-d5fa9d183d59.red-green-proof.md:1"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-57f572d9-1dda-45cd-b37c-d5fa9d183d59.checkpoint.md:1"
+        },
+        {
+          "kind": "artifact",
+          "reference": "manifest.json:68"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: run a audit lifecycle API nad bounded oknem"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59"
+}

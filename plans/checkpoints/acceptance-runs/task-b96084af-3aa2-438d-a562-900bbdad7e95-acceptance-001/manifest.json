@@ -1,0 +1,53 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:47:47+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-audit-lifecycle-semantics-0818.md",
+      "taskId": "task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5",
+      "title": "Monitoring lifecycle: opravit skute\u010dnou attempt identitu, termin\u00e1ly a ambiguity matici"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T06:48:44+00:00",
+    "implementingStartedAt": "2026-10-20T06:42:41+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-monitor-openapi-20261020.md",
+    "taskId": "task-b96084af-3aa2-438d-a562-900bbdad7e95",
+    "title": "Monitoring OpenAPI: opravit YAML a dokon\u010dit p\u0159esn\u00e9 observation DTO kontrakty"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring OpenAPI: opravit YAML a dokon\u010dit p\u0159esn\u00e9 observation DTO kontrakty"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-b96084af-3aa2-438d-a562-900bbdad7e95-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_attemptstarted-audit-contract-preserves-producer-identity.md",
+      "provenance": "untracked+referenced",
+      "size": 761
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b96084af-3aa2-438d-a562-900bbdad7e95.checkpoint.md",
+      "provenance": "untracked",
+      "size": 979
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b96084af-3aa2-438d-a562-900bbdad7e95.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 26006
+    }
+  ],
+  "taskId": "task-b96084af-3aa2-438d-a562-900bbdad7e95",
+  "tddRequired": true
+}

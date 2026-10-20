@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "claim": "The caller-declared mandatory TDD cycle must contain valid RED and GREEN phases for the identical focused command.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The supplied canonical proof contains only a RED phase and explicitly reports that the GREEN phase is missing; the checkpoint likewise marks GREEN capture incomplete.",
+      "rationale": "With tddRequired=true, an incomplete RED-only proof does not establish the required RED-to-GREEN cycle. This is an artifact assessment, not interpretation of a test-suite failure.",
+      "required": "Supply a valid helper-owned GREEN phase for the identical focused command so the canonical proof records a complete RED-to-GREEN cycle.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-97212f63-4c40-400e-b36d-31b9531745dc.red-green-proof.md:1-8"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-97212f63-4c40-400e-b36d-31b9531745dc.checkpoint.md:2-10"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete supplied visibility of the owned mapper and focused contract tests before their semantics can be evaluated.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed diff contract is incomplete and explicitly omits be-document-processing/src/document_processing/audit/audit_page_observations.py and be-document-processing/tests/test_monitor_page_observations.py, the two primary owned implementation paths for this goal.",
+      "rationale": "The omitted paths prevent a trustworthy semantic review of mapper behavior and contract coverage. Their omission is not evidence that implementation is absent or incorrect, so the issue is typed as incomplete evidence rather than a correctness finding.",
+      "required": "Provide a complete caller-supplied diff or equivalent review material for the owned mapper and focused test paths, then repeat semantic acceptance.",
+      "sources": [
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-monitor-pages-20261020.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-20_task-97212f63-4c40-400e-b36d-31b9531745dc_monitoring-pages-dokon-it-pure-observation-mapper-a.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring pages: dokon\u010dit pure observation mapper a kontraktn\u00ed testy"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-97212f63-4c40-400e-b36d-31b9531745dc-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-97212f63-4c40-400e-b36d-31b9531745dc"
+}

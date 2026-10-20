@@ -1,0 +1,66 @@
+{
+  "findings": [
+    {
+      "claim": "The caller-required TDD cycle must have a valid RED/GREEN proof artifact.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The supplied TDD proof/provenance explicitly states that no TDD proof was supplied, although the manifest declares tddRequired=true and the task requires a red-green proof checkpoint.",
+      "rationale": "Without the required proof, the mandated test-first cycle and its implementation-specific RED followed by GREEN cannot be established from caller-supplied evidence.",
+      "required": "Supply the task-scoped canonical RED/GREEN proof showing the focused lifecycle reducer test failing for the intended implementation gap before implementation and passing afterward.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-1e8311a4-08b0-4142-9bf9-6553815e572e.red-green-proof.md (not supplied)"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-20_task-1e8311a4-08b0-4142-9bf9-6553815e572e_monitoring-mvp-bounded-tec-odvozen-lifecycle.md#TDD"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires sufficient supplied visibility into the lifecycle reducer and its focused tests to evaluate the goal.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller marks diff visibility complete=false and truncated=true; both the required reducer path be-document-processing/src/document_processing/audit/audit_lifecycle_observations.py and focused test be-document-processing/tests/test_monitor_lifecycle_observations.py are omitted from supplied review material.",
+      "rationale": "Those omitted paths contain the goal's primary implementation and behavioral evidence. Their absence prevents a semantic assessment, but under the visibility contract it does not prove that implementation is absent or incorrect.",
+      "required": "Provide a complete caller-supplied diff or artifacts covering the lifecycle reducer and its focused test, then rerun acceptance review without inferring absence from omitted paths.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_lifecycle_observations.py (omitted by supplied visibility contract)"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_lifecycle_observations.py (omitted by supplied visibility contract)"
+        },
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract: complete=false,truncated=true"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: bounded \u010dtec\u00ed odvozen\u00ed lifecycle"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-1e8311a4-08b0-4142-9bf9-6553815e572e-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-1e8311a4-08b0-4142-9bf9-6553815e572e"
+}

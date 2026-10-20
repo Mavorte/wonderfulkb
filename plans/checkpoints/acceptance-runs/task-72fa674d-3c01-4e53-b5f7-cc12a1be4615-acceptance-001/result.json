@@ -1,0 +1,104 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The existing live HTTP runner and guarded deployment/preflight flow must support the authorized global GET /cases continuation.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The complete supplied diff contains no implementation change to tests/integration/case_client_api_integration.py and only adds continuation limits to the deploy tool; the task checkpoint explicitly states that the production runner/context and protected-route extensions remain incomplete.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "The assignment requires extending the existing runner, adding the protected GET method through the guarded deployment flow, and retaining original-route/auth checks; without those components the requested continuation cannot perform its acceptance scenarios.",
+      "required": "Implement the continuation-aware live runner, request accounting, additive protected-route preflight, and guarded deployment flow required by the canonical task.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-72fa674d-3c01-4e53-b5f7-cc12a1be4615.checkpoint.md:3-10"
+        },
+        {
+          "kind": "file",
+          "reference": "be-case-client/tools/case_client_test_deploy.py"
+        },
+        {
+          "kind": "file",
+          "reference": "be-case-client/tests/integration/case_client_api_integration.py"
+        }
+      ]
+    },
+    {
+      "claim": "Completion requires an actual successful live AWS deployment and HTTP report bound to deployed Lambda and Gateway readback.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied checkpoint says no AWS operations were attempted, the fresh manifest has zero mutations and requests, and the run is BLOCKED_OFFLINE_PARTIAL; no live report, deployed hash/config before-and-after evidence, or Gateway deployment identity was supplied.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "Offline Test Gate success cannot establish the task's explicit live obligations: the real protected GET /cases route, cross-client traversal and rejection scenarios, original-operation regression, and unchanged deployed configuration after testing.",
+      "required": "Complete the authorized guarded deployment and live HTTP scenarios, then supply the sanitized task-scoped report with accounting, scenario outcomes, Lambda hash/config readback, Gateway method/stage identity, and recovery pointer.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-72fa674d-3c01-4e53-b5f7-cc12a1be4615.checkpoint.md:3-10"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-72fa674d-3c01-4e53-b5f7-cc12a1be4615-orphan-implementing.json"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-19_followup-task-72fa674d-3c01-4e53-b5f7-cc12a1be4615-acceptance-fix-case-client-get-cases-nap-vemi-klienty-goal-0.md"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-declared TDD requirement needs task-specific RED/GREEN proof for the new continuation guard behavior.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "The supplied TDD proof is for parent task task-a1411f1b-f478-44b1-a9d5-675afa9665ac and covers only the global handler route; the current run manifest lists that parent proof but does not supply the current task's claimed continuation-budget proof.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The canonical task explicitly requires a fresh focused RED before changing continuation behavior and a fresh GREEN afterward, while the run manifest declares tddRequired true; a checkpoint assertion that proof was captured is not the required RED/GREEN artifact.",
+      "required": "Supply valid task-72fa674d-3c01-4e53-b5f7-cc12a1be4615 RED/GREEN proof for the continuation guard change, including the focused command, failing pre-change output, and passing post-change output.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-a1411f1b-f478-44b1-a9d5-675afa9665ac.red-green-proof.md:1-45"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-72fa674d-3c01-4e53-b5f7-cc12a1be4615.checkpoint.md:3-10"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-19_followup-task-72fa674d-3c01-4e53-b5f7-cc12a1be4615-acceptance-fix-case-client-get-cases-nap-vemi-klienty-goal-0.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] [acceptance-fix] Case Client: GET /cases nap\u0159\u00ed\u010d v\u0161emi klienty: goal-001: Case Client: GET /cases nap\u0159\u00ed\u010d"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-72fa674d-3c01-4e53-b5f7-cc12a1be4615-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-72fa674d-3c01-4e53-b5f7-cc12a1be4615"
+}

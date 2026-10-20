@@ -1,0 +1,59 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T22:22:51+00:00",
+    "implementingStartedAt": "2026-10-19T22:15:45+00:00",
+    "taskFile": "plans/tasks/2026-10-19_followup-task-f3b580a5-dee4-45bf-b918-a5165c12f40c-monitoring-mvp-uloit-a-pest-jeden-filereceived-event.md",
+    "taskId": "task-f3b580a5-dee4-45bf-b918-a5165c12f40c",
+    "title": "[acceptance-fix] Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event: goal-001: Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst j"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "[acceptance-fix] Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event: goal-001: Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst j"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-f3b580a5-dee4-45bf-b918-a5165c12f40c-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-19_monitoring-filereceived-audit-plan-scope.md",
+      "provenance": "untracked+referenced",
+      "size": 919
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/test-failures/focused-pytest-capture-environment-blockers.md",
+      "provenance": "untracked+referenced",
+      "size": 953
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b6ff9adf-d61b-4db0-b1ec-881674700f7f.checkpoint.md",
+      "provenance": "untracked+referenced",
+      "size": 1185
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b6ff9adf-d61b-4db0-b1ec-881674700f7f.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 848
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-f3b580a5-dee4-45bf-b918-a5165c12f40c.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1083
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-f3b580a5-dee4-45bf-b918-a5165c12f40c.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 779
+    }
+  ],
+  "taskId": "task-f3b580a5-dee4-45bf-b918-a5165c12f40c",
+  "tddRequired": true
+}

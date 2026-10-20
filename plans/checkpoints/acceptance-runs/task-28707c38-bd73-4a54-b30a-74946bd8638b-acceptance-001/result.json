@@ -1,0 +1,79 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The acceptance repair requires actual supported worker producer calls using authoritative execution context and a single injected fail-open audit listener.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The task checkpoint states that the execution-owner contract and canonical build provenance remain unavailable, producer-hook implementation is blocked, and no supported implementation or behavioral caller tests were completed. The supplied focused test only introspects whether process_document has an execution_context parameter; the supplied diff contains no actual worker caller instrumentation or immutable context forwarding.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "A blocker report and signature-only assertion do not deliver the required real enqueue/claim producer behavior, context forwarding, or caller-level fail-open integration.",
+      "required": "Supply the approved execution-owner context/build contract, instrument the supported real worker callers without changing queue, claim, retry, lease, or business semantics, and provide caller-level behavior for confirmed enqueue, successful and unsuccessful claims, exact immutable context forwarding, and failing audit sinks.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_followup-task-28707c38-bd73-4a54-b30a-74946bd8638b-acceptance-fix-monitoring-worker-dokonit-skuten-producer-vol.md:8-35"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-20_task-28707c38-bd73-4a54-b30a-74946bd8638b_acceptance-fix-monitoring-worker-dokon-it-skute-n-producer.md:1-49"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-28707c38-bd73-4a54-b30a-74946bd8638b.checkpoint.md:2-12"
+        },
+        {
+          "kind": "file",
+          "reference": "be-validator-agent/trigger/tests/test_audit_instrumentation.py:1-8"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-declared mandatory TDD workflow requires a valid historical RED and fresh same-command GREEN proof for the repaired behavior.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied task-scoped TDD projection is explicitly incomplete: it contains the inherited focused RED command with exit code 1 and no GREEN phase. The task checkpoint confirms that behavior implementation and GREEN capture remain blocked.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "With tddRequired=true, RED-only provenance cannot establish completion of the acceptance repair even though the caller-owned Test Gate passed.",
+      "required": "After implementing the real worker producer behavior, retain the genuine historical RED provenance and capture a fresh GREEN phase with the exact same focused command in a complete task-scoped proof.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0.red-green-proof.md:1-29"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-28707c38-bd73-4a54-b30a-74946bd8638b.checkpoint.md:2-12"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-28707c38-bd73-4a54-b30a-74946bd8638b-orphan-implementing.json"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] [acceptance-fix] Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz: goal-001: M"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-28707c38-bd73-4a54-b30a-74946bd8638b-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-28707c38-bd73-4a54-b30a-74946bd8638b"
+}

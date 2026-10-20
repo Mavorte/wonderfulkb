@@ -1,0 +1,140 @@
+{
+  "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+  "state": "inactive",
+  "request": "user20261019-2302: verify exact API placement and add next2 sections without starting",
+  "tasks": [
+    {
+      "seq": 1,
+      "id": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f",
+      "title": "Monitoring MVP: uložit a přečíst jeden FileReceived event",
+      "size": "M",
+      "type": "implementation",
+      "section": "slice-file-received",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-01-file-received-store.md",
+      "sha256": "a499ffdf162e2634adc187b2e97fdc2fb3242b1af8b1b48413abf8a0843f9a78",
+      "noRuntime": true
+    },
+    {
+      "seq": 2,
+      "id": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6",
+      "title": "Monitoring MVP: FileReceived po potvrzeném uploadu",
+      "size": "M",
+      "type": "implementation",
+      "section": "slice-file-received",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-02-file-received-hook-build.md",
+      "sha256": "0fbefbcb32823e1a3bf991a9a600dad2d0de10cea6d39e1d0cc830b57be207ce",
+      "noRuntime": true
+    },
+    {
+      "seq": 3,
+      "id": "task-9d34c790-5c01-46ba-96d0-bc7f45740763",
+      "title": "Monitoring MVP: jeden GET dokumentových událostí",
+      "size": "M",
+      "type": "implementation",
+      "section": "slice-file-received",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-03-document-events-get.md",
+      "sha256": "0c8e6a8746cf8138f2352dcd4440256aa96b516b51f919302e67a51e216e4f3a",
+      "noRuntime": true
+    },
+    {
+      "seq": 4,
+      "id": "task-a165d3b1-7bd6-461e-a2f6-0c6c029c2b56",
+      "title": "Monitoring MVP: jednoduchý AWS upload → events smoke",
+      "size": "M",
+      "type": "implementation",
+      "section": "slice-file-received",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-04-file-received-aws-smoke.md",
+      "sha256": "8a6a23aabc031a576ce26dc02ff77d838965fa54a66be0ee264ec1103fbf86b2",
+      "noRuntime": true
+    },
+    {
+      "seq": 5,
+      "id": "task-2977be23-2b9b-4fc8-8505-18282602e547",
+      "title": "Monitoring MVP: doložit zdroj triggeru a run/attempt kontrakt",
+      "size": "S",
+      "type": "investigation",
+      "section": "slice-run-queued",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-05-live-trigger-contract.md",
+      "sha256": "7bdfb6be2b9b06e2068e1b69305e3ac7c3fac4c069c6d623989271c03a2fd36e",
+      "noRuntime": true
+    },
+    {
+      "seq": 6,
+      "id": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7",
+      "title": "Monitoring MVP: RunQueued v existujícím event deníku",
+      "size": "M",
+      "type": "implementation",
+      "section": "slice-run-queued",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-06-run-queued-event.md",
+      "sha256": "77de007e4f549bca1184b633241fc031b643b69d7f2dea8242438213063764cc",
+      "noRuntime": true
+    },
+    {
+      "seq": 7,
+      "id": "task-1d77ce99-3b09-48f7-9978-e0e99783c9b5",
+      "title": "Monitoring MVP: jeden GET událostí konkrétního runu",
+      "size": "M",
+      "type": "implementation",
+      "section": "slice-run-queued",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-07-run-events-get.md",
+      "sha256": "f7e5840d5daa92413ebd177cdee6320cb9d6bb94cfe1c2265a22a9480ccb5062",
+      "noRuntime": true
+    },
+    {
+      "seq": 8,
+      "id": "task-e1e34fde-82b5-43aa-a744-aef7b5858293",
+      "title": "Monitoring MVP: AttemptStarted v event deníku",
+      "size": "M",
+      "type": "implementation",
+      "section": "slice-attempt-started",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-08-attempt-started-event.md",
+      "sha256": "88ea10748da7209176a847d995da553533c1535a1eb4d8ac721c872acd17fa43",
+      "noRuntime": true
+    },
+    {
+      "seq": 9,
+      "id": "task-dc9a8eab-2900-4aca-9a80-4411cebc0472",
+      "title": "Monitoring MVP: jeden GET pozorovaných pokusů",
+      "size": "M",
+      "type": "implementation",
+      "section": "slice-attempt-started",
+      "phase": "backlog",
+      "pauseState": "default",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-09-attempts-get.md",
+      "sha256": "6eeb450e6f9b111ab9d93f69bcc789f2cc4921f33929a637e2e0852363e572a9",
+      "noRuntime": true
+    }
+  ],
+  "newRootCount": 5,
+  "newImplementationCount": 4,
+  "investigationCount": 1,
+  "openProducerDependencies": [
+    "canonical source repo/revision",
+    "authoritative shared run identity absent in deployed message",
+    "authoritative attempt identity absent in deployed claim"
+  ],
+  "notClaimed": [
+    "live producer hooks",
+    "deployment",
+    "AWS producer-to-HTTP success"
+  ],
+  "evidence": "plans/monitoring/live-trigger-evidence-20261019.md",
+  "historicalSnapshot": true,
+  "supersededBy": "plans/monitoring/pre-dispatch-review-20261019.md"
+}

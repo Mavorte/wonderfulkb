@@ -1,0 +1,72 @@
+[
+  {
+    "id": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6",
+    "phase": "implementing",
+    "status": "running",
+    "pid": 44705,
+    "planSessionId": "calm-brook-6284",
+    "implSessionId": "bright-dune-2585",
+    "planReviewed": true,
+    "planReviewResult": "pass",
+    "approved": true,
+    "errorMessage": null,
+    "batch": "wonderfulkb-monitoring-api-slices-20261019",
+    "batchState": "active"
+  },
+  {
+    "id": "task-e0275532-1050-49c2-b1e3-b787751549bf",
+    "phase": "planning",
+    "status": "running",
+    "pid": 47845,
+    "planSessionId": "dark-fork-0897",
+    "implSessionId": null,
+    "planReviewed": null,
+    "planReviewResult": null,
+    "approved": null,
+    "errorMessage": null,
+    "batch": "wonderfulkb-monitor-openapi-20261020",
+    "batchState": "active"
+  },
+  {
+    "id": "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954",
+    "phase": "planning",
+    "status": "running",
+    "pid": 47846,
+    "planSessionId": "dark-dune-8571",
+    "implSessionId": null,
+    "planReviewed": null,
+    "planReviewResult": null,
+    "approved": null,
+    "errorMessage": null,
+    "batch": "wonderfulkb-monitor-pages-domain-20261020",
+    "batchState": "active"
+  },
+  {
+    "id": "task-1e8311a4-08b0-4142-9bf9-6553815e572e",
+    "phase": "planning",
+    "status": "running",
+    "pid": 47847,
+    "planSessionId": "swift-brook-4113",
+    "implSessionId": null,
+    "planReviewed": null,
+    "planReviewResult": null,
+    "approved": null,
+    "errorMessage": null,
+    "batch": "wonderfulkb-monitor-lifecycle-domain-20261020",
+    "batchState": "active"
+  },
+  {
+    "id": "task-626722a4-f9fd-46a9-8304-17b9f24de1cc",
+    "phase": "planning",
+    "status": "running",
+    "pid": 47859,
+    "planSessionId": "calm-wave-3188",
+    "implSessionId": null,
+    "planReviewed": null,
+    "planReviewResult": null,
+    "approved": null,
+    "errorMessage": null,
+    "batch": "wonderfulkb-monitor-runtime-context-20261020",
+    "batchState": "active"
+  }
+]

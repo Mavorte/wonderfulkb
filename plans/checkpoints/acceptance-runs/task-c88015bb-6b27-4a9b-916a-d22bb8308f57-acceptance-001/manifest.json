@@ -1,0 +1,35 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T16:47:25+00:00",
+    "implementingStartedAt": "2026-10-19T16:39:27+00:00",
+    "taskFile": "plans/tasks/2026-10-19_case-client-list-all-cases.md",
+    "taskId": "task-c88015bb-6b27-4a9b-916a-d22bb8308f57",
+    "title": "Case Client: GET /cases nap\u0159\u00ed\u010d v\u0161emi klienty"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Case Client: GET /cases nap\u0159\u00ed\u010d v\u0161emi klienty"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-c88015bb-6b27-4a9b-916a-d22bb8308f57-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-c88015bb-6b27-4a9b-916a-d22bb8308f57.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1371
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-c88015bb-6b27-4a9b-916a-d22bb8308f57.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 2210
+    }
+  ],
+  "taskId": "task-c88015bb-6b27-4a9b-916a-d22bb8308f57",
+  "tddRequired": true
+}

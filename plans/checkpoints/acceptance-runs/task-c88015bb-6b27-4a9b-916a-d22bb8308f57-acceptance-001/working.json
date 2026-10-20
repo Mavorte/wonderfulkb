@@ -1,0 +1,89 @@
+{
+  "findings": [
+    {
+      "claim": "The global GET /cases implementation and required live-cycle deliverables must be delivered.",
+      "crossCutting": false,
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The task-scoped diff adds only test_global_cases_route_returns_shared_public_list; it contains no handler dispatch, repository list_cases implementation, DynamoDB Scan path, API/template/documentation/tooling changes, deployment result, or live HTTP verification required by the task.",
+      "rationale": "A test that expects the new route does not implement the route. The checkpoint explicitly states implementation, broader coverage, deployment, and live verification remain untouched.",
+      "required": "Implement the required global GET /cases behavior across the existing handler and repositories, update the protected API contract and existing tooling, and complete the authorized deployment and live HTTP verification.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-case-client/tests/test_case_client_lambda.py:67-76"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-c88015bb-6b27-4a9b-916a-d22bb8308f57.checkpoint.md"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-required TDD proof must contain a genuine behavior-driven RED followed by GREEN.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied proof contains only a RED phase whose failure is ModuleNotFoundError for simplejson during test setup; it has no GREEN phase, and the supplied proof projection explicitly reports missing GREEN and incomplete phase order.",
+      "rationale": "An environment dependency import failure does not demonstrate the newly added GET /cases expectation failing for the intended behavioral reason, and no subsequent passing phase proves the implementation.",
+      "required": "Provide valid task-scoped RED/GREEN provenance with RED failing on the absent global GET /cases behavior and GREEN passing after implementation.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-c88015bb-6b27-4a9b-916a-d22bb8308f57.red-green-proof.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-c88015bb-6b27-4a9b-916a-d22bb8308f57.checkpoint.md"
+        }
+      ]
+    },
+    {
+      "claim": "The task requires sanitized live HTTP evidence and a verified deployment hash for the newly deployed Case Client.",
+      "crossCutting": false,
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "No task-scoped live report or verified deployment hash is supplied; the checkpoint marks the authorized deployment and live HTTP verification incomplete. The canonical Test Gate passed, but it does not supply the explicitly required deployed-runtime evidence.",
+      "rationale": "The task states that local green does not replace the live result and requires the existing HTTP runner to demonstrate global fixtures, pagination, API-key protection, and regressions against the deployed version.",
+      "required": "Complete the authorized in-place deployment and preserve the sanitized live HTTP report and verified deployment hash covering the required scenarios.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-c88015bb-6b27-4a9b-916a-d22bb8308f57.checkpoint.md"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-c88015bb-6b27-4a9b-916a-d22bb8308f57-orphan-implementing.json"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-19_case-client-list-all-cases.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Case Client: GET /cases nap\u0159\u00ed\u010d v\u0161emi klienty"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-c88015bb-6b27-4a9b-916a-d22bb8308f57-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-c88015bb-6b27-4a9b-916a-d22bb8308f57"
+}

@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility into the task-owned lifecycle reducer and focused test changes before the semantic goal can be accepted.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and explicitly omits be-document-processing/src/document_processing/audit/audit_lifecycle_observations.py and be-document-processing/tests/test_monitor_lifecycle_observations.py, the two owned implementation paths. The supplied RED/GREEN proof establishes focused execution evidence but does not expose the omitted implementation semantics for review.",
+      "rationale": "Because the task's canonical status, conflict preservation, scope validation, availability, and read-failure behavior resides in omitted paths, the supplied material cannot establish the goal while the contract forbids inferring absence or correctness from omitted content. This is incomplete semantic evidence, not an implementation-defect finding.",
+      "required": "Provide a complete caller-supplied diff or equivalent review material covering the omitted task-owned reducer and focused test paths, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-diff-visibility-contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-lifecycle-conflict-evidence-0856.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring lifecycle: canonical run status a neztr\u00e1tov\u00e1 konfliktn\u00ed evidence"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-d6b1100a-d1eb-4e95-8618-85cb3380f560-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-d6b1100a-d1eb-4e95-8618-85cb3380f560"
+}

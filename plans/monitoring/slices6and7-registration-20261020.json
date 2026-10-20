@@ -1,0 +1,93 @@
+{
+  "requestMessageId": "1561864908998574244",
+  "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+  "tasks": [
+    {
+      "id": "task-8c478cf6-5418-4bdc-b8a0-af56daaa25a3",
+      "task": "Monitoring MVP: událost skutečného použití stránkové cache",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-14-cache-reused-event.md",
+      "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+      "batchSeq": 14,
+      "phase": "backlog",
+      "pauseState": "default",
+      "parentTaskId": null,
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-cache-reused",
+      "pid": null,
+      "sessionId": null
+    },
+    {
+      "id": "task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c",
+      "task": "Monitoring MVP: použití cache ve stávajícím stránkovém API",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-15-cache-reused-read.md",
+      "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+      "batchSeq": 15,
+      "phase": "backlog",
+      "pauseState": "default",
+      "parentTaskId": null,
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-cache-reused",
+      "pid": null,
+      "sessionId": null
+    },
+    {
+      "id": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3",
+      "task": "Monitoring MVP: události skutečně provedené extrakce",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-16-extraction-events.md",
+      "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+      "batchSeq": 16,
+      "phase": "backlog",
+      "pauseState": "default",
+      "parentTaskId": null,
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-extraction",
+      "pid": null,
+      "sessionId": null
+    },
+    {
+      "id": "task-12f46945-d733-47dc-b0e9-b8c9746fd7c2",
+      "task": "Monitoring MVP: pozorovaná extrakce ve stávajícím steps API",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-17-extraction-read.md",
+      "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+      "batchSeq": 17,
+      "phase": "backlog",
+      "pauseState": "default",
+      "parentTaskId": null,
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-extraction",
+      "pid": null,
+      "sessionId": null
+    }
+  ],
+  "briefs": [
+    {
+      "file": "plans/tasks/2026-10-20_monitor-mvp-14-cache-reused-event.md",
+      "title": "Monitoring MVP: událost skutečného použití stránkové cache",
+      "sha256": "f9b90299e955a6b0b7adb4f6a45d107e1e7904016e1221db1054ccc46f12d166"
+    },
+    {
+      "file": "plans/tasks/2026-10-20_monitor-mvp-15-cache-reused-read.md",
+      "title": "Monitoring MVP: použití cache ve stávajícím stránkovém API",
+      "sha256": "71d11ab2102b8b7a70c4bc156cf19cb931d4c61dc30081de4faf2241ada07619"
+    },
+    {
+      "file": "plans/tasks/2026-10-20_monitor-mvp-16-extraction-events.md",
+      "title": "Monitoring MVP: události skutečně provedené extrakce",
+      "sha256": "24f8d0fa84d9aaaf35760227c95be6e2aefc720d69239649607a40426a24bbb4"
+    },
+    {
+      "file": "plans/tasks/2026-10-20_monitor-mvp-17-extraction-read.md",
+      "title": "Monitoring MVP: pozorovaná extrakce ve stávajícím steps API",
+      "sha256": "c810fccbe4a76b043ba5e76047d9c45eae69d102220902a3c1daf75c1829e334"
+    }
+  ],
+  "checks": {
+    "batchActive": true,
+    "allNewDefaultPaused": true,
+    "independentRoots": true,
+    "proposalLinksVerified": true,
+    "oldMembershipOrderPreserved": true,
+    "canonicalBriefHashesVerified": true
+  },
+  "scope": "slice6 cache reuse and slice7 extraction contract/store + existing read API additions; not producer hook/build or live AWS smoke"
+}

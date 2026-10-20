@@ -1,0 +1,67 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The task requires the attempts GET candidate to be deployed in place to the existing wonderfulkb-ingest AWS TEST App Runner target and reach a deployed state.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The supplied task checkpoint states that the final candidate image was built and locally smoked, but App Runner remained on a sibling image and this task performed no push or UpdateService; Step 5 remained incomplete and the task was explicitly marked NOT COMPLETE.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "The canonical task makes actual guarded TEST deployment part of this task and states that source or local-green delivery is insufficient. The supplied state is therefore missing a required delivery component, not merely missing test execution.",
+      "required": "Guardedly deploy the task candidate to the specified existing App Runner TEST service, preserve and verify recovery/configuration, wait for successful healthy rollout, and record the deployed image/revision/digest.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-dc9a8eab-2900-4aca-9a80-4411cebc0472.checkpoint.md:6-11"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-19_monitor-mvp-09-attempts-get.md:Povinn\u00e9 dokon\u010den\u00ed and Z\u00e1vazn\u00e9 up\u0159esn\u011bn\u00ed dod\u00e1vky"
+        }
+      ]
+    },
+    {
+      "claim": "The task requires bounded authenticated HTTP verification directly against the deployed attempts route using an authorized synthetic case/document and observed run/attempt data.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied checkpoint states that this task made no HTTP or fixture reads and that LIVE-FUNCTION-VERIFIED remains blocked; only local ASGI/image smoke and test proof are supplied.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "The canonical task explicitly rejects health checks, local TestClient, and 200-empty responses as proof of the new functionality. No supplied evidence demonstrates the deployed route's nonempty DTO, scoping/filtering, continuation, private no-store behavior, or required negative authorization/scope behavior.",
+      "required": "After deployment, perform the bounded authenticated live HTTP assertions required by the task against the authorized synthetic fixture and record sanitized request counts, IDs/schema assertions, status, cache policy, target revision, and truthful content-branch outcome.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-dc9a8eab-2900-4aca-9a80-4411cebc0472.checkpoint.md:6-11"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-19_monitor-mvp-09-attempts-get.md:Povinn\u00e9 dokon\u010den\u00ed items 3-6 and Z\u00e1vazn\u00e9 up\u0159esn\u011bn\u00ed dod\u00e1vky"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: jeden GET pozorovan\u00fdch pokus\u016f"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-dc9a8eab-2900-4aca-9a80-4411cebc0472-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-dc9a8eab-2900-4aca-9a80-4411cebc0472"
+}

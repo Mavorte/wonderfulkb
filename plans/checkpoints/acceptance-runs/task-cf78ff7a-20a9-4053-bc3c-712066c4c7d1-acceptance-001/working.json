@@ -1,0 +1,70 @@
+{
+  "findings": [
+    {
+      "claim": "The acceptance fix requires actual supported worker producer calls using authoritative execution context and a single injected fail-open audit listener.",
+      "crossCutting": false,
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The task checkpoint says the authoritative owner-issued context contract remains absent, Step 4 is blocked, and no production changes were made; the supplied diff adds only an introspection test for an execution_context parameter and contains no worker caller instrumentation.",
+      "rationale": "A documented prerequisite blocker and a failing signature assertion do not deliver the required real producer behavior, context forwarding, or caller-level fail-open integration.",
+      "required": "Supply the approved execution-owner context contract, instrument the supported real worker callers without changing queue, claim, retry, lease, or business semantics, and provide behavioral caller evidence for successful and unsuccessful claims plus failing audit sinks.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_followup-task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1-monitoring-worker-dokonit-skuten-producer-voln-a-behaviorln.md:8-35"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1.checkpoint.md:2-10"
+        },
+        {
+          "kind": "file",
+          "reference": "be-validator-agent/trigger/tests/test_audit_instrumentation.py:1-8"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-declared mandatory TDD workflow requires a valid historical RED and fresh same-command GREEN proof for the repaired behavior.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied TDD projection is explicitly incomplete: it contains only the parent RED command with exit code 1 and no GREEN phase; the task checkpoint confirms that GREEN capture was unavailable and the focused test remains unimplemented.",
+      "rationale": "With tddRequired=true, a RED-only record cannot establish the completed acceptance-fix behavior even though the caller-owned Test Gate passed.",
+      "required": "After implementing the required worker producer behavior, retain the genuine parent RED provenance and capture a fresh GREEN phase with the exact same focused command in a complete task-scoped proof.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0.red-green-proof.md:1-29"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1.checkpoint.md:5-10"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1-orphan-implementing.json"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz: goal-001: Monitoring worker:"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1"
+}

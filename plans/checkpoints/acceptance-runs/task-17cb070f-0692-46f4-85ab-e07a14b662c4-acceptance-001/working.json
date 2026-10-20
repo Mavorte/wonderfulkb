@@ -1,0 +1,85 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied review material must provide sufficient visibility to assess the steps GET goal.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract has complete=false and omits the route, audit query, and focused test implementation paths relevant to the goal.",
+      "rationale": "The omitted implementation paths were not reviewed, so acceptance cannot establish whether the goal is correctly delivered; absence from the supplied diff is not evidence that implementation is absent.",
+      "required": "Provide a complete acceptance evidence bundle covering the goal-relevant implementation paths, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract"
+        }
+      ]
+    },
+    {
+      "claim": "Because the manifest declares TDD required, valid RED and GREEN proof must be supplied for this task.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller states '(no TDD proof supplied)', and the checkpoint says an accepted RED was not captured and GREEN remains incomplete.",
+      "rationale": "Without the mandatory RED/GREEN proof, the required TDD cycle cannot be verified even though the separate Test Gate passed.",
+      "required": "Supply valid task-scoped RED and GREEN TDD proof for the focused steps endpoint behavior.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/acceptance-runs/task-17cb070f-0692-46f4-85ab-e07a14b662c4-acceptance-001/manifest.json:73"
+        },
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied TDD proof/provenance"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-17cb070f-0692-46f4-85ab-e07a14b662c4.checkpoint.md:2-7"
+        }
+      ]
+    },
+    {
+      "claim": "The task requires repo-local evidence of an installed and guarded AWS test deployment plus direct authenticated live HTTP verification of the changed steps route.",
+      "crossCutting": false,
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "No deployment/live verification evidence was supplied; the task checkpoint marks gates and guarded deployment/live verification unfinished and describes missing trusted authorization/read seams.",
+      "rationale": "Source or contract material and the unrelated passing registered Test Gate do not establish the explicitly required DEPLOYED and LIVE-FUNCTION-VERIFIED outcome.",
+      "required": "Supply task-specific artifact provenance, target revision and recovery evidence, guarded deployment completion, and bounded authenticated HTTP assertions for the steps route, or a concrete authorized operator blocker/handoff as required by the task.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-11-attempt-steps-get.md"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-17cb070f-0692-46f4-85ab-e07a14b662c4.checkpoint.md:2-7"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: jeden GET pozorovan\u00fdch krok\u016f pokusu"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-17cb070f-0692-46f4-85ab-e07a14b662c4-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-17cb070f-0692-46f4-85ab-e07a14b662c4"
+}

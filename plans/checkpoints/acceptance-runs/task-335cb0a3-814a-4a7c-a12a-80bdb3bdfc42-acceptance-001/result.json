@@ -1,0 +1,63 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The caller-required TDD cycle must include valid RED and GREEN proof for the focused pages GET implementation.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The supplied TDD proof projection explicitly reports a missing GREEN phase and incomplete phase order; the artifact contains only a RED command ending with a missing fixture error.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The manifest declares tddRequired=true, so RED-only evidence does not establish the required RED-GREEN cycle.",
+      "required": "Supply a valid task-scoped GREEN phase following the accepted RED phase, with complete proof provenance for the focused command.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42.red-green-proof.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-tdd-proof-projection"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete supplied visibility into the implementation material needed to evaluate the pages GET goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and omits the route, audit query/storage/mapping implementation, focused page-route tests, and other relevant paths; those omitted paths were not reviewed.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The supplied material cannot support a trustworthy semantic acceptance verdict, and the caller explicitly requires incomplete visibility to finalize non-ACCEPT without treating omitted paths as absent implementation.",
+      "required": "Provide a complete acceptance evidence bundle covering the task-relevant implementation and test artifacts, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: jeden GET pozorovan\u00fdch v\u00fdsledk\u016f str\u00e1nek"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42"
+}

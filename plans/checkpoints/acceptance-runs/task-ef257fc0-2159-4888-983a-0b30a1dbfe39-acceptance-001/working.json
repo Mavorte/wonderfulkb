@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "claim": "The repair must be deployed to the existing AWS test target and verified through direct authenticated live lifecycle HTTP requests with artifact, revision, recovery, authorization, fixture, and response provenance.",
+      "crossCutting": false,
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The task checkpoint explicitly marks guarded test deployment and bounded live verification incomplete, reports a fresh AWS NoCredentials blocker, and records no target reads or writes, no deployment, no cloud fixtures, and no candidate rollout. The local image and test evidence therefore do not supply the required deployed end-to-end proof.",
+      "rationale": "The goal requires functional end-to-end lifecycle HTTP behavior through the real deployed authorization and audit infrastructure; local composition tests and image import cannot establish that outcome.",
+      "required": "Authenticate through the supported AWS workflow, perform the guarded in-place test rollout with verified recovery and immutable source-to-image-to-target provenance, and record bounded authenticated live assertions for the lifecycle runs, detail, and audit routes, including authorization denial, cursor scope, publication evidence, no-store, and safe read-failure behavior.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-ef257fc0-2159-4888-983a-0b30a1dbfe39.checkpoint.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-20_task-ef257fc0-2159-4888-983a-0b30a1dbfe39_acceptance-fix-monitoring-lifecycle-http-skute-n-bounded.md"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-ef257fc0-2159-4888-983a-0b30a1dbfe39-orphan-implementing.json"
+        }
+      ]
+    },
+    {
+      "claim": "The supplied task-scoped diff must be complete enough to support a trustworthy semantic acceptance verdict.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract states complete=false, truncated=true, filteredPathInventoryTruncated=true, and identifies an omitted path. Omitted paths were not reviewed and the supplied evidence cannot establish complete implementation coverage.",
+      "rationale": "Incomplete caller-bounded visibility materially prevents acceptance, while the contract forbids inferring that implementation is absent from omitted material; no more specific catalog entry represents this visibility condition.",
+      "required": "Provide a complete, non-truncated task-scoped diff and path inventory for a subsequent acceptance run, preserving omitted-path semantics and concurrent ownership metadata.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] [acceptance-fix] Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed: goal-"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-ef257fc0-2159-4888-983a-0b30a1dbfe39-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-ef257fc0-2159-4888-983a-0b30a1dbfe39"
+}

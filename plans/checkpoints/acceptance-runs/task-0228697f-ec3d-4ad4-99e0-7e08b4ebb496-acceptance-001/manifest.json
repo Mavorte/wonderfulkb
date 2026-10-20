@@ -1,0 +1,35 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T16:13:00+00:00",
+    "implementingStartedAt": "2026-10-19T16:07:31+00:00",
+    "taskFile": "plans/tasks/2026-10-19_case-client-deploy-clean-proof.md",
+    "taskId": "task-0228697f-ec3d-4ad4-99e0-7e08b4ebb496",
+    "title": "Case Client: dokon\u010dit deploy po IAM oprav\u011b a ov\u011b\u0159it live POST"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Case Client: dokon\u010dit deploy po IAM oprav\u011b a ov\u011b\u0159it live POST"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-0228697f-ec3d-4ad4-99e0-7e08b4ebb496-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-0228697f-ec3d-4ad4-99e0-7e08b4ebb496.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1201
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-0228697f-ec3d-4ad4-99e0-7e08b4ebb496.red-green-proof.md",
+      "provenance": "untracked",
+      "size": 9576
+    }
+  ],
+  "taskId": "task-0228697f-ec3d-4ad4-99e0-7e08b4ebb496",
+  "tddRequired": true
+}

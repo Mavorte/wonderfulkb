@@ -1,0 +1,46 @@
+{
+  "authorization": "1561982156316614729",
+  "lanes": {
+    "wonderfulkb-monitor-http-integration-20261020": [
+      "task-e1e34fde-82b5-43aa-a744-aef7b5858293",
+      "task-1d77ce99-3b09-48f7-9978-e0e99783c9b5",
+      "task-dc9a8eab-2900-4aca-9a80-4411cebc0472",
+      "task-a165d3b1-7bd6-461e-a2f6-0c6c029c2b56"
+    ],
+    "wonderfulkb-monitor-http-steps-20261020": [
+      "task-d2e34593-3eca-44a0-954d-c470eaa95321",
+      "task-17cb070f-0692-46f4-85ab-e07a14b662c4",
+      "task-3287e245-ec14-4bb4-9019-a094b5d61070",
+      "task-1ffb515f-53f9-4cb5-8e84-c98250c2292c"
+    ],
+    "wonderfulkb-monitor-http-pages-20261020": [
+      "task-164adaf3-99df-429e-86b4-c565e5461be0",
+      "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42",
+      "task-8c478cf6-5418-4bdc-b8a0-af56daaa25a3",
+      "task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c"
+    ],
+    "wonderfulkb-monitor-http-lifecycle-20261020": [
+      "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3",
+      "task-12f46945-d733-47dc-b0e9-b8c9746fd7c2",
+      "task-aa624fc8-7c29-4a9f-9cdc-8b2e7e6acf1e",
+      "task-095a56a6-1e34-4c79-9649-07a109f27928",
+      "task-422c4f83-d138-47ea-859b-011f3d86e6e5"
+    ],
+    "wonderfulkb-monitor-worker-integration-20261020": [
+      "task-2264932c-e1f9-4f8c-9314-3bfffac8234a",
+      "task-535479cc-36c1-4f88-8810-aa163d287e78",
+      "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59",
+      "task-fc4580ab-a2c5-47b5-b632-e3d71b453652",
+      "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf"
+    ]
+  },
+  "failedOriginalsPreserved": [
+    "03",
+    "06",
+    "23",
+    "25"
+  ],
+  "newTasks": 0,
+  "policy": "Five existing batch IDs, each4 not-yet-started original roots. Approximate balance; user explicitly accepts source collision risk. No exhausted infrastructure retry, reset or acceptance override. Existing failed original attempts remain recorded, not silently declared complete. Real technical missing inputs remain evidence blockers, no fake auth/identities. Per-task deployment/live obligations retained.",
+  "concurrentWorkReconciliation": "Two existing completion roots registered by another ongoing user-authorized owner incorporated, not created here. Duplicate2 added-helper completion roots cancelled unstarted per latest no-extra-work order. Preserve running lifecycle attempt."
+}

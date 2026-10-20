@@ -1,0 +1,54 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility into the implementation paths required to assess the retry and terminal event goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-declared diff visibility is incomplete (complete=false); central goal paths are omitted, including audit_storage.py, audit_queries.py, and test_monitor_retry_terminal_events.py, while audit_events.py is only partial.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The omitted and partial paths contain required persistence, decoding, validation, and focused test behavior. The visibility contract forbids inferring absence or correctness from omitted material, so the goal cannot be semantically accepted or rejected on the supplied evidence.",
+      "required": "Provide a complete caller-scoped diff or equivalent supplied artifacts covering the omitted goal-critical implementation and focused test paths, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_events.py"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_storage.py"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_queries.py"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_retry_terminal_events.py"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: ud\u00e1losti retry a skute\u010dn\u00fdch konc\u016f"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a"
+}

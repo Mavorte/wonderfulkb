@@ -1,0 +1,63 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:42:02+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-18-signature-events.md",
+      "taskId": "task-aa624fc8-7c29-4a9f-9cdc-8b2e7e6acf1e",
+      "title": "Monitoring MVP: ud\u00e1losti skute\u010dn\u00e9 detekce podpis\u016f"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:21:51+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-cf441015-6bba-4862-8200-b2c0047f6905-monitoring-http-dokonit-autentizovan-document-events-zklad-a.md",
+      "taskId": "task-cf441015-6bba-4862-8200-b2c0047f6905",
+      "title": "[acceptance-fix] Monitoring HTTP: dokon\u010dit autentizovan\u00fd document-events z\u00e1klad a skute\u010dn\u00e9 nasazen\u00ed: goal-001: Monitorin"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T08:41:25+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:23:30+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-ef257fc0-2159-4888-983a-0b30a1dbfe39-acceptance-fix-monitoring-lifecycle-http-skuten-bounded-rout.md",
+      "taskId": "task-ef257fc0-2159-4888-983a-0b30a1dbfe39",
+      "title": "[acceptance-fix] [acceptance-fix] Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed: goal-"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T08:43:25+00:00",
+    "implementingStartedAt": "2026-10-20T08:37:47+00:00",
+    "taskFile": "plans/tasks/2026-10-20_monitor-mvp-27-worker-http-integration-proof.md",
+    "taskId": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf",
+    "title": "Monitoring MVP: skute\u010dn\u00e1 worker \u2192 HTTP integra\u010dn\u00ed cesta"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: skute\u010dn\u00e1 worker \u2192 HTTP integra\u010dn\u00ed cesta"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-ac9bcb19-d1d0-4bed-a469-f7e503825caf.checkpoint.md",
+      "provenance": "untracked",
+      "size": 7244
+    }
+  ],
+  "taskId": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf",
+  "tddRequired": true
+}

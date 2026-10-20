@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility into the implementation paths needed to evaluate the shared audit event contracts and readback goal.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract is complete=false: core audit implementation and focused test paths are omitted, and the OpenAPI path is only partial. Those omitted paths were not reviewed, so the supplied material cannot establish the goal's semantic correctness or completeness.",
+      "rationale": "The visibility gap is material because the omitted files contain the event definitions, serialization/deserialization, storage/query dispatch, listener seam, and focused contract coverage that constitute the evaluation target. The caller explicitly requires typed incomplete evidence/visibility and prohibits inferring missing implementation from omitted paths.",
+      "required": "Provide a complete caller-supplied task-scoped diff or equivalent immutable artifacts covering the omitted audit implementation and relevant focused tests, then perform a new acceptance run; do not treat path absence as implementation absence.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-audit-shared-event-contracts-0818.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-4ad56e72-4cb9-4180-92a0-19e11177c7a8.red-green-proof.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring: atomicky dokon\u010dit sd\u00edlen\u00e9 audit event kontrakty a jejich readback"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-4ad56e72-4cb9-4180-92a0-19e11177c7a8-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-4ad56e72-4cb9-4180-92a0-19e11177c7a8"
+}

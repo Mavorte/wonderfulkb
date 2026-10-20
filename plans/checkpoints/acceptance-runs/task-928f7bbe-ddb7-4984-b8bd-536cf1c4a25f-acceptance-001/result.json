@@ -1,0 +1,16 @@
+{
+  "classification": "ACCEPT",
+  "findings": [],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "MET",
+      "summary": "[acceptance-fix] Trigger: opravit cestu kanonick\u00e9 table \u0161ablony a zachovat audit p\u0159i stream variant\u011b: goal-001: Trigger:"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-928f7bbe-ddb7-4984-b8bd-536cf1c4a25f-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-928f7bbe-ddb7-4984-b8bd-536cf1c4a25f"
+}

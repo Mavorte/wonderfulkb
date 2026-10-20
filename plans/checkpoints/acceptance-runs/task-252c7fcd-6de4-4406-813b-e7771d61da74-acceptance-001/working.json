@@ -1,0 +1,58 @@
+{
+  "findings": [
+    {
+      "claim": "The task requires a guarded in-place AWS TEST deployment of the steps endpoint and nonempty authenticated live verification in the same task.",
+      "crossCutting": false,
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The supplied task checkpoint marks guarded AWS TEST deployment and bounded live assertions incomplete, records zero cloud writes and no rollout, and states that the task is not complete because the audit table, authorization secret, bindings, and permissions were unavailable.",
+      "rationale": "Source and installed-image checks do not deliver the goal's mandatory deployed behavior; the supplied artifact affirmatively establishes that no functional AWS TEST endpoint was rolled out or live-verified.",
+      "required": "Provision or obtain the approved test prerequisites, deploy the attested steps image to the existing guarded App Runner target, verify the deployed digest/revision, and capture a nonempty authenticated steps DTO response plus the required bounded authorization and cursor assertions.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-252c7fcd-6de4-4406-813b-e7771d61da74.checkpoint.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-steps-http-approved.md"
+        }
+      ]
+    },
+    {
+      "claim": "The supplied review visibility must be complete enough to evaluate the goal without inferring from omitted paths.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is explicitly complete=false and truncated=true, with omitted and partial paths; the caller directs that omitted paths were not reviewed and that the run must finalize as incomplete evidence/visibility rather than ACCEPT.",
+      "rationale": "This material evidence limitation does not fit a more specific catalog entry and prevents a trustworthy complete semantic verdict, while omitted paths cannot support absence or correctness findings.",
+      "required": "Provide a complete caller-computed review bundle for the evaluation target, including the currently omitted and partial task-relevant paths, then run a new acceptance review without reusing this run's state.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring steps HTTP: skute\u010dn\u00fd bounded endpoint se sd\u00edlenou case autorizac\u00ed a test deploymentem"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-252c7fcd-6de4-4406-813b-e7771d61da74-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-252c7fcd-6de4-4406-813b-e7771d61da74"
+}

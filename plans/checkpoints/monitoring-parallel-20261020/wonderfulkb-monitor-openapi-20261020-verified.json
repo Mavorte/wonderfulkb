@@ -1,0 +1,36 @@
+{
+  "batch": {
+    "batchId": "wonderfulkb-monitor-openapi-20261020",
+    "members": [
+      {
+        "batchSeq": 1,
+        "id": "task-e0275532-1050-49c2-b1e3-b787751549bf",
+        "pauseState": null,
+        "phase": "planning",
+        "project": "wonderfulkb",
+        "proposalId": "proposal-20261019-150954-c8891f",
+        "proposalSection": "slice-file-received",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-parallel-openapi-contract.md",
+        "type": "implementation"
+      }
+    ],
+    "nextAppendSeq": 2,
+    "rootCount": 1,
+    "roots": [
+      {
+        "batchSeq": 1,
+        "completionState": "incomplete",
+        "id": "task-e0275532-1050-49c2-b1e3-b787751549bf",
+        "paused": false,
+        "phase": "planning",
+        "status": "running",
+        "terminalLeafTaskIds": [],
+        "terminalReason": null
+      }
+    ],
+    "state": "active",
+    "taskCount": 1
+  },
+  "command": "batch.status",
+  "ok": true
+}

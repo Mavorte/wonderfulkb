@@ -1,0 +1,63 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility sufficient to evaluate the pages HTTP goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract reports complete=false, truncated=true, omitted paths, and a partial path; those omitted paths were not reviewed.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The caller explicitly requires incomplete evidence/visibility to prevent ACCEPT. This is an evidence limitation, not proof that implementation is absent or incorrect.",
+      "required": "Provide a complete caller-computed review bundle for the evaluation target, including all currently omitted and partial task-relevant paths, then run a new acceptance review.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    },
+    {
+      "claim": "The task requires a guarded AWS TEST deployment and bounded authenticated live verification of the nonempty pages DTO.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied task checkpoint leaves guarded AWS TEST deployment and live verification unchecked and states that all cloud mutations, live HTTP calls, and fixture writes were zero because the audit table, monitoring secret, owner guard, and exact fixture grant were unavailable.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "Source, local image, and TestClient evidence do not establish the task's explicitly required DEPLOYED and LIVE-FUNCTION-VERIFIED delivery stages.",
+      "required": "Complete the guarded in-place AWS TEST deployment and supply readback of the deployed immutable digest/config plus bounded authenticated live pages and steps assertions, or supply canonical evidence of the concrete blocker under the task's delivery contract.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-9fcac322-bb59-4168-aa0d-fa45933d3724.checkpoint.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-pages-http-approved.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring pages HTTP: skute\u010dn\u00fd bounded endpoint se sd\u00edlenou case autorizac\u00ed a test deploymentem"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-9fcac322-bb59-4168-aa0d-fa45933d3724-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-9fcac322-bb59-4168-aa0d-fa45933d3724"
+}

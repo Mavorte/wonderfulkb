@@ -1,0 +1,42 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "Acceptance requires complete supplied visibility into the task-scoped implementation evidence relevant to the runtime producer-context goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and truncated=true; it lists omitted implementation and test paths and a partial OpenAPI path, so those paths were not reviewed.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The supplied blocker artifacts support the permitted no-integration branch, but incomplete visibility prevents a trustworthy final semantic determination and must not be converted into either an implementation-absence finding or ACCEPT.",
+      "required": "Provide a complete caller-scoped diff or equivalent supplied evidence covering the omitted and partial goal-relevant paths, then rerun acceptance without inferring absence from unsupplied files.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-runtime-owner-contract-0818.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring runtime: dokon\u010dit producer context a\u017e nad dolo\u017een\u00fdm execution-owner kontraktem"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-821fe70a-e40f-4fc9-bd11-ced0e5183dde-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-821fe70a-e40f-4fc9-bd11-ced0e5183dde"
+}

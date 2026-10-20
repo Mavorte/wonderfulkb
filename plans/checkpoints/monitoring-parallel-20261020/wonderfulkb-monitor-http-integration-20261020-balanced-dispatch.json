@@ -1,0 +1,15 @@
+{
+  "changedTaskIds": [
+    "task-e1e34fde-82b5-43aa-a744-aef7b5858293"
+  ],
+  "command": "task.start",
+  "log": "/tmp/opencode-warm-fork-2505.log",
+  "message": "started: task-e1e34fde-82b5-43aa-a744-aef7b5858293",
+  "modelUsed": "openai/gpt-6-luna",
+  "ok": true,
+  "operation": "start",
+  "phase": "plan",
+  "pid": 70934,
+  "sessionId": "warm-fork-2505",
+  "taskId": "task-e1e34fde-82b5-43aa-a744-aef7b5858293"
+}

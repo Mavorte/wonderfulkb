@@ -1,0 +1,71 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "Caller-required TDD must include a valid ordered RED and GREEN proof for the focused extraction-event implementation.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The supplied TDD proof contains only a RED phase with exit code 2 and explicitly states that the GREEN phase and phase order are incomplete.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The manifest sets tddRequired=true, so an incomplete RED/GREEN proof does not satisfy the mandatory TDD evidence contract.",
+      "required": "Provide the canonical focused TDD proof with a valid implementation-specific RED followed by a successful GREEN phase and complete phase ordering.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-8b51eacc-35c1-498a-b4a7-f2421c498bd3.red-green-proof.md"
+        }
+      ]
+    },
+    {
+      "claim": "Semantic acceptance requires complete supplied visibility of the target implementation paths needed to assess the extraction-event contract.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract is complete=false: audit_storage.py and test_monitor_extraction_events.py are omitted, while audit_events.py is only partial.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Those omitted and partial target paths can contain the required persistence, validation, and focused contract behavior. The supplied material therefore cannot establish acceptance, while the visibility rules prohibit treating unreviewed code as absent or incorrect.",
+      "required": "Provide a complete caller-supplied task-scoped diff or equivalent review artifacts covering the target event, storage, and focused test paths, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_events.py"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_storage.py"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_extraction_events.py"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: ud\u00e1losti skute\u010dn\u011b proveden\u00e9 extrakce"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3"
+}

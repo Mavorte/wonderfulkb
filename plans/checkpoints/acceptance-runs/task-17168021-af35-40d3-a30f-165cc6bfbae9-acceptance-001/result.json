@@ -1,0 +1,88 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The existing wonderfulkb-trigger stack must own a deployed ACTIVE wonderfulkb-trigger-execution table with the required runtime wiring.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The task checkpoint says the reviewed change set is AVAILABLE but not executed, no ExecuteChangeSet occurred, and deployment/live readbacks remain outstanding.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "Preparing and validating a change set does not satisfy the goal's required deployed AWS TEST resource and stack-owned wiring; the task-owned artifact explicitly states that the cloud mutation was not performed.",
+      "required": "Execute the guarded reviewed change set after the required fresh drift checks, then provide fresh stack, table, PITR, ownership, environment, IAM, and unchanged-runtime readbacks.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-17168021-af35-40d3-a30f-165cc6bfbae9.checkpoint.md:6-20"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/handoffs/aws-runtime-readiness-20261020.md:24-30"
+        }
+      ]
+    },
+    {
+      "claim": "Because the manifest declares TDD required, a valid ordered RED/GREEN proof for the live execution-table acceptance check is mandatory.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied canonical proof contains only a RED phase ending in ResourceNotFoundException, while the checkpoint explicitly states that GREEN is outstanding.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "A RED-only artifact does not demonstrate the required post-deployment GREEN phase or complete RED-to-GREEN order.",
+      "required": "After actual deployment, capture the GREEN phase with the same canonical proof command and preserve the complete ordered RED/GREEN artifact.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-17168021-af35-40d3-a30f-165cc6bfbae9.red-green-proof.md:1-46"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-17168021-af35-40d3-a30f-165cc6bfbae9.checkpoint.md:10-20"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete supplied visibility over the task-scoped implementation material needed for a trustworthy semantic verdict.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false, filteredPathInventoryTruncated=true, and lists omitted task-relevant trigger paths including the canonical trigger template and deployment/runtime files.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The caller explicitly requires a typed incomplete-evidence/visibility outcome when complete is false; omitted paths were not reviewed and cannot be inferred from the partial diff.",
+      "required": "Provide a complete caller-computed task-scoped diff and path inventory, including the omitted trigger infrastructure and runtime paths, in a subsequent acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "AWS TEST: zalo\u017eit execution tabulku p\u0159es existuj\u00edc\u00ed trigger stack"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-17168021-af35-40d3-a30f-165cc6bfbae9-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-17168021-af35-40d3-a30f-165cc6bfbae9"
+}

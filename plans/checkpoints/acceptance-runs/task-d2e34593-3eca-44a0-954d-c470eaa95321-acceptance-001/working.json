@@ -1,0 +1,58 @@
+{
+  "findings": [
+    {
+      "claim": "The caller-declared mandatory TDD cycle must have durable RED and GREEN proof for the source-validation event contract.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The manifest declares tddRequired=true, while the supplied TDD proof/provenance explicitly says no TDD proof was supplied; the checkpoint only reports a blocked RED attempt and leaves implementation and GREEN verification incomplete.",
+      "rationale": "Without the required RED/GREEN proof, acceptance cannot establish that the implementation followed the mandatory TDD process. Acceptance does not execute the missing tests itself.",
+      "required": "Supply valid task-scoped TDD proof containing the focused RED and GREEN executions and outcomes required by the task.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-d2e34593-3eca-44a0-954d-c470eaa95321.checkpoint.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-10-source-validation-events.md"
+        }
+      ]
+    },
+    {
+      "claim": "Semantic acceptance requires complete supplied visibility of the task-scoped implementation material needed to evaluate the source-validation event/store contract.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false: audit_storage.py, audit_listener.py, the focused source-validation test file, and other paths are omitted, while audit_events.py is only partially supplied.",
+      "rationale": "The omitted and partial core paths prevent a trustworthy semantic determination of the delivered contract. Their absence from supplied artifacts is not evidence that implementation is absent, so this is an incomplete-evidence finding rather than a correctness finding.",
+      "required": "Provide a complete caller-scoped diff or equivalent supplied artifacts covering the task-relevant event model, persistence dispatch, fail-open boundary, and focused tests for a new acceptance review.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: ud\u00e1losti jednoho ov\u011b\u0159en\u00ed vstupu"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-d2e34593-3eca-44a0-954d-c470eaa95321-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-d2e34593-3eca-44a0-954d-c470eaa95321"
+}

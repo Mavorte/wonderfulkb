@@ -1,0 +1,112 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The lifecycle runs, run-detail, and document-audit routes must be usable through the service's real trusted principal-to-case and document authorization boundary.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The route implementation only consults an optional app.state.lifecycle_authorize_read callback and denies when it is absent; main.py never installs a production provider. The target-task checkpoint confirms that no caller-to-case/document provider exists and keeps deployment/live verification blocked. The 200-path tests install a hermetic callback themselves, so they do not supply the missing service integration.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "A test-injected authorization seam proves adapter behavior but does not deliver authorized lifecycle HTTP behavior in the actual application. In normal application construction every lifecycle request remains denied before the bounded reader is called.",
+      "required": "Implement and wire the approved monitoring SERVICE principal and explicit case/document grant lookup in the application composition root, preserving fail-closed behavior and denial-before-read, then exercise the routes through that real boundary.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-intake/app/processing_monitor_lifecycle_routes.py:35-55"
+        },
+        {
+          "kind": "file",
+          "reference": "be-intake/app/main.py:48-51"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-4f189265-c034-43e8-b8d9-c4e1fef9a45b.checkpoint.md:2-8"
+        },
+        {
+          "kind": "file",
+          "reference": "be-intake/tests/test_processing_monitor_lifecycle_views.py:31-52"
+        }
+      ]
+    },
+    {
+      "claim": "Lifecycle detail and audit responses must preserve supported ResultPublished observations as publication facts in the bounded window.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "correctness",
+      "observed": "The contract and reducer expose ResultPublished and published_results, but audit_events.py defines no ResultPublished event class and audit_queries._event_from_item has no ResultPublished dispatch. A bounded read containing that documented event therefore raises Unsupported audit event type, which the HTTP adapter converts to 503 instead of returning publication observations. The target checkpoint also explicitly says the publication producer/decoder is absent.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "Publication is part of the required lifecycle response. Advertising and mapping published_results cannot make the route functional when the canonical reader cannot decode the underlying event type.",
+      "required": "Add the verified producer-owned ResultPublished event contract, persistence round trip, and reader dispatch, then map its stable publication identity and evidence without conflating publication with terminal run state.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-document-processing/contracts/openapi-processing-monitor.yaml:238-257"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_queries.py:82-97"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_events.py:1-425"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-4f189265-c034-43e8-b8d9-c4e1fef9a45b.checkpoint.md:6-8"
+        }
+      ]
+    },
+    {
+      "claim": "The acceptance repair explicitly requires a guarded deployment to the existing AWS test target and direct authenticated live HTTP verification of the changed lifecycle routes with revision, artifact, recovery, and fixture provenance.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "The supplied target-task checkpoint leaves the deployment/live step open, records AWS NoCredentials and the missing authorization provider, and states that zero cloud requests were made. No task artifact supplies a target revision, deployed image digest, verified recovery artifact/configuration, authorized synthetic fixture ledger, or direct live runs/detail/audit HTTP assertions.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "Local TestClient behavior, package/image import, and the passed Test Gate do not establish that the required artifact was deployed or that the changed routes work through the real authorization and audit infrastructure.",
+      "required": "After the production authorization and publication-read gaps are resolved, perform the guarded in-place test deployment and record source-to-image and target revision provenance, verified recovery state, entitled synthetic fixture IDs, and bounded authenticated live HTTP assertions for runs, detail, audit, cursor scope, denial, no-store, and read-failure behavior.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-4f189265-c034-43e8-b8d9-c4e1fef9a45b.checkpoint.md:2-8"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-20_task-4f189265-c034-43e8-b8d9-c4e1fef9a45b_monitoring-lifecycle-http-skute-n-bounded-routes-a-funk-n.md:implementation-steps-5-6"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-4f189265-c034-43e8-b8d9-c4e1fef9a45b-orphan-implementing.json"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed: goal-001: Monitoring l"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-4f189265-c034-43e8-b8d9-c4e1fef9a45b-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-4f189265-c034-43e8-b8d9-c4e1fef9a45b"
+}

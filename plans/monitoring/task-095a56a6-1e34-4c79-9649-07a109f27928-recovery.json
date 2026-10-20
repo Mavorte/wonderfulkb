@@ -1,0 +1,49 @@
+{
+  "captured_at": "2026-10-20T11:12:21.511097+00:00",
+  "purpose": "Reference-only recovery snapshot; no secret values. Refresh and compare under transferred owner guard before mutation.",
+  "last_succeeded_operation": "e5bcdf6b57c74901a5befeb9678f8add",
+  "image_index": "sha256:e462d804b114d426df9d61e1b686f29afc07859ddd5ab3133dadb259585f9b8a",
+  "linux_amd64_manifest": "sha256:99f39a86c78d8dbf6582d4accf082aa0f92af069fae29795d56a2c78154ad856",
+  "image_config": "sha256:260e97aa9897c948214044d2b2c3b40ada3063d62ab6dcc5b404c88e8ea7c7ef",
+  "ServiceArn": "arn:aws:apprunner:eu-central-1:609394381050:service/wonderfulkb-ingest/c9ef96fae3da4192abd7e8280d43ae6b",
+  "SourceConfiguration": {
+    "ImageRepository": {
+      "ImageIdentifier": "609394381050.dkr.ecr.eu-central-1.amazonaws.com/wonderfulkb-ingest:task-1d77ce99-e462d804",
+      "ImageConfiguration": {
+        "RuntimeEnvironmentVariables": {
+          "AUDIT_TABLE_NAME": "wonderfulkb-uw-document-processing-audit",
+          "CASES_TABLE": "wonderfulkb-uw-cases",
+          "DOCS_TABLE": "wonderfulkb-uw-documents",
+          "MONITOR_AUTH_SECRET_ARN": "arn:aws:secretsmanager:eu-central-1:609394381050:secret:wonderfulkb/monitoring-synthetic-20261020-4Dojab",
+          "PROCESSING_MONITOR_AUTHORIZATION_SECRET_ARN": "arn:aws:secretsmanager:eu-central-1:609394381050:secret:wonderfulkb/monitoring-synthetic-20261020-4Dojab",
+          "RAW_BUCKET": "wonderfulkb-raw-document-storage"
+        },
+        "Port": "8080",
+        "RuntimeEnvironmentSecrets": {
+          "API_KEY": "arn:aws:secretsmanager:eu-central-1:609394381050:secret:wonderfulkb/ingest-api-key-UY77Za"
+        }
+      },
+      "ImageRepositoryType": "ECR"
+    },
+    "AutoDeploymentsEnabled": false,
+    "AuthenticationConfiguration": {
+      "AccessRoleArn": "arn:aws:iam::609394381050:role/wonderfulkb-apprunner-ecr-access"
+    }
+  },
+  "InstanceConfiguration": {
+    "Cpu": "512", "Memory": "1024",
+    "InstanceRoleArn": "arn:aws:iam::609394381050:role/wonderfulkb-ingest-instance"
+  },
+  "HealthCheckConfiguration": {
+    "Protocol": "HTTP", "Path": "/healthz", "Interval": 10, "Timeout": 5,
+    "HealthyThreshold": 1, "UnhealthyThreshold": 5
+  },
+  "NetworkConfiguration": {
+    "EgressConfiguration": {"EgressType": "DEFAULT"},
+    "IngressConfiguration": {"IsPubliclyAccessible": true}, "IpAddressType": "IPV4"
+  },
+  "AutoScalingConfigurationSummary": {
+    "AutoScalingConfigurationArn": "arn:aws:apprunner:eu-central-1:609394381050:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",
+    "AutoScalingConfigurationName": "DefaultConfiguration", "AutoScalingConfigurationRevision": 1
+  }
+}

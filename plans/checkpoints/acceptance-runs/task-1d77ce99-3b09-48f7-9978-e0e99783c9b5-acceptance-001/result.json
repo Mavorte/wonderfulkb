@@ -1,0 +1,38 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "Complete caller-supplied implementation visibility is required to determine whether the run-events delivery satisfies the goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract declares complete=false and identifies omitted and partial paths, so those paths were not reviewed.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The supplied route, contract, and TDD proof support the requested behavior, but incomplete visibility prevents a trustworthy complete semantic verdict; omitted paths cannot be treated as absent or incorrect.",
+      "required": "Provide a complete caller-computed task-scoped diff/review bundle, including currently omitted and partial paths, and repeat semantic acceptance without inferring absence from filtering.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: jeden GET ud\u00e1lost\u00ed konkr\u00e9tn\u00edho runu"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-1d77ce99-3b09-48f7-9978-e0e99783c9b5-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-1d77ce99-3b09-48f7-9978-e0e99783c9b5"
+}

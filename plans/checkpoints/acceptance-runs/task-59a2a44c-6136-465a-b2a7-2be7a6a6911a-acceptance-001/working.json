@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "claim": "Legacy attempt_number must never act as an ordinal fallback when canonical attempt_no is absent.",
+      "crossCutting": false,
+      "findingType": "implemented_behavior_incorrect",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The reducer still assigns number from attempt_number for a legacy-only AttemptStarted and also falls back to attempt_number for AttemptFinished when attempt_no is absent, allowing unsupported alias-only input to create a definite attempt summary.",
+      "rationale": "The canonical task explicitly says the serializer does not emit attempt_number and forbids adding that alias fallback; accepting it can turn malformed/non-canonical evidence into a certain attempt identity instead of preserving uncertainty or rejecting it.",
+      "required": "Remove the legacy-only ordinal fallback for AttemptStarted and AttemptFinished; only validated canonical attempt_no may establish a definite attempt number, while contradictory or malformed scope remains explicit uncertainty/evidence.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_lifecycle_observations.py:115-139"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-lifecycle-unscoped-evidence-0923.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring lifecycle: zachovat unscoped evidence a odm\u00edtnout rozporn\u00fd ordinal fallback"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-59a2a44c-6136-465a-b2a7-2be7a6a6911a-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-59a2a44c-6136-465a-b2a7-2be7a6a6911a"
+}

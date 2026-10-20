@@ -1,0 +1,15 @@
+{
+  "changedTaskIds": [
+    "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3"
+  ],
+  "command": "task.start",
+  "log": "/tmp/opencode-bold-brook-3710.log",
+  "message": "started: task-8b51eacc-35c1-498a-b4a7-f2421c498bd3",
+  "modelUsed": "openai/gpt-6-luna",
+  "ok": true,
+  "operation": "start",
+  "phase": "plan",
+  "pid": 70931,
+  "sessionId": "bold-brook-3710",
+  "taskId": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3"
+}

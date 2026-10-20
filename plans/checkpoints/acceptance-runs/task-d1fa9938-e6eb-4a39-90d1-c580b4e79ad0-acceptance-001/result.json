@@ -1,0 +1,79 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The task requires actual worker caller instrumentation using authoritative execution context and a single injected fail-open audit listener.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The supplied checkpoint says implementation is blocked by the absent authoritative interface, the focused RED intentionally remains failing, and no GREEN or source producer change is claimed.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "A blocker description and RED test do not deliver the required producer calls; the target goal therefore remains unimplemented rather than merely unverified.",
+      "required": "Provide the authoritative execution-owner context interface, instrument the supported real worker callers without changing execution semantics, and deliver the required caller-level behavior.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_complete-worker-audit-integration-0908.md:9-12"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_complete-worker-audit-integration-0908.md:23-29"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0.checkpoint.md:5-11"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-declared mandatory TDD workflow requires a genuine RED-to-GREEN proof with the same focused command.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied proof contains only a RED phase, and the checkpoint explicitly states that GREEN is unavailable and the focused test remains failing.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "With tddRequired=true, a RED-only record is an incomplete mandatory TDD proof and cannot establish the required implemented behavior.",
+      "required": "After the prerequisite interface exists and implementation is delivered, capture a valid GREEN phase using the same argv and retain the complete RED-to-GREEN proof.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_complete-worker-audit-integration-0908.md:12"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_complete-worker-audit-integration-0908.md:34-35"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0.red-green-proof.md:1-29"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0.checkpoint.md:5-11"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0"
+}

@@ -1,0 +1,81 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T09:39:47+00:00",
+        "overlappedEvaluation": false,
+        "startedAt": ""
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-20-publication-events.md",
+      "taskId": "task-3287e245-ec14-4bb4-9019-a094b5d61070",
+      "title": "Monitoring MVP: ud\u00e1losti potvrzen\u00e9 publikace v\u00fdsledku"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T09:34:30+00:00",
+        "overlappedEvaluation": false,
+        "startedAt": ""
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-signature-event-contract-proof.md",
+      "taskId": "task-77996c8d-00b5-4fe3-a061-a423053deb66",
+      "title": "Monitoring signatures: doplnit chyb\u011bj\u00edc\u00ed d\u016fkaz event/store kontraktu"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T09:39:46+00:00",
+        "overlappedEvaluation": false,
+        "startedAt": ""
+      },
+      "taskFile": "plans/tasks/2026-10-19_monitor-mvp-04-file-received-aws-smoke.md",
+      "taskId": "task-a165d3b1-7bd6-461e-a2f6-0c6c029c2b56",
+      "title": "Monitoring MVP: jednoduch\u00fd AWS upload \u2192 events smoke"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T09:41:54+00:00",
+    "implementingStartedAt": "2026-10-20T09:16:33+00:00",
+    "taskFile": "plans/tasks/2026-10-20_monitor-worker-http-remaining-approved.md",
+    "taskId": "task-b0db5177-2f43-4036-b080-af1ca7d143d5",
+    "title": "Monitoring worker: dokon\u010dit skute\u010dn\u00e9 producenty a nasazen\u00fd worker\u2192HTTP d\u016fkaz"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring worker: dokon\u010dit skute\u010dn\u00e9 producenty a nasazen\u00fd worker\u2192HTTP d\u016fkaz"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-b0db5177-2f43-4036-b080-af1ca7d143d5-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b0db5177-2f43-4036-b080-af1ca7d143d5.checkpoint.md",
+      "provenance": "untracked",
+      "size": 5190
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b0db5177-2f43-4036-b080-af1ca7d143d5.collection-error-proof.md",
+      "provenance": "untracked",
+      "size": 2230
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b0db5177-2f43-4036-b080-af1ca7d143d5.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 8929
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/handoffs/aws-runtime-readiness-20261020.md",
+      "provenance": "untracked+referenced",
+      "size": 5470
+    }
+  ],
+  "taskId": "task-b0db5177-2f43-4036-b080-af1ca7d143d5",
+  "tddRequired": true
+}

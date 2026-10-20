@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "claim": "The caller-required TDD proof must contain a genuine behavioral RED followed by GREEN for the focused FileReceived audit behavior.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The supplied follow-up proof contains only a RED command that exits during conftest import because pymupdf is missing; its projection explicitly reports a missing GREEN phase and incomplete phase order. The parent proof is the same environment failure, not a behavioral RED.",
+      "rationale": "A dependency collection failure does not demonstrate the expected pre-implementation behavior failure, and no subsequent GREEN evidence was supplied, so the mandatory TDD provenance is invalid and incomplete.",
+      "required": "Supply valid provenance for a genuine behavioral RED followed by GREEN for the same focused command, preserving the existing failed environment captures as historical evidence.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-f3b580a5-dee4-45bf-b918-a5165c12f40c.red-green-proof.md:1"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-b6ff9adf-d61b-4db0-b1ec-881674700f7f.red-green-proof.md:1"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-f3b580a5-dee4-45bf-b918-a5165c12f40c.checkpoint.md:1"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete enough supplied implementation visibility to determine whether the FileReceived store and read goal is satisfied.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract declares complete=false and truncated=true, identifies an omitted path and a partial path, and states that omitted paths were not reviewed.",
+      "rationale": "The supplied material is explicitly incomplete, so absence from the delivered diff cannot establish absence on disk and the implementation cannot be accepted or rejected on correctness from this evidence.",
+      "required": "Provide a complete caller-computed task-scoped diff or equivalent complete review material covering the omitted and partial paths, then rerun acceptance without inferring implementation absence from unsupplied paths.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event: goal-001: Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst j"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-f3b580a5-dee4-45bf-b918-a5165c12f40c-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-f3b580a5-dee4-45bf-b918-a5165c12f40c"
+}

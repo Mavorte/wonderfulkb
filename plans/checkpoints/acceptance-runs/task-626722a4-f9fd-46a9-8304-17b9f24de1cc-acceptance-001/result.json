@@ -1,0 +1,63 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The caller-declared mandatory TDD cycle must have canonical RED/GREEN proof.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The manifest sets tddRequired=true, while the supplied material states that no TDD proof was supplied and the checkpoint confirms the mandatory RED/GREEN proof artifact is absent.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The catalog makes absent mandatory TDD proof blocking whenever tddRequired is true; the task's conditional implementation rationale does not alter the caller-owned manifest flag.",
+      "required": "Supply valid canonical RED/GREEN TDD proof for this run, or have the caller issue a new manifest that explicitly marks TDD not required when the blocker-only outcome is intended.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied:TDD-proof-provenance"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-626722a4-f9fd-46a9-8304-17b9f24de1cc.checkpoint.md:8"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete supplied visibility over the task-relevant implementation or a typed incomplete-evidence outcome.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract is complete=false and identifies omitted task-relevant paths, including the audit implementation and tests; those paths were not supplied for review.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The caller explicitly requires a non-ACCEPT incomplete evidence/visibility result and prohibits inferring implementation absence or correctness from omitted paths. No more specific catalog entry represents incomplete review visibility.",
+      "required": "Provide a complete caller-computed diff/material bundle for a new acceptance run so task-relevant omitted paths can be semantically reviewed.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied:diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: skute\u010dn\u00fd runtime kontext a queue claim producer"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-626722a4-f9fd-46a9-8304-17b9f24de1cc-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-626722a4-f9fd-46a9-8304-17b9f24de1cc"
+}

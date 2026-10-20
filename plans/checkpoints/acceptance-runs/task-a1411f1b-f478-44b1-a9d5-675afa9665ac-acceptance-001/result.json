@@ -1,0 +1,75 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The required existing live HTTP runner must cover the new global GET /cases route and its bounded scenarios.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The supplied diff contains no change to be-case-client/tests/integration/case_client_api_integration.py or the existing live tooling, and the task checkpoint explicitly marks the live runner extension incomplete.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "The repair task requires extending the existing tooling for global fixtures, pagination, invalid or foreign tokens, API-key protection, and existing-operation regressions; implementing the handler and API contract alone does not deliver that required component.",
+      "required": "Extend the existing bounded live runner/tooling to exercise the required global GET /cases scenarios while preserving its authorization and budget guards.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-case-client/tests/integration/case_client_api_integration.py"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-a1411f1b-f478-44b1-a9d5-675afa9665ac.checkpoint.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-19_task-a1411f1b-f478-44b1-a9d5-675afa9665ac_case-client-get-cases-nap-v-emi-klienty-goal-001-case.md"
+        }
+      ]
+    },
+    {
+      "claim": "The repair requires sanitized live HTTP evidence and a verified deployment identity for the deployed global GET /cases behavior.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied checkpoint states that deployment and live verification were not performed because the existing authorization ledger had exhausted its deploy-attempt and live-write budgets; no task-scoped deployed hash or sanitized live report is supplied.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "The canonical repair goal carries forward the explicit deployed-runtime evidence requirement, and the passed Test Gate only establishes its own test gate outcome, not deployment identity or live API behavior.",
+      "required": "Under valid caller-owned authorization and budgets, deploy in place and supply the sanitized live HTTP report plus verified deployment hash covering cross-client results, full limit-1 pagination, malformed or foreign token rejection, API-key protection, and existing-operation regressions.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-a1411f1b-f478-44b1-a9d5-675afa9665ac.checkpoint.md"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-19_followup-task-a1411f1b-f478-44b1-a9d5-675afa9665ac-case-client-get-cases-nap-vemi-klienty.md"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-a1411f1b-f478-44b1-a9d5-675afa9665ac-orphan-implementing.json"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] Case Client: GET /cases nap\u0159\u00ed\u010d v\u0161emi klienty: goal-001: Case Client: GET /cases nap\u0159\u00ed\u010d v\u0161emi klienty"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-a1411f1b-f478-44b1-a9d5-675afa9665ac-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-a1411f1b-f478-44b1-a9d5-675afa9665ac"
+}

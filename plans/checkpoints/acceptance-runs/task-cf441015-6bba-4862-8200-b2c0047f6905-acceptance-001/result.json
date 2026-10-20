@@ -1,0 +1,46 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "Goal-001 requires the authenticated document-events implementation to be installed, guardedly deployed to the existing AWS TEST target, and directly live-verified with bounded upload-to-FileReceived-to-GET provenance.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The task checkpoint leaves installed artifact deployment and live producer/HTTP verification incomplete, states that no cloud requests or writes occurred beyond a failed STS preflight, and marks the task BLOCKED rather than COMPLETE. The caller also declares the supplied diff visibility incomplete, so omitted paths cannot establish the missing deployed/live evidence.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "Source, focused GREEN, and local installed-image smoke do not demonstrate the task's explicitly required DEPLOYED and LIVE_VERIFIED outcomes. Without target revision/image provenance and authenticated live route evidence, goal-001 is not fully evidenced.",
+      "required": "Provide task-local guarded AWS TEST deployment and direct authenticated bounded upload-to-FileReceived-to-GET evidence for the same synthetic case/document, including immutable artifact digest, deployed revision/config recovery provenance, request/write accounting, pagination/no-store assertions, and negative authorization/read-failure behavior.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-cf441015-6bba-4862-8200-b2c0047f6905.checkpoint.md:7-10"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_followup-task-cf441015-6bba-4862-8200-b2c0047f6905-monitoring-http-dokonit-autentizovan-document-events-zklad-a.md:Sou\u010d\u00e1st dod\u00e1n\u00ed"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-cf441015-6bba-4862-8200-b2c0047f6905-orphan-implementing.json"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] Monitoring HTTP: dokon\u010dit autentizovan\u00fd document-events z\u00e1klad a skute\u010dn\u00e9 nasazen\u00ed: goal-001: Monitorin"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-cf441015-6bba-4862-8200-b2c0047f6905-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-cf441015-6bba-4862-8200-b2c0047f6905"
+}

@@ -1,0 +1,32 @@
+{
+  "batchId": "wonderfulkb-monitor-http-lifecycle-20261020",
+  "members": [
+    {
+      "batchSeq": 1,
+      "id": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-retry-terminal",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-24-lifecycle-read.md",
+      "type": "implementation"
+    }
+  ],
+  "nextAppendSeq": 2,
+  "rootCount": 1,
+  "roots": [
+    {
+      "batchSeq": 1,
+      "completionState": "incomplete",
+      "id": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    }
+  ],
+  "state": "inactive",
+  "taskCount": 1
+}

@@ -1,0 +1,15 @@
+{
+  "changedTaskIds": [
+    "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954"
+  ],
+  "command": "task.start",
+  "log": "/tmp/opencode-dark-dune-8571.log",
+  "message": "started: task-b37c64cd-1783-45e6-8daf-f2e6a04e0954",
+  "modelUsed": "openai/gpt-6-luna",
+  "ok": true,
+  "operation": "start",
+  "phase": "plan",
+  "pid": 47846,
+  "sessionId": "dark-dune-8571",
+  "taskId": "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954"
+}

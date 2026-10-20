@@ -1,0 +1,81 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:52:42+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-audit-shared-event-contracts-0818.md",
+      "taskId": "task-4ad56e72-4cb9-4180-92a0-19e11177c7a8",
+      "title": "Monitoring: atomicky dokon\u010dit sd\u00edlen\u00e9 audit event kontrakty a jejich readback"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:50:44+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-runtime-owner-contract-0818.md",
+      "taskId": "task-821fe70a-e40f-4fc9-bd11-ced0e5183dde",
+      "title": "Monitoring runtime: dokon\u010dit producer context a\u017e nad dolo\u017een\u00fdm execution-owner kontraktem"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:50:39+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:42:41+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-monitor-openapi-20261020.md",
+      "taskId": "task-b96084af-3aa2-438d-a562-900bbdad7e95",
+      "title": "Monitoring OpenAPI: opravit YAML a dokon\u010dit p\u0159esn\u00e9 observation DTO kontrakty"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T06:54:40+00:00",
+    "implementingStartedAt": "2026-10-20T06:47:47+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-audit-lifecycle-semantics-0818.md",
+    "taskId": "task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5",
+    "title": "Monitoring lifecycle: opravit skute\u010dnou attempt identitu, termin\u00e1ly a ambiguity matici"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring lifecycle: opravit skute\u010dnou attempt identitu, termin\u00e1ly a ambiguity matici"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_attemptstarted-audit-contract-preserves-producer-identity.md",
+      "provenance": "untracked+referenced",
+      "size": 761
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_audit-envelope-decimal-round-trip.md",
+      "provenance": "untracked+referenced",
+      "size": 1214
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1047
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 8387
+    }
+  ],
+  "taskId": "task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5",
+  "tddRequired": true
+}

@@ -1,0 +1,35 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T17:25:26+00:00",
+    "implementingStartedAt": "2026-10-19T17:17:49+00:00",
+    "taskFile": "plans/tasks/2026-10-19_followup-task-72fa674d-3c01-4e53-b5f7-cc12a1be4615-acceptance-fix-case-client-get-cases-nap-vemi-klienty-goal-0.md",
+    "taskId": "task-72fa674d-3c01-4e53-b5f7-cc12a1be4615",
+    "title": "[acceptance-fix] [acceptance-fix] Case Client: GET /cases nap\u0159\u00ed\u010d v\u0161emi klienty: goal-001: Case Client: GET /cases nap\u0159\u00ed\u010d"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "[acceptance-fix] [acceptance-fix] Case Client: GET /cases nap\u0159\u00ed\u010d v\u0161emi klienty: goal-001: Case Client: GET /cases nap\u0159\u00ed\u010d"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-72fa674d-3c01-4e53-b5f7-cc12a1be4615-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-72fa674d-3c01-4e53-b5f7-cc12a1be4615.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1082
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-a1411f1b-f478-44b1-a9d5-675afa9665ac.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 1872
+    }
+  ],
+  "taskId": "task-72fa674d-3c01-4e53-b5f7-cc12a1be4615",
+  "tddRequired": true
+}

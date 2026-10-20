@@ -1,0 +1,29 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T22:52:51+00:00",
+    "implementingStartedAt": "2026-10-19T22:46:55+00:00",
+    "taskFile": "plans/tasks/2026-10-20_monitor-mvp-01-file-received-store-sol.md",
+    "taskId": "task-4651db4a-86e4-4bd9-ad5d-09532bd16490",
+    "title": "Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-4651db4a-86e4-4bd9-ad5d-09532bd16490-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-4651db4a-86e4-4bd9-ad5d-09532bd16490.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1618
+    }
+  ],
+  "taskId": "task-4651db4a-86e4-4bd9-ad5d-09532bd16490",
+  "tddRequired": true
+}

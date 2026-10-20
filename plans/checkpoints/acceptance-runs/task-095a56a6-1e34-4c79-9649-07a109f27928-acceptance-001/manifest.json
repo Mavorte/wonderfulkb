@@ -1,0 +1,59 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T11:06:03+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-19_monitor-mvp-09-attempts-get.md",
+      "taskId": "task-dc9a8eab-2900-4aca-9a80-4411cebc0472",
+      "title": "Monitoring MVP: jeden GET pozorovan\u00fdch pokus\u016f"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T11:18:03+00:00",
+    "implementingStartedAt": "2026-10-20T11:08:03+00:00",
+    "taskFile": "plans/tasks/2026-10-20_monitor-mvp-19-signature-read.md",
+    "taskId": "task-095a56a6-1e34-4c79-9649-07a109f27928",
+    "title": "Monitoring MVP: detekce podpis\u016f ve st\u00e1vaj\u00edc\u00edm steps API"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: detekce podpis\u016f ve st\u00e1vaj\u00edc\u00edm steps API"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-095a56a6-1e34-4c79-9649-07a109f27928-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_extraction-steps-allowlist-and-run-events-prerequisite.md",
+      "provenance": "untracked+referenced",
+      "size": 1382
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/tooling/2026-10-20_extraction-read-plan-resumes-source-proof-and-runtime-ledger.md",
+      "provenance": "untracked+referenced",
+      "size": 1712
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-095a56a6-1e34-4c79-9649-07a109f27928.checkpoint.md",
+      "provenance": "untracked",
+      "size": 3585
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/handoffs/aws-runtime-readiness-20261020.md",
+      "provenance": "untracked+referenced",
+      "size": 7616
+    }
+  ],
+  "taskId": "task-095a56a6-1e34-4c79-9649-07a109f27928",
+  "tddRequired": true
+}

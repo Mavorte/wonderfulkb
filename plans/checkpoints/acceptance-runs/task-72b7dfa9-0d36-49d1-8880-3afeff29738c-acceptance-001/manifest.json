@@ -1,0 +1,87 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:24:59+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-runtime-execution-integration-0908.md",
+      "taskId": "task-3d3090bd-7fe6-470f-a099-9b5c8b502c7f",
+      "title": "Monitoring runtime: skute\u010dn\u00e1 producer integrace nad dolo\u017een\u00fdm execution rozhran\u00edm"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T07:22:56+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:15:07+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-lifecycle-conflict-evidence-0856.md",
+      "taskId": "task-d6b1100a-d1eb-4e95-8618-85cb3380f560",
+      "title": "Monitoring lifecycle: canonical run status a neztr\u00e1tov\u00e1 konfliktn\u00ed evidence"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T07:22:56+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:14:59+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-openapi-field-fidelity-0856.md",
+      "taskId": "task-eb1279da-fb6b-42ed-9551-8fa3fb753515",
+      "title": "Monitoring OpenAPI: p\u0159esn\u00e1 povinn\u00e1 pole a status enumy eventov\u00fdch DTO"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T07:26:58+00:00",
+    "implementingStartedAt": "2026-10-20T07:21:00+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-step-http-route-0908.md",
+    "taskId": "task-72b7dfa9-0d36-49d1-8880-3afeff29738c",
+    "title": "Monitoring steps HTTP: skute\u010dn\u00fd endpoint, funk\u010dn\u00ed fixture a runtime ov\u011b\u0159en\u00ed"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring steps HTTP: skute\u010dn\u00fd endpoint, funk\u010dn\u00ed fixture a runtime ov\u011b\u0159en\u00ed"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-72b7dfa9-0d36-49d1-8880-3afeff29738c-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_bounded-monitoring-read-plan-semantics.md",
+      "provenance": "untracked+referenced",
+      "size": 1281
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/security-issues/intake-case-scope-authorization-and-tdd-red.md",
+      "provenance": "untracked+referenced",
+      "size": 902
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/test-failures/acceptance-repair-preserve-tdd-evidence.md",
+      "provenance": "untracked+referenced",
+      "size": 720
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-72b7dfa9-0d36-49d1-8880-3afeff29738c.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1441
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-72b7dfa9-0d36-49d1-8880-3afeff29738c.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 2512
+    }
+  ],
+  "taskId": "task-72b7dfa9-0d36-49d1-8880-3afeff29738c",
+  "tddRequired": true
+}

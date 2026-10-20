@@ -1,0 +1,70 @@
+{
+  "findings": [
+    {
+      "claim": "The required PageCacheReused validation, isolation, no-I/O, and bounded fail-open characterization matrix is incomplete.",
+      "crossCutting": false,
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The supplied focused test covers basic completed/failed roundtrips, changed-payload idempotence, selected invalid values, and a pure Decimal mapping, but contains no cache-event tests for run/attempt/page/document isolation, omitted required-argument TypeError behavior, constructor cache/model/S3/environment sentinel checks, complete forbidden payload fields such as blocks/tables/storage keys, or the real existing file_received fail-open seam and its explicitly bounded responsibility.",
+      "rationale": "These are named deliverables of goal-001 rather than optional suite breadth; their absence leaves the requested cache contract proof materially incomplete even though the central event implementation already exists.",
+      "required": "Add focused hermetic PageCacheReused tests for every missing matrix branch, including exact missing-argument exception semantics, scoped isolation, full payload non-leakage, constructor no-I/O sentinels, and an honest concrete reference or characterization of the existing file_received-only fail-open boundary without inventing a cache producer API.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_cache_reused_events.py:1-89"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-cache-contract-proof-0923.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-73ee7806-e314-4dbf-9474-8b1228b9be04.checkpoint.md"
+        }
+      ]
+    },
+    {
+      "claim": "Mandatory task-scoped TDD proof was not supplied.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The immutable manifest sets tddRequired to true, the canonical task requires a task-specific genuine RED/GREEN applicability proof, and the caller supplied '(no TDD proof supplied)'; the checkpoint also leaves the TDD applicability and focused matrix step incomplete.",
+      "rationale": "Without the required proof there is no caller-supplied evidence of the mandated RED/GREEN cycle or an honest characterization-only applicability decision for already-correct behavior.",
+      "required": "Provide the task-scoped red-green proof with the required same-command RED/GREEN evidence or documented applicable characterization path, preserving genuine output and explaining which assertions exposed missing behavior versus existing behavior.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "TDD proof/provenance: no TDD proof supplied"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-73ee7806-e314-4dbf-9474-8b1228b9be04.checkpoint.md:1-10"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-cache-contract-proof-0923.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test matici"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-73ee7806-e314-4dbf-9474-8b1228b9be04-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-73ee7806-e314-4dbf-9474-8b1228b9be04"
+}

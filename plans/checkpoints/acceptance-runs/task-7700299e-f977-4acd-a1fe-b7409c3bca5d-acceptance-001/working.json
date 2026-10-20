@@ -1,0 +1,116 @@
+{
+  "findings": [
+    {
+      "claim": "The task delivers the guarded API Gateway GET /cases deployment flow and global HTTP acceptance scenarios.",
+      "crossCutting": false,
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The supplied checkpoint leaves implementation, offline verification, guarded deployment, and live HTTP acceptance unfinished, and the complete task-scoped diff contains no change to be-case-client/tests/integration/case_client_api_integration.py and no additive put_method/put_integration/create_deployment flow in the deploy helper.",
+      "rationale": "The goal explicitly requires the agent to deploy GET /cases and prove it over HTTP; changing the ledger identity and local route declarations does not deliver those required behaviors.",
+      "required": "Implement the guarded additive Gateway method/integration/stage deployment and the required global pagination, auth, token, and original-operation HTTP scenarios, then complete the authorized deployment workflow.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-7700299e-f977-4acd-a1fe-b7409c3bca5d.checkpoint.md:2-9"
+        },
+        {
+          "kind": "file",
+          "reference": "be-case-client/tools/case_client_test_deploy.py:33-43"
+        },
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-task-scoped-diff:includedPaths"
+        }
+      ]
+    },
+    {
+      "claim": "Preflight validates all five protected API methods, including both POST /cases and GET /cases.",
+      "crossCutting": false,
+      "findingType": "implemented_behavior_incorrect",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "correctness",
+      "observed": "The delivered preflight route declaration is a Python dictionary containing /cases twice. The later GET entry overwrites POST, so iteration cannot validate POST /cases and does not represent five methods.",
+      "rationale": "The task specifically requires replacing the duplicate-key mapping with an ordered list of path/method pairs so all original methods remain protected while GET /cases is added.",
+      "required": "Represent required routes without key collision and validate both POST /cases and GET /cases independently, together with the other three methods.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-case-client/tools/case_client_test_deploy.py:190-196"
+        },
+        {
+          "kind": "file",
+          "reference": "be-case-client/tests/test_case_client_live_tools.py:284-286"
+        }
+      ]
+    },
+    {
+      "claim": "A sanitized live report proves the deployed GET /cases behavior over HTTP within the authorized ledger.",
+      "crossCutting": false,
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "No supplied artifact reports a Gateway deployment identity, global limit=1 traversal across both fixture clients, token/auth outcomes, original-operation regressions, ledger consumption, or matching Lambda hashes. The checkpoint instead states that no live AWS calls were made and the live ledger remained unused.",
+      "rationale": "Live deployment and HTTP proof are explicit deliverables of this goal; local source changes and local test output are not deployed evidence.",
+      "required": "Supply the required sanitized live deployment and HTTP acceptance report with Gateway readback, scenario outcomes, ledger usage, and unchanged Lambda hash/config evidence.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-7700299e-f977-4acd-a1fe-b7409c3bca5d.checkpoint.md:2-9"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-19_case-client-deploy-global-get-and-test.md:Ov\u011b\u0159en\u00ed"
+        }
+      ]
+    },
+    {
+      "claim": "The mandatory RED/GREEN proof demonstrates test-first implementation of the task's Gateway deployment and HTTP-runner behavior.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-004",
+      "kind": "evidence",
+      "observed": "The supplied RED has one failure only for deploy.TASK using the previous task ID, and GREEN follows after changing that identity. It does not show a failing-then-passing cycle for five-method preflight, Gateway mutation/readback/rollback, or global HTTP accounting and scenarios; the checkpoint also says the new focused cycle could not be captured.",
+      "rationale": "The manifest declares tddRequired true and the task requires task-specific RED/GREEN evidence for the missing functional changes, not merely for switching the continuation ledger identity.",
+      "required": "Capture valid task-scoped RED and GREEN evidence for the required deployment-helper and HTTP-runner behaviors while preserving prior proof history.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-7700299e-f977-4acd-a1fe-b7409c3bca5d.red-green-proof.md:1-46"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-7700299e-f977-4acd-a1fe-b7409c3bca5d.checkpoint.md:3-9"
+        },
+        {
+          "kind": "artifact",
+          "reference": "manifest.json:33-34"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Case Client: nasadit GET /cases a prok\u00e1zat funk\u010dnost p\u0159es HTTP"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-7700299e-f977-4acd-a1fe-b7409c3bca5d-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-7700299e-f977-4acd-a1fe-b7409c3bca5d"
+}

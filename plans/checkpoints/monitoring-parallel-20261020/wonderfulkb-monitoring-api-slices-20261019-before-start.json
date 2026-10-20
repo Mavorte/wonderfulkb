@@ -1,0 +1,301 @@
+{
+  "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+  "members": [
+    {
+      "batchSeq": 1,
+      "id": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f",
+      "pauseState": null,
+      "phase": "done",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-file-received",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-01-file-received-store.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 1,
+      "id": "task-f3b580a5-dee4-45bf-b918-a5165c12f40c",
+      "pauseState": null,
+      "phase": "cancelled",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-file-received",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_followup-task-f3b580a5-dee4-45bf-b918-a5165c12f40c-monitoring-mvp-uloit-a-pest-jeden-filereceived-event.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 2,
+      "id": "task-4651db4a-86e4-4bd9-ad5d-09532bd16490",
+      "pauseState": "default",
+      "phase": "done",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-file-received",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-01-file-received-store-sol.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 3,
+      "id": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6",
+      "pauseState": null,
+      "phase": "implementing",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-file-received",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-02-file-received-hook-build.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 4,
+      "id": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-run-queued",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-06-run-queued-event.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 5,
+      "id": "task-e1e34fde-82b5-43aa-a744-aef7b5858293",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-attempt-started",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-08-attempt-started-event.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 6,
+      "id": "task-2977be23-2b9b-4fc8-8505-18282602e547",
+      "pauseState": "default",
+      "phase": "cancelled",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-run-queued",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-05-live-trigger-contract.md",
+      "type": "investigation"
+    },
+    {
+      "batchSeq": 7,
+      "id": "task-d2e34593-3eca-44a0-954d-c470eaa95321",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-source-validation",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-10-source-validation-events.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 8,
+      "id": "task-164adaf3-99df-429e-86b4-c565e5461be0",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-page-outcome",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-12-page-outcome-events.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 9,
+      "id": "task-8c478cf6-5418-4bdc-b8a0-af56daaa25a3",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-cache-reused",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-14-cache-reused-event.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 10,
+      "id": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-extraction",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-16-extraction-events.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 11,
+      "id": "task-aa624fc8-7c29-4a9f-9cdc-8b2e7e6acf1e",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-signatures",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-18-signature-events.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 12,
+      "id": "task-3287e245-ec14-4bb4-9019-a094b5d61070",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-result-published",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-20-publication-events.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 13,
+      "id": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-retry-terminal",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-22-retry-terminal-events.md",
+      "type": "implementation"
+    }
+  ],
+  "nextAppendSeq": 14,
+  "rootCount": 13,
+  "roots": [
+    {
+      "batchSeq": 1,
+      "completionState": "settled_unsuccessful",
+      "id": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f",
+      "paused": false,
+      "phase": "done",
+      "status": "done",
+      "terminalLeafTaskIds": [
+        "task-f3b580a5-dee4-45bf-b918-a5165c12f40c"
+      ],
+      "terminalReason": "operator_force_cancelled"
+    },
+    {
+      "batchSeq": 2,
+      "completionState": "settled_unsuccessful",
+      "id": "task-4651db4a-86e4-4bd9-ad5d-09532bd16490",
+      "paused": true,
+      "phase": "done",
+      "status": "done",
+      "terminalLeafTaskIds": [
+        "task-4651db4a-86e4-4bd9-ad5d-09532bd16490"
+      ],
+      "terminalReason": "operator_terminal_override"
+    },
+    {
+      "batchSeq": 3,
+      "completionState": "incomplete",
+      "id": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6",
+      "paused": false,
+      "phase": "implementing",
+      "status": "running",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 4,
+      "completionState": "incomplete",
+      "id": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 5,
+      "completionState": "incomplete",
+      "id": "task-e1e34fde-82b5-43aa-a744-aef7b5858293",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 6,
+      "completionState": "successful_complete",
+      "id": "task-2977be23-2b9b-4fc8-8505-18282602e547",
+      "paused": true,
+      "phase": "cancelled",
+      "status": "cancelled",
+      "terminalLeafTaskIds": [
+        "task-2977be23-2b9b-4fc8-8505-18282602e547"
+      ],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 7,
+      "completionState": "incomplete",
+      "id": "task-d2e34593-3eca-44a0-954d-c470eaa95321",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 8,
+      "completionState": "incomplete",
+      "id": "task-164adaf3-99df-429e-86b4-c565e5461be0",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 9,
+      "completionState": "incomplete",
+      "id": "task-8c478cf6-5418-4bdc-b8a0-af56daaa25a3",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 10,
+      "completionState": "incomplete",
+      "id": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 11,
+      "completionState": "incomplete",
+      "id": "task-aa624fc8-7c29-4a9f-9cdc-8b2e7e6acf1e",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 12,
+      "completionState": "incomplete",
+      "id": "task-3287e245-ec14-4bb4-9019-a094b5d61070",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 13,
+      "completionState": "incomplete",
+      "id": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    }
+  ],
+  "state": "active",
+  "taskCount": 14
+}

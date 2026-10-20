@@ -1,0 +1,15 @@
+{
+  "changedTaskIds": [
+    "task-626722a4-f9fd-46a9-8304-17b9f24de1cc"
+  ],
+  "command": "task.start",
+  "log": "/tmp/opencode-calm-wave-3188.log",
+  "message": "started: task-626722a4-f9fd-46a9-8304-17b9f24de1cc",
+  "modelUsed": "openai/gpt-6-luna",
+  "ok": true,
+  "operation": "start",
+  "phase": "plan",
+  "pid": 47859,
+  "sessionId": "calm-wave-3188",
+  "taskId": "task-626722a4-f9fd-46a9-8304-17b9f24de1cc"
+}

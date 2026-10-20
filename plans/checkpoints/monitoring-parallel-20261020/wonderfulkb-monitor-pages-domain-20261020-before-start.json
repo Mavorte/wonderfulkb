@@ -1,0 +1,32 @@
+{
+  "batchId": "wonderfulkb-monitor-pages-domain-20261020",
+  "members": [
+    {
+      "batchSeq": 1,
+      "id": "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-page-outcome",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-parallel-page-observation-mapping.md",
+      "type": "implementation"
+    }
+  ],
+  "nextAppendSeq": 2,
+  "rootCount": 1,
+  "roots": [
+    {
+      "batchSeq": 1,
+      "completionState": "incomplete",
+      "id": "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    }
+  ],
+  "state": "inactive",
+  "taskCount": 1
+}

@@ -1,0 +1,15 @@
+{
+  "changedTaskIds": [
+    "task-1e8311a4-08b0-4142-9bf9-6553815e572e"
+  ],
+  "command": "task.start",
+  "log": "/tmp/opencode-swift-brook-4113.log",
+  "message": "started: task-1e8311a4-08b0-4142-9bf9-6553815e572e",
+  "modelUsed": "openai/gpt-6-luna",
+  "ok": true,
+  "operation": "start",
+  "phase": "plan",
+  "pid": 47847,
+  "sessionId": "swift-brook-4113",
+  "taskId": "task-1e8311a4-08b0-4142-9bf9-6553815e572e"
+}

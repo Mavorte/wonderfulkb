@@ -1,0 +1,69 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:24:41+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:13:18+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-22-retry-terminal-events.md",
+      "taskId": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a",
+      "title": "Monitoring MVP: ud\u00e1losti retry a skute\u010dn\u00fdch konc\u016f"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:25:50+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:12:40+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-monitor-lifecycle-20261020.md",
+      "taskId": "task-422c4f83-d138-47ea-859b-011f3d86e6e5",
+      "title": "Monitoring lifecycle: dokon\u010dit pure reducer a \u00faplnou testovac\u00ed matici"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:28:35+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:20:27+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-monitor-pages-20261020.md",
+      "taskId": "task-97212f63-4c40-400e-b36d-31b9531745dc",
+      "title": "Monitoring pages: dokon\u010dit pure observation mapper a kontraktn\u00ed testy"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T06:28:36+00:00",
+    "implementingStartedAt": "2026-10-20T06:22:42+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-monitor-runtime-20261020.md",
+    "taskId": "task-535479cc-36c1-4f88-8810-aa163d287e78",
+    "title": "Monitoring runtime: dokon\u010dit dolo\u017een\u00fd producer a immutable execution context"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring runtime: dokon\u010dit dolo\u017een\u00fd producer a immutable execution context"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-535479cc-36c1-4f88-8810-aa163d287e78-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-535479cc-36c1-4f88-8810-aa163d287e78.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1627
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-626722a4-f9fd-46a9-8304-17b9f24de1cc.host-review.md",
+      "provenance": "untracked+referenced",
+      "size": 4385
+    }
+  ],
+  "taskId": "task-535479cc-36c1-4f88-8810-aa163d287e78",
+  "tddRequired": false
+}

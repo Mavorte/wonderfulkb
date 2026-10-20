@@ -1,0 +1,75 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "2026-10-20T10:21:56+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T10:10:34+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-15-cache-reused-read.md",
+      "taskId": "task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c",
+      "title": "Monitoring MVP: pou\u017eit\u00ed cache ve st\u00e1vaj\u00edc\u00edm str\u00e1nkov\u00e9m API"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T10:13:58+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_deploy-trigger-execution-table.md",
+      "taskId": "task-17168021-af35-40d3-a30f-165cc6bfbae9",
+      "title": "AWS TEST: zalo\u017eit execution tabulku p\u0159es existuj\u00edc\u00ed trigger stack"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T10:19:56+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T10:10:13+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-19_monitor-mvp-07-run-events-get.md",
+      "taskId": "task-1d77ce99-3b09-48f7-9978-e0e99783c9b5",
+      "title": "Monitoring MVP: jeden GET ud\u00e1lost\u00ed konkr\u00e9tn\u00edho runu"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T10:21:56+00:00",
+    "implementingStartedAt": "2026-10-20T10:10:05+00:00",
+    "taskFile": "plans/tasks/2026-10-20_monitor-mvp-17-extraction-read.md",
+    "taskId": "task-12f46945-d733-47dc-b0e9-b8c9746fd7c2",
+    "title": "Monitoring MVP: pozorovan\u00e1 extrakce ve st\u00e1vaj\u00edc\u00edm steps API"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: pozorovan\u00e1 extrakce ve st\u00e1vaj\u00edc\u00edm steps API"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-12f46945-d733-47dc-b0e9-b8c9746fd7c2-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-12f46945-d733-47dc-b0e9-b8c9746fd7c2.checkpoint.md",
+      "provenance": "untracked",
+      "size": 2824
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-12f46945-d733-47dc-b0e9-b8c9746fd7c2.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 5313
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/handoffs/aws-runtime-readiness-20261020.md",
+      "provenance": "untracked+referenced",
+      "size": 7616
+    }
+  ],
+  "taskId": "task-12f46945-d733-47dc-b0e9-b8c9746fd7c2",
+  "tddRequired": true
+}

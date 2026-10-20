@@ -1,0 +1,8 @@
+{
+  "batchId": "wonderfulkb-monitor-lifecycle-domain-20261020",
+  "command": "batch.start",
+  "ok": true,
+  "phase": "backlog",
+  "started": true,
+  "taskId": "task-1e8311a4-08b0-4142-9bf9-6553815e572e"
+}

@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete diff visibility before goal-001 can be accepted.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract reports complete=false and identifies omittedPaths=[opencode.json] plus a partial path, so omitted material was not reviewed.",
+      "rationale": "The caller explicitly requires a non-ACCEPT typed incomplete-evidence outcome when complete is false. The supplied implementation appears consistent within visible paths, but acceptance cannot infer the omitted content or treat absence from supplied artifacts as absence on disk.",
+      "required": "Provide a complete caller-computed review bundle for this task, including currently omitted and partial changed paths, then run a new acceptance review.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-4651db4a-86e4-4bd9-ad5d-09532bd16490-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-4651db4a-86e4-4bd9-ad5d-09532bd16490"
+}

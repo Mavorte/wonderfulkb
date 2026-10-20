@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility of the goal-relevant OpenAPI contract and focused contract test before semantic acceptance can be established.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract has complete=false; be-document-processing/contracts/openapi-processing-monitor.yaml is partial and be-document-processing/tests/test_monitor_openapi_observation_contract.py is omitted.",
+      "rationale": "The unseen remainder can materially affect YAML validity, local-reference resolution, exact DTO allowlists, lifecycle schemas, and the focused assertions. The contract explicitly forbids inferring completeness or implementation absence from this truncated evidence.",
+      "required": "Provide a complete caller-supplied diff or equivalent complete goal-relevant artifacts for the OpenAPI YAML and focused contract test, then perform a new acceptance run without treating omitted content as absent implementation.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/contracts/openapi-processing-monitor.yaml"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_openapi_observation_contract.py"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring OpenAPI: opravit YAML a dokon\u010dit p\u0159esn\u00e9 observation DTO kontrakty"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-b96084af-3aa2-438d-a562-900bbdad7e95-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-b96084af-3aa2-438d-a562-900bbdad7e95"
+}

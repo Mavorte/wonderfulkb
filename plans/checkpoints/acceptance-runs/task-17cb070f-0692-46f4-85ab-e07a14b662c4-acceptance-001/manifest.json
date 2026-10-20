@@ -1,0 +1,74 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:58:42+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-13-attempt-pages-get.md",
+      "taskId": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42",
+      "title": "Monitoring MVP: jeden GET pozorovan\u00fdch v\u00fdsledk\u016f str\u00e1nek"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T07:00:55+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:52:42+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-audit-shared-event-contracts-0818.md",
+      "taskId": "task-4ad56e72-4cb9-4180-92a0-19e11177c7a8",
+      "title": "Monitoring: atomicky dokon\u010dit sd\u00edlen\u00e9 audit event kontrakty a jejich readback"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:00:57+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-24-lifecycle-read.md",
+      "taskId": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59",
+      "title": "Monitoring MVP: run a audit lifecycle API nad bounded oknem"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:58:40+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:50:44+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-runtime-owner-contract-0818.md",
+      "taskId": "task-821fe70a-e40f-4fc9-bd11-ced0e5183dde",
+      "title": "Monitoring runtime: dokon\u010dit producer context a\u017e nad dolo\u017een\u00fdm execution-owner kontraktem"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T07:04:54+00:00",
+    "implementingStartedAt": "2026-10-20T06:56:43+00:00",
+    "taskFile": "plans/tasks/2026-10-20_monitor-mvp-11-attempt-steps-get.md",
+    "taskId": "task-17cb070f-0692-46f4-85ab-e07a14b662c4",
+    "title": "Monitoring MVP: jeden GET pozorovan\u00fdch krok\u016f pokusu"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: jeden GET pozorovan\u00fdch krok\u016f pokusu"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-17cb070f-0692-46f4-85ab-e07a14b662c4-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-17cb070f-0692-46f4-85ab-e07a14b662c4.checkpoint.md",
+      "provenance": "untracked",
+      "size": 976
+    }
+  ],
+  "taskId": "task-17cb070f-0692-46f4-85ab-e07a14b662c4",
+  "tddRequired": true
+}

@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "claim": "Collision retries must use up to three distinct server-generated UUID candidates before exhaustion.",
+      "crossCutting": false,
+      "findingType": "implemented_behavior_incorrect",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "Both DynamoDBCaseClientRepository.create_case and MockCaseClientRepository.create_case count each uuid4() result as an attempt without rejecting a duplicate candidate, so repeated generator output can retry the same occupied key three times and raise allocation failure after only one distinct candidate.",
+      "rationale": "The caller-supplied plan explicitly specifies at most three distinct generated IDs. Counting duplicate candidates as separate collision attempts violates that strategy and can fail a create that should proceed to another candidate; the supplied tests cover three different IDs but not duplicate generator output.",
+      "required": "Track generated candidates so collision retries operate on distinct UUIDs, while preserving a bounded fail-closed strategy, and cover duplicate generator output in both adapter behaviors.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-case-client/src/case_client_dynamodb_repository.py:269-302"
+        },
+        {
+          "kind": "file",
+          "reference": "be-case-client/src/case_client_mock_repository.py:72-79"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-19_task-74486347-28bc-4131-b2c6-a05b334cec00_case-client-dokon-it-server-uuid-a-odstranit-projektov-zne.md:Approach"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Case Client: dokon\u010dit server UUID a odstranit projektov\u00e9 zne\u010di\u0161t\u011bn\u00ed acceptance diffu"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-74486347-28bc-4131-b2c6-a05b334cec00-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-74486347-28bc-4131-b2c6-a05b334cec00"
+}

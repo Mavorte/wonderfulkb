@@ -1,0 +1,35 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T13:04:46+00:00",
+    "implementingStartedAt": "2026-10-19T12:48:46+00:00",
+    "taskFile": "plans/tasks/2026-10-19_case-client-dynamodb-adapter.md",
+    "taskId": "task-11fe7375-3c4e-4afe-b11b-cab49fc2c973",
+    "title": "Case & Client: vym\u011bnit mock za DynamoDB adapt\u00e9r nad extern\u00edmi tabulkami"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Case & Client: vym\u011bnit mock za DynamoDB adapt\u00e9r nad extern\u00edmi tabulkami"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-11fe7375-3c4e-4afe-b11b-cab49fc2c973-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-11fe7375-3c4e-4afe-b11b-cab49fc2c973.checkpoint.md",
+      "provenance": "untracked",
+      "size": 2284
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-11fe7375-3c4e-4afe-b11b-cab49fc2c973.red-green-proof.md",
+      "provenance": "untracked",
+      "size": 4978
+    }
+  ],
+  "taskId": "task-11fe7375-3c4e-4afe-b11b-cab49fc2c973",
+  "tddRequired": true
+}

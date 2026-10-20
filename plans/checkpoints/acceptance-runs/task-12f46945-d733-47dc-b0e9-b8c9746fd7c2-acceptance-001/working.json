@@ -1,0 +1,58 @@
+{
+  "findings": [
+    {
+      "claim": "The task requires the corrected extraction read artifact to be deployed to the existing AWS TEST target and verified through authenticated live HTTP with a real nonempty extraction observation.",
+      "crossCutting": false,
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The supplied checkpoint says the corrected image was not pushed or deployed, the corrected cursor candidate still requires guarded rollout, and live verification was blocked by absent current synthetic membership, an empty audit query, and an unavailable shared request ledger.",
+      "rationale": "Local RED/GREEN and image smoke evidence do not satisfy the task's explicit DEPLOYED and LIVE-FUNCTION-VERIFIED completion requirement; the supplied artifact itself marks the task incomplete.",
+      "required": "Deploy the corrected immutable artifact through the guarded existing App Runner procedure and supply bounded authenticated HTTP evidence for the extraction steps DTO and required scope/privacy behavior, or document a concrete unresolved blocker without claiming completion.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-12f46945-d733-47dc-b0e9-b8c9746fd7c2.checkpoint.md:6"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-12f46945-d733-47dc-b0e9-b8c9746fd7c2.checkpoint.md:10-12"
+        }
+      ]
+    },
+    {
+      "claim": "The supplied review material must provide complete visibility for a trustworthy semantic acceptance decision.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller's diff visibility contract explicitly reports complete=false and truncated=true, with a partial processing monitor routes test and omitted paths including the focused step-routes test; those omitted paths were not reviewed.",
+      "rationale": "This is material incomplete evidence rather than proof of absent or incorrect implementation. The supplied contract requires a typed incomplete-visibility outcome and forbids ACCEPT when complete is false.",
+      "required": "Provide a complete caller-scoped diff/evidence bundle for the target task, including the currently partial and omitted relevant paths, then perform a fresh acceptance run without reusing this run's conclusions.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: pozorovan\u00e1 extrakce ve st\u00e1vaj\u00edc\u00edm steps API"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-12f46945-d733-47dc-b0e9-b8c9746fd7c2-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-12f46945-d733-47dc-b0e9-b8c9746fd7c2"
+}

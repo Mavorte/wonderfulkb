@@ -1,0 +1,35 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T17:55:27+00:00",
+    "implementingStartedAt": "2026-10-19T17:49:27+00:00",
+    "taskFile": "plans/tasks/2026-10-19_case-client-deploy-global-get-and-test.md",
+    "taskId": "task-7700299e-f977-4acd-a1fe-b7409c3bca5d",
+    "title": "Case Client: nasadit GET /cases a prok\u00e1zat funk\u010dnost p\u0159es HTTP"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Case Client: nasadit GET /cases a prok\u00e1zat funk\u010dnost p\u0159es HTTP"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-7700299e-f977-4acd-a1fe-b7409c3bca5d-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-7700299e-f977-4acd-a1fe-b7409c3bca5d.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1166
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-7700299e-f977-4acd-a1fe-b7409c3bca5d.red-green-proof.md",
+      "provenance": "untracked",
+      "size": 2076
+    }
+  ],
+  "taskId": "task-7700299e-f977-4acd-a1fe-b7409c3bca5d",
+  "tddRequired": true
+}

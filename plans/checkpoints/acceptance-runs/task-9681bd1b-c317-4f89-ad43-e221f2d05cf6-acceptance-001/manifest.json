@@ -1,0 +1,35 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T05:32:53+00:00",
+    "implementingStartedAt": "2026-10-20T05:24:54+00:00",
+    "taskFile": "plans/tasks/2026-10-19_monitor-mvp-02-file-received-hook-build.md",
+    "taskId": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6",
+    "title": "Monitoring MVP: FileReceived po potvrzen\u00e9m uploadu"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: FileReceived po potvrzen\u00e9m uploadu"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-9681bd1b-c317-4f89-ad43-e221f2d05cf6.checkpoint.md",
+      "provenance": "untracked",
+      "size": 3041
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-9681bd1b-c317-4f89-ad43-e221f2d05cf6.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 3911
+    }
+  ],
+  "taskId": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6",
+  "tddRequired": true
+}

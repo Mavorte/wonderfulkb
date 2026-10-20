@@ -1,0 +1,63 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The caller-declared mandatory TDD cycle requires valid RED and GREEN proof for the focused OpenAPI contract test.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "No TDD proof was supplied; the supplied checkpoint says RED proof, implementation, GREEN proof, and broader verification remain incomplete.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The manifest sets tddRequired=true, and the supplied artifacts do not establish a genuine test-first RED followed by GREEN.",
+      "required": "Supply valid task-scoped RED and GREEN TDD proof for the focused OpenAPI observation contract test through the canonical evidence path.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "TDD-proof/provenance:none-supplied"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-e0275532-1050-49c2-b1e3-b787751549bf.checkpoint.md"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete supplied visibility for a trustworthy semantic verdict on the OpenAPI contract goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract reports complete=false and identifies omitted paths and a partial path; those omitted materials were not reviewed.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Incomplete caller-supplied visibility prevents confirming the goal from the bounded review material, and the catalog has no more specific incomplete-visibility finding type.",
+      "required": "Provide a complete caller-scoped review bundle, or a subsequent run whose visibility contract is complete, before accepting the goal.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-computed-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: jeden p\u0159esn\u00fd OpenAPI kontrakt event observations"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-e0275532-1050-49c2-b1e3-b787751549bf-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-e0275532-1050-49c2-b1e3-b787751549bf"
+}

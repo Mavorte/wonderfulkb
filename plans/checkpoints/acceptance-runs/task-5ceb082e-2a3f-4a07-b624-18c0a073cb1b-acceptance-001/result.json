@@ -1,0 +1,63 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The caller-required TDD proof must contain a genuine task-specific RED phase followed by a GREEN phase.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The canonical proof contains only a RED capture in which every test errors during import because simplejson is unavailable under Python 3.9; it has no GREEN phase. The checkpoint explicitly states that this RED was not genuine and that no production code was changed.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "Manifest tddRequired is true, while the supplied proof demonstrates neither a behavior-specific failing test nor successful post-implementation execution, so the mandatory RED/GREEN provenance is invalid.",
+      "required": "Provide canonical task-scoped TDD evidence with a genuine behavior-specific RED before implementation and a subsequent GREEN after implementation, using the required Python 3.13 environment.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b.red-green-proof.md:1"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b.checkpoint.md:1"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete supplied implementation visibility to determine whether the server-generated UUID contract was delivered across the handler, mock, DynamoDB adapter, tests, and documentation.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is explicitly complete=false, truncated=true, and pathInventoryTruncated=true, with implementation-relevant paths omitted from the supplied diff. The visible portion is dominated by generated SAM build artifacts and does not provide complete review material for the goal.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Because omitted paths were not reviewed, acceptance cannot establish implementation correctness or absence from the supplied material. This material evidence limitation does not fit a more specific catalog entry and must fail closed without a correctness finding.",
+      "required": "Supply a complete, non-truncated task-scoped diff or equivalent caller-supplied implementation evidence covering all goal-relevant changed paths, then repeat semantic acceptance.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Case Client: sjednotit serverov\u00e9 UUID case s DynamoDB adapt\u00e9rem"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b"
+}

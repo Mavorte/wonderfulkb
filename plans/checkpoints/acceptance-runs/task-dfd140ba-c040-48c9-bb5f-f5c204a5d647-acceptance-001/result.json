@@ -1,0 +1,104 @@
+{
+  "classification": "correctness_reject",
+  "findings": [
+    {
+      "claim": "The task requires an authenticated GET /v1/cases/{case_id}/processing/documents/{document_id}/events implementation using a trusted identity-to-case authorization seam, document membership checks, the existing bounded audit reader, and safe HTTP error/cache behavior.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The task checkpoint marks the authorized route implementation step incomplete and states that no trusted caller identity/entitlement interface or authenticated synthetic fixture is available. The supplied diff adds only lifecycle routes for /runs, /runs/{run_id}, and /audit that return 403; it does not add the required processing_monitor_routes.py document-events endpoint.",
+      "policyRule": "catalog:required_implementation_missing:blocking",
+      "rationale": "The canonical goal is end-to-end delivery of the authenticated document-events HTTP foundation. A legitimate authorization prerequisite may explain the blocker, but the required endpoint behavior remains undelivered and cannot satisfy the goal.",
+      "required": "Provide the owner-approved trusted caller-to-case authorization interface and authorized fixture, then implement and register the document-events route with case/document scope validation, bounded AuditStore.read_document pagination, required response DTO, 400/403-or-masked-404/404/503 behavior, and Cache-Control private, no-store on all responses.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_complete-document-events-http-0818.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-dfd140ba-c040-48c9-bb5f-f5c204a5d647.checkpoint.md:3-10"
+        },
+        {
+          "kind": "file",
+          "reference": "be-intake/app/processing_monitor_lifecycle_routes.py:1-32"
+        }
+      ]
+    },
+    {
+      "claim": "The manifest declares TDD mandatory and the task requires a genuine behavior RED followed by GREEN with the identical focused command in the task-specific red-green proof artifact.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "No TDD proof was supplied. The task checkpoint states that RED/GREEN implementation steps remain incomplete and explicitly says no RED/GREEN proof is claimed or manually created.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "With tddRequired=true, the absent required RED/GREEN provenance is independently blocking even though the implementation is also blocked by authorization.",
+      "required": "After the trusted authorization prerequisite is available, execute the required TDD cycle through the supported TDD skill and provide the task-specific RED/GREEN proof showing the same focused argv and an implementation-specific RED followed by GREEN.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "manifest.json:85-86"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-dfd140ba-c040-48c9-bb5f-f5c204a5d647.checkpoint.md:3-10"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-20_task-dfd140ba-c040-48c9-bb5f-f5c204a5d647_monitoring-http-dokon-it-autentizovan-document-events-z.md:TDD"
+        }
+      ]
+    },
+    {
+      "claim": "Successful delivery requires actual installation into the intake artifact, guarded in-place deployment to the existing AWS test App Runner target, and bounded authenticated live HTTP verification of the changed document-events route with artifact digest and deployed revision provenance.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "The task checkpoint leaves regression/package/deployment/live verification incomplete. The supplied host review records no source or image digest, target revision, recovery/config evidence, authorized synthetic fixture, deployment, or direct live route evidence; Test Gate also has no evidence.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "The canonical task explicitly rejects source-only completion. Without deployment and direct live-function evidence, the required deployed and LIVE-FUNCTION-VERIFIED outcome is not demonstrated.",
+      "required": "After implementing the authorized route, build and verify the installed audit package/router in the intake artifact, perform a guarded deployment to the verified existing test target, and provide task-local redacted evidence of source/image digest, recovery/config guard, deployed revision/time, authenticated route DTO and pagination assertions, no-store headers, negative auth/scope behavior, and hermetic read-failure-to-503 behavior.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_complete-document-events-http-0818.md:Povinn\u00e9 dokon\u010den\u00ed: skute\u010dn\u00e9 nasazen\u00ed a dota\u017een\u00ed read API"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/acceptance-host-review-0818-read-reducer.md:GET /events \u2014 source and deployment evidence"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-dfd140ba-c040-48c9-bb5f-f5c204a5d647.checkpoint.md:3-10"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring HTTP: dokon\u010dit autentizovan\u00fd document-events z\u00e1klad a skute\u010dn\u00e9 nasazen\u00ed"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-dfd140ba-c040-48c9-bb5f-f5c204a5d647-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-dfd140ba-c040-48c9-bb5f-f5c204a5d647"
+}

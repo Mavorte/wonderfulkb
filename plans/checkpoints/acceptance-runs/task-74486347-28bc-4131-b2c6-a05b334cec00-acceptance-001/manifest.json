@@ -1,0 +1,41 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T14:40:48+00:00",
+    "implementingStartedAt": "2026-10-19T14:32:50+00:00",
+    "taskFile": "plans/tasks/2026-10-19_case-client-uuid-complete-and-acceptance-hygiene.md",
+    "taskId": "task-74486347-28bc-4131-b2c6-a05b334cec00",
+    "title": "Case Client: dokon\u010dit server UUID a odstranit projektov\u00e9 zne\u010di\u0161t\u011bn\u00ed acceptance diffu"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Case Client: dokon\u010dit server UUID a odstranit projektov\u00e9 zne\u010di\u0161t\u011bn\u00ed acceptance diffu"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-74486347-28bc-4131-b2c6-a05b334cec00-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-74486347-28bc-4131-b2c6-a05b334cec00.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1783
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-74486347-28bc-4131-b2c6-a05b334cec00.red-green-proof.md",
+      "provenance": "untracked",
+      "size": 3298
+    },
+    {
+      "mediaKind": "application/json",
+      "path": "plans/handoffs/case-client-remote-20261019/manifest.json",
+      "provenance": "referenced",
+      "size": 4122
+    }
+  ],
+  "taskId": "task-74486347-28bc-4131-b2c6-a05b334cec00",
+  "tddRequired": true
+}

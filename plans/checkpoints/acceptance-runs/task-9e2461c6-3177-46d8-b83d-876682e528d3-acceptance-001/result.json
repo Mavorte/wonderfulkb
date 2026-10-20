@@ -1,0 +1,50 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "Mandatory task-scoped TDD proof was not supplied.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The run manifest declares tddRequired=true, the caller explicitly supplies no TDD proof, and the follow-up checkpoint states that the proof helper rejected RED because the implementation already passed and therefore did not publish a task-scoped RED/GREEN artifact. The referenced Test Gate is green but contains only the registered backoffice test/build command, not the required TDD provenance.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The task contract explicitly requires reuse or linkage of genuine historical RED evidence plus fresh GREEN verification under this follow-up task. A passing Test Gate and agent-reported test counts do not replace the required durable RED/GREEN proof artifact.",
+      "required": "Provide valid task-scoped TDD provenance that links the genuine parent RED and records the follow-up GREEN according to the required proof contract, without fabricating a new RED.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "TDD proof/provenance: no TDD proof supplied"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-9e2461c6-3177-46d8-b83d-876682e528d3.checkpoint.md:1-9"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-73ee7806-e314-4dbf-9474-8b1228b9be04.checkpoint.md:1-10"
+        },
+        {
+          "kind": "test-gate",
+          "reference": "/Users/michal/.openclaw/workspace/km-system/state/test-gates/task-9e2461c6-3177-46d8-b83d-876682e528d3-orphan-implementing.json"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test matici: goal-001: Mon"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-9e2461c6-3177-46d8-b83d-876682e528d3-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-9e2461c6-3177-46d8-b83d-876682e528d3"
+}

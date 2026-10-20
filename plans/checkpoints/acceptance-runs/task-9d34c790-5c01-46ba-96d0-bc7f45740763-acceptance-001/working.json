@@ -1,0 +1,81 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied task-scoped material is complete enough to determine whether the document-events GET goal is satisfied.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract states complete=false and truncated=true, with implementation-relevant paths omitted and audit_storage.py only partially supplied.",
+      "rationale": "Acceptance cannot establish the endpoint's semantic correctness from incomplete visibility and must not infer absence or correctness from omitted paths.",
+      "required": "Provide a complete task-scoped diff or equivalent supplied artifacts covering all implementation-relevant paths, then repeat semantic acceptance.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-required TDD cycle has valid RED/GREEN proof.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "No TDD proof was supplied, and the task checkpoint says the attempted capture failed during collection and that no accepted RED/GREEN proof exists.",
+      "rationale": "The manifest declares tddRequired=true, so the absent valid RED/GREEN proof is blocking evidence under the catalog.",
+      "required": "Supply valid task-scoped RED and GREEN TDD proof produced by the required workflow.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "no TDD proof supplied"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-9d34c790-5c01-46ba-96d0-bc7f45740763.checkpoint.md:4-9"
+        }
+      ]
+    },
+    {
+      "claim": "The required guarded AWS test deployment and direct live HTTP verification are evidenced for this task.",
+      "crossCutting": false,
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "The supplied checkpoint explicitly states that no deployment was attempted, while the canonical task requires deployed and live-function-verified evidence including artifact digest, target revision, and bounded HTTP assertions.",
+      "rationale": "Deployment and direct live route verification are explicit completion evidence for this task and are absent from the caller-supplied artifacts; this is separate from Test Gate execution.",
+      "required": "Supply repo-local evidence of the guarded in-place test deployment and direct authenticated HTTP verification, or the task-defined concrete operator blocker/handoff without claiming completion.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-19_monitor-mvp-03-document-events-get.md:mandatory-deployment"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-9d34c790-5c01-46ba-96d0-bc7f45740763.checkpoint.md:6-9"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: jeden GET dokumentov\u00fdch ud\u00e1lost\u00ed"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-9d34c790-5c01-46ba-96d0-bc7f45740763-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-9d34c790-5c01-46ba-96d0-bc7f45740763"
+}

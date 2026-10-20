@@ -1,0 +1,67 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "Acceptance requires sufficient supplied visibility into the actual worker audit-hook implementation to assess the goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-declared diff visibility contract is incomplete and omits the actual audit package, actual worker pipeline/trigger implementation, and relevant tests; only unrelated documentation/environment files and a partial OpenAPI file are visible.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The omitted paths contain the code and caller-level behavior that would prove or disprove wiring of real worker boundaries. Under the supplied visibility contract their absence is not implementation absence, but it prevents a trustworthy semantic verdict.",
+      "required": "Provide a complete task-scoped diff or equivalent caller-supplied implementation evidence covering the actual worker callers, composition/build seam, audit package changes, and relevant caller-level tests, then repeat acceptance review.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied:diff-visibility-contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-26-worker-audit-hooks.md"
+        }
+      ]
+    },
+    {
+      "claim": "Because the manifest declares TDD required, the supplied proof must show an implementation-specific RED failure followed by GREEN on the same focused command.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The RED phase fails during test collection because the declared dependency pypdf is missing, before any task-specific assertion executes; the checkpoint explicitly states that this is an environment collection failure rather than assertion-level RED. The later run passes after dependency installation.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "A dependency/import failure does not establish that the new worker audit-hook requirement was first captured by a failing test, so the artifact does not prove the mandatory RED-to-GREEN implementation cycle.",
+      "required": "Supply valid TDD provenance showing a task-specific test assertion failing before the implementation and the same focused command passing after the implementation.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-fc4580ab-a2c5-47b5-b632-e3d71b453652.red-green-proof.md:7-27"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-fc4580ab-a2c5-47b5-b632-e3d71b453652.checkpoint.md:10-12"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: napojen\u00ed skute\u010dn\u00fdch worker hranic na audit"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-fc4580ab-a2c5-47b5-b632-e3d71b453652-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-fc4580ab-a2c5-47b5-b632-e3d71b453652"
+}

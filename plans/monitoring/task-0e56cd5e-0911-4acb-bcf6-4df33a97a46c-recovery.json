@@ -1,0 +1,43 @@
+{
+  "ServiceArn": "arn:aws:apprunner:eu-central-1:609394381050:service/wonderfulkb-ingest/c9ef96fae3da4192abd7e8280d43ae6b",
+  "LastOperationId": "224a177ab8d54226adf8c569aefca482",
+  "ImageDigest": "sha256:d6764bd1bfa64dc5c89c0ffd026984a3c6c89bbb7e5cf4eba9bfad8b96aa375b",
+  "SourceConfiguration": {
+    "ImageRepository": {
+      "ImageIdentifier": "609394381050.dkr.ecr.eu-central-1.amazonaws.com/wonderfulkb-ingest:host-frozen-20261020-1102",
+      "ImageConfiguration": {
+        "RuntimeEnvironmentVariables": {
+          "AUDIT_TABLE_NAME": "wonderfulkb-uw-document-processing-audit",
+          "CASES_TABLE": "wonderfulkb-uw-cases",
+          "DOCS_TABLE": "wonderfulkb-uw-documents",
+          "MONITOR_AUTH_SECRET_ARN": "arn:aws:secretsmanager:eu-central-1:609394381050:secret:wonderfulkb/monitoring-synthetic-20261020-4Dojab",
+          "PROCESSING_MONITOR_AUTHORIZATION_SECRET_ARN": "arn:aws:secretsmanager:eu-central-1:609394381050:secret:wonderfulkb/monitoring-synthetic-20261020-4Dojab",
+          "RAW_BUCKET": "wonderfulkb-raw-document-storage"
+        },
+        "Port": "8080",
+        "RuntimeEnvironmentSecrets": {
+          "API_KEY": "arn:aws:secretsmanager:eu-central-1:609394381050:secret:wonderfulkb/ingest-api-key-UY77Za"
+        }
+      },
+      "ImageRepositoryType": "ECR"
+    },
+    "AutoDeploymentsEnabled": false,
+    "AuthenticationConfiguration": {
+      "AccessRoleArn": "arn:aws:iam::609394381050:role/wonderfulkb-apprunner-ecr-access"
+    }
+  },
+  "InstanceConfiguration": {
+    "Cpu": "512", "Memory": "1024",
+    "InstanceRoleArn": "arn:aws:iam::609394381050:role/wonderfulkb-ingest-instance"
+  },
+  "HealthCheckConfiguration": {
+    "Protocol": "HTTP", "Path": "/healthz", "Interval": 10,
+    "Timeout": 5, "HealthyThreshold": 1, "UnhealthyThreshold": 5
+  },
+  "AutoScalingConfigurationArn": "arn:aws:apprunner:eu-central-1:609394381050:autoscalingconfiguration/DefaultConfiguration/1/00000000000000000000000000000001",
+  "NetworkConfiguration": {
+    "EgressConfiguration": {"EgressType": "DEFAULT"},
+    "IngressConfiguration": {"IsPubliclyAccessible": true},
+    "IpAddressType": "IPV4"
+  }
+}

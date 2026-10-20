@@ -1,0 +1,20 @@
+[
+  {
+    "old": "task-8c478cf6-5418-4bdc-b8a0-af56daaa25a3",
+    "completion": "task-73ee7806-e314-4dbf-9474-8b1228b9be04",
+    "disposition": "superseded",
+    "batch": "wonderfulkb-monitor-http-integration-20261020"
+  },
+  {
+    "old": "task-d6b1100a-d1eb-4e95-8618-85cb3380f560",
+    "completion": "task-59a2a44c-6136-465a-b2a7-2be7a6a6911a",
+    "disposition": "superseded",
+    "batch": "wonderfulkb-monitor-lifecycle-domain-20261020"
+  },
+  {
+    "old": "task-eb1279da-fb6b-42ed-9551-8fa3fb753515",
+    "completion": null,
+    "disposition": "scoped-source-complete",
+    "batch": "wonderfulkb-monitor-openapi-20261020"
+  }
+]

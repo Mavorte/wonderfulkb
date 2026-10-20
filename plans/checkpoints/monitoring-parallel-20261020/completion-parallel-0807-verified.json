@@ -1,0 +1,447 @@
+[
+  {
+    "batchId": "wonderfulkb-monitor-http-integration-20261020",
+    "state": "active",
+    "members": [
+      {
+        "id": "task-e1e34fde-82b5-43aa-a744-aef7b5858293",
+        "phase": "implementing",
+        "pid": 76934,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-e1e34fde-82b5-43aa-a744-aef7b5858293_monitoring-mvp-attemptstarted-v-event-den-ku.md",
+        "implSessionId": "quick-reef-5389",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-08-attempt-started-event.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitor-http-lifecycle-20261020",
+    "state": "active",
+    "members": [
+      {
+        "id": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3",
+        "phase": "implementing",
+        "pid": 78079,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-8b51eacc-35c1-498a-b4a7-f2421c498bd3_monitoring-mvp-ud-losti-skute-n-proveden-extrakce.md",
+        "implSessionId": "fresh-dune-2794",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-16-extraction-events.md"
+      },
+      {
+        "id": "task-aa624fc8-7c29-4a9f-9cdc-8b2e7e6acf1e",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 2,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-18-signature-events.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitor-http-pages-20261020",
+    "state": "active",
+    "members": [
+      {
+        "id": "task-164adaf3-99df-429e-86b4-c565e5461be0",
+        "phase": "implementing",
+        "pid": 77450,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-164adaf3-99df-429e-86b4-c565e5461be0_monitoring-mvp-ud-losti-nov-pr-ce-a-v-s-ledku-str-nky.md",
+        "implSessionId": "bright-brook-5247",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-12-page-outcome-events.md"
+      },
+      {
+        "id": "task-8c478cf6-5418-4bdc-b8a0-af56daaa25a3",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 2,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-14-cache-reused-event.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitor-http-steps-20261020",
+    "state": "active",
+    "members": [
+      {
+        "id": "task-d2e34593-3eca-44a0-954d-c470eaa95321",
+        "phase": "implementing",
+        "pid": 77089,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-d2e34593-3eca-44a0-954d-c470eaa95321_monitoring-mvp-ud-losti-jednoho-ov-en-vstupu.md",
+        "implSessionId": "quick-vale-3685",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-10-source-validation-events.md"
+      },
+      {
+        "id": "task-3287e245-ec14-4bb4-9019-a094b5d61070",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 2,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-20-publication-events.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitor-lifecycle-domain-20261020",
+    "state": "active",
+    "members": [
+      {
+        "id": "task-1e8311a4-08b0-4142-9bf9-6553815e572e",
+        "phase": "done",
+        "pid": null,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-1e8311a4-08b0-4142-9bf9-6553815e572e_monitoring-mvp-bounded-tec-odvozen-lifecycle.md",
+        "implSessionId": "bright-crag-6695",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-23-lifecycle-window-reducer.md"
+      },
+      {
+        "id": "task-422c4f83-d138-47ea-859b-011f3d86e6e5",
+        "phase": "implementing",
+        "pid": 79884,
+        "batchSeq": 2,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-422c4f83-d138-47ea-859b-011f3d86e6e5_monitoring-lifecycle-dokon-it-pure-reducer-a-plnou-testovac.md",
+        "implSessionId": "bold-dune-8950",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_complete-monitor-lifecycle-20261020.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitor-openapi-20261020",
+    "state": "inactive",
+    "members": [
+      {
+        "id": "task-e0275532-1050-49c2-b1e3-b787751549bf",
+        "phase": "cancelled",
+        "pid": null,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-e0275532-1050-49c2-b1e3-b787751549bf_monitoring-mvp-jeden-p-esn-openapi-kontrakt-event.md",
+        "implSessionId": "warm-fork-7288",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-parallel-openapi-contract.md"
+      },
+      {
+        "id": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7",
+        "phase": "failed",
+        "pid": null,
+        "batchSeq": 2,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7_monitoring-mvp-runqueued-v-existuj-c-m-event-den-ku.md",
+        "implSessionId": "wild-crag-0823",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-06-run-queued-event.md"
+      },
+      {
+        "id": "task-9d34c790-5c01-46ba-96d0-bc7f45740763",
+        "phase": "failed",
+        "pid": null,
+        "batchSeq": 3,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-9d34c790-5c01-46ba-96d0-bc7f45740763_monitoring-mvp-jeden-get-dokumentov-ch-ud-lost.md",
+        "implSessionId": "bold-brook-2352",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-03-document-events-get.md"
+      },
+      {
+        "id": "task-b96084af-3aa2-438d-a562-900bbdad7e95",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 4,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_complete-monitor-openapi-20261020.md"
+      },
+      {
+        "id": "task-a165d3b1-7bd6-461e-a2f6-0c6c029c2b56",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 5,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-04-file-received-aws-smoke.md"
+      },
+      {
+        "id": "task-1d77ce99-3b09-48f7-9978-e0e99783c9b5",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 6,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-07-run-events-get.md"
+      },
+      {
+        "id": "task-dc9a8eab-2900-4aca-9a80-4411cebc0472",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 7,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-09-attempts-get.md"
+      },
+      {
+        "id": "task-17cb070f-0692-46f4-85ab-e07a14b662c4",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 8,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-11-attempt-steps-get.md"
+      },
+      {
+        "id": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 9,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-13-attempt-pages-get.md"
+      },
+      {
+        "id": "task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 10,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-15-cache-reused-read.md"
+      },
+      {
+        "id": "task-12f46945-d733-47dc-b0e9-b8c9746fd7c2",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 11,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-17-extraction-read.md"
+      },
+      {
+        "id": "task-095a56a6-1e34-4c79-9649-07a109f27928",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 12,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-19-signature-read.md"
+      },
+      {
+        "id": "task-1ffb515f-53f9-4cb5-8e84-c98250c2292c",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 13,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-21-publication-read.md"
+      },
+      {
+        "id": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 14,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-24-lifecycle-read.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitor-pages-domain-20261020",
+    "state": "active",
+    "members": [
+      {
+        "id": "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954",
+        "phase": "cancelled",
+        "pid": null,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-b37c64cd-1783-45e6-8daf-f2e6a04e0954_monitoring-mvp-ist-mapov-n-omezen-ho-okna-page-observations.md",
+        "implSessionId": "dark-peak-6969",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-parallel-page-observation-mapping.md"
+      },
+      {
+        "id": "task-97212f63-4c40-400e-b36d-31b9531745dc",
+        "phase": "planning",
+        "pid": 78404,
+        "batchSeq": 2,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-97212f63-4c40-400e-b36d-31b9531745dc_monitoring-pages-dokon-it-pure-observation-mapper-a.md",
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_complete-monitor-pages-20261020.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitor-runtime-context-20261020",
+    "state": "active",
+    "members": [
+      {
+        "id": "task-626722a4-f9fd-46a9-8304-17b9f24de1cc",
+        "phase": "done",
+        "pid": null,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-626722a4-f9fd-46a9-8304-17b9f24de1cc_monitoring-mvp-skute-n-runtime-kontext-a-queue-claim.md",
+        "implSessionId": "fresh-cove-5222",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-25-runtime-producer-context.md"
+      },
+      {
+        "id": "task-535479cc-36c1-4f88-8810-aa163d287e78",
+        "phase": "planning",
+        "pid": 79949,
+        "batchSeq": 2,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_complete-monitor-runtime-20261020.md"
+      },
+      {
+        "id": "task-fc4580ab-a2c5-47b5-b632-e3d71b453652",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 3,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-26-worker-audit-hooks.md"
+      },
+      {
+        "id": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf",
+        "phase": "backlog",
+        "pid": null,
+        "batchSeq": 4,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-27-worker-http-integration-proof.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitor-worker-integration-20261020",
+    "state": "active",
+    "members": [
+      {
+        "id": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a",
+        "phase": "implementing",
+        "pid": 81117,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-2264932c-e1f9-4f8c-9314-3bfffac8234a_monitoring-mvp-ud-losti-retry-a-skute-n-ch-konc.md",
+        "implSessionId": "warm-cove-2748",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-22-retry-terminal-events.md"
+      }
+    ]
+  },
+  {
+    "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+    "state": "settled_unsuccessful",
+    "members": [
+      {
+        "id": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f",
+        "phase": "done",
+        "pid": 97673,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-19_task-b6ff9adf-d61b-4db0-b1ec-881674700f7f_monitoring-mvp-ulo-it-a-p-e-st-jeden-filereceived-event.md",
+        "implSessionId": "calm-brook-0330",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-01-file-received-store.md"
+      },
+      {
+        "id": "task-f3b580a5-dee4-45bf-b918-a5165c12f40c",
+        "phase": "cancelled",
+        "pid": null,
+        "batchSeq": 1,
+        "pauseState": null,
+        "parentTaskId": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f",
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-f3b580a5-dee4-45bf-b918-a5165c12f40c_monitoring-mvp-ulo-it-a-p-e-st-jeden-filereceived-event.md",
+        "implSessionId": "bright-vale-7579",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_followup-task-f3b580a5-dee4-45bf-b918-a5165c12f40c-monitoring-mvp-uloit-a-pest-jeden-filereceived-event.md"
+      },
+      {
+        "id": "task-4651db4a-86e4-4bd9-ad5d-09532bd16490",
+        "phase": "done",
+        "pid": null,
+        "batchSeq": 2,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-4651db4a-86e4-4bd9-ad5d-09532bd16490_monitoring-mvp-ulo-it-a-p-e-st-jeden-filereceived-event.md",
+        "implSessionId": "calm-reef-5172",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-01-file-received-store-sol.md"
+      },
+      {
+        "id": "task-9681bd1b-c317-4f89-ad43-e221f2d05cf6",
+        "phase": "done",
+        "pid": null,
+        "batchSeq": 3,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": "/Users/michal/Projects/wonderfulkb/plans/2026-10-20_task-9681bd1b-c317-4f89-ad43-e221f2d05cf6_monitoring-mvp-filereceived-po-potvrzen-m-uploadu.md",
+        "implSessionId": "bright-dune-2585",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-02-file-received-hook-build.md"
+      },
+      {
+        "id": "task-2977be23-2b9b-4fc8-8505-18282602e547",
+        "phase": "cancelled",
+        "pid": null,
+        "batchSeq": 6,
+        "pauseState": "default",
+        "parentTaskId": null,
+        "planFile": null,
+        "implSessionId": null,
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-05-live-trigger-contract.md"
+      }
+    ]
+  }
+]

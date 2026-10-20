@@ -1,0 +1,41 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T12:24:39+00:00",
+    "implementingStartedAt": "2026-10-19T12:14:39+00:00",
+    "taskFile": "plans/tasks/2026-10-19_case-client-lambda-mock.md",
+    "taskId": "task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a",
+    "title": "Case & Client: jedna Lambda s explicitn\u00edmi mock daty, offline testy a minim\u00e1ln\u00edm SAM balen\u00edm"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Case & Client: jedna Lambda s explicitn\u00edmi mock daty, offline testy a minim\u00e1ln\u00edm SAM balen\u00edm"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/decisions-case-client-mock-fixture-pagination.md",
+      "provenance": "untracked+referenced",
+      "size": 1209
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a.checkpoint.md",
+      "provenance": "untracked",
+      "size": 4060
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a.red-green-proof.md",
+      "provenance": "untracked",
+      "size": 15963
+    }
+  ],
+  "taskId": "task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a",
+  "tddRequired": true
+}

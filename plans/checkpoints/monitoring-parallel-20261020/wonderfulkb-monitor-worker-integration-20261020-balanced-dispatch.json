@@ -1,0 +1,15 @@
+{
+  "changedTaskIds": [
+    "task-2264932c-e1f9-4f8c-9314-3bfffac8234a"
+  ],
+  "command": "task.start",
+  "log": "/tmp/opencode-cool-wave-8391.log",
+  "message": "started: task-2264932c-e1f9-4f8c-9314-3bfffac8234a",
+  "modelUsed": "openai/gpt-6-luna",
+  "ok": true,
+  "operation": "start",
+  "phase": "plan",
+  "pid": 70930,
+  "sessionId": "cool-wave-8391",
+  "taskId": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a"
+}

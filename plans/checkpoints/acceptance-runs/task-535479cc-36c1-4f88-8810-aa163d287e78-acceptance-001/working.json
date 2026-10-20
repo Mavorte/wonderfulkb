@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "claim": "Acceptance requires complete supplied visibility into the target-owned runtime producer/context changes or blocker deliverable before goal-001 can receive a semantic verdict.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and truncated=true. The delivered diff does not review the target-owned be-validator-agent caller/context paths, and plans/monitoring/runtime-producer-context-contract.md is filtered from review even though the checkpoint says it was updated as the conditional blocker deliverable. Omitted or filtered paths cannot establish either correctness or absence.",
+      "rationale": "The task permits either an approved real-caller integration or, when the authoritative execution interface is absent, an exact blocker record. Because the evidence for both target-owned alternatives is outside supplied review visibility, accepting would be unsupported, while a missing-implementation correctness finding would improperly infer from omitted paths.",
+      "required": "Provide a complete caller-supplied diff or equivalent review artifact covering the target-owned be-validator-agent caller/context paths and plans/monitoring/runtime-producer-context-contract.md so the conditional implementation-or-blocker requirement can be assessed.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-535479cc-36c1-4f88-8810-aa163d287e78.checkpoint.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-monitor-runtime-20261020.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring runtime: dokon\u010dit dolo\u017een\u00fd producer a immutable execution context"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-535479cc-36c1-4f88-8810-aa163d287e78-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-535479cc-36c1-4f88-8810-aa163d287e78"
+}

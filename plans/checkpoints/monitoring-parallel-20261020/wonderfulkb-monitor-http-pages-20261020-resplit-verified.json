@@ -1,0 +1,53 @@
+{
+  "batchId": "wonderfulkb-monitor-http-pages-20261020",
+  "members": [
+    {
+      "batchSeq": 1,
+      "id": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-page-outcome",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-13-attempt-pages-get.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 2,
+      "id": "task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-cache-reused",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-15-cache-reused-read.md",
+      "type": "implementation"
+    }
+  ],
+  "nextAppendSeq": 3,
+  "rootCount": 2,
+  "roots": [
+    {
+      "batchSeq": 1,
+      "completionState": "incomplete",
+      "id": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 2,
+      "completionState": "incomplete",
+      "id": "task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    }
+  ],
+  "state": "inactive",
+  "taskCount": 2
+}

@@ -1,0 +1,92 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:19:35+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-3fa192e3-bfa9-4298-a36b-30f1cb1c15ef-acceptance-fix-monitoring-cache-reuse-dokonit-poadovanou-val.md",
+      "taskId": "task-3fa192e3-bfa9-4298-a36b-30f1cb1c15ef",
+      "title": "[acceptance-fix] [acceptance-fix] Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test mati"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T08:17:18+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:03:12+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-4f189265-c034-43e8-b8d9-c4e1fef9a45b-monitoring-lifecycle-http-skuten-bounded-routes-a-funkn-end.md",
+      "taskId": "task-4f189265-c034-43e8-b8d9-c4e1fef9a45b",
+      "title": "[acceptance-fix] Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed: goal-001: Monitoring l"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:11:23+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-928f7bbe-ddb7-4984-b8bd-536cf1c4a25f-trigger-opravit-cestu-kanonick-table-ablony-a-zachovat-audit.md",
+      "taskId": "task-928f7bbe-ddb7-4984-b8bd-536cf1c4a25f",
+      "title": "[acceptance-fix] Trigger: opravit cestu kanonick\u00e9 table \u0161ablony a zachovat audit p\u0159i stream variant\u011b: goal-001: Trigger:"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T08:17:19+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:03:30+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-f5933265-a1a8-4267-b493-689dc98b55c8-monitoring-lifecycle-zachovat-unscoped-evidence-a-odmtnout-r.md",
+      "taskId": "task-f5933265-a1a8-4267-b493-689dc98b55c8",
+      "title": "[acceptance-fix] Monitoring lifecycle: zachovat unscoped evidence a odm\u00edtnout rozporn\u00fd ordinal fallback: goal-001: Monit"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T08:21:19+00:00",
+    "implementingStartedAt": "2026-10-20T08:13:40+00:00",
+    "taskFile": "plans/tasks/2026-10-20_followup-task-28707c38-bd73-4a54-b30a-74946bd8638b-acceptance-fix-monitoring-worker-dokonit-skuten-producer-vol.md",
+    "taskId": "task-28707c38-bd73-4a54-b30a-74946bd8638b",
+    "title": "[acceptance-fix] [acceptance-fix] Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz: goal-001: M"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "[acceptance-fix] [acceptance-fix] Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz: goal-001: M"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-28707c38-bd73-4a54-b30a-74946bd8638b-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_worker-audit-integration-owner-identity-gate.md",
+      "provenance": "untracked+referenced",
+      "size": 922
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-28707c38-bd73-4a54-b30a-74946bd8638b.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1257
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1.checkpoint.md",
+      "provenance": "untracked+referenced",
+      "size": 1668
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 1540
+    }
+  ],
+  "taskId": "task-28707c38-bd73-4a54-b30a-74946bd8638b",
+  "tddRequired": true
+}

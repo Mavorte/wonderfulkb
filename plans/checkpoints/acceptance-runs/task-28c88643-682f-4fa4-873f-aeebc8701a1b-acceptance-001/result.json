@@ -1,0 +1,38 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review evidence is complete enough to determine whether goal-001 is satisfied.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract has complete=false and identifies omitted paths that were not reviewed; the supplied material therefore does not provide complete task-scoped visibility.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Acceptance must fail closed when material review visibility is explicitly incomplete. This does not establish that implementation is absent or incorrect on any omitted path, but it prevents a trustworthy ACCEPT verdict for goal-001.",
+      "required": "Provide a complete caller-scoped evidence bundle or a subsequent acceptance run whose visibility contract is complete, including the currently omitted paths as applicable.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "[acceptance-fix] Case Client: nasadit GET /cases a prok\u00e1zat funk\u010dnost p\u0159es HTTP: goal-001: Case Client: nasadit GET /cas"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-28c88643-682f-4fa4-873f-aeebc8701a1b-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-28c88643-682f-4fa4-873f-aeebc8701a1b"
+}

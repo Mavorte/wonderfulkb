@@ -1,0 +1,92 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T08:33:24+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:19:35+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-3fa192e3-bfa9-4298-a36b-30f1cb1c15ef-acceptance-fix-monitoring-cache-reuse-dokonit-poadovanou-val.md",
+      "taskId": "task-3fa192e3-bfa9-4298-a36b-30f1cb1c15ef",
+      "title": "[acceptance-fix] [acceptance-fix] Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test mati"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T08:25:25+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:11:23+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-928f7bbe-ddb7-4984-b8bd-536cf1c4a25f-trigger-opravit-cestu-kanonick-table-ablony-a-zachovat-audit.md",
+      "taskId": "task-928f7bbe-ddb7-4984-b8bd-536cf1c4a25f",
+      "title": "[acceptance-fix] Trigger: opravit cestu kanonick\u00e9 table \u0161ablony a zachovat audit p\u0159i stream variant\u011b: goal-001: Trigger:"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:37:47+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-27-worker-http-integration-proof.md",
+      "taskId": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf",
+      "title": "Monitoring MVP: skute\u010dn\u00e1 worker \u2192 HTTP integra\u010dn\u00ed cesta"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:21:51+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-cf441015-6bba-4862-8200-b2c0047f6905-monitoring-http-dokonit-autentizovan-document-events-zklad-a.md",
+      "taskId": "task-cf441015-6bba-4862-8200-b2c0047f6905",
+      "title": "[acceptance-fix] Monitoring HTTP: dokon\u010dit autentizovan\u00fd document-events z\u00e1klad a skute\u010dn\u00e9 nasazen\u00ed: goal-001: Monitorin"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T08:39:29+00:00",
+    "implementingStartedAt": "2026-10-20T08:23:30+00:00",
+    "taskFile": "plans/tasks/2026-10-20_followup-task-ef257fc0-2159-4888-983a-0b30a1dbfe39-acceptance-fix-monitoring-lifecycle-http-skuten-bounded-rout.md",
+    "taskId": "task-ef257fc0-2159-4888-983a-0b30a1dbfe39",
+    "title": "[acceptance-fix] [acceptance-fix] Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed: goal-"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "[acceptance-fix] [acceptance-fix] Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed: goal-"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-ef257fc0-2159-4888-983a-0b30a1dbfe39-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-4f189265-c034-43e8-b8d9-c4e1fef9a45b.checkpoint.md",
+      "provenance": "untracked+referenced",
+      "size": 1350
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-4f189265-c034-43e8-b8d9-c4e1fef9a45b.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 4392
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-ef257fc0-2159-4888-983a-0b30a1dbfe39.checkpoint.md",
+      "provenance": "untracked+referenced",
+      "size": 3869
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-ef257fc0-2159-4888-983a-0b30a1dbfe39.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 5709
+    }
+  ],
+  "taskId": "task-ef257fc0-2159-4888-983a-0b30a1dbfe39",
+  "tddRequired": true
+}

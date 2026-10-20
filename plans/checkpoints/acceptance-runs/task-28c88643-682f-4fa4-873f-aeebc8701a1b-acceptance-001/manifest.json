@@ -1,0 +1,59 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T18:31:30+00:00",
+    "implementingStartedAt": "2026-10-19T18:11:50+00:00",
+    "taskFile": "plans/tasks/2026-10-19_followup-task-28c88643-682f-4fa4-873f-aeebc8701a1b-case-client-nasadit-get-cases-a-prokzat-funknost-pes-http.md",
+    "taskId": "task-28c88643-682f-4fa4-873f-aeebc8701a1b",
+    "title": "[acceptance-fix] Case Client: nasadit GET /cases a prok\u00e1zat funk\u010dnost p\u0159es HTTP: goal-001: Case Client: nasadit GET /cas"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "[acceptance-fix] Case Client: nasadit GET /cases a prok\u00e1zat funk\u010dnost p\u0159es HTTP: goal-001: Case Client: nasadit GET /cas"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-28c88643-682f-4fa4-873f-aeebc8701a1b-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/tooling/tdd-proof-cycle-validation.md",
+      "provenance": "untracked+referenced",
+      "size": 653
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-28c88643-682f-4fa4-873f-aeebc8701a1b.checkpoint.md",
+      "provenance": "untracked",
+      "size": 3168
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-28c88643-682f-4fa4-873f-aeebc8701a1b.live-report.md",
+      "provenance": "untracked+referenced",
+      "size": 13376
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-28c88643-682f-4fa4-873f-aeebc8701a1b.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 4010
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-7700299e-f977-4acd-a1fe-b7409c3bca5d.checkpoint.md",
+      "provenance": "untracked+referenced",
+      "size": 1166
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-7700299e-f977-4acd-a1fe-b7409c3bca5d.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 2076
+    }
+  ],
+  "taskId": "task-28c88643-682f-4fa4-873f-aeebc8701a1b",
+  "tddRequired": true
+}

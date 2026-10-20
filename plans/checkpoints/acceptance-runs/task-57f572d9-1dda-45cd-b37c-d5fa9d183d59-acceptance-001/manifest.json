@@ -1,0 +1,69 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "2026-10-20T07:06:55+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:56:43+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-11-attempt-steps-get.md",
+      "taskId": "task-17cb070f-0692-46f4-85ab-e07a14b662c4",
+      "title": "Monitoring MVP: jeden GET pozorovan\u00fdch krok\u016f pokusu"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "2026-10-20T07:06:55+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:58:42+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-13-attempt-pages-get.md",
+      "taskId": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42",
+      "title": "Monitoring MVP: jeden GET pozorovan\u00fdch v\u00fdsledk\u016f str\u00e1nek"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:04:57+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-26-worker-audit-hooks.md",
+      "taskId": "task-fc4580ab-a2c5-47b5-b632-e3d71b453652",
+      "title": "Monitoring MVP: napojen\u00ed skute\u010dn\u00fdch worker hranic na audit"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T07:06:55+00:00",
+    "implementingStartedAt": "2026-10-20T07:00:57+00:00",
+    "taskFile": "plans/tasks/2026-10-20_monitor-mvp-24-lifecycle-read.md",
+    "taskId": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59",
+    "title": "Monitoring MVP: run a audit lifecycle API nad bounded oknem"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: run a audit lifecycle API nad bounded oknem"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-57f572d9-1dda-45cd-b37c-d5fa9d183d59.checkpoint.md",
+      "provenance": "untracked",
+      "size": 713
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-57f572d9-1dda-45cd-b37c-d5fa9d183d59.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 4041
+    }
+  ],
+  "taskId": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59",
+  "tddRequired": true
+}

@@ -1,0 +1,46 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility sufficient to evaluate the required worker-to-HTTP producer and deployed live-proof goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and omits worker/runtime paths central to the goal, including be-validator-agent/trigger/worker_handler.py and tests/test_processing_monitor_worker_http_integration.py; the supplied checkpoint also states that guarded AWS deployment and bounded live proof remain incomplete. Omitted paths were not reviewed, so their implementation state cannot be determined from this run.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Incomplete visibility materially prevents a trustworthy semantic verdict for goal-001. This is an evidence limitation, not proof that implementation is absent or incorrect, and the run must not ACCEPT.",
+      "required": "Provide a complete caller-supplied task-scoped review bundle covering the omitted worker/runtime paths and the required deployed bounded worker-to-HTTP evidence, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-diff-visibility-contract"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-b0db5177-2f43-4036-b080-af1ca7d143d5.checkpoint.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/handoffs/aws-runtime-readiness-20261020.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring worker: dokon\u010dit skute\u010dn\u00e9 producenty a nasazen\u00fd worker\u2192HTTP d\u016fkaz"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-b0db5177-2f43-4036-b080-af1ca7d143d5-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-b0db5177-2f43-4036-b080-af1ca7d143d5"
+}

@@ -1,0 +1,125 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:22:38+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:11:34+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-12-page-outcome-events.md",
+      "taskId": "task-164adaf3-99df-429e-86b4-c565e5461be0",
+      "title": "Monitoring MVP: ud\u00e1losti nov\u00e9 pr\u00e1ce a v\u00fdsledku str\u00e1nky"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:24:41+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:13:18+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-22-retry-terminal-events.md",
+      "taskId": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a",
+      "title": "Monitoring MVP: ud\u00e1losti retry a skute\u010dn\u00fdch konc\u016f"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:25:50+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:12:40+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-monitor-lifecycle-20261020.md",
+      "taskId": "task-422c4f83-d138-47ea-859b-011f3d86e6e5",
+      "title": "Monitoring lifecycle: dokon\u010dit pure reducer a \u00faplnou testovac\u00ed matici"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:22:42+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-monitor-runtime-20261020.md",
+      "taskId": "task-535479cc-36c1-4f88-8810-aa163d287e78",
+      "title": "Monitoring runtime: dokon\u010dit dolo\u017een\u00fd producer a immutable execution context"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:22:39+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:11:50+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-16-extraction-events.md",
+      "taskId": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3",
+      "title": "Monitoring MVP: ud\u00e1losti skute\u010dn\u011b proveden\u00e9 extrakce"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:22:36+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:11:17+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-10-source-validation-events.md",
+      "taskId": "task-d2e34593-3eca-44a0-954d-c470eaa95321",
+      "title": "Monitoring MVP: ud\u00e1losti jednoho ov\u011b\u0159en\u00ed vstupu"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T06:22:33+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:11:09+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-19_monitor-mvp-08-attempt-started-event.md",
+      "taskId": "task-e1e34fde-82b5-43aa-a744-aef7b5858293",
+      "title": "Monitoring MVP: AttemptStarted v event den\u00edku"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T06:25:52+00:00",
+    "implementingStartedAt": "2026-10-20T06:20:27+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-monitor-pages-20261020.md",
+    "taskId": "task-97212f63-4c40-400e-b36d-31b9531745dc",
+    "title": "Monitoring pages: dokon\u010dit pure observation mapper a kontraktn\u00ed testy"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring pages: dokon\u010dit pure observation mapper a kontraktn\u00ed testy"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-97212f63-4c40-400e-b36d-31b9531745dc-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_keep-page-observation-mapping-pure-and-window-scoped.md",
+      "provenance": "untracked+referenced",
+      "size": 1265
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-97212f63-4c40-400e-b36d-31b9531745dc.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1226
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-97212f63-4c40-400e-b36d-31b9531745dc.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 4018
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b37c64cd-1783-45e6-8daf-f2e6a04e0954.host-review.md",
+      "provenance": "untracked+referenced",
+      "size": 3387
+    }
+  ],
+  "taskId": "task-97212f63-4c40-400e-b36d-31b9531745dc",
+  "tddRequired": true
+}

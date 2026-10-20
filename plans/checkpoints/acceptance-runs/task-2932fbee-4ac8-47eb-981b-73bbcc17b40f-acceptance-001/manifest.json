@@ -1,0 +1,76 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T07:33:00+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:24:59+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-runtime-execution-integration-0908.md",
+      "taskId": "task-3d3090bd-7fe6-470f-a099-9b5c8b502c7f",
+      "title": "Monitoring runtime: skute\u010dn\u00e1 producer integrace nad dolo\u017een\u00fdm execution rozhran\u00edm"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:35:12+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-lifecycle-http-routes-0908.md",
+      "taskId": "task-a67c7b62-949e-4720-b1a2-51fcc3502cec",
+      "title": "Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T07:37:14+00:00",
+    "implementingStartedAt": "2026-10-20T07:31:03+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-page-http-route-0908.md",
+    "taskId": "task-2932fbee-4ac8-47eb-981b-73bbcc17b40f",
+    "title": "Monitoring pages HTTP: skute\u010dn\u00fd endpoint, funk\u010dn\u00ed fixture a runtime ov\u011b\u0159en\u00ed"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring pages HTTP: skute\u010dn\u00fd endpoint, funk\u010dn\u00ed fixture a runtime ov\u011b\u0159en\u00ed"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-2932fbee-4ac8-47eb-981b-73bbcc17b40f-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_bounded-monitoring-read-plan-semantics.md",
+      "provenance": "untracked+referenced",
+      "size": 1281
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_keep-page-observation-mapping-pure-and-window-scoped.md",
+      "provenance": "untracked+referenced",
+      "size": 1265
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/test-failures/intake-monitoring-red-multipart-explicit-fixture.md",
+      "provenance": "untracked+referenced",
+      "size": 1304
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-2932fbee-4ac8-47eb-981b-73bbcc17b40f.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1403
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 2210
+    }
+  ],
+  "taskId": "task-2932fbee-4ac8-47eb-981b-73bbcc17b40f",
+  "tddRequired": true
+}

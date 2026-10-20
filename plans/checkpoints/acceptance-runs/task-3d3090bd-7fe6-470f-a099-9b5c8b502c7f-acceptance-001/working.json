@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "claim": "The caller-declared mandatory genuine RED/GREEN TDD proof must be supplied for this task.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The manifest declares tddRequired=true, while the supplied TDD proof/provenance explicitly states that no TDD proof was supplied; the checkpoint also records that no eligible source implementation or proof cycle was performed.",
+      "rationale": "Without the required task-scoped RED/GREEN artifact, acceptance cannot establish compliance with the caller-owned TDD obligation. Existing test-result prose is not a substitute for the required proof.",
+      "required": "Supply a valid task-scoped genuine RED/GREEN proof using the required identical focused argv and designated project interpreter, or obtain a caller-owned change to the TDD requirement; do not relabel environment checks or unchanged passing tests as TDD.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-3d3090bd-7fe6-470f-a099-9b5c8b502c7f.checkpoint.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-runtime-execution-integration-0908.md"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete supplied visibility into the task-scoped implementation material before the runtime producer integration goal can receive an ACCEPT verdict.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and lists the implementation and test paths as omitted, including the audit package and relevant tests; only AGENTS.md, .env.example, and PROCESSING-MONITOR-API.md are fully included, while the OpenAPI contract is partial.",
+      "rationale": "The supplied evidence is explicitly incomplete. Under the caller contract, omitted paths were not reviewed and their absence cannot establish missing implementation or correctness, but the incomplete visibility materially prevents a trustworthy acceptance decision for the runtime integration goal.",
+      "required": "Provide a subsequent acceptance run with complete caller-supplied visibility for the relevant task-scoped implementation and test artifacts, preserving the canonical Test Gate reference and attribution metadata.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-computed-diff-visibility-contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-runtime-execution-integration-0908.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring runtime: skute\u010dn\u00e1 producer integrace nad dolo\u017een\u00fdm execution rozhran\u00edm"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-3d3090bd-7fe6-470f-a099-9b5c8b502c7f-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-3d3090bd-7fe6-470f-a099-9b5c8b502c7f"
+}

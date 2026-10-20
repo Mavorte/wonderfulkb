@@ -1,0 +1,41 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T22:06:42+00:00",
+    "implementingStartedAt": "2026-10-19T22:00:44+00:00",
+    "taskFile": "plans/tasks/2026-10-19_monitor-mvp-01-file-received-store.md",
+    "taskId": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f",
+    "title": "Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-19_monitoring-filereceived-audit-store-scope.md",
+      "provenance": "untracked+referenced",
+      "size": 1015
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b6ff9adf-d61b-4db0-b1ec-881674700f7f.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1185
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-b6ff9adf-d61b-4db0-b1ec-881674700f7f.red-green-proof.md",
+      "provenance": "untracked",
+      "size": 848
+    }
+  ],
+  "taskId": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f",
+  "tddRequired": true
+}

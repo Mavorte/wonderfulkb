@@ -1,0 +1,96 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility sufficient for semantic acceptance.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller's diff visibility contract is explicitly incomplete and truncated, with omitted and partial paths; omitted paths were not reviewed.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The task requires an end-to-end worker-to-HTTP delivery, and incomplete supplied visibility prevents a trustworthy semantic acceptance verdict without inferring anything about omitted paths.",
+      "required": "Provide a complete caller-scoped diff/evidence bundle for the evaluation target, or a subsequent run whose visibility contract is complete.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-declared mandatory RED/GREEN TDD proof must be supplied for this task.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The manifest declares tddRequired true, the caller supplied no TDD proof, and the task checkpoint states that the canonical red-green-proof file was not found and no behavioral RED or GREEN was captured.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The required TDD cycle is a mandatory acceptance proof and cannot be replaced by unrelated regression runs or a pre-existing signature assertion.",
+      "required": "Supply the canonical task-scoped RED/GREEN proof produced from the same focused worker-to-HTTP integration command.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-ac9bcb19-d1d0-4bed-a469-f7e503825caf.checkpoint.md:4-10"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-ac9bcb19-d1d0-4bed-a469-f7e503825caf.checkpoint.md:51-54"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-27-worker-http-integration-proof.md:TDD and Verification"
+        }
+      ]
+    },
+    {
+      "claim": "The task requires recorded installed, deployed, and live worker-to-HTTP verification against the existing AWS TEST target.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "The task checkpoint records installed and deployed as not attempted, live-function-verified as not attempted, and zero POST, GET, or synthetic cloud writes; it explicitly concludes BLOCKED, not COMPLETE.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "The goal is a real worker-to-audit-to-existing-intake-HTTP path, and the task contract forbids treating source or prepared runbook evidence as completion without actual deployed runtime evidence.",
+      "required": "Complete the guarded installation and AWS TEST deployment, then supply bounded synthetic worker-to-HTTP runtime evidence with verified artifact/source digests and the required HTTP assertions, or record the concrete authorized operator blocker/outcome.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-ac9bcb19-d1d0-4bed-a469-f7e503825caf.checkpoint.md:8-10"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-ac9bcb19-d1d0-4bed-a469-f7e503825caf.checkpoint.md:56-63"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-27-worker-http-integration-proof.md:Goal and Verification"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: skute\u010dn\u00e1 worker \u2192 HTTP integra\u010dn\u00ed cesta"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf"
+}

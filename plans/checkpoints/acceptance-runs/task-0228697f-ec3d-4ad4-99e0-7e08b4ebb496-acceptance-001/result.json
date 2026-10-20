@@ -1,0 +1,61 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The task requires current proof of deployment to the original test API and successful live POST behavior, but that verification evidence was not supplied.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The task checkpoint states that no deployment or live HTTP calls were run and that the actual live deployment and HTTP matrix remain unverified.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "The goal is specifically to complete deployment after the IAM fix and verify live POST; local guard tests and offline checks cannot establish the deployed hash/runtime/backend or real HTTP/DynamoDB outcomes required by the canonical task.",
+      "required": "Provide sanitized current-run evidence of the deployed hash, Python runtime and DynamoDB backend plus the required live POST/GET and rejection/auth results, or a concrete authorized live blocker.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-0228697f-ec3d-4ad4-99e0-7e08b4ebb496.checkpoint.md:7-12"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-19_case-client-deploy-clean-proof.md"
+        }
+      ]
+    },
+    {
+      "claim": "The supplied implementation diff is incomplete, so the run lacks complete semantic visibility.",
+      "crossCutting": true,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract reports complete=false and truncated=true, with four omitted paths and one partial path that were not reviewable from the supplied material.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The caller explicitly requires a non-ACCEPT incomplete-evidence outcome when visibility is incomplete; omitted paths cannot be inspected or used to infer implementation absence, so this material evidence limitation does not fit a more specific catalog entry.",
+      "required": "Supply a complete caller-computed diff and full contents for the omitted and partial paths in a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract: complete=false, truncated=true"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Case Client: dokon\u010dit deploy po IAM oprav\u011b a ov\u011b\u0159it live POST"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-0228697f-ec3d-4ad4-99e0-7e08b4ebb496-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-0228697f-ec3d-4ad4-99e0-7e08b4ebb496"
+}

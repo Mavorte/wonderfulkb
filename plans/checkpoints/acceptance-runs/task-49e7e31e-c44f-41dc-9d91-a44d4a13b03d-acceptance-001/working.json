@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "claim": "Supplied evidence must expose the material execution-owner implementation sufficiently to evaluate the run allocator, atomic claim attempt, and queue/claim audit goal.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and omits material target paths including be-validator-agent/trigger/processing_execution_context.py, be-validator-agent/trigger/processing_execution_claims.py, be-validator-agent/trigger/worker_handler.py, be-validator-agent/trigger/template.yaml, and tests/test_execution_owner.py; be-validator-agent/trigger/common.py is only partial.",
+      "rationale": "Those omitted and partial paths contain the core behavior under evaluation. The supplied plan, TDD proof, checkpoint, and provenance assert outcomes but cannot substitute for semantic review of the omitted implementation. The caller contract forbids inferring absence or correctness from omitted paths and requires typed incomplete evidence/visibility rather than ACCEPT.",
+      "required": "Provide a complete caller-supplied task-scoped diff or equivalent review material for the omitted execution-owner, worker integration, resource-template, and focused-test paths, then perform a new acceptance run without treating this run as an implementation failure.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-49e7e31e-c44f-41dc-9d91-a44d4a13b03d.evidence.md"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-execution-identity-approved.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring execution: skute\u010dn\u00fd run allocator, atomick\u00fd claim attempt a queue/claim audit"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-49e7e31e-c44f-41dc-9d91-a44d4a13b03d-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-49e7e31e-c44f-41dc-9d91-a44d4a13b03d"
+}

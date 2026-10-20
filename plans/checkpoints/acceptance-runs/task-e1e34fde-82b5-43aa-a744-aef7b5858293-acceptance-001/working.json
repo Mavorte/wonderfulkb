@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied acceptance material must provide complete visibility into the task-relevant implementation paths needed to assess the AttemptStarted event/store contract.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract is complete=false and omits audit_storage.py and tests/test_monitor_attempt_started.py while audit_events.py is only partial; therefore the delivered behavior cannot be fully assessed from the supplied material. This does not establish that implementation is absent or incorrect.",
+      "rationale": "The omitted and partial paths are central to required conditional idempotence, document Query decoding, invalid-input non-mutation, and focused contract coverage. The caller explicitly requires incomplete evidence/visibility finalization and forbids ACCEPT when complete=false.",
+      "required": "Provide a new acceptance run with complete caller-supplied visibility for the task-relevant implementation and test artifacts; do not infer absence from omitted paths.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-diff-visibility-contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-19_monitor-mvp-08-attempt-started-event.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: AttemptStarted v event den\u00edku"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-e1e34fde-82b5-43aa-a744-aef7b5858293-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-e1e34fde-82b5-43aa-a744-aef7b5858293"
+}

@@ -1,0 +1,36 @@
+{
+  "batch": {
+    "batchId": "wonderfulkb-monitor-lifecycle-domain-20261020",
+    "members": [
+      {
+        "batchSeq": 1,
+        "id": "task-1e8311a4-08b0-4142-9bf9-6553815e572e",
+        "pauseState": null,
+        "phase": "planning",
+        "project": "wonderfulkb",
+        "proposalId": "proposal-20261019-150954-c8891f",
+        "proposalSection": "slice-retry-terminal",
+        "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-23-lifecycle-window-reducer.md",
+        "type": "implementation"
+      }
+    ],
+    "nextAppendSeq": 2,
+    "rootCount": 1,
+    "roots": [
+      {
+        "batchSeq": 1,
+        "completionState": "incomplete",
+        "id": "task-1e8311a4-08b0-4142-9bf9-6553815e572e",
+        "paused": false,
+        "phase": "planning",
+        "status": "running",
+        "terminalLeafTaskIds": [],
+        "terminalReason": null
+      }
+    ],
+    "state": "active",
+    "taskCount": 1
+  },
+  "command": "batch.status",
+  "ok": true
+}

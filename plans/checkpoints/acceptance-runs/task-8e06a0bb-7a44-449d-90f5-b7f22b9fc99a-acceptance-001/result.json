@@ -1,0 +1,42 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The caller-required TDD proof must include a behavioral RED after importable stubs are introduced.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The canonical RED phase contains 13 setup errors caused solely by ModuleNotFoundError for case_client_handler; it contains no failing behavioral assertion. The task's TDD section explicitly states that a missing import is only an initial diagnostic and is not sufficient behavioral RED.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "Although a GREEN phase is supplied, the immutable proof does not demonstrate the required red-to-green behavior cycle, so the mandatory TDD evidence is invalid under the task-specific proof contract.",
+      "required": "Provide canonical TDD provenance that preserves the initial import diagnostic and also captures an importable-stub RED with a concrete behavioral assertion failing before the implementation makes the identical focused command GREEN.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-19_case-client-lambda-mock.md:TDD"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a.red-green-proof.md:RED Phase"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Case & Client: jedna Lambda s explicitn\u00edmi mock daty, offline testy a minim\u00e1ln\u00edm SAM balen\u00edm"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a"
+}

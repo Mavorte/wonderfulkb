@@ -1,0 +1,32 @@
+{
+  "batchId": "wonderfulkb-monitor-runtime-context-20261020",
+  "members": [
+    {
+      "batchSeq": 1,
+      "id": "task-626722a4-f9fd-46a9-8304-17b9f24de1cc",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-attempt-started",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-25-runtime-producer-context.md",
+      "type": "implementation"
+    }
+  ],
+  "nextAppendSeq": 2,
+  "rootCount": 1,
+  "roots": [
+    {
+      "batchSeq": 1,
+      "completionState": "incomplete",
+      "id": "task-626722a4-f9fd-46a9-8304-17b9f24de1cc",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    }
+  ],
+  "state": "inactive",
+  "taskCount": 1
+}

@@ -1,0 +1,66 @@
+{
+  "findings": [
+    {
+      "claim": "This task requires a current-task genuine RED-to-GREEN TDD proof captured with the same focused command.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The manifest declares tddRequired=true and the caller states that no TDD proof was supplied; the only supplied proof belongs to predecessor task task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42 and records a fixture setup error rather than this task's behavioral RED/GREEN cycle.",
+      "rationale": "The predecessor proof cannot establish the mandatory TDD cycle for evaluation target task-2932fbee-4ac8-47eb-981b-73bbcc17b40f, and the target checkpoint explicitly leaves RED and GREEN capture incomplete.",
+      "required": "Supply the canonical current-task RED/GREEN proof with a genuine behavioral RED and GREEN captured using identical argv through the required TDD workflow.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/acceptance-runs/task-2932fbee-4ac8-47eb-981b-73bbcc17b40f-acceptance-001/manifest.json:75"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-2932fbee-4ac8-47eb-981b-73bbcc17b40f.checkpoint.md:3-11"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42.red-green-proof.md:1-36"
+        }
+      ]
+    },
+    {
+      "claim": "The supplied review material must provide complete visibility into the task-relevant implementation before semantic acceptance can be established.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false and explicitly lists the task-relevant intake route, router wiring, Docker packaging, focused page-route tests, audit implementation, and other implementation paths as omitted; only documentation and a partial OpenAPI path are visible.",
+      "rationale": "The acceptance contract forbids inferring absence or correctness from omitted paths. Because those omitted paths contain the required endpoint, fixture, package integration, and runtime-facing implementation, the supplied material cannot establish the goal and must not be accepted.",
+      "required": "Provide a complete caller-supplied diff or equivalent bounded artifacts covering the task-relevant implementation paths, then perform a new acceptance run; do not infer implementation absence from this run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-page-http-route-0908.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring pages HTTP: skute\u010dn\u00fd endpoint, funk\u010dn\u00ed fixture a runtime ov\u011b\u0159en\u00ed"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-2932fbee-4ac8-47eb-981b-73bbcc17b40f-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-2932fbee-4ac8-47eb-981b-73bbcc17b40f"
+}

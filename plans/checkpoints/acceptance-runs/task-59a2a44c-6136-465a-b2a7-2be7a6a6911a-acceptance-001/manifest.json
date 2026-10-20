@@ -1,0 +1,99 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:39:10+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-cache-contract-proof-0923.md",
+      "taskId": "task-73ee7806-e314-4dbf-9474-8b1228b9be04",
+      "title": "Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test matici"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T07:45:26+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:35:12+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-lifecycle-http-routes-0908.md",
+      "taskId": "task-a67c7b62-949e-4720-b1a2-51fcc3502cec",
+      "title": "Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T07:45:35+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:37:21+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-worker-audit-integration-0908.md",
+      "taskId": "task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0",
+      "title": "Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T07:45:38+00:00",
+    "implementingStartedAt": "2026-10-20T07:39:18+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-lifecycle-unscoped-evidence-0923.md",
+    "taskId": "task-59a2a44c-6136-465a-b2a7-2be7a6a6911a",
+    "title": "Monitoring lifecycle: zachovat unscoped evidence a odm\u00edtnout rozporn\u00fd ordinal fallback"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring lifecycle: zachovat unscoped evidence a odm\u00edtnout rozporn\u00fd ordinal fallback"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-59a2a44c-6136-465a-b2a7-2be7a6a6911a-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_bounded-audit-lifecycle-summaries-preserve-uncertainty.md",
+      "provenance": "untracked+referenced",
+      "size": 1024
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_lifecycle-reducer-canonical-attempt-identity-followup.md",
+      "provenance": "untracked+referenced",
+      "size": 1323
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/tooling/project-venv-for-contract-pytest-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 508
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/monitoring-parallel-20261020/lifecycle-review-0856.md",
+      "provenance": "untracked+referenced",
+      "size": 5357
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/monitoring-parallel-20261020/lifecycle-review-0923.md",
+      "provenance": "untracked+referenced",
+      "size": 4567
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-59a2a44c-6136-465a-b2a7-2be7a6a6911a.checkpoint.md",
+      "provenance": "untracked",
+      "size": 729
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-59a2a44c-6136-465a-b2a7-2be7a6a6911a.red-green-proof.md",
+      "provenance": "untracked",
+      "size": 6406
+    }
+  ],
+  "taskId": "task-59a2a44c-6136-465a-b2a7-2be7a6a6911a",
+  "tddRequired": true
+}

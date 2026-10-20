@@ -1,0 +1,38 @@
+[
+  {
+    "old": "task-17cb070f-0692-46f4-85ab-e07a14b662c4",
+    "completion": "task-72b7dfa9-0d36-49d1-8880-3afeff29738c",
+    "disposition": "superseded",
+    "batch": "wonderfulkb-monitor-http-steps-20261020"
+  },
+  {
+    "old": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42",
+    "completion": "task-2932fbee-4ac8-47eb-981b-73bbcc17b40f",
+    "disposition": "superseded",
+    "batch": "wonderfulkb-monitor-http-pages-20261020"
+  },
+  {
+    "old": "task-821fe70a-e40f-4fc9-bd11-ced0e5183dde",
+    "completion": "task-3d3090bd-7fe6-470f-a099-9b5c8b502c7f",
+    "disposition": "superseded",
+    "batch": "wonderfulkb-monitor-runtime-context-20261020"
+  },
+  {
+    "old": "task-4ad56e72-4cb9-4180-92a0-19e11177c7a8",
+    "completion": null,
+    "disposition": "complete-source",
+    "batch": "wonderfulkb-monitor-http-integration-20261020"
+  },
+  {
+    "old": "task-57f572d9-1dda-45cd-b37c-d5fa9d183d59",
+    "completion": "task-a67c7b62-949e-4720-b1a2-51fcc3502cec",
+    "disposition": "superseded",
+    "batch": "wonderfulkb-monitor-http-lifecycle-20261020"
+  },
+  {
+    "old": "task-fc4580ab-a2c5-47b5-b632-e3d71b453652",
+    "completion": "task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0",
+    "disposition": "superseded",
+    "batch": "wonderfulkb-monitor-worker-integration-20261020"
+  }
+]

@@ -1,0 +1,80 @@
+{
+  "actor": "km-monitor:task-evidence",
+  "artifactProvenance": [
+    {
+      "path": "plans/checkpoints/task-9e2461c6-3177-46d8-b83d-876682e528d3.evidence.md",
+      "provenance": "evidence_repair:task-9e2461c6-3177-46d8-b83d-876682e528d3-acceptance-001-evidence-repair-001",
+      "size": 2931
+    }
+  ],
+  "artifacts": [
+    "plans/checkpoints/task-9e2461c6-3177-46d8-b83d-876682e528d3.evidence.md"
+  ],
+  "auditPath": "plans/checkpoints/acceptance-runs/task-9e2461c6-3177-46d8-b83d-876682e528d3-acceptance-001-evidence-repair-001/repair.json",
+  "commit": "fd8cab7699725bb6e5d77dc25860f9355721443a",
+  "escalationReason": "task_evidence_gap",
+  "finishedAt": "2026-10-20T08:07:21.352084+00:00",
+  "gaps": [
+    "command_lines_truncated",
+    "command_lines_truncated",
+    "outcome_lines_truncated"
+  ],
+  "mutationCheck": {
+    "changedPaths": [],
+    "clean": true
+  },
+  "pairs": [
+    {
+      "command": "python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py --help",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-9e2461c6-3177-46d8-b83d-876682e528d3 python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py red -- .venv/bin/python -m pytest tests/test_monitor_cache_reused_events.py",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-9e2461c6-3177-46d8-b83d-876682e528d3 python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py green -- .venv/bin/python -m pytest tests/test_monitor_cache_reused_events.",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests",
+      "outcome": "======================= 222 passed, 7 warnings in 9.55s ========================"
+    },
+    {
+      "command": "npm test && npm run build",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/test_monitor_cache_reused_events.py",
+      "outcome": "======================== 30 passed, 6 warnings in 3.97s ========================"
+    },
+    {
+      "command": "TASK_ID=task-73ee7806-e314-4dbf-9474-8b1228b9be04 python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py red -- .venv/bin/python -m pytest tests/test_monitor_cache_reused_events.py",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-73ee7806-e314-4dbf-9474-8b1228b9be04 python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py green -- .venv/bin/python -m pytest tests/test_monitor_cache_reused_events.",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-73ee7806-e314-4dbf-9474-8b1228b9be04 python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py red --project-root /Users/michal/Projects/wonderfulkb -- .venv/bin/python -",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-73ee7806-e314-4dbf-9474-8b1228b9be04 python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py read --task-id task-73ee7806-e314-4dbf-9474-8b1228b9be04 --run-id b554b18fe",
+      "outcome": "{\"task_id\": \"task-73ee7806-e314-4dbf-9474-8b1228b9be04\", \"caller_cwd\": \"/Users/michal/Projects/wonderfulkb/be-document-p"
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests",
+      "outcome": "======================= 209 passed, 7 warnings in 5.28s ========================"
+    },
+    {
+      "command": "npm test && npm run build",
+      "outcome": "outcome_unavailable"
+    }
+  ],
+  "repairRunId": "task-9e2461c6-3177-46d8-b83d-876682e528d3-acceptance-001-evidence-repair-001",
+  "sourceRunId": "task-9e2461c6-3177-46d8-b83d-876682e528d3-acceptance-001",
+  "startedAt": "2026-10-20T08:07:20.210944+00:00",
+  "status": "escalated"
+}

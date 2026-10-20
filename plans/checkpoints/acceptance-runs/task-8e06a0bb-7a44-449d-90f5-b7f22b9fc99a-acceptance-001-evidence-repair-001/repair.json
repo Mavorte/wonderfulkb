@@ -1,0 +1,50 @@
+{
+  "actor": "km-monitor:task-evidence",
+  "artifactProvenance": [
+    {
+      "path": "plans/checkpoints/task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a.evidence.md",
+      "provenance": "evidence_repair:task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a-acceptance-001-evidence-repair-001",
+      "size": 1607
+    }
+  ],
+  "artifacts": [
+    "plans/checkpoints/task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a.evidence.md"
+  ],
+  "auditPath": "plans/checkpoints/acceptance-runs/task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a-acceptance-001-evidence-repair-001/repair.json",
+  "commit": "65a779b8c8a0589eae2213c16116b17367bb39b3",
+  "escalationReason": "task_evidence_gap",
+  "finishedAt": "2026-10-19T12:28:40.283048+00:00",
+  "gaps": [
+    "command_lines_truncated"
+  ],
+  "mutationCheck": {
+    "changedPaths": [],
+    "clean": true
+  },
+  "pairs": [
+    {
+      "command": "TASK_ID=task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py red -- python3 -m unittest discover -s be-case-client/tests -p 'test_case_c",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py red -- python3 -m unittest discover -s be-case-client/tests -p 'test_case_c",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py green -- python3 -m unittest discover -s be-case-client/tests -p 'test_case",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py green -- python3 -m unittest discover -s be-case-client/tests -p 'test_case",
+      "outcome": "outcome_unavailable"
+    },
+    {
+      "command": "TASK_ID=task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a python3 /Users/michal/.config/opencode/skills/tdd/scripts/proof-capture.py green -- python3 -m unittest discover -s be-case-client/tests -p 'test_case",
+      "outcome": "outcome_unavailable"
+    }
+  ],
+  "repairRunId": "task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a-acceptance-001-evidence-repair-001",
+  "sourceRunId": "task-8e06a0bb-7a44-449d-90f5-b7f22b9fc99a-acceptance-001",
+  "startedAt": "2026-10-19T12:28:39.873296+00:00",
+  "status": "escalated"
+}

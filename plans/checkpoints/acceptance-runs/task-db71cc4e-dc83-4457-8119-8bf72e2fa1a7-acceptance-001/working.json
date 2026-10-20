@@ -1,0 +1,66 @@
+{
+  "findings": [
+    {
+      "claim": "The caller-required TDD cycle must be supported by supplied canonical RED/GREEN proof.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The manifest declares tddRequired true, but the caller explicitly supplied no TDD proof; the checkpoint only asserts that an external proof path exists and does not supply its contents or canonical proof evidence.",
+      "rationale": "A checkpoint claim is not a substitute for the required RED/GREEN artifact, so the mandatory TDD process cannot be validated from caller-supplied material.",
+      "required": "Supply the canonical focused RED/GREEN proof showing a genuine implementation-specific RED and GREEN from the same test command.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/checkpoints/acceptance-runs/task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7-acceptance-001/manifest.json:40"
+        },
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-tdd-proof:none"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-supplied implementation evidence must be complete enough to assess the RunQueued goal.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller marks diff visibility complete=false and truncated=true; audit_storage.py is partial, test_monitor_run_queued.py is omitted, and additional relevant paths were not reviewed.",
+      "rationale": "The supplied material cannot establish a complete semantic assessment, and the visibility contract explicitly requires an incomplete-evidence result rather than ACCEPT; omitted paths cannot support an implementation-absence or correctness inference.",
+      "required": "Provide a complete caller-scoped diff and the omitted relevant implementation/test artifacts for a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-diff-visibility-contract"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_storage.py:partial"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_run_queued.py:omitted"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: RunQueued v existuj\u00edc\u00edm event den\u00edku"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7"
+}

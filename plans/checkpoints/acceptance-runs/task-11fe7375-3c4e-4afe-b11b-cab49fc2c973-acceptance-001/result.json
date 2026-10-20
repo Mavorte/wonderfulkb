@@ -1,0 +1,42 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material does not provide complete implementation visibility for goal-001.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract declares complete=false, truncated=true, pathInventoryTruncated=true, partialPaths contains aws-sam/build/CaseClientFunction/boto3/data/ec2/2014-10-01/resources-1.json, and many paths are omitted; omitted paths were not reviewed.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Acceptance cannot establish that the DynamoDB adapter goal is satisfied from an explicitly incomplete projection. Per the caller contract, omitted paths prove neither presence nor absence, so no implementation correctness conclusion is warranted and the run must fail closed on evidence visibility.",
+      "required": "Provide a complete caller-supplied diff/artifact projection for the evaluation target in a new acceptance run, preserving the canonical Test Gate reference and TDD proof; do not infer missing implementation from omitted paths.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-11fe7375-3c4e-4afe-b11b-cab49fc2c973.red-green-proof.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Case & Client: vym\u011bnit mock za DynamoDB adapt\u00e9r nad extern\u00edmi tabulkami"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-11fe7375-3c4e-4afe-b11b-cab49fc2c973-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-11fe7375-3c4e-4afe-b11b-cab49fc2c973"
+}

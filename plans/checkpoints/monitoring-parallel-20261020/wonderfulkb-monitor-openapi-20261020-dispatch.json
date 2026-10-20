@@ -1,0 +1,15 @@
+{
+  "changedTaskIds": [
+    "task-e0275532-1050-49c2-b1e3-b787751549bf"
+  ],
+  "command": "task.start",
+  "log": "/tmp/opencode-dark-fork-0897.log",
+  "message": "started: task-e0275532-1050-49c2-b1e3-b787751549bf",
+  "modelUsed": "openai/gpt-6-luna",
+  "ok": true,
+  "operation": "start",
+  "phase": "plan",
+  "pid": 47845,
+  "sessionId": "dark-fork-0897",
+  "taskId": "task-e0275532-1050-49c2-b1e3-b787751549bf"
+}

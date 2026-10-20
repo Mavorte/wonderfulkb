@@ -1,0 +1,93 @@
+{
+  "request": "1561861611881373867",
+  "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+  "tasks": [
+    {
+      "id": "task-d2e34593-3eca-44a0-954d-c470eaa95321",
+      "task": "Monitoring MVP: události jednoho ověření vstupu",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-10-source-validation-events.md",
+      "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+      "batchSeq": 10,
+      "phase": "backlog",
+      "pauseState": "default",
+      "parentTaskId": null,
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-source-validation",
+      "pid": null,
+      "sessionId": null
+    },
+    {
+      "id": "task-17cb070f-0692-46f4-85ab-e07a14b662c4",
+      "task": "Monitoring MVP: jeden GET pozorovaných kroků pokusu",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-11-attempt-steps-get.md",
+      "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+      "batchSeq": 11,
+      "phase": "backlog",
+      "pauseState": "default",
+      "parentTaskId": null,
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-source-validation",
+      "pid": null,
+      "sessionId": null
+    },
+    {
+      "id": "task-164adaf3-99df-429e-86b4-c565e5461be0",
+      "task": "Monitoring MVP: události nové práce a výsledku stránky",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-12-page-outcome-events.md",
+      "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+      "batchSeq": 12,
+      "phase": "backlog",
+      "pauseState": "default",
+      "parentTaskId": null,
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-page-outcome",
+      "pid": null,
+      "sessionId": null
+    },
+    {
+      "id": "task-335cb0a3-814a-4a7c-a12a-80bdb3bdfc42",
+      "task": "Monitoring MVP: jeden GET pozorovaných výsledků stránek",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-13-attempt-pages-get.md",
+      "batchId": "wonderfulkb-monitoring-api-slices-20261019",
+      "batchSeq": 13,
+      "phase": "backlog",
+      "pauseState": "default",
+      "parentTaskId": null,
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-page-outcome",
+      "pid": null,
+      "sessionId": null
+    }
+  ],
+  "briefs": [
+    {
+      "file": "plans/tasks/2026-10-20_monitor-mvp-10-source-validation-events.md",
+      "title": "Monitoring MVP: události jednoho ověření vstupu",
+      "sha256": "c5a333010f4f3c447ed54d275ed661616c0db3bede027edd22b39d6bac6da963"
+    },
+    {
+      "file": "plans/tasks/2026-10-20_monitor-mvp-11-attempt-steps-get.md",
+      "title": "Monitoring MVP: jeden GET pozorovaných kroků pokusu",
+      "sha256": "ff2f204025b03e9987a4eb37fff4b269ddca716eb390e6e2ece800478896e89f"
+    },
+    {
+      "file": "plans/tasks/2026-10-20_monitor-mvp-12-page-outcome-events.md",
+      "title": "Monitoring MVP: události nové práce a výsledku stránky",
+      "sha256": "81903351496eac8c49affdb2241a7b2bc0421265d5251c4039db38fff74a80e7"
+    },
+    {
+      "file": "plans/tasks/2026-10-20_monitor-mvp-13-attempt-pages-get.md",
+      "title": "Monitoring MVP: jeden GET pozorovaných výsledků stránek",
+      "sha256": "f1c61d4ec15bc6fc9d459b549050c96a6484a57632cab7c72938470024df3e8d"
+    }
+  ],
+  "checks": {
+    "titles_frontmatter_match": true,
+    "independent_roots": true,
+    "ordinary_sequential_pauses": true,
+    "existing_slots_and_pointers_preserved": true,
+    "batch_active_at_verification": true,
+    "proposal_links_verified": true
+  },
+  "scope": "slices4and5 contract/store + bounded observation GET; producer hooks/runtime identity/deployed worker proof not implemented by these four tasks"
+}

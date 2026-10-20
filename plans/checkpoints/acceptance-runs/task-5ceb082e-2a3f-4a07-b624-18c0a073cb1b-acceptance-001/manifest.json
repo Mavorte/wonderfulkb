@@ -1,0 +1,47 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T13:50:47+00:00",
+    "implementingStartedAt": "2026-10-19T13:44:48+00:00",
+    "taskFile": "plans/tasks/2026-10-19_case-client-server-generated-id.md",
+    "taskId": "task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b",
+    "title": "Case Client: sjednotit serverov\u00e9 UUID case s DynamoDB adapt\u00e9rem"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Case Client: sjednotit serverov\u00e9 UUID case s DynamoDB adapt\u00e9rem"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/decisions-case-client-backend-static-invariants.md",
+      "provenance": "untracked+referenced",
+      "size": 1134
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1521
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 21767
+    },
+    {
+      "mediaKind": "application/x-handoff-directory",
+      "path": "plans/handoffs/case-client-remote-20261019",
+      "provenance": "referenced",
+      "size": 72526
+    }
+  ],
+  "taskId": "task-5ceb082e-2a3f-4a07-b624-18c0a073cb1b",
+  "tddRequired": true
+}

@@ -1,0 +1,84 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility for a trustworthy semantic acceptance verdict.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract is incomplete and omits the route implementation, audit query implementation, focused route test, and other material paths from review.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The caller explicitly requires incomplete evidence/visibility finalization and forbids inferring implementation absence or correctness from omitted paths; the missing visibility materially prevents acceptance.",
+      "required": "Provide a complete caller-computed review bundle covering the material implementation and test paths, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        }
+      ]
+    },
+    {
+      "claim": "Caller-required TDD evidence must contain a valid RED-to-GREEN cycle using the same focused command.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied proof contains only a RED phase, and its projection explicitly states that the GREEN phase and complete phase order are missing.",
+      "policyRule": "catalog:required_tdd_proof_missing:blocking",
+      "rationale": "The manifest declares tddRequired=true, so a RED-only proof does not satisfy the mandatory TDD evidence contract.",
+      "required": "Capture and supply a valid GREEN phase after implementation with the same canonical argv while preserving the existing genuine RED evidence.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-72b7dfa9-0d36-49d1-8880-3afeff29738c.red-green-proof.md:1"
+        }
+      ]
+    },
+    {
+      "claim": "The task requires guarded deployment to the existing AWS test target and direct authenticated HTTP verification of the changed steps route.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-003",
+      "kind": "evidence",
+      "observed": "The supplied task checkpoint states that no build, deploy, or live operation was performed and that deployment/live verification remains absent.",
+      "policyRule": "catalog:verification_evidence_missing:blocking",
+      "rationale": "Local source and RED evidence cannot establish the explicitly required DEPLOYED and LIVE-FUNCTION-VERIFIED outcome.",
+      "required": "Supply task-specific artifact and revision provenance plus successful guarded deployment readback and bounded authenticated HTTP verification of the changed route, or a concrete supported operator completion record within this task.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-72b7dfa9-0d36-49d1-8880-3afeff29738c.checkpoint.md:7"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_complete-step-http-route-0908.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring steps HTTP: skute\u010dn\u00fd endpoint, funk\u010dn\u00ed fixture a runtime ov\u011b\u0159en\u00ed"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-72b7dfa9-0d36-49d1-8880-3afeff29738c-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-72b7dfa9-0d36-49d1-8880-3afeff29738c"
+}

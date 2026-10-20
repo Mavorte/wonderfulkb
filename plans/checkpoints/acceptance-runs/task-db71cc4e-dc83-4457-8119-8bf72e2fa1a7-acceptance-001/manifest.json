@@ -1,0 +1,41 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "2026-10-20T05:57:15+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T05:47:38+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-19_monitor-mvp-03-document-events-get.md",
+      "taskId": "task-9d34c790-5c01-46ba-96d0-bc7f45740763",
+      "title": "Monitoring MVP: jeden GET dokumentov\u00fdch ud\u00e1lost\u00ed"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T05:57:15+00:00",
+    "implementingStartedAt": "2026-10-20T05:50:57+00:00",
+    "taskFile": "plans/tasks/2026-10-19_monitor-mvp-06-run-queued-event.md",
+    "taskId": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7",
+    "title": "Monitoring MVP: RunQueued v existuj\u00edc\u00edm event den\u00edku"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: RunQueued v existuj\u00edc\u00edm event den\u00edku"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1054
+    }
+  ],
+  "taskId": "task-db71cc4e-dc83-4457-8119-8bf72e2fa1a7",
+  "tddRequired": true
+}

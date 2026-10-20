@@ -1,0 +1,66 @@
+{
+  "findings": [
+    {
+      "claim": "The rollback template reference must resolve from deploy.sh's own location to the canonical be-intake documents-table template.",
+      "crossCutting": false,
+      "findingType": "implemented_behavior_incorrect",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "deploy.sh sets ORIGINAL_TEMPLATE using 'cd ../../be-intake/documents-table', which is evaluated relative to the process working directory rather than the script directory.",
+      "rationale": "The expression only resolves correctly when the caller happens to start in be-validator-agent/trigger; invoking the script from another working directory can fail or select the wrong path, contrary to the explicit script-directory-anchored rollback contract.",
+      "required": "Derive the canonical template path from deploy.sh's directory, for example via a SCRIPT_DIR based on BASH_SOURCE[0], so rollback resolution is independent of the caller's working directory.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-validator-agent/trigger/deploy.sh:22"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/2026-10-20_task-d76e4d9e-8ec3-4977-b15f-c8b28368ccab_trigger-opravit-cestu-kanonick-table-ablony-a-zachovat.md"
+        }
+      ]
+    },
+    {
+      "claim": "The caller-required TDD proof must contain a genuine RED caused by the missing stream-template resource/output parity before implementation.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The recorded RED fails with FileNotFoundError for /Users/michal/Projects/be-intake/documents-table/template.yaml because the newly edited test used HERE.parents[2]; the checkpoint explicitly says this was a test path index error corrected before implementation. It therefore never exercised the intended missing AuditTable/output parity.",
+      "rationale": "A RED caused by an erroneous test fixture path does not demonstrate that the regression test detected the pre-implementation behavior required by the task, so the supplied mandatory RED/GREEN provenance is invalid despite the later GREEN run.",
+      "required": "Provide valid RED/GREEN proof using the exact focused command where RED reaches the parity assertions and fails for the pre-implementation stream-template mismatch, followed by GREEN after the implementation change.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-d76e4d9e-8ec3-4977-b15f-c8b28368ccab.red-green-proof.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-d76e4d9e-8ec3-4977-b15f-c8b28368ccab.checkpoint.md"
+        },
+        {
+          "kind": "file",
+          "reference": "be-validator-agent/trigger/tests/test_template.py:117-124"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Trigger: opravit cestu kanonick\u00e9 table \u0161ablony a zachovat audit p\u0159i stream variant\u011b"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-d76e4d9e-8ec3-4977-b15f-c8b28368ccab-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-d76e4d9e-8ec3-4977-b15f-c8b28368ccab"
+}

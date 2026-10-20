@@ -1,0 +1,29 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T11:02:01+00:00",
+    "implementingStartedAt": "2026-10-20T10:56:06+00:00",
+    "taskFile": "plans/tasks/2026-10-20_resolve-four-trigger-integration-conflicts.md",
+    "taskId": "task-9369d5b7-2b9c-4627-9146-2217e7f14348",
+    "title": "Resolve four trigger integration conflicts preserving both features"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Resolve four trigger integration conflicts preserving both features"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-9369d5b7-2b9c-4627-9146-2217e7f14348-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-9369d5b7-2b9c-4627-9146-2217e7f14348.checkpoint.md",
+      "provenance": "untracked",
+      "size": 701
+    }
+  ],
+  "taskId": "task-9369d5b7-2b9c-4627-9146-2217e7f14348",
+  "tddRequired": false
+}

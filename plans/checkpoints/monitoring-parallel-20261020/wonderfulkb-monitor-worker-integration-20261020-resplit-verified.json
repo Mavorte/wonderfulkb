@@ -1,0 +1,53 @@
+{
+  "batchId": "wonderfulkb-monitor-worker-integration-20261020",
+  "members": [
+    {
+      "batchSeq": 1,
+      "id": "task-fc4580ab-a2c5-47b5-b632-e3d71b453652",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-retry-terminal",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-26-worker-audit-hooks.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 2,
+      "id": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-retry-terminal",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-20_monitor-mvp-27-worker-http-integration-proof.md",
+      "type": "implementation"
+    }
+  ],
+  "nextAppendSeq": 3,
+  "rootCount": 2,
+  "roots": [
+    {
+      "batchSeq": 1,
+      "completionState": "incomplete",
+      "id": "task-fc4580ab-a2c5-47b5-b632-e3d71b453652",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 2,
+      "completionState": "incomplete",
+      "id": "task-ac9bcb19-d1d0-4bed-a469-f7e503825caf",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    }
+  ],
+  "state": "inactive",
+  "taskCount": 2
+}

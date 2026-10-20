@@ -1,0 +1,70 @@
+{
+  "findings": [
+    {
+      "claim": "The caller-declared mandatory TDD cycle must have valid RED and GREEN proof.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The manifest sets tddRequired=true, the caller states that no TDD proof was supplied, and the task checkpoint leaves both focused RED capture and GREEN verification incomplete.",
+      "rationale": "Without canonical RED/GREEN evidence, the required test-first implementation process cannot be established from the supplied material.",
+      "required": "Supply valid task-scoped RED and GREEN proof for the focused page-outcome test command through the canonical TDD evidence workflow.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-12-page-outcome-events.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-164adaf3-99df-429e-86b4-c565e5461be0.checkpoint.md"
+        }
+      ]
+    },
+    {
+      "claim": "Acceptance requires complete visibility into the task-scoped implementation material needed to assess the page-outcome event and persistence goal.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The caller-computed visibility contract declares complete=false and truncated=true; audit_events.py is only partial, while audit_storage.py and test_monitor_page_outcome_events.py are omitted from review.",
+      "rationale": "Those paths contain the core event contract, persistence behavior, and focused goal evidence, so the supplied material cannot support a trustworthy semantic acceptance verdict; omission proves only incomplete visibility, not missing implementation.",
+      "required": "Provide a complete, non-truncated task-scoped diff or equivalent supplied artifacts covering the full page event contract, persistence changes, and focused tests for a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_events.py"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/src/document_processing/audit/audit_storage.py"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_page_outcome_events.py"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: ud\u00e1losti nov\u00e9 pr\u00e1ce a v\u00fdsledku str\u00e1nky"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-164adaf3-99df-429e-86b4-c565e5461be0-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-164adaf3-99df-429e-86b4-c565e5461be0"
+}

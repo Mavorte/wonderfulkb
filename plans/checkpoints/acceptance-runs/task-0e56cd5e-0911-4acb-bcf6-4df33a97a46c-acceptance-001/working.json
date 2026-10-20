@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "claim": "The required deployed and live-function-verified cache-reuse read delivery is not demonstrated by the supplied acceptance material.",
+      "crossCutting": false,
+      "findingType": "verification_evidence_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The task checkpoint explicitly states BLOCKED / NOT COMPLETE, records only SOURCE/INSTALLED and deployed-artifact equivalence, and reports the sole live request returned 404 because the approved synthetic document metadata and trustworthy reuse observation were unavailable. The caller also declares the supplied diff incomplete with omitted paths not reviewed.",
+      "rationale": "The canonical task requires an actual guarded AWS TEST deployment plus authenticated HTTP verification of the changed PageCacheReused pages DTO and event parity; local tests, image smoke, artifact equivalence, and a 404 do not establish that required live behavior. Incomplete supplied visibility additionally prevents semantic acceptance without making claims about omitted implementation.",
+      "required": "Supply complete review visibility and task-local evidence of the actual deployed revision/digest plus a successful bounded authenticated HTTP verification of a genuine PageCacheReused observation through pages and document/run events, including the required scope and no-store assertions, or a canonical Test Gate reference that proves the explicit artifact goal.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c.checkpoint.md"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-15-cache-reused-read.md"
+        },
+        {
+          "kind": "artifact",
+          "reference": "caller-diff-visibility-contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: pou\u017eit\u00ed cache ve st\u00e1vaj\u00edc\u00edm str\u00e1nkov\u00e9m API"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-0e56cd5e-0911-4acb-bcf6-4df33a97a46c"
+}

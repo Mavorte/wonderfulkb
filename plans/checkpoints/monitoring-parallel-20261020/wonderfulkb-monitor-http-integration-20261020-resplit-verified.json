@@ -1,0 +1,95 @@
+{
+  "batchId": "wonderfulkb-monitor-http-integration-20261020",
+  "members": [
+    {
+      "batchSeq": 1,
+      "id": "task-9d34c790-5c01-46ba-96d0-bc7f45740763",
+      "pauseState": null,
+      "phase": "planning",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-file-received",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-03-document-events-get.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 2,
+      "id": "task-a165d3b1-7bd6-461e-a2f6-0c6c029c2b56",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-file-received",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-04-file-received-aws-smoke.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 3,
+      "id": "task-1d77ce99-3b09-48f7-9978-e0e99783c9b5",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-run-queued",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-07-run-events-get.md",
+      "type": "implementation"
+    },
+    {
+      "batchSeq": 4,
+      "id": "task-dc9a8eab-2900-4aca-9a80-4411cebc0472",
+      "pauseState": "default",
+      "phase": "backlog",
+      "project": "wonderfulkb",
+      "proposalId": "proposal-20261019-150954-c8891f",
+      "proposalSection": "slice-attempt-started",
+      "taskFile": "/Users/michal/Projects/wonderfulkb/plans/tasks/2026-10-19_monitor-mvp-09-attempts-get.md",
+      "type": "implementation"
+    }
+  ],
+  "nextAppendSeq": 5,
+  "rootCount": 4,
+  "roots": [
+    {
+      "batchSeq": 1,
+      "completionState": "incomplete",
+      "id": "task-9d34c790-5c01-46ba-96d0-bc7f45740763",
+      "paused": false,
+      "phase": "planning",
+      "status": "running",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 2,
+      "completionState": "incomplete",
+      "id": "task-a165d3b1-7bd6-461e-a2f6-0c6c029c2b56",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 3,
+      "completionState": "incomplete",
+      "id": "task-1d77ce99-3b09-48f7-9978-e0e99783c9b5",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    },
+    {
+      "batchSeq": 4,
+      "completionState": "incomplete",
+      "id": "task-dc9a8eab-2900-4aca-9a80-4411cebc0472",
+      "paused": true,
+      "phase": "backlog",
+      "status": "backlog",
+      "terminalLeafTaskIds": [],
+      "terminalReason": null
+    }
+  ],
+  "state": "active",
+  "taskCount": 4
+}

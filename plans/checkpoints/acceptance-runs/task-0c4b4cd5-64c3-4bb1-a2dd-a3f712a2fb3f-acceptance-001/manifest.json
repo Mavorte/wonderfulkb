@@ -1,0 +1,29 @@
+{
+  "concurrentContext": [],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-19T15:00:48+00:00",
+    "implementingStartedAt": "2026-10-19T14:55:08+00:00",
+    "taskFile": "plans/tasks/2026-10-19_case-client-deploy-live-integration.md",
+    "taskId": "task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f",
+    "title": "Case & Client: nasadit n\u00e1\u0161 Python na existuj\u00edc\u00ed testovac\u00ed API a odladit \u017eivou DB integraci"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Case & Client: nasadit n\u00e1\u0161 Python na existuj\u00edc\u00ed testovac\u00ed API a odladit \u017eivou DB integraci"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f.checkpoint.md",
+      "provenance": "untracked",
+      "size": 3062
+    }
+  ],
+  "taskId": "task-0c4b4cd5-64c3-4bb1-a2dd-a3f712a2fb3f",
+  "tddRequired": true
+}

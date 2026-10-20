@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "claim": "The supplied review material must provide complete visibility of the owned implementation paths before the OpenAPI field-fidelity goal can be accepted.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract is complete=false: the owned OpenAPI YAML is only partial and the owned focused contract test is omitted, so those omitted portions were not reviewed.",
+      "rationale": "The supplied TDD proof establishes a focused RED/GREEN cycle, but it cannot replace semantic inspection of omitted implementation material. The caller explicitly requires incomplete evidence/visibility to finalize without ACCEPT and forbids inferring absence or correctness from omitted paths.",
+      "required": "Provide a complete caller-supplied diff or equivalent review material covering the full owned OpenAPI YAML and focused contract test, then perform a new acceptance run.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/contracts/openapi-processing-monitor.yaml"
+        },
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_openapi_observation_contract.py"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring OpenAPI: p\u0159esn\u00e1 povinn\u00e1 pole a status enumy eventov\u00fdch DTO"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-eb1279da-fb6b-42ed-9551-8fa3fb753515-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-eb1279da-fb6b-42ed-9551-8fa3fb753515"
+}

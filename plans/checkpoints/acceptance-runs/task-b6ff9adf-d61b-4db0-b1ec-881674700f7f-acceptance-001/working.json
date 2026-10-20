@@ -1,0 +1,66 @@
+{
+  "findings": [
+    {
+      "claim": "The task requires a working FileReceived audit envelope, idempotent store, bounded document Query with scope-bound continuation, explicit disabled configuration, finite SDK timeout, and required audit table/IAM configuration.",
+      "crossCutting": false,
+      "findingType": "required_implementation_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "correctness",
+      "observed": "The complete supplied diff adds only be-document-processing/tests/test_monitor_audit_storage.py for the product slice; it does not add audit_events.py, audit_storage.py, audit_queries.py, or any existing-template audit resource/IAM/configuration change. The checkpoint also states implementation step 4 is not completed.",
+      "rationale": "The test imports an audit API that is not delivered, and the required persistence/read behavior and infrastructure therefore cannot exist in the supplied implementation.",
+      "required": "Implement the narrowly scoped audit modules and required existing-template configuration so FileReceived can be conditionally stored and read via bounded, document-scoped Query with scope-bound continuation, disabled-store behavior, and finite SDK timeout.",
+      "sources": [
+        {
+          "kind": "file",
+          "reference": "be-document-processing/tests/test_monitor_audit_storage.py:6"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-b6ff9adf-d61b-4db0-b1ec-881674700f7f.checkpoint.md:7"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-19_monitor-mvp-01-file-received-store.md"
+        }
+      ]
+    },
+    {
+      "claim": "The caller requires valid RED then GREEN TDD proof for this task.",
+      "crossCutting": false,
+      "findingType": "required_tdd_proof_missing",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-002",
+      "kind": "evidence",
+      "observed": "The supplied proof contains only a RED command that exited while loading conftest because pymupdf was missing; the proof projection says GREEN is missing and phase order is incomplete, and the checkpoint says the recorded RED is not a genuine implementation failure.",
+      "rationale": "An environment import failure is not the expected behavioral RED, and no GREEN phase was captured, so the mandatory TDD proof is invalid and incomplete.",
+      "required": "Provide genuine expected RED evidence followed by GREEN evidence for the focused audit-store behavior, captured under the caller-owned TDD workflow.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-b6ff9adf-d61b-4db0-b1ec-881674700f7f.red-green-proof.md:7"
+        },
+        {
+          "kind": "artifact",
+          "reference": "plans/checkpoints/task-b6ff9adf-d61b-4db0-b1ec-881674700f7f.checkpoint.md:5"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: ulo\u017eit a p\u0159e\u010d\u00edst jeden FileReceived event"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-b6ff9adf-d61b-4db0-b1ec-881674700f7f"
+}

@@ -1,0 +1,69 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T05:38:56+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-23-lifecycle-window-reducer.md",
+      "taskId": "task-1e8311a4-08b0-4142-9bf9-6553815e572e",
+      "title": "Monitoring MVP: bounded \u010dtec\u00ed odvozen\u00ed lifecycle"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T05:39:04+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-25-runtime-producer-context.md",
+      "taskId": "task-626722a4-f9fd-46a9-8304-17b9f24de1cc",
+      "title": "Monitoring MVP: skute\u010dn\u00fd runtime kontext a queue claim producer"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T05:39:41+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-parallel-page-observation-mapping.md",
+      "taskId": "task-b37c64cd-1783-45e6-8daf-f2e6a04e0954",
+      "title": "Monitoring MVP: \u010dist\u00e9 mapov\u00e1n\u00ed omezen\u00e9ho okna page observations"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T05:45:19+00:00",
+    "implementingStartedAt": "2026-10-20T05:39:23+00:00",
+    "taskFile": "plans/tasks/2026-10-20_monitor-parallel-openapi-contract.md",
+    "taskId": "task-e0275532-1050-49c2-b1e3-b787751549bf",
+    "title": "Monitoring MVP: jeden p\u0159esn\u00fd OpenAPI kontrakt event observations"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring MVP: jeden p\u0159esn\u00fd OpenAPI kontrakt event observations"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-e0275532-1050-49c2-b1e3-b787751549bf-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-19_monitoring-filereceived-audit-plan-scope.md",
+      "provenance": "untracked+referenced",
+      "size": 919
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-e0275532-1050-49c2-b1e3-b787751549bf.checkpoint.md",
+      "provenance": "untracked",
+      "size": 823
+    }
+  ],
+  "taskId": "task-e0275532-1050-49c2-b1e3-b787751549bf",
+  "tddRequired": true
+}

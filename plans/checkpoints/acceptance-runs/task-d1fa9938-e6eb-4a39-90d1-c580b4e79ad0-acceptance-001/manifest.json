@@ -1,0 +1,80 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": true,
+        "finishedAt": "2026-10-20T07:39:07+00:00",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:31:03+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-page-http-route-0908.md",
+      "taskId": "task-2932fbee-4ac8-47eb-981b-73bbcc17b40f",
+      "title": "Monitoring pages HTTP: skute\u010dn\u00fd endpoint, funk\u010dn\u00ed fixture a runtime ov\u011b\u0159en\u00ed"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:39:18+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-lifecycle-unscoped-evidence-0923.md",
+      "taskId": "task-59a2a44c-6136-465a-b2a7-2be7a6a6911a",
+      "title": "Monitoring lifecycle: zachovat unscoped evidence a odm\u00edtnout rozporn\u00fd ordinal fallback"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:39:10+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-cache-contract-proof-0923.md",
+      "taskId": "task-73ee7806-e314-4dbf-9474-8b1228b9be04",
+      "title": "Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test matici"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:35:12+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_complete-lifecycle-http-routes-0908.md",
+      "taskId": "task-a67c7b62-949e-4720-b1a2-51fcc3502cec",
+      "title": "Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T07:43:07+00:00",
+    "implementingStartedAt": "2026-10-20T07:37:21+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-worker-audit-integration-0908.md",
+    "taskId": "task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0",
+    "title": "Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1158
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 1540
+    }
+  ],
+  "taskId": "task-d1fa9938-e6eb-4a39-90d1-c580b4e79ad0",
+  "tddRequired": true
+}

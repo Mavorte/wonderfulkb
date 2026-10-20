@@ -1,0 +1,42 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review evidence must expose the task-owned reducer implementation and focused test matrix sufficiently to assess the lifecycle goal.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility is incomplete and explicitly omits be-document-processing/src/document_processing/audit/audit_lifecycle_observations.py and be-document-processing/tests/test_monitor_lifecycle_observations.py; their contents were not supplied for review.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "Those omitted paths are the core source and test deliverables for goal-001. The supplied GREEN proof establishes a focused command outcome but cannot substitute for semantic inspection of omitted implementation and tests, so acceptance cannot determine correctness and must not infer that either deliverable is absent.",
+      "required": "Provide a complete caller-supplied diff or equivalent bounded artifacts containing the task-owned reducer and focused tests, then rerun semantic acceptance; do not infer implementation absence from the current omission.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "file",
+          "reference": "plans/tasks/2026-10-20_complete-monitor-lifecycle-20261020.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring lifecycle: dokon\u010dit pure reducer a \u00faplnou testovac\u00ed matici"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-422c4f83-d138-47ea-859b-011f3d86e6e5-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-422c4f83-d138-47ea-859b-011f3d86e6e5"
+}

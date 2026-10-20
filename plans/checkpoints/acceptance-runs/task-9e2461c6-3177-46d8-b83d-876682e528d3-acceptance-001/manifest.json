@@ -1,0 +1,81 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:03:12+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-4f189265-c034-43e8-b8d9-c4e1fef9a45b-monitoring-lifecycle-http-skuten-bounded-routes-a-funkn-end.md",
+      "taskId": "task-4f189265-c034-43e8-b8d9-c4e1fef9a45b",
+      "title": "[acceptance-fix] Monitoring lifecycle HTTP: skute\u010dn\u00e9 bounded routes a funk\u010dn\u00ed end-to-end ov\u011b\u0159en\u00ed: goal-001: Monitoring l"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T07:55:22+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1-monitoring-worker-dokonit-skuten-producer-voln-a-behaviorln.md",
+      "taskId": "task-cf78ff7a-20a9-4053-bc3c-712066c4c7d1",
+      "title": "[acceptance-fix] Monitoring worker: dokon\u010dit skute\u010dn\u00e1 producer vol\u00e1n\u00ed a behavior\u00e1ln\u00ed d\u016fkaz: goal-001: Monitoring worker:"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T08:03:30+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_followup-task-f5933265-a1a8-4267-b493-689dc98b55c8-monitoring-lifecycle-zachovat-unscoped-evidence-a-odmtnout-r.md",
+      "taskId": "task-f5933265-a1a8-4267-b493-689dc98b55c8",
+      "title": "[acceptance-fix] Monitoring lifecycle: zachovat unscoped evidence a odm\u00edtnout rozporn\u00fd ordinal fallback: goal-001: Monit"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T08:04:59+00:00",
+    "implementingStartedAt": "2026-10-20T07:57:19+00:00",
+    "taskFile": "plans/tasks/2026-10-20_followup-task-9e2461c6-3177-46d8-b83d-876682e528d3-monitoring-cache-reuse-dokonit-poadovanou-validan-izolan-a-f.md",
+    "taskId": "task-9e2461c6-3177-46d8-b83d-876682e528d3",
+    "title": "[acceptance-fix] Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test matici: goal-001: Mon"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "[acceptance-fix] Monitoring cache reuse: dokon\u010dit po\u017eadovanou valida\u010dn\u00ed, izola\u010dn\u00ed a fail-open test matici: goal-001: Mon"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-9e2461c6-3177-46d8-b83d-876682e528d3-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-19_monitoring-filereceived-audit-plan-scope.md",
+      "provenance": "untracked+referenced",
+      "size": 919
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "learnings/architecture/2026-10-20_page-cache-reused-artifact-roundtrip.md",
+      "provenance": "untracked+referenced",
+      "size": 838
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-73ee7806-e314-4dbf-9474-8b1228b9be04.checkpoint.md",
+      "provenance": "untracked+referenced",
+      "size": 793
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-9e2461c6-3177-46d8-b83d-876682e528d3.checkpoint.md",
+      "provenance": "untracked",
+      "size": 1235
+    }
+  ],
+  "taskId": "task-9e2461c6-3177-46d8-b83d-876682e528d3",
+  "tddRequired": true
+}

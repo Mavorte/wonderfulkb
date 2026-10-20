@@ -1,0 +1,42 @@
+{
+  "classification": "evidence_reject",
+  "findings": [
+    {
+      "claim": "The supplied review material must expose the implementation paths necessary to assess the PageCacheReused event and store contract.",
+      "crossCutting": false,
+      "effect": "blocking",
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-declared diff visibility is incomplete and explicitly omits audit_events.py, audit_storage.py, and test_monitor_cache_reused_events.py; only unrelated or broader documentation changes are visible, so the implementation semantics cannot be reviewed.",
+      "policyRule": "catalog:unknown:blocking",
+      "rationale": "The visibility contract forbids inferring absence or correctness from omitted paths and requires incomplete evidence/visibility rather than ACCEPT when complete is false.",
+      "required": "Provide a complete caller-supplied semantic review bundle containing the task-relevant implementation diff, or an equivalent complete artifact, without requiring Acceptance to execute tests.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied-diff-visibility-contract"
+        },
+        {
+          "kind": "plan",
+          "reference": "plans/tasks/2026-10-20_monitor-mvp-14-cache-reused-event.md"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: ud\u00e1lost skute\u010dn\u00e9ho pou\u017eit\u00ed str\u00e1nkov\u00e9 cache"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-8c478cf6-5418-4bdc-b8a0-af56daaa25a3-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-8c478cf6-5418-4bdc-b8a0-af56daaa25a3"
+}

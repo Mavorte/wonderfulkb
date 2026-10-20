@@ -1,0 +1,16 @@
+{
+  "classification": "ACCEPT",
+  "findings": [],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "MET",
+      "summary": "[acceptance-fix] Monitoring lifecycle: zachovat unscoped evidence a odm\u00edtnout rozporn\u00fd ordinal fallback: goal-001: Monit"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-f5933265-a1a8-4267-b493-689dc98b55c8-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "finalized",
+  "taskId": "task-f5933265-a1a8-4267-b493-689dc98b55c8"
+}

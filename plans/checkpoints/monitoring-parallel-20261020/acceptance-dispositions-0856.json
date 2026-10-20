@@ -1,0 +1,16 @@
+[
+  {
+    "old": "task-b96084af-3aa2-438d-a562-900bbdad7e95",
+    "completion": "task-eb1279da-fb6b-42ed-9551-8fa3fb753515",
+    "batch": "wonderfulkb-monitor-openapi-20261020",
+    "seq": 5,
+    "historicalVerdict": "infra_inconclusive"
+  },
+  {
+    "old": "task-e7de471f-9b14-4e3d-99db-15cd8f31d8b5",
+    "completion": "task-d6b1100a-d1eb-4e95-8618-85cb3380f560",
+    "batch": "wonderfulkb-monitor-lifecycle-domain-20261020",
+    "seq": 4,
+    "historicalVerdict": "infra_inconclusive"
+  }
+]

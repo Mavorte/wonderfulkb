@@ -1,0 +1,97 @@
+{
+  "concurrentContext": [
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:11:34+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-12-page-outcome-events.md",
+      "taskId": "task-164adaf3-99df-429e-86b4-c565e5461be0",
+      "title": "Monitoring MVP: ud\u00e1losti nov\u00e9 pr\u00e1ce a v\u00fdsledku str\u00e1nky"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:13:18+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-22-retry-terminal-events.md",
+      "taskId": "task-2264932c-e1f9-4f8c-9314-3bfffac8234a",
+      "title": "Monitoring MVP: ud\u00e1losti retry a skute\u010dn\u00fdch konc\u016f"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:11:50+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-16-extraction-events.md",
+      "taskId": "task-8b51eacc-35c1-498a-b4a7-f2421c498bd3",
+      "title": "Monitoring MVP: ud\u00e1losti skute\u010dn\u011b proveden\u00e9 extrakce"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:11:17+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-20_monitor-mvp-10-source-validation-events.md",
+      "taskId": "task-d2e34593-3eca-44a0-954d-c470eaa95321",
+      "title": "Monitoring MVP: ud\u00e1losti jednoho ov\u011b\u0159en\u00ed vstupu"
+    },
+    {
+      "execution": {
+        "completedDuringEvaluation": false,
+        "finishedAt": "",
+        "overlappedEvaluation": true,
+        "startedAt": "2026-10-20T06:11:09+00:00"
+      },
+      "taskFile": "plans/tasks/2026-10-19_monitor-mvp-08-attempt-started-event.md",
+      "taskId": "task-e1e34fde-82b5-43aa-a744-aef7b5858293",
+      "title": "Monitoring MVP: AttemptStarted v event den\u00edku"
+    }
+  ],
+  "evaluationTarget": {
+    "acceptanceDispatchAt": "2026-10-20T06:20:23+00:00",
+    "implementingStartedAt": "2026-10-20T06:12:40+00:00",
+    "taskFile": "plans/tasks/2026-10-20_complete-monitor-lifecycle-20261020.md",
+    "taskId": "task-422c4f83-d138-47ea-859b-011f3d86e6e5",
+    "title": "Monitoring lifecycle: dokon\u010dit pure reducer a \u00faplnou testovac\u00ed matici"
+  },
+  "goals": [
+    {
+      "id": "goal-001",
+      "summary": "Monitoring lifecycle: dokon\u010dit pure reducer a \u00faplnou testovac\u00ed matici"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-422c4f83-d138-47ea-859b-011f3d86e6e5-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "taskArtifacts": [
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-1e8311a4-08b0-4142-9bf9-6553815e572e.host-review.md",
+      "provenance": "untracked+referenced",
+      "size": 3084
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-422c4f83-d138-47ea-859b-011f3d86e6e5.checkpoint.md",
+      "provenance": "untracked",
+      "size": 840
+    },
+    {
+      "mediaKind": "text/markdown",
+      "path": "plans/checkpoints/task-422c4f83-d138-47ea-859b-011f3d86e6e5.red-green-proof.md",
+      "provenance": "untracked+referenced",
+      "size": 4617
+    }
+  ],
+  "taskId": "task-422c4f83-d138-47ea-859b-011f3d86e6e5",
+  "tddRequired": true
+}

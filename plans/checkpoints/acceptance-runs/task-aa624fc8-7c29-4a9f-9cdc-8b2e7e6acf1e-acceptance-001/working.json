@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "claim": "The acceptance verdict requires complete caller-supplied visibility for the evaluation target.",
+      "crossCutting": false,
+      "findingType": "unknown",
+      "goalIds": [
+        "goal-001"
+      ],
+      "id": "finding-001",
+      "kind": "evidence",
+      "observed": "The caller-computed diff visibility contract declares complete=false and truncated=true, with omittedPaths including opencode.json and a partial proposal path; those omitted materials were not reviewed.",
+      "rationale": "The supplied signature-event code and RED/GREEN artifact are consistent with the goal, but the explicit incomplete-visibility contract prevents a trustworthy ACCEPT and does not establish that any implementation is absent or incorrect.",
+      "required": "Provide a complete caller-computed review bundle, or a subsequent run whose visibility contract is complete, so goal-001 can receive a conclusive semantic verdict.",
+      "sources": [
+        {
+          "kind": "artifact",
+          "reference": "caller-supplied diff visibility contract"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "status": "UNMET",
+      "summary": "Monitoring MVP: ud\u00e1losti skute\u010dn\u00e9 detekce podpis\u016f"
+    }
+  ],
+  "policyVersion": "acceptance-policy-v2",
+  "runId": "task-aa624fc8-7c29-4a9f-9cdc-8b2e7e6acf1e-acceptance-001",
+  "schemaVersion": "acceptance-run-v1",
+  "status": "working",
+  "taskId": "task-aa624fc8-7c29-4a9f-9cdc-8b2e7e6acf1e"
+}
