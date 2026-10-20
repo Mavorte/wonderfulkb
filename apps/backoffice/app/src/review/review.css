@@ -25,7 +25,6 @@
 .cr-crumbs { gap: var(--kb-space-2); font-size: 0.875rem; line-height: 1.5rem; color: var(--kb-text-secondary); }
 .cr-header__row { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--kb-space-6); flex-wrap: wrap; }
 .cr-title { margin: 0; font-size: 1.75rem; line-height: 2.5rem; letter-spacing: -0.031rem; font-weight: var(--kb-weight-semibold); }
-.cr-title__amount { color: var(--kb-text-secondary); font-weight: var(--kb-weight-regular); margin-left: var(--kb-space-2); }
 .cr-header__meta { margin: 0; color: var(--kb-text-secondary); }
 .cr-run { display: flex; align-items: center; gap: var(--kb-space-3); font-size: 0.875rem; line-height: 1.5rem; color: var(--kb-text-secondary); }
 

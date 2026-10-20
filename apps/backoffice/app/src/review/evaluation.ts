@@ -123,7 +123,8 @@ export interface CaseView {
   fixes: FixItem[];
   facts: { label: string; value: string | null }[];
   borrower: string | null;
-  amount: string | null;
+  ico: string | null;
+  loanNo: string | null;
   decision: "approve" | "return" | "reject" | null;
   headline: string;
 }
@@ -353,8 +354,8 @@ export function createCaseView(evaluation: EvaluationRow, results: ResultRow[]):
   const recipient = byId.get("recipient_matches_client");
   const borrowerParty = recipient?.expected ?? firstField(rules, ["debtor", "buyer", "policyholder"]);
   const borrower = borrowerParty?.split(/,\s*IČO?\b/)[0] ?? null;
-  const amount = firstField(rules, ["asset_value"]);
-  const loanNo = firstField(rules, ["secured_contract"]);
+  const ico = borrowerParty?.match(/IČO?:?\s*(\d+)/)?.[1] ?? null;
+  const loanNo = firstField(rules, ["secured_contract"])?.replace(/^Smlouva o úvěru č\.\s*/, "") ?? null;
 
   const verdict = verdicts[evaluation.verdict ?? ""];
   const headline =
@@ -373,14 +374,15 @@ export function createCaseView(evaluation: EvaluationRow, results: ResultRow[]):
     fixes,
     facts: [
       { label: "Borrower", value: party(borrowerParty) },
-      { label: "Loan contract", value: loanNo?.replace(/^Smlouva o úvěru č\.\s*/, "") ?? null },
+      { label: "Loan contract", value: loanNo },
       { label: "Asset", value: firstField(rules, ["asset", "subject", "insured_asset"]) },
       { label: "Serial number", value: firstField(rules, ["serial_number"]) },
       { label: "Supplier", value: party(firstField(rules, ["seller", "handed_over_by"])) },
       { label: "Guarantor", value: party(firstField(rules, ["guarantor"])) },
     ],
     borrower,
-    amount,
+    ico,
+    loanNo,
     decision: evaluation.status === "completed" ? (verdict?.decision ?? null) : null,
     headline,
   };
