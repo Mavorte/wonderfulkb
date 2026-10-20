@@ -112,6 +112,9 @@
 .cr-dialog__body { padding: 0 var(--kb-space-6); overflow-y: auto; display: grid; gap: var(--kb-space-4); }
 .cr-dialog__lead { margin: 0; font-size: 0.875rem; line-height: 1.5rem; }
 .cr-dialog__list { margin: 0; padding-left: var(--kb-space-5); display: grid; gap: var(--kb-space-2); font-size: 0.875rem; line-height: 1.5rem; }
+.cr-call-status { margin: -4px 0 0; font-size: 0.75rem; line-height: 1rem; color: var(--kb-text-secondary); }
+.cr-call-status--success { color: var(--kb-success); }
+.cr-call-status--error { color: var(--kb-error); }
 .cr-dialog__foot { display: flex; justify-content: flex-end; gap: var(--kb-space-3); padding: var(--kb-space-4) var(--kb-space-6) var(--kb-space-6); }
 
 /* Main grid */

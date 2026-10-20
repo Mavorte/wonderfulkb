@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Correction Call Status",
+  "description": "Returns the latest Request correction call of a case from backoffice.correction_calls (body: case_id): its status as the correction-caller agent advances it, without the surname on file",
+  "method": "POST",
+  "path_slug": "correction-call-status"
+}

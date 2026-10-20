@@ -17,7 +17,6 @@ export type RequestRow = {
   contact_last_name: string;
   findings: string;
   note: string;
-  upload_link: string;
   status: string;
 };
 
@@ -27,7 +26,7 @@ export type CallState = {
   request_id: string;
   verified: boolean;
   attempts: number;
-  sms_sent: boolean;
+  email_sent: boolean;
 };
 
 type Ctx = {

@@ -1,7 +1,8 @@
 // Request correction (body: case_id, findings [{ label, found }], note): leaves
 // what the client must fix in backoffice.correction_calls, then has the
 // correction-caller agent call the client. The agent picks the row up by the
-// number it dials, verifies the surname stored here and texts the upload link.
+// number it dials, verifies the surname stored here and emails the findings with
+// the upload link (mocked).
 //
 // Configuration (globals):
 // - `correction_call_destination`: the number to call and text (demo: one number for every case).

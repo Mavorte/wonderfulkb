@@ -253,7 +253,7 @@
     },
     "internal": {
       "compact_context": true,
-      "use_dynamic_announcements": true,
+      "use_dynamic_announcements": false,
       "prompts": {
         "dynamic_announcement": {}
       }

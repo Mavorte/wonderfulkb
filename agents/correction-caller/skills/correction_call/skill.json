@@ -1,14 +1,14 @@
 {
   "name": "correction_call",
   "display_name": "Correction Call",
-  "description": "Outbound call after a back-office reviewer returned a loan case for corrections: verify the surname, explain what to fix, send the upload link by SMS.",
+  "description": "Outbound call after a back-office reviewer returned a loan case for corrections: verify the surname, summarise what to fix, email the full findings with the upload link.",
   "prompts": {
     "skill": "prompt.md"
   },
   "tools": {
     "open_correction_call": { "type": "programmable", "config": {} },
     "verify_last_name": { "type": "programmable", "config": {} },
-    "send_upload_link": { "type": "programmable", "config": {} },
+    "send_findings_email": { "type": "programmable", "config": {} },
     "end_call": { "type": "programmable", "config": {} }
   }
 }
