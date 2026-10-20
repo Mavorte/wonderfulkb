@@ -1,0 +1,9 @@
+{
+  "kind": "http",
+  "name": "Correction Call",
+  "description": "Request correction: records what to fix for a case in backoffice.correction_calls (findings, the contact's surname on file, the client's intake upload link), then has the correction-caller agent call the number in the global correction_call_destination",
+  "service_account_id": "f942331f-0443-44fa-a5dd-6c456b6e9349",
+  "method": "POST",
+  "path_slug": "correction-call",
+  "param_mapping": {}
+}

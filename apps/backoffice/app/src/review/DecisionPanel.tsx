@@ -1,35 +1,27 @@
 import { useEffect, useRef, useState } from "react";
+import { useWonderful } from "@wonderful/app-sdk";
+import getErrorCode from "../getErrorCode";
 import type { CaseView } from "./evaluation";
 
 type DecisionKind = "approve" | "return" | "escalate" | "reject";
 
 const options: { kind: DecisionKind; label: string }[] = [
   { kind: "approve", label: "Approve disbursement" },
-  { kind: "return", label: "Return for corrections" },
+  { kind: "return", label: "Request correction" },
   { kind: "escalate", label: "Escalate to risk" },
   { kind: "reject", label: "Reject" },
 ];
 
 const notConnected = "Recording decisions isn't connected yet";
 
-function draftFor(view: CaseView) {
-  const { evaluation, fixes, borrower } = view;
-  const steps = fixes.map((f, i) => `${i + 1}. ${f.label}: ${f.found ?? "needs review"}`).join("\n");
-  return {
-    to: "",
-    subject: `Case ${evaluation.case_id}${borrower ? ` – ${borrower}` : ""}: corrections needed before disbursement`,
-    body: `Hello,
+const callErrors: Record<string, string> = {
+  no_contact: "The client has no contact person on file to verify.",
+  case_not_found: "The case wasn't found.",
+  not_configured: "Calling isn't configured for this workspace.",
+  call_failed: "The call couldn't be placed. Try again.",
+};
 
-the review of case ${evaluation.case_id}${borrower ? ` (${borrower})` : ""} found issues that block disbursement. Please arrange the following with the client:
-
-${steps}
-
-The case will be re-checked once the corrected documents are uploaded.
-
-Thank you,
-Back office`,
-  };
-}
+type CallState = { status: "idle" | "calling" } | { status: "placed"; phone: string } | { status: "failed"; message: string };
 
 export default function DecisionPanel({ view }: { view: CaseView }) {
   const recommended = view.decision;
@@ -37,34 +29,43 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
   const [reason, setReason] = useState("");
   const [showError, setShowError] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
-  const [drafting, setDrafting] = useState(false);
-  const [draft, setDraft] = useState(() => draftFor(view));
-  const [copied, setCopied] = useState<"idle" | "done" | "failed">("idle");
+  const [confirming, setConfirming] = useState(false);
+  const [call, setCall] = useState<CallState>({ status: "idle" });
+  const { api } = useWonderful();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const deviates = recommended !== null && choice !== recommended;
 
   useEffect(() => {
-    if (!drafting) return;
-    dialogRef.current?.querySelector<HTMLElement>("textarea")?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setDrafting(false);
+    if (!confirming) return;
+    dialogRef.current?.querySelector<HTMLElement>(".kb-btn--primary")?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setConfirming(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [drafting]);
+  }, [confirming]);
 
   const confirm = () => {
     if (deviates && !reason.trim()) return setShowError(true);
-    if (choice === "return") setDrafting(true);
+    if (choice === "return") setConfirming(true);
   };
 
-  const copy = async () => {
+  const placeCall = async () => {
+    setCall({ status: "calling" });
     try {
-      await navigator.clipboard.writeText(`${draft.subject}\n\n${draft.body}`);
-      setCopied("done");
-    } catch {
-      setCopied("failed");
+      const result = await api.invokeFunction<{ phone_number: string }>("backoffice/correction-call", {
+        method: "POST",
+        params: {
+          case_id: view.evaluation.case_id,
+          findings: view.fixes.map((f) => ({ label: f.label, found: f.found })),
+          note: reason.trim(),
+        },
+      });
+      setCall({ status: "placed", phone: result.phone_number });
+      setConfirming(false);
+    } catch (error) {
+      const code = getErrorCode(error);
+      setCall({ status: "failed", message: callErrors[code ?? ""] ?? callErrors.call_failed });
     }
-    window.setTimeout(() => setCopied("idle"), 2000);
   };
 
   return (
@@ -114,9 +115,23 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
         </button>
       )}
       {choice === "return" ? (
-        <button type="button" className="kb-btn kb-btn--primary cr-confirm" onClick={confirm}>
-          Review request to sales
-        </button>
+        <>
+          <button
+            type="button"
+            className="kb-btn kb-btn--primary cr-confirm"
+            onClick={confirm}
+            disabled={call.status === "placed" || view.fixes.length === 0}
+          >
+            Request correction
+          </button>
+          {call.status === "placed" ? (
+            <p className="cr-disabled-note" role="status">
+              Calling the client on {call.phone}. The agent verifies their surname, explains the findings and texts the upload link.
+            </p>
+          ) : (
+            view.fixes.length === 0 && <p className="cr-disabled-note">There are no findings to correct.</p>
+          )}
+        </>
       ) : (
         <>
           <button type="button" className="kb-btn kb-btn--primary cr-confirm" disabled title={choice ? notConnected : undefined}>
@@ -126,56 +141,52 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
         </>
       )}
 
-      {drafting && (
-        <div className="cr-overlay" onClick={(e) => e.target === e.currentTarget && setDrafting(false)}>
+      {confirming && (
+        <div className="cr-overlay" onClick={(e) => e.target === e.currentTarget && setConfirming(false)}>
           <div className="cr-dialog" role="dialog" aria-modal="true" aria-labelledby="cr-dialog-title" ref={dialogRef}>
             <header className="cr-dialog__head">
               <div>
-                <p className="cr-eyebrow">Drafted from the evaluation · sending isn't connected yet</p>
+                <p className="cr-eyebrow">Outbound call to the client</p>
                 <h2 className="cr-dialog__title" id="cr-dialog-title">
-                  Request to sales
+                  Request correction
                 </h2>
               </div>
-              <button type="button" className="cr-dialog__close" aria-label="Close" onClick={() => setDrafting(false)}>
+              <button type="button" className="cr-dialog__close" aria-label="Close" onClick={() => setConfirming(false)}>
                 <svg className="kb-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="m12 10.6 5-5 1.4 1.4-5 5 5 5-1.4 1.4-5-5-5 5L5.6 17l5-5-5-5L7 5.6l5 5Z" />
                 </svg>
               </button>
             </header>
             <div className="cr-dialog__body">
-              <div className="kb-field">
-                <label htmlFor="cr-to">To</label>
-                <input id="cr-to" className="kb-input" placeholder="Sales owner of the case" value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} />
-              </div>
-              <div className="kb-field">
-                <label htmlFor="cr-subject">Subject</label>
-                <input
-                  id="cr-subject"
-                  className="kb-input"
-                  value={draft.subject}
-                  onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
-                />
-              </div>
-              <div className="kb-field">
-                <label htmlFor="cr-body">Message</label>
-                <textarea
-                  id="cr-body"
-                  className="kb-input cr-dialog__text"
-                  rows={16}
-                  value={draft.body}
-                  onChange={(e) => setDraft({ ...draft, body: e.target.value })}
-                />
-              </div>
+              <p className="cr-dialog__lead">
+                An agent calls {view.borrower ?? "the client"}, confirms the contact person's surname against the one on file, explains what to
+                correct and texts a link to upload the corrected documents.
+              </p>
+              <ol className="cr-dialog__list">
+                {view.fixes.map((f) => (
+                  <li key={f.ruleId}>
+                    <strong>{f.label}</strong>
+                    {f.found && <span>: {f.found}</span>}
+                  </li>
+                ))}
+              </ol>
+              {reason.trim() && (
+                <p className="cr-dialog__lead">
+                  <strong>Your note:</strong> {reason.trim()}
+                </p>
+              )}
+              {call.status === "failed" && (
+                <p className="kb-field__error" role="alert">
+                  {call.message}
+                </p>
+              )}
             </div>
             <footer className="cr-dialog__foot">
-              <button type="button" className="kb-btn kb-btn--secondary" onClick={() => setDrafting(false)}>
+              <button type="button" className="kb-btn kb-btn--secondary" onClick={() => setConfirming(false)}>
                 Back
               </button>
-              <button type="button" className="kb-btn kb-btn--tertiary" onClick={copy}>
-                {copied === "done" ? "Copied" : copied === "failed" ? "Copy blocked — select the text" : "Copy message"}
-              </button>
-              <button type="button" className="kb-btn kb-btn--primary" disabled title="Sending isn't connected yet">
-                Send and return case
+              <button type="button" className="kb-btn kb-btn--primary" onClick={placeCall} disabled={call.status === "calling"}>
+                {call.status === "calling" ? "Calling…" : "Call client"}
               </button>
             </footer>
           </div>
