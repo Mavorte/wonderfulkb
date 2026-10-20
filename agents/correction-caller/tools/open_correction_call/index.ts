@@ -22,6 +22,12 @@ export default w.tool({
     await updateRow(ctx, state, { status: "in_call", communication_id: comm?.id ?? "" });
 
     const company = request.data.company_name;
+    // Bias speech recognition toward the surname and company it is about to hear.
+    try {
+      ctx.transcriber.updateSessionConfig({ terms: [request.data.contact_last_name, company].filter(Boolean) });
+    } catch (error) {
+      console.log(`transcriber hints not applied: ${error instanceof Error ? error.message : String(error)}`);
+    }
     ctx.agent.announce(
       `Dobrý den, jsem AI asistent oddělení kontroly úvěrů Komerční banky. Volám kvůli žádosti o úvěr${company ? ` společnosti ${company}` : ""}. ` +
         "Nejdřív vás musím ověřit. Jaké je vaše příjmení?",

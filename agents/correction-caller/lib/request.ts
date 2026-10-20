@@ -94,14 +94,31 @@ export function normalizeName(name: string): string {
     .replace(/[^a-z]/g, (ch) => FOLD[ch] ?? "");
 }
 
+function editDistance(a: string, b: string): number {
+  let previous = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j++) {
+      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    previous = current;
+  }
+  return previous[b.length];
+}
+
+// Speech-to-text mangles a letter or two of uncommon surnames.
+function isClose(spoken: string, expected: string): boolean {
+  return editDistance(spoken, expected) <= (expected.length > 5 ? 2 : 1);
+}
+
 /**
- * The caller may say their full name, so the surname on file may be the whole
- * answer or its last word. Longer answers are refused, so one attempt cannot
- * try a list of surnames.
+ * The caller may answer "Křemeník", "Dalibor Křemeník" or "je to Křemeník", so
+ * any word, or the whole answer, may be the surname on file. Answers over three
+ * words are refused, so one attempt cannot try a list of surnames.
  */
 export function lastNameMatches(spoken: string, onFile: string): boolean {
   const expected = normalizeName(onFile);
-  const words = spoken.trim().split(/\s+/);
-  if (!expected || words.length > 2) return false;
-  return normalizeName(spoken) === expected || normalizeName(words[words.length - 1]) === expected;
+  const words = spoken.trim().split(/\s+/).filter(Boolean);
+  if (!expected || words.length === 0 || words.length > 3) return false;
+  return [spoken, ...words].some((candidate) => isClose(normalizeName(candidate), expected));
 }

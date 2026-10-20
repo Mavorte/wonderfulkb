@@ -1,12 +1,17 @@
 import { s, w } from "@wonderful/types/schema";
 import { MAX_ATTEMPTS, getState, lastNameMatches, loadRow, parseFindings, setState, updateRow } from "../../lib/request";
 
+const RETRY = "Promiňte, to se mi nepodařilo ověřit. Řekněte mi prosím své příjmení ještě jednou, klidně ho i hláskujte.";
+const LOCKED = "Bohužel vás teď nemohu ověřit. Banka se vám ozve jinou cestou. Na shledanou.";
+
 export default w.tool({
   name: "verify_last_name",
   description:
     "Check the surname the caller said against the contact person on file. On a match, returns the document problems to explain. Never reveals the name on file.",
   params: s.object({
-    last_name: s.string().describe("The surname exactly as the caller said it, e.g. 'Novák'. Never guess or fill in a name the caller did not say."),
+    last_name: s
+      .string()
+      .describe("The caller's answer to the surname question exactly as transcribed, even if it does not look like a name, e.g. 'je to Novák'. Never guess or fill in a name."),
   }),
   handler: async (ctx, { last_name }) => {
     const state = getState(ctx);
@@ -16,7 +21,7 @@ export default w.tool({
 
     if (!state.verified) {
       if (state.attempts >= MAX_ATTEMPTS) {
-        return { verified: false, attempts_left: 0, instruction: "Verification is locked. Say you cannot continue and call end_call." };
+        return { verified: false, attempts_left: 0, say: LOCKED, instruction: "Say the `say` text word for word, then call end_call." };
       }
       state.attempts += 1;
       state.verified = lastNameMatches(last_name, row.contact_last_name);
@@ -27,10 +32,11 @@ export default w.tool({
         return {
           verified: false,
           attempts_left: attemptsLeft,
+          say: attemptsLeft > 0 ? RETRY : LOCKED,
           instruction:
             attemptsLeft > 0
-              ? "The surname does not match. Do not say why or hint at the right name. Ask the caller to repeat or spell their surname."
-              : "Verification failed. Say politely that you cannot discuss the case and that the bank will contact them again, then call end_call. Share no case details.",
+              ? "Say the `say` text word for word and nothing else. Do not hint at the name on file."
+              : "Say the `say` text word for word, then call end_call. Share no case details.",
         };
       }
       await updateRow(ctx, state, { status: "verified" });
