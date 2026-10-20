@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
-import type { EvaluationPayload, EvaluationRow, ResultRow } from "./evaluation";
+import { isRunning, type EvaluationPayload, type EvaluationRow, type ResultRow } from "./evaluation";
+
+const pollMs = 4000;
 
 type State =
   | { status: "loading" }
@@ -47,12 +49,21 @@ export default function useEvaluation({ caseId, evaluationId }: EvaluationReques
 
   useEffect(() => {
     let cancelled = false;
+    let timer: number | undefined;
+    // While the agent is still recording results, refetch quietly so the page fills in live.
+    const fetchOnce = () =>
+      load({ caseId, evaluationId })
+        .then((payload) => {
+          if (cancelled) return;
+          setState({ status: "ready", payload });
+          if (payload.evaluation && isRunning(payload.evaluation)) timer = window.setTimeout(fetchOnce, pollMs);
+        })
+        .catch((e: unknown) => !cancelled && setState({ status: "error", message: e instanceof Error ? e.message : String(e) }));
     setState({ status: "loading" });
-    load({ caseId, evaluationId })
-      .then((payload) => !cancelled && setState({ status: "ready", payload }))
-      .catch((e: unknown) => !cancelled && setState({ status: "error", message: e instanceof Error ? e.message : String(e) }));
+    fetchOnce();
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
     // `load` is recreated each render; only the requested ids should refetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps

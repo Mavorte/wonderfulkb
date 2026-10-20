@@ -361,7 +361,7 @@ export function createCaseView(evaluation: EvaluationRow, results: ResultRow[]):
     evaluation.status === "failed"
       ? "Evaluation failed"
       : evaluation.status !== "completed"
-        ? "Evaluation in progress"
+        ? "Checking business rules"
         : (verdict?.headline ?? evaluation.verdict ?? "No verdict");
 
   return {
@@ -384,6 +384,10 @@ export function createCaseView(evaluation: EvaluationRow, results: ResultRow[]):
     decision: evaluation.status === "completed" ? (verdict?.decision ?? null) : null,
     headline,
   };
+}
+
+export function isRunning(evaluation: EvaluationRow): boolean {
+  return evaluation.status !== "completed" && evaluation.status !== "failed";
 }
 
 export function formatTime(iso: string | null | undefined): string {

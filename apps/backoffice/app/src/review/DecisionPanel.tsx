@@ -33,7 +33,7 @@ Back office`,
 
 export default function DecisionPanel({ view }: { view: CaseView }) {
   const recommended = view.decision;
-  const [choice, setChoice] = useState<DecisionKind>(recommended ?? "escalate");
+  const [choice, setChoice] = useState<DecisionKind | null>(recommended);
   const [reason, setReason] = useState("");
   const [showError, setShowError] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -119,10 +119,10 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
         </button>
       ) : (
         <>
-          <button type="button" className="kb-btn kb-btn--primary cr-confirm" disabled title={notConnected}>
+          <button type="button" className="kb-btn kb-btn--primary cr-confirm" disabled title={choice ? notConnected : undefined}>
             Confirm decision
           </button>
-          <p className="cr-disabled-note">{notConnected}</p>
+          <p className="cr-disabled-note">{choice ? notConnected : "Choose a decision"}</p>
         </>
       )}
 
