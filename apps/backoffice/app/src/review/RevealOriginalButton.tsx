@@ -2,20 +2,30 @@ import { useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
 import type { DocView } from "./evaluation";
 
-type OriginalResponse = { url: string; filename: string; expiresIn: number; error?: undefined } | { error: string };
+/** The readable original as the document-original Function returns it; the link expires after 60 s. */
+export type RevealedOriginal = { url: string; filename: string; contentType: string };
+
+type OriginalResponse = (RevealedOriginal & { expiresIn: number; error?: undefined }) | { error: string };
 
 const errorText: Record<string, string> = {
   not_found: "The documents API has no original for this document.",
   unauthenticated: "Sign in to reveal the original.",
 };
 
-type Props = { caseId: string; doc: DocView };
+type Props = {
+  caseId: string;
+  doc: DocView;
+  revealed: boolean;
+  onReveal: (original: RevealedOriginal) => void;
+  onHide: () => void;
+};
 
 /**
- * Opens the readable original (signatures visible) in a new tab. Each click is
- * audited and gets a fresh link that expires after 60 s, so the link is never kept.
+ * Reveals the readable original (signatures visible) for the document panel to
+ * show in place of the masked pages. Each reveal is audited and fetches a fresh
+ * link, so the link is never kept.
  */
-function HostRevealOriginalButton({ caseId, doc }: Props) {
+function HostRevealOriginalButton({ caseId, doc, revealed, onReveal, onHide }: Props) {
   const { api } = useWonderful();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,15 +34,6 @@ function HostRevealOriginalButton({ caseId, doc }: Props) {
   const unavailable = doc.originalAvailable === false;
 
   const reveal = async () => {
-    // Open the tab inside the click so popup blockers allow it; it gets the link once the call returns.
-    // A blocked tab stops here, before the audited reveal.
-    const tab = window.open("", "_blank");
-    if (!tab) {
-      setError("The browser blocked the new tab. Allow pop-ups for this app and try again.");
-      return;
-    }
-    tab.opener = null;
-    tab.document.title = "Opening original…";
     setBusy(true);
     setError(null);
     try {
@@ -41,14 +42,21 @@ function HostRevealOriginalButton({ caseId, doc }: Props) {
         params: { case_id: caseId, document_id: doc.documentId },
       });
       if (result.error !== undefined) throw new Error(errorText[result.error] ?? `Couldn't reveal the original (${result.error}).`);
-      tab.location.href = result.url;
+      onReveal({ url: result.url, filename: result.filename, contentType: result.contentType });
     } catch (e: unknown) {
-      tab.close();
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
   };
+
+  if (revealed) {
+    return (
+      <button type="button" className="kb-btn kb-btn--secondary kb-btn--small" onClick={onHide}>
+        Hide original
+      </button>
+    );
+  }
 
   return (
     <span className="cr-reveal">
@@ -57,7 +65,7 @@ function HostRevealOriginalButton({ caseId, doc }: Props) {
         className="kb-btn kb-btn--secondary kb-btn--small"
         onClick={reveal}
         disabled={busy || unavailable}
-        title={unavailable ? "No original for this document" : "Opens the original with readable signatures. The reveal is audited."}
+        title={unavailable ? "No original for this document" : "Shows the original with readable signatures. The reveal is audited."}
       >
         {busy ? "Revealing…" : "Reveal original"}
       </button>
