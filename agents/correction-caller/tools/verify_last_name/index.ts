@@ -1,8 +1,8 @@
 import { s, w } from "@wonderful/types/schema";
 import { MAX_ATTEMPTS, getState, lastNameMatches, loadRow, parseFindings, setState, updateRow } from "../../lib/request";
 
-const RETRY = "Promiňte, to se mi nepodařilo ověřit. Řekněte mi prosím své příjmení ještě jednou, klidně ho i hláskujte.";
-const LOCKED = "Bohužel vás teď nemohu ověřit. Banka se vám ozve jinou cestou. Na shledanou.";
+const RETRY = "Sorry, I couldn't verify that. Could you say your last name once more, or spell it for me?";
+const LOCKED = "I'm sorry, I can't verify you right now. The bank will contact you another way. Goodbye.";
 
 export default w.tool({
   name: "verify_last_name",
@@ -11,7 +11,7 @@ export default w.tool({
   params: s.object({
     last_name: s
       .string()
-      .describe("The caller's answer to the surname question exactly as transcribed, even if it does not look like a name, e.g. 'je to Novák'. Never guess or fill in a name."),
+      .describe("The caller's answer to the surname question exactly as transcribed, even if it does not look like a name, e.g. \"it's Novák\". Never guess or fill in a name."),
   }),
   handler: async (ctx, { last_name }) => {
     const state = getState(ctx);
@@ -48,7 +48,7 @@ export default w.tool({
       findings: parseFindings(row.findings),
       reviewer_note: row.note || null,
       instruction:
-        "In one or two short Czech sentences, summarise the main problem. Do not go through every finding. Then call send_findings_email.",
+        "In one or two short English sentences, summarise the main problem. Do not go through every finding. Then call send_findings_email.",
     };
   },
 });
