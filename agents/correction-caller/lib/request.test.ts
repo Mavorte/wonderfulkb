@@ -7,18 +7,26 @@ describe("lastNameMatches", () => {
     expect(lastNameMatches("KŘEMENÍK", "Křemeník")).toBe(true);
   });
 
-  it("accepts the full name", () => {
+  it("accepts the full name or a short sentence", () => {
     expect(lastNameMatches("Dalibor Křemeník", "Křemeník")).toBe(true);
+    expect(lastNameMatches("je to Křemeník", "Křemeník")).toBe(true);
+  });
+
+  it("tolerates a misheard letter or two", () => {
+    expect(lastNameMatches("Křemenik", "Křemeník")).toBe(true);
+    expect(lastNameMatches("Kremeňík", "Křemeník")).toBe(true);
+    expect(lastNameMatches("Křemínek", "Křemeník")).toBe(true);
+    expect(lastNameMatches("Nová", "Novák")).toBe(true);
+    expect(lastNameMatches("Nov", "Novák")).toBe(false);
   });
 
   it("rejects a different surname", () => {
     expect(lastNameMatches("Novák", "Křemeník")).toBe(false);
-    expect(lastNameMatches("Křemen", "Křemeník")).toBe(false);
+    expect(lastNameMatches("To není", "Křemeník")).toBe(false);
   });
 
   it("rejects a list of surnames in one answer", () => {
-    expect(lastNameMatches("Novák Svoboda Křemeník", "Křemeník")).toBe(false);
-    expect(lastNameMatches("Křemeník Novák", "Křemeník")).toBe(false);
+    expect(lastNameMatches("Novák Svoboda Dvořák Křemeník", "Křemeník")).toBe(false);
   });
 
   it("never matches an empty name on file", () => {

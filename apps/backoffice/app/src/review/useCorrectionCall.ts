@@ -27,6 +27,10 @@ export function describeCall(call: CorrectionCall): { text: string; tone: "info"
       return { text: "Client informed. The findings and upload link were emailed.", tone: "success" };
     case "verification_failed":
       return { text: "The surname didn't match, so nothing was shared.", tone: "error" };
+    case "ended_unverified":
+      return { text: "The call ended before the client was verified. Nothing was shared.", tone: "error" };
+    case "ended":
+      return { text: "The call ended before the email was sent.", tone: "error" };
     default:
       return { text: "The call couldn't be placed.", tone: "error" };
   }
