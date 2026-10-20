@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Skeleton from "../Skeleton";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import ActivityTimeline from "./ActivityTimeline";
 import DecisionPanel from "./DecisionPanel";
@@ -373,6 +374,72 @@ function Review({ view }: { view: CaseView }) {
   );
 }
 
+function ReviewSkeleton() {
+  return (
+    <div className="cr" aria-busy="true" aria-label="Loading evaluation">
+      <header className="cr-header">
+        <div className="cr-header__row">
+          <div className="bo-skeleton-stack">
+            <Skeleton width="8rem" height="0.875rem" />
+            <Skeleton width="22rem" height="2.25rem" />
+            <Skeleton width="18rem" />
+          </div>
+          <Skeleton width="16rem" height="3rem" />
+        </div>
+      </header>
+
+      <section className="cr-action cr-action--none">
+        <div className="bo-skeleton-stack">
+          <Skeleton width="9rem" height="0.75rem" />
+          <Skeleton width="60%" height="1.75rem" />
+          <Skeleton width="40%" />
+          <Skeleton width="80%" />
+          <Skeleton width="70%" />
+        </div>
+        <div className="cr-action__side">
+          <Skeleton height="0.5rem" />
+          <Skeleton width="70%" />
+          <Skeleton height="2.5rem" />
+        </div>
+      </section>
+
+      <div className="cr-grid">
+        <div className="cr-left">
+          <div className="cr-facts">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="bo-skeleton-stack">
+                <Skeleton width="5rem" height="0.75rem" />
+                <Skeleton width="8rem" />
+              </div>
+            ))}
+          </div>
+          <ol className="cr-rules">
+            {Array.from({ length: 6 }, (_, i) => (
+              <li key={i} className="cr-rule cr-rule--skeleton">
+                <div className="cr-rule__head">
+                  <Skeleton width="2rem" height="2rem" className="bo-skeleton--pill" />
+                  <Skeleton width="60%" />
+                  <Skeleton width="4rem" height="1.25rem" className="bo-skeleton--pill" />
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="cr-docs">
+          <div className="cr-docs__strip">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} width="4rem" height="5rem" />
+            ))}
+          </div>
+          <div className="cr-docs__pages">
+            <div className="cr-page" style={{ height: "40rem" }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CaseReviewPage() {
   const caseId = useParams<{ caseId: string }>().caseId ?? null;
   const evaluationId = useSearchParams()[0].get("evaluation");
@@ -386,7 +453,7 @@ export default function CaseReviewPage() {
     [state],
   );
 
-  if (state.status === "loading") return <p className="cr-state">Loading evaluation…</p>;
+  if (state.status === "loading") return <ReviewSkeleton />;
   if (state.status === "error") return <p className="cr-state cr-state--error">Couldn't load the evaluation: {state.message}</p>;
   if (!view) {
     const missing = evaluationId ? `Evaluation ${evaluationId} not found.` : caseId ? `Case ${caseId} has no evaluation yet.` : "No evaluation yet.";

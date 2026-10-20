@@ -213,3 +213,13 @@
 .bo-clients__address { color: var(--kb-text-secondary); min-width: 16rem; }
 .bo-clients__case { display: flex; align-items: center; gap: var(--kb-space-3); white-space: nowrap; }
 .bo-clients__date { font-size: 0.8125rem; color: var(--kb-text-muted); font-variant-numeric: tabular-nums; }
+
+.bo-skeleton {
+  display: block; width: 100%; height: 1rem; border-radius: var(--kb-radius-3xs);
+  background: linear-gradient(90deg, var(--kb-surface-muted) 25%, var(--kb-grey-20) 50%, var(--kb-surface-muted) 75%) 0 0 / 200% 100%;
+  animation: bo-shimmer 1.4s ease-in-out infinite;
+}
+.bo-skeleton--pill { border-radius: var(--kb-radius-full); }
+.bo-skeleton-stack { display: grid; gap: var(--kb-space-2); }
+@keyframes bo-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.bo-skeleton--end { margin-left: auto; }

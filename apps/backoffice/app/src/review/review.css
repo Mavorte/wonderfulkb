@@ -146,6 +146,8 @@
   padding: var(--kb-space-4) var(--kb-space-5); background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer;
 }
 .cr-rule__head:hover { background: var(--kb-surface-muted); }
+.cr-rule--skeleton .cr-rule__head { cursor: default; }
+.cr-rule--skeleton .cr-rule__head:hover { background: none; }
 .cr-rule__head:focus-visible { outline: 2px solid var(--kb-focus-ring); outline-offset: -2px; }
 .cr-rule__no {
   width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: var(--kb-radius-full);

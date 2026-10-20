@@ -1,5 +1,6 @@
 import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
+import Skeleton from "../Skeleton";
 import { Link } from "react-router-dom";
 import CaseStatusPill from "../cases/CaseStatusPill";
 import type { CaseStatus } from "../cases/caseStatus";
@@ -95,6 +96,63 @@ function QueueTable({ cases, rank }: { cases: TriagedCase[]; rank: Map<string, n
   );
 }
 
+function QueueSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading cases">
+      <Skeleton width="24rem" height="1.5rem" className="bo-queue__lead" />
+      <ul className="bo-queue__summary">
+        {tiers.map((tier) => (
+          <li key={tier}>
+            <div className={`bo-queue__tile bo-queue__tile--${tier}`}>
+              <Skeleton width="2.5rem" height="2.5rem" />
+              <Skeleton width="70%" height="1.5rem" />
+            </div>
+          </li>
+        ))}
+      </ul>
+      {tiers.slice(0, 2).map((tier) => (
+        <div key={tier} className="bo-card bo-card--queue">
+          <div className="bo-queue__section-head">
+            <span className={`bo-queue__dot bo-queue__dot--${tier}`} />
+            <Skeleton width="14rem" height="1.5rem" />
+            <Skeleton width="22rem" className="bo-queue__section-description" />
+          </div>
+          <table className="bo-table bo-table--queue">
+            <tbody>
+              {[0, 1, 2].map((row) => (
+                <tr key={row}>
+                  <td className="bo-queue__rank">
+                    <Skeleton width="1rem" />
+                  </td>
+                  <td>
+                    <div className="bo-skeleton-stack">
+                      <Skeleton width="12rem" />
+                      <Skeleton width="7rem" height="0.875rem" />
+                      <Skeleton width="6rem" height="1.25rem" className="bo-skeleton--pill" />
+                    </div>
+                  </td>
+                  <td>
+                    <div className="bo-skeleton-stack">
+                      <Skeleton width="16rem" />
+                      <Skeleton width="20rem" height="0.875rem" />
+                    </div>
+                  </td>
+                  <td className="bo-queue__action">
+                    <div className="bo-skeleton-stack">
+                      <Skeleton width="10rem" />
+                      <Skeleton width="7rem" height="0.875rem" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function QueuePage() {
   const { api, track } = useWonderful();
   const apiRef = useRef(api);
@@ -144,10 +202,10 @@ export default function QueuePage() {
   if (!payload || !queue) {
     return (
       <>
-        <h1 className="bo-title">Work queue</h1>
-        <p className="bo-empty" aria-busy="true">
-          Loading cases…
-        </p>
+        <div className="bo-heading bo-heading--compact">
+          <h1 className="bo-title">Work queue</h1>
+        </div>
+        <QueueSkeleton />
       </>
     );
   }
