@@ -48,7 +48,10 @@ class TextractDetector:
     def __init__(self, client=None, region="eu-central-1", dpi=150, cache_dir=None):
         if client is None:
             import boto3
-            client = boto3.client("textract", region_name=region)
+            from botocore.config import Config
+            # Textract has a low TPS quota: parallel workers get ProvisionedThroughputExceeded, so back off and retry
+            client = boto3.client("textract", region_name=region,
+                                  config=Config(retries={"mode": "adaptive", "max_attempts": 10}))
         self.client, self.dpi = client, dpi
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.calls = 0
