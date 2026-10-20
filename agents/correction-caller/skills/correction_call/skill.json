@@ -6,10 +6,32 @@
     "skill": "prompt.md"
   },
   "tools": {
-    "open_correction_call": { "type": "programmable", "config": {} },
-    "verify_last_name": { "type": "programmable", "config": {} },
-    "next_finding": { "type": "programmable", "config": {} },
-    "send_findings_email": { "type": "programmable", "config": {} },
-    "end_call": { "type": "programmable", "config": {} }
+    "open_correction_call": {
+      "type": "programmable",
+      "config": {}
+    },
+    "verify_last_name": {
+      "type": "programmable",
+      "config": {}
+    },
+    "next_finding": {
+      "type": "programmable",
+      "config": {}
+    },
+    "send_findings_email": {
+      "type": "programmable",
+      "config": {}
+    },
+    "end_call": {
+      "type": "programmable",
+      "config": {},
+      "announcement_type": "fixed",
+      "delay_messages": {
+        "en-US": {
+          "male": [],
+          "female": []
+        }
+      }
+    }
   }
 }
