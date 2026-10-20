@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import RevealOriginalButton from "./RevealOriginalButton";
 import StatusIcon from "./StatusIcon";
 import type { DocView, RequiredDoc } from "./evaluation";
 
@@ -14,15 +15,20 @@ function shortTitle(title: string) {
 }
 
 export default function DocumentPanel({
+  caseId,
   docs,
   missing,
   focus,
   onSelect,
+  onPreviewError,
 }: {
+  caseId: string;
   docs: DocView[];
   missing: RequiredDoc[];
   focus: Focus | null;
   onSelect: (focus: Focus) => void;
+  // A preview image failed to load, e.g. because its presigned link expired.
+  onPreviewError: () => void;
 }) {
   const doc = docs.find((d) => d.key === focus?.docKey) ?? docs[0];
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -50,38 +56,44 @@ export default function DocumentPanel({
   }
 
   const activePage = focus?.docKey === doc.key ? focus.page : null;
+  const hasPreview = doc.pages.some(Boolean);
 
   return (
     <section className="cr-docs" aria-label="Documents" ref={sectionRef}>
       <div className="cr-docs__strip" role="tablist" aria-label="Case documents">
-        {docs.map((d) => (
-          <button
-            key={d.key}
-            type="button"
-            role="tab"
-            aria-selected={d.key === doc.key}
-            className="cr-thumb"
-            onClick={() => onSelect({ docKey: d.key, page: d.referencedPages[0] ?? 1, nonce: Date.now() })}
-            title={d.title}
-          >
-            <span className={`cr-thumb__img${d.pages.length ? "" : " is-unavailable"}`}>
-              {d.pages.length ? (
-                <img src={d.pages[0]} alt="" loading="lazy" />
-              ) : (
-                <svg className="kb-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm4 18H6V4h7v5h5v11Z" />
-                </svg>
-              )}
-              {d.status && (
-                <span className="cr-thumb__badge">
-                  <StatusIcon status={d.status} size={16} />
-                </span>
-              )}
-            </span>
-            <span className="cr-thumb__title">{shortTitle(d.title)}</span>
-            <span className="cr-thumb__meta">{d.pages.length ? `${d.pages.length} p.` : "No preview"}</span>
-          </button>
-        ))}
+        {docs.map((d) => {
+          const cover = d.pages.find(Boolean);
+          return (
+            <button
+              key={d.key}
+              type="button"
+              role="tab"
+              aria-selected={d.key === doc.key}
+              className="cr-thumb"
+              onClick={() => onSelect({ docKey: d.key, page: d.referencedPages[0] ?? 1, nonce: Date.now() })}
+              title={d.title}
+            >
+              <span className={`cr-thumb__img${cover ? "" : " is-unavailable"}`}>
+                {cover ? (
+                  <img src={cover} alt="" loading="lazy" onError={onPreviewError} />
+                ) : d.loading ? (
+                  <span className="cr-spinner" aria-hidden="true" />
+                ) : (
+                  <svg className="kb-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm4 18H6V4h7v5h5v11Z" />
+                  </svg>
+                )}
+                {d.status && (
+                  <span className="cr-thumb__badge">
+                    <StatusIcon status={d.status} size={16} />
+                  </span>
+                )}
+              </span>
+              <span className="cr-thumb__title">{shortTitle(d.title)}</span>
+              <span className="cr-thumb__meta">{cover ? `${d.pages.length} p.` : d.loading ? "Loading…" : "No preview"}</span>
+            </button>
+          );
+        })}
         {missing.map((m) => (
           <div key={m.description} className="cr-thumb cr-thumb--missing" title={m.description}>
             <span className="cr-thumb__img">
@@ -101,19 +113,28 @@ export default function DocumentPanel({
             {doc.referencedPages.length > 0 && ` · cited p. ${doc.referencedPages.join(", ")}`}
           </p>
         </div>
-        {doc.pdf ? (
-          <a className="kb-btn kb-btn--tertiary kb-btn--small" href={doc.pdf} target="_blank" rel="noreferrer">
-            Open PDF
-          </a>
-        ) : (
-          <button type="button" className="kb-btn kb-btn--tertiary kb-btn--small" disabled title="Documents API not connected yet">
-            Open PDF
-          </button>
-        )}
+        <div className="cr-docs__actions">
+          {doc.pdf ? (
+            <a
+              className="kb-btn kb-btn--tertiary kb-btn--small"
+              href={doc.pdf}
+              target="_blank"
+              rel="noreferrer"
+              title="Masked copy: signatures are blacked out"
+            >
+              Open PDF
+            </a>
+          ) : (
+            <button type="button" className="kb-btn kb-btn--tertiary kb-btn--small" disabled title="No masked PDF for this document">
+              Open PDF
+            </button>
+          )}
+          <RevealOriginalButton key={doc.key} caseId={caseId} doc={doc} />
+        </div>
       </header>
 
       {doc.fields.length > 0 && (
-        <details className="cr-extracted" open={!doc.pages.length}>
+        <details className="cr-extracted" open={!hasPreview}>
           <summary>Extracted data</summary>
           <dl>
             {doc.fields.map((f) => (
@@ -129,23 +150,34 @@ export default function DocumentPanel({
         </details>
       )}
 
-      {doc.pages.length ? (
+      {hasPreview ? (
         <div className="cr-docs__pages" ref={scrollRef}>
           {doc.pages.map((src, i) => (
             <div
-              key={src}
+              key={i}
               className={`cr-page${doc.referencedPages.includes(i + 1) ? " is-cited" : ""}${activePage === i + 1 ? " is-active" : ""}`}
               ref={(el) => {
                 pageRefs.current[i] = el;
               }}
             >
-              <img src={src} alt={`${doc.title}, page ${i + 1}`} loading={i < 3 ? "eager" : "lazy"} />
+              {src ? (
+                <img src={src} alt={`${doc.title}, page ${i + 1}`} loading={i < 3 ? "eager" : "lazy"} onError={onPreviewError} />
+              ) : (
+                <div className="cr-page__missing">No preview for this page</div>
+              )}
               <span className="cr-page__no">
                 {doc.referencedPages.includes(i + 1) && "Cited · "}
                 {i + 1} / {doc.pages.length}
               </span>
             </div>
           ))}
+        </div>
+      ) : doc.loading ? (
+        <div className="cr-docs__pages cr-docs__unavailable" role="status">
+          <div className="cr-loading">
+            <span className="cr-spinner cr-spinner--32" aria-hidden="true" />
+            <p>Loading pages…</p>
+          </div>
         </div>
       ) : (
         <div className="cr-docs__pages cr-docs__unavailable">
@@ -154,7 +186,7 @@ export default function DocumentPanel({
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm4 18H6V4h7v5h5v11Z" />
             </svg>
             <p>Page preview not available</p>
-            <p className="cr-muted">The documents API isn't connected to this app yet.</p>
+            <p className="cr-muted">{doc.unavailable ?? "The evaluation didn't record this document's id."}</p>
           </div>
         </div>
       )}

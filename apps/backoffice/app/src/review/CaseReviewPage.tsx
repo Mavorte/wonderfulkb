@@ -18,6 +18,7 @@ import {
 } from "./evaluation";
 import { rawStatusLabel } from "./ruleLabels";
 import getCasePath from "../cases/getCasePath";
+import useDocumentPreviews from "./useDocumentPreviews";
 import useEvaluation from "./useEvaluation";
 
 type Tab = "rules" | "activity";
@@ -40,43 +41,36 @@ function rawCounts(rules: RuleView[]) {
 }
 
 function RuleRow({ rule, onOpen }: { rule: RuleView; onOpen: (focus: Focus) => void }) {
-  const [expanded, setExpanded] = useState(false);
   return (
     <li className={`cr-finding cr-finding--${rule.status}`} id={`rule-${rule.id}`}>
       <StatusIcon status={rule.status} size={16} />
       <div className="cr-finding__body">
-        <button type="button" className="cr-finding__title" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+        <p className="cr-finding__title">
           {rule.label}
           <span className={`cr-raw cr-raw--${rule.status}`}>{rawStatusLabel[rule.rawStatus] ?? rule.rawStatus}</span>
-          <svg className="kb-icon kb-icon--16 cr-finding__chevron" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m12 13.2 4.9-5 1.5 1.5-6.4 6.4-6.4-6.4 1.5-1.5 4.9 5Z" />
-          </svg>
-        </button>
-        {rule.found && <p className="cr-finding__found">{rule.found}</p>}
-        {expanded && (
-          <div className="cr-finding__more">
-            <p className="cr-finding__detail">{rule.reasoning}</p>
-            {rule.expected && (
-              <p className="cr-finding__expected">
-                <span>Expected</span> {rule.expected}
-              </p>
-            )}
-            {rule.signatures.length > 0 && (
-              <ul className="cr-sigs">
-                {rule.signatures.map((s) => (
-                  <li key={s.role}>
-                    <StatusIcon status={s.found >= s.required ? "pass" : "fail"} size={16} />
-                    {s.role} signature {s.found}/{s.required}
-                    {s.pages.length > 0 && <span className="cr-muted"> · p. {s.pages.join(", ")}</span>}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {rule.confidence !== null && (
-              <p className="cr-muted cr-finding__conf">Extraction confidence {Math.round(rule.confidence * 100)} %</p>
-            )}
-          </div>
-        )}
+        </p>
+        <div className="cr-finding__more">
+          <p className="cr-finding__detail">{rule.reasoning}</p>
+          {rule.expected && (
+            <p className="cr-finding__expected">
+              <span>Expected</span> {rule.expected}
+            </p>
+          )}
+          {rule.signatures.length > 0 && (
+            <ul className="cr-sigs">
+              {rule.signatures.map((s) => (
+                <li key={s.role}>
+                  <StatusIcon status={s.found >= s.required ? "pass" : "fail"} size={16} />
+                  {s.role} signature {s.found}/{s.required}
+                  {s.pages.length > 0 && <span className="cr-muted"> · p. {s.pages.join(", ")}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {rule.confidence !== null && (
+            <p className="cr-muted cr-finding__conf">Extraction confidence {Math.round(rule.confidence * 100)} %</p>
+          )}
+        </div>
         {rule.sources.length > 0 && (
           <div className="cr-finding__evidence">
             {groupSources(rule.sources).map((s) => (
@@ -167,6 +161,7 @@ function GroupCard({
 function Review({ view }: { view: CaseView }) {
   const { evaluation: ev } = view;
   const [focus, setFocus] = useState<Focus | null>(null);
+  const previews = useDocumentPreviews(ev.case_id, view.docs);
   const [open, setOpen] = useState<Set<number>>(
     () => new Set(view.groups.filter((g) => g.status === "fail" || g.status === "warn").map((g) => g.id)),
   );
@@ -368,7 +363,14 @@ function Review({ view }: { view: CaseView }) {
           </section>
         </div>
 
-        <DocumentPanel docs={view.docs} missing={view.missingDocs} focus={focus} onSelect={setFocus} />
+        <DocumentPanel
+          caseId={ev.case_id}
+          docs={previews.docs}
+          missing={view.missingDocs}
+          focus={focus}
+          onSelect={setFocus}
+          onPreviewError={previews.refresh}
+        />
       </div>
     </div>
   );
