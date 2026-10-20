@@ -27,6 +27,9 @@ OBSERVATION_FIELDS = {
     ("StepStarted", "extraction"): FACT_FIELDS,
     ("StepFinished", "extraction"): FACT_FIELDS | {"duration_ms"},
     ("StepFailed", "extraction"): FACT_FIELDS | {"duration_ms", "error_code"},
+    ("StepStarted", "signature_detection"): FACT_FIELDS,
+    ("StepFinished", "signature_detection"): FACT_FIELDS | {"duration_ms"},
+    ("StepFailed", "signature_detection"): FACT_FIELDS | {"duration_ms", "error_code"},
 }
 
 

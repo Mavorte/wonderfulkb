@@ -37,7 +37,7 @@ PUBLIC_EVENT_FIELDS = {
     "RunFinished": ("run_id", "attempt_no", "run_status", "error_code"),
 }
 PUBLIC_ERROR_CODES = {
-    "StepFailed": {"PIPELINE_CONFIG_CHANGED", "SOURCE_HASH_MISMATCH", "PROCESSING_FAILED", "EXTRACTION_FAILED"},
+    "StepFailed": {"PIPELINE_CONFIG_CHANGED", "SOURCE_HASH_MISMATCH", "PROCESSING_FAILED", "EXTRACTION_FAILED", "SIGNATURE_DETECTION_FAILED"},
     "AttemptFinished": {"PROCESSING_FAILED"},
     "RunFinished": {"RETRY_EXHAUSTED", "PROCESSING_FAILED"},
 }
@@ -70,15 +70,15 @@ def read_authorized_window(request, scope, limit, next_token):
         raise HTTPException(503, "audit read unavailable") from None
 
 
-def _wrap_run_cursor(reader, case_id, document_id, run_id):
+def _wrap_run_cursor(reader, case_id, document_id, run_id, operation="run_events"):
     if reader is None:
         return None
-    data = {"version": 1, "operation": "run_events", "case_id": case_id,
+    data = {"version": 1, "operation": operation, "case_id": case_id,
             "document_id": document_id, "run_id": run_id, "reader": reader}
     return base64.urlsafe_b64encode(json.dumps(data, separators=(",", ":")).encode()).decode().rstrip("=")
 
 
-def _unwrap_run_cursor(token, case_id, document_id, run_id):
+def _unwrap_run_cursor(token, case_id, document_id, run_id, operation="run_events"):
     if token is None:
         return None
     try:
@@ -101,7 +101,7 @@ def _unwrap_run_cursor(token, case_id, document_id, run_id):
                 or type(data["version"]) is not int or data["version"] != 1
                 or any(type(data[key]) is not str for key in ("operation", "case_id", "document_id", "run_id", "reader"))
                 or (data["operation"], data["case_id"], data["document_id"], data["run_id"])
-                != ("run_events", case_id, document_id, run_id)
+                != (operation, case_id, document_id, run_id)
                 or not 1 <= len(data["reader"]) <= 4096):
             raise ValueError
         return data["reader"]
@@ -125,6 +125,30 @@ def run_events(request: Request, case_id: str, document_id: str, run_id: str,
                              "coverage": "partial"}, headers=PRIVATE)
     except Exception:
         raise HTTPException(503, "audit read unavailable") from None
+
+
+@router.get("/runs/{run_id}/attempts")
+def run_attempts(request: Request, case_id: str, document_id: str, run_id: str,
+                 limit: int = Query(50, ge=1, le=100),
+                 next_token: str | None = Query(None, min_length=1, max_length=8192)):
+    scope = authorized_document(request, case_id, document_id)
+    validate_identifier(run_id)
+    reader = _unwrap_run_cursor(next_token, case_id, document_id, run_id, "attempts")
+    page = read_authorized_window(request, scope, limit, reader)
+    try:
+        return JSONResponse({"items": [attempt_dto(event) for event in page.items
+                                       if event.type == "AttemptStarted" and event.run_id == run_id],
+                             "next_token": _wrap_run_cursor(page.next_token, case_id, document_id, run_id, "attempts"),
+                             "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                             "coverage": "partial"}, headers=PRIVATE)
+    except Exception:
+        raise HTTPException(503, "audit read unavailable") from None
+
+
+def attempt_dto(event):
+    # Event identities remain separate, including conflicting attempt ordinals.
+    return {key: value for key, value in event.to_item().items()
+            if key in {"event_id", "attempt_no", "occurred_at"}}
 
 
 def event_dto(event):

@@ -64,8 +64,21 @@ paths:
     parameters: [{$ref: '#/components/parameters/CaseId'}, {$ref: '#/components/parameters/DocumentId'}, {$ref: '#/components/parameters/RunId'}]
     get:
       operationId: listProcessingAttempts
-      description: Observed AttemptStarted attempts only; no synthetic attempts. One bounded window; coverage partial.
-      parameters: [{$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
+      description: >-
+        Partial event-observation view of stored AttemptStarted events for this run,
+        not a complete execution-attempt registry. RunQueued need not be observed.
+        One bounded evaluated document Query in technical EVENT#event_id order,
+        not chronology or a snapshot; no extra reads fill the page. Empty items
+        with next_token are valid continuation, not proof of absence. Distinct
+        event identities with the same attempt_no remain conflicting observations;
+        no business status, total or duration is inferred. Idempotent stored event
+        identities are not duplicated. Refresh/replayed cursors give no incremental
+        or snapshot guarantee. Continuation binds case, document, run and attempts
+        operation. Current authorization and document membership are rechecked;
+        missing document is 404 and read failures are 503, never empty success.
+      parameters:
+        - {$ref: '#/components/parameters/Limit'}
+        - {name: next_token, in: query, description: Opaque attempts-scoped continuation., schema: {type: string, minLength: 1, maxLength: 8192}}
       responses:
         '200': {$ref: '#/components/responses/Attempts'}
         '400': {$ref: '#/components/responses/BadRequest'}
@@ -77,7 +90,7 @@ paths:
     get:
       operationId: listProcessingSteps
       security: [{MonitoringServiceBearer: []}]
-      description: One evaluated document Query filtered to allowlisted source_validation, extraction and executed page facts for explicit run_id and attempt_no. Technical event-identity order, not chronology. Coverage is partial; missing observations do not prove work was not performed. No start, terminal, duration or success is inferred; terminal-only fragments and empty continuation are valid. Extraction has no page_number or document values. StepFinished proves neither complete fields, a model call nor run completion. Refresh starts at the beginning without snapshot or incremental guarantees.
+      description: One evaluated document Query filtered to allowlisted source_validation, extraction, signature_detection and executed page facts for explicit run_id and attempt_no. Technical event-identity order, not chronology. Coverage is partial; missing observations do not prove work was not performed. No start, terminal, duration or success is inferred; terminal-only fragments and empty continuation are valid. Extraction and signature detection have no page_number or document values. Signature boundaries expose no signature contents, results, counts or historical configuration. A stored StepFailed is not success; completed-empty may finish successfully. Disabled or absent boundaries remain unobserved, never synthesized as failed or skipped. StepFinished proves neither complete fields, a model call nor run completion. Refresh starts at the beginning without snapshot or incremental guarantees.
       parameters: [{$ref: '#/components/parameters/AttemptNo'}, {$ref: '#/components/parameters/Limit'}, {$ref: '#/components/parameters/NextToken'}]
       responses:
         '200': {$ref: '#/components/responses/Steps'}
@@ -281,7 +294,7 @@ components:
         attempt_no: {type: integer, minimum: 1}
         stage: {type: string, enum: [source_validation, page_transcription, extraction, signature_detection, result_publishing]}
         duration_ms: {type: number, minimum: 0}
-        error_code: {type: string, enum: [PIPELINE_CONFIG_CHANGED, SOURCE_HASH_MISMATCH, PROCESSING_FAILED, EXTRACTION_FAILED]}
+        error_code: {type: string, enum: [PIPELINE_CONFIG_CHANGED, SOURCE_HASH_MISMATCH, PROCESSING_FAILED, EXTRACTION_FAILED, SIGNATURE_DETECTION_FAILED]}
     PageCacheReused:
       type: object
       description: Observed reuse of a stored page result; not a new completion, executed step or provider call in this attempt.
@@ -398,7 +411,14 @@ components:
         error_code: {type: string, enum: [RETRY_EXHAUSTED, PROCESSING_FAILED]}
     DocumentEvent: {oneOf: [{$ref: '#/components/schemas/FileReceived'}, {$ref: '#/components/schemas/RunQueued'}, {$ref: '#/components/schemas/AttemptStarted'}, {$ref: '#/components/schemas/StepStarted'}, {$ref: '#/components/schemas/StepFinished'}, {$ref: '#/components/schemas/StepFailed'}, {$ref: '#/components/schemas/PageCacheReused'}, {$ref: '#/components/schemas/PageCompleted'}, {$ref: '#/components/schemas/PageFailed'}, {$ref: '#/components/schemas/ResultPublished'}, {$ref: '#/components/schemas/RetryEnqueued'}, {$ref: '#/components/schemas/AttemptFinished'}, {$ref: '#/components/schemas/RunFinished'}]}
     RunEvent: {oneOf: [{$ref: '#/components/schemas/RunQueued'}, {$ref: '#/components/schemas/AttemptStarted'}, {$ref: '#/components/schemas/StepStarted'}, {$ref: '#/components/schemas/StepFinished'}, {$ref: '#/components/schemas/StepFailed'}, {$ref: '#/components/schemas/PageCacheReused'}, {$ref: '#/components/schemas/PageCompleted'}, {$ref: '#/components/schemas/PageFailed'}, {$ref: '#/components/schemas/ResultPublished'}, {$ref: '#/components/schemas/RetryEnqueued'}, {$ref: '#/components/schemas/AttemptFinished'}, {$ref: '#/components/schemas/RunFinished'}]}
-    AttemptObservation: {oneOf: [{$ref: '#/components/schemas/AttemptStarted'}]}
+    AttemptObservation:
+      type: object
+      additionalProperties: false
+      required: [event_id, attempt_no, occurred_at]
+      properties:
+        event_id: {type: string, minLength: 1}
+        attempt_no: {type: integer, minimum: 1}
+        occurred_at: {type: string, format: date-time}
     StepObservation:
       oneOf:
         - {$ref: '#/components/schemas/SourceValidationStartedObservation'}
@@ -407,6 +427,9 @@ components:
         - {$ref: '#/components/schemas/ExtractionStartedObservation'}
         - {$ref: '#/components/schemas/ExtractionFinishedObservation'}
         - {$ref: '#/components/schemas/ExtractionFailedObservation'}
+        - {$ref: '#/components/schemas/SignatureStartedObservation'}
+        - {$ref: '#/components/schemas/SignatureFinishedObservation'}
+        - {$ref: '#/components/schemas/SignatureFailedObservation'}
         - {$ref: '#/components/schemas/PageStartedObservation'}
         - {$ref: '#/components/schemas/PageCompletedObservation'}
         - {$ref: '#/components/schemas/PageFailedObservation'}
@@ -461,6 +484,33 @@ components:
       required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no, error_code]
       properties:
         <<: *extractionFacts
+        type: {type: string, enum: [StepFailed]}
+        duration_ms: {type: number, minimum: 0}
+        error_code: {type: string, enum: [PIPELINE_CONFIG_CHANGED, SOURCE_HASH_MISMATCH, SOURCE_VALIDATION_FAILED, EXTRACTION_FAILED, PAGE_TRANSCRIPTION_FAILED, RESULT_PUBLISHING_FAILED, SIGNATURE_DETECTION_FAILED]}
+    SignatureStartedObservation:
+      type: object
+      additionalProperties: false
+      description: Observed non-page signature boundary only; no detector/model-call, contents, counts, results or configuration claim. Missing observations remain unknown.
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no]
+      properties: &signatureFacts
+        <<: *sourceValidationFacts
+        stage: {type: string, enum: [signature_detection]}
+    SignatureFinishedObservation:
+      type: object
+      additionalProperties: false
+      description: Stored successful boundary, including completed-empty; not a signature result or run completion claim.
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no]
+      properties:
+        <<: *signatureFacts
+        type: {type: string, enum: [StepFinished]}
+        duration_ms: {type: number, minimum: 0}
+    SignatureFailedObservation:
+      type: object
+      additionalProperties: false
+      description: Stored failed boundary, including a returned failure; never mapped to success.
+      required: [event_id, sequence, occurred_at, type, stage, run_id, attempt_no, error_code]
+      properties:
+        <<: *signatureFacts
         type: {type: string, enum: [StepFailed]}
         duration_ms: {type: number, minimum: 0}
         error_code: {type: string, enum: [PIPELINE_CONFIG_CHANGED, SOURCE_HASH_MISMATCH, SOURCE_VALIDATION_FAILED, EXTRACTION_FAILED, PAGE_TRANSCRIPTION_FAILED, RESULT_PUBLISHING_FAILED, SIGNATURE_DETECTION_FAILED]}

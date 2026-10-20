@@ -169,6 +169,42 @@ async def main():
         assert status == 200
         assert body["items"] == [{**expected, "case_id": "case-test", "document_id": "doc-test"}]
     assert (await request(intake.app, pages_path, token, b"attempt_no=1"))[1]["items"] == []
+    for kind in ("StepFinished", "StepFailed"):
+        signature = {**event, "event_id": "signature-image-" + kind, "sequence": 10,
+                     "type": kind, "run_id": "run-test", "attempt_no": 1,
+                     "stage": "signature_detection", "duration_ms": 2.5}
+        if kind == "StepFailed":
+            signature["error_code"] = "SIGNATURE_DETECTION_FAILED"
+        table.query.return_value = {"Items": [{**signature, "signatures": "excluded", "counts": 0}]}
+        expected = {k: v for k, v in signature.items()
+                    if k not in {"schema_version", "case_id", "document_id", "filename"}}
+        before = table.query.call_count
+        status, body = await request(intake.app, pages_path.removesuffix("/pages") + "/steps", token, b"attempt_no=1&limit=1")
+        assert status == 200 and body["items"] == [expected] and body["coverage"] == "partial"
+        assert table.query.call_count == before + 1 and table.query.call_args.kwargs["Limit"] == 1
+        for event_path in (path, run_path):
+            status, body = await request(intake.app, event_path, token)
+            assert status == 200
+            assert body["items"] == [{**expected, "case_id": "case-test", "document_id": "doc-test"}]
+        assert (await request(intake.app, pages_path, token, b"attempt_no=1"))[1]["items"] == []
+    attempts_path = run_path.removesuffix('/events') + '/attempts'
+    started = {**event, 'event_id': 'attempt-image', 'type': 'AttemptStarted',
+               'run_id': 'run-test', 'attempt_no': 2}
+    table.query.return_value = {'Items': [started, {**started, 'event_id': 'foreign', 'run_id': 'other-run'}]}
+    status, body = await request(intake.app, attempts_path, token)
+    assert status == 200 and body['items'] == [{'event_id': 'attempt-image', 'attempt_no': 2,
+                                               'occurred_at': event['occurred_at']}]
+    assert body['coverage'] == 'partial' and body['next_token'] is None
+    table.query.side_effect = [{'Items': [event], 'LastEvaluatedKey': key}, {'Items': [started]}]
+    before = table.query.call_count
+    status, body = await request(intake.app, attempts_path, token, b'limit=1')
+    assert status == 200 and body['items'] == [] and body['next_token']
+    cursor = body['next_token']
+    assert (await request(intake.app, run_path, token, urlencode({'next_token': cursor}).encode()))[0] == 400
+    assert table.query.call_count == before + 1
+    status, body = await request(intake.app, attempts_path, token, urlencode({'next_token': cursor, 'limit': 1}).encode())
+    assert status == 200 and body['items'][0]['event_id'] == 'attempt-image'
+    assert table.query.call_count == before + 2 and table.query.call_args.kwargs['ExclusiveStartKey'] == key
     table.scan.assert_not_called()
     audit_root = Path(audit.__file__).parent
     hashes = {str(path.relative_to(audit_root)): hashlib.sha256(path.read_bytes()).hexdigest()
@@ -179,7 +215,7 @@ async def main():
         "processing_monitor_step_routes.py", "content_hashes.py")}
     print(json.dumps({"uid": os.getuid(), "package_version": importlib.metadata.version("wonderfulkb-document-processing"),
                       "audit_source_hashes": hashes, "intake_source_hashes": source,
-                      "assertions": "ASGI200/private-no-store/FileReceived+cacheDTO+nonempty-pages+single-step-terminal/cache-pages-completed-failed-unknown-model-document-run-parity-steps-exclusion-run-attempt-isolation/extraction-failure-duration-document-run-parity-pages-exclusion/run-events-empty-continuation-filter-cross-run400/grant403/cursor400/read503; provider I/O stubbed"}, sort_keys=True))
+                      "assertions": "ASGI200/private-no-store/FileReceived+cacheDTO+nonempty-pages+single-step-terminal/cache-pages-completed-failed-unknown-model-document-run-parity-steps-exclusion-run-attempt-isolation/extraction-failure-duration-document-run-parity-pages-exclusion/signature-finished-failed-duration-document-run-parity-pages-exclusion/run-events-empty-continuation-filter-cross-run400/attempts-nonempty-DTO-run-isolation-empty-continuation-cross-operation400/grant403/cursor400/read503; provider I/O stubbed"}, sort_keys=True))
 
 
 if __name__ == "__main__":

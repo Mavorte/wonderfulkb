@@ -227,3 +227,19 @@ resumes from the last evaluated event position. Invalid/cross-scope cursors are
 400; each continuation repeats current authorization (403) and membership (404).
 Read/decoder/DTO failures are 503. Technical `EVENT#event_id` ordering is neither
 global chronology nor a snapshot; this endpoint makes no completeness claim.
+
+### Attempt observations
+
+`GET /v1/cases/{case_id}/processing/documents/{document_id}/runs/{run_id}/attempts`
+uses that same authorization/membership and single bounded document Query. Only
+stored `AttemptStarted` observations for the requested run are exposed as
+`{event_id, attempt_no, occurred_at}`; no observed `RunQueued` is required.
+Distinct event IDs with equal attempt numbers stay separate observations, not a
+business-state conclusion. No total, status or attempt duration is inferred.
+The collection retains `coverage: partial`, UTC `observed_at`, nullable
+`next_token`, and private/no-store semantics. Limit defaults to 50 (1–100), and an
+empty evaluated page may have continuation. Tokens bind the attempts operation
+as well as case/document/run; document-events and run-events tokens cannot be
+reused here. Technical event-identity ordering and refresh/replay provide neither
+chronology nor snapshot/completeness guarantees. Missing document is 404;
+authorization/read failures follow the shared 403/503 policy.
