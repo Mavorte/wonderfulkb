@@ -444,3 +444,5 @@
 .cr-locked p { margin: 0; }
 .cr-locked__title { font-weight: var(--kb-weight-semibold); }
 @media (prefers-reduced-motion: reduce) { .cr-live::before, .cr-progress__fill { animation: none; } }
+.cr-lens { position: fixed; top: 0; left: 0; z-index: 10; box-sizing: border-box; background-origin: border-box; border-radius: var(--kb-radius-sm); border: 2px solid var(--kb-white); box-shadow: 0 0 0 1px var(--kb-border-strong), 0 8px 24px #0000004d; background-color: var(--kb-white); background-repeat: no-repeat; pointer-events: none; }
+.cr-lens[hidden] { display: none; }
