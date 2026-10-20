@@ -24,12 +24,13 @@
     },
     "end_call": {
       "type": "programmable",
-      "config": {},
-      "announcement_type": "fixed",
-      "delay_messages": {
-        "en-US": {
-          "male": [],
-          "female": []
+      "config": {
+        "announcement_type": "fixed",
+        "delay_messages": {
+          "en-US": {
+            "male": [],
+            "female": []
+          }
         }
       }
     }
