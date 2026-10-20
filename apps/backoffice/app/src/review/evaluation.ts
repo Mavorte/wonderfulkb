@@ -38,6 +38,7 @@ export interface EvaluationPayload {
 
 export interface SourceRef {
   docKey: string;
+  documentId?: string;
   title: string;
   page?: number;
 }
@@ -89,9 +90,18 @@ export interface RuleGroup {
 
 export interface DocView {
   key: string;
+  // The documents API id, when the agent recorded it.
+  documentId?: string;
   title: string;
-  pages: string[];
+  // pages[i] is page i + 1; null when that page has no preview.
+  pages: (string | null)[];
   pdf?: string;
+  // Why there is no preview, once the documents API has answered.
+  unavailable?: string;
+  // The documents API has the readable original (revealed only on request).
+  originalAvailable?: boolean;
+  // The documents API hasn't answered yet.
+  loading?: boolean;
   fields: Field[];
   referencedPages: number[];
   status?: CheckStatus;
@@ -238,7 +248,12 @@ function toRule(row: ResultRow): RuleView {
   const docDetails = details && !Array.isArray(details) ? details : null;
   const sources = (parseJson<RawSource[]>(row.sources) ?? [])
     .filter((s) => s.title)
-    .map((s) => ({ docKey: s.title as string, title: s.title as string, page: s.page ?? undefined }));
+    .map((s) => ({
+      docKey: s.title as string,
+      documentId: s.document_id ?? undefined,
+      title: s.title as string,
+      page: s.page ?? undefined,
+    }));
   return {
     id: row.rule_id,
     label: ruleLabels[row.rule_id] ?? row.rule_id.replace(/_/g, " "),
@@ -314,6 +329,7 @@ export function createCaseView(evaluation: EvaluationRow, results: ResultRow[]):
       const doc =
         docs.get(s.docKey) ??
         ({ key: s.docKey, title: s.title, pages: [], fields: [], referencedPages: [], ...previewFor(evaluation.case_id, s.title) } as DocView);
+      doc.documentId ??= s.documentId;
       if (s.page && !doc.referencedPages.includes(s.page)) doc.referencedPages.push(s.page);
       // required_documents_present cites the documents that are there, so it doesn't mark them.
       if (rule.id !== "required_documents_present" && rule.status !== "pass" && rule.status !== "na") {

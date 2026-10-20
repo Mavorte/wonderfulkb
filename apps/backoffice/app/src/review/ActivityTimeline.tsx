@@ -25,7 +25,6 @@ function eventsFor(view: CaseView): Event[] {
     events.push({
       at: rule.recordedAt!,
       title: `${rule.label} — ${rawStatusLabel[rule.rawStatus] ?? rule.rawStatus}`,
-      detail: rule.found ?? undefined,
       status: rule.status,
       sources: rule.sources,
     });

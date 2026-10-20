@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Document Original",
+  "description": "Reveals the readable original of one case document for human review: a 60 s presigned link from the AWS case/client API (GET /cases/{case_id}/documents/{document_id}/original). Requires a signed-in user and writes an audit line with their id",
+  "method": "POST",
+  "path_slug": "document-original"
+}

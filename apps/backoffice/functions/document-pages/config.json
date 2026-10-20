@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Document Pages",
+  "description": "Reads the masked page previews of a case's documents from the AWS case/client API (GET /cases/{case_id}/documents/{document_id}/pages): presigned PNG per page and the masked PDF, never the readable original",
+  "method": "POST",
+  "path_slug": "document-pages"
+}
