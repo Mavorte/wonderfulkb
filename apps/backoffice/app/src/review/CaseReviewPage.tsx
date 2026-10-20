@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Skeleton from "../Skeleton";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import ActivityTimeline from "./ActivityTimeline";
@@ -250,7 +250,15 @@ function Review({ view }: { view: CaseView }) {
       },
       { replace: true },
     );
-  const queued = useQueueContext().queue?.find((c) => c.case_id === ev.case_id);
+  const { queue, refresh: refreshQueue } = useQueueContext();
+  const queued = queue?.find((c) => c.case_id === ev.case_id);
+  // The run's status places the case in the queue, so a run that moves on updates the queue at once.
+  const seenStatus = useRef(ev.status);
+  useEffect(() => {
+    if (seenStatus.current === ev.status) return;
+    seenStatus.current = ev.status;
+    refreshQueue();
+  }, [ev.status, refreshQueue]);
   const evaluatedGroups = view.groups.filter((g) => g.evaluated);
   const duration = formatDuration(ev.started_at, ev.finished_at);
   const running = isRunning(ev);
