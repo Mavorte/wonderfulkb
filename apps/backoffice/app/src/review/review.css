@@ -110,7 +110,8 @@
 .cr-dialog__close:hover { background: var(--kb-surface-muted); }
 .cr-dialog__close:focus-visible { outline: 2px solid var(--kb-focus-ring); }
 .cr-dialog__body { padding: 0 var(--kb-space-6); overflow-y: auto; display: grid; gap: var(--kb-space-4); }
-.cr-dialog__text { height: auto; resize: vertical; font-size: 0.875rem; line-height: 1.5rem; }
+.cr-dialog__lead { margin: 0; font-size: 0.875rem; line-height: 1.5rem; }
+.cr-dialog__list { margin: 0; padding-left: var(--kb-space-5); display: grid; gap: var(--kb-space-2); font-size: 0.875rem; line-height: 1.5rem; }
 .cr-dialog__foot { display: flex; justify-content: flex-end; gap: var(--kb-space-3); padding: var(--kb-space-4) var(--kb-space-6) var(--kb-space-6); }
 
 /* Main grid */

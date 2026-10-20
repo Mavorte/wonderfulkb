@@ -1,0 +1,20 @@
+{
+  "name": "correction_calls",
+  "description": "One row per Request correction call: what the correction-caller agent tells the client, the surname it verifies and the upload link it texts. Written by the correction-call Function, advanced by the agent during the call.",
+  "columns": [
+    { "name": "request_id", "type": "string", "required": true, "primary_key": true },
+    { "name": "case_id", "type": "string", "required": true },
+    { "name": "phone_number", "type": "string", "required": true },
+    { "name": "company_name", "type": "string" },
+    { "name": "contact_last_name", "type": "string", "required": true },
+    { "name": "findings", "type": "string", "required": true },
+    { "name": "note", "type": "string" },
+    { "name": "upload_link", "type": "string", "required": true },
+    { "name": "status", "type": "string", "required": true },
+    { "name": "requested_by", "type": "string" },
+    { "name": "requested_at", "type": "datetime", "required": true },
+    { "name": "communication_id", "type": "string" },
+    { "name": "sms_sent_at", "type": "datetime" }
+  ],
+  "indexes": [{ "name": "by_phone_status", "columns": ["phone_number", "status", "requested_at"] }]
+}
