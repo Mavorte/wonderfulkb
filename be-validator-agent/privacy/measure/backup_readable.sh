@@ -51,6 +51,7 @@ doc = json.load(open(f"{d}/all-versions.json"))
 groups = [  # (skupina, regulární výraz klíče)
     ("original_pdf", r"^cases/[^/]+/original/[^/]+\.pdf$"),
     ("page_png",     r"^cases/[^/]+/analysis/[^/]+/pages/\d+\.png$"),
+    ("original_page_png", r"^cases/[^/]+/original-pages/[^/]+/\d+\.png$"),
     ("crop_png",     r"^cases/[^/]+/analysis/[^/]+/signatures/sig_\d+\.png$"),   # jen čitelné; .png.enc a .preview.png ne
 ]
 if os.environ.get("INCLUDE_ZIPS") == "1":

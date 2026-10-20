@@ -144,6 +144,7 @@ def test_missing_sibling_modules_degrade_to_partial_with_clear_error(ingest, mak
     row = run_document("c1", "d1", options=make_options(skip=()))
     assert row["processing_status"] == "partial" and "text_s3_key" in row  # classify and embed missing
     steps = json.loads(s3_text(aws_env, "cases/c1/analysis/d1/run.json"))["steps"]
+    assert steps.pop("original_pages")["status"] == "ok"  # rendering needs no sibling module
     assert {s["status"] for s in steps.values()} == {"unavailable"} and "not importable" in steps["classify"]["error"]
 
 

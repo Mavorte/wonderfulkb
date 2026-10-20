@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: wonderfulkb API (klienti, case, dokumenty pro validačního agenta)
-  version: 0.5.0
+  version: 0.6.0
   description: |
     Jedno API (Lambda `wonderfulkb-agent-api`, HTTP API, stage `v1`) pro klienty a case (dříve samostatné
     Case & Client API, Lambda `wonderfulkb-case-client`, smazaná 19. 10. 2026) a pro vstupy, kterými Wonderful
@@ -601,6 +601,10 @@ paths:
         - Funguje i pro dokument, který se ještě zpracovává (stačí, že byl nahrán).
         - `content_type` a `filename` jsou z nahrání (Ingest API), takže originál nemusí být PDF (např. `image/jpeg`).
         - `bbox` z podpisů a regionů platí i pro originál (stejná strana, relativní souřadnice).
+        - `pages`: čitelné stránky jako PNG (`original-pages/<doc>/<n>.png`), vykreslené stejně jako zamaskované
+          `pages[].preview_url` z `getDocumentPages`, takže na ně jde položit tytéž `bbox`. Odkazy platí také 60 s
+          a patří k témuž auditovanému odkrytí. Stránka ještě nevykreslená (dokument se zpracovává, starší dokument
+          bez dávkového dovykreslení) má `url: null`.
         - Cesta je v `reveal_path` z `getDocumentPages`; `original_available: false` tam předem říká, že tady bude `404`.
       parameters:
         - $ref: '#/components/parameters/CaseId'
@@ -618,6 +622,9 @@ paths:
                 content_type: application/pdf
                 url: https://wonderfulkb-raw-document-storage.s3.eu-central-1.amazonaws.com/cases/…/original/….pdf?response-content-disposition=inline…&X-Amz-Expires=60&X-Amz-…
                 expires_in: 60
+                pages:
+                  - {page: 1, url: 'https://…/cases/…/original-pages/…/1.png?X-Amz-Expires=60&X-Amz-…'}
+                  - {page: 2, url: 'https://…/cases/…/original-pages/…/2.png?X-Amz-Expires=60&X-Amz-…'}
         '400': {$ref: '#/components/responses/BadRequest'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
@@ -886,14 +893,23 @@ components:
         reveal_path: /cases/3f2b8c1e-7a4d-4e9b-9c21-5d8e0f6a1b47/documents/8e41d2a9-0c6b-5f37-a1d4-92b7e3c58f10/original
     DocumentOriginal:
       type: object
-      required: [case_id, document_id, filename, content_type, url, expires_in]
+      required: [case_id, document_id, filename, content_type, url, expires_in, pages]
       properties:
         case_id: {type: string}
         document_id: {type: string}
         filename: {type: string, description: Původní název nahraného souboru}
         content_type: {type: string, example: application/pdf}
         url: {type: string, description: Předpodepsaný odkaz na originál}
-        expires_in: {type: integer, description: Platnost odkazu v sekundách, example: 60}
+        expires_in: {type: integer, description: Platnost odkazů v sekundách, example: 60}
+        pages:
+          type: array
+          description: Čitelné stránky originálu (PNG), stejný rozměr jako zamaskované náhledy stránek
+          items:
+            type: object
+            required: [page, url]
+            properties:
+              page: {type: integer, minimum: 1}
+              url: {type: string, nullable: true, description: 'Předpodepsaný odkaz na PNG stránky; null = stránka ještě není vykreslená'}
     Error:
       type: object
       required: [error]

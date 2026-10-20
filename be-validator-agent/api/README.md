@@ -2,7 +2,7 @@
 
 Jediné API projektu kromě uploadu (Ingest API, `be-intake`): Lambda `wonderfulkb-agent-api` za HTTP API
 `<AGENT_API_BASE_URL>`. Kontrakt:
-[openapi-validator-agent.yaml](../../be-document-processing/contracts/openapi-validator-agent.yaml) (verze 0.4.0),
+[openapi-validator-agent.yaml](../../be-document-processing/contracts/openapi-validator-agent.yaml) (verze 0.6.0),
 datový kontrakt [validator-agent-storage.md](../docs/validator-agent-storage.md).
 
 | Cesty | Kód | Data |
@@ -135,7 +135,7 @@ Hlavní použití: UI ukáže stranu a vyznačí na ní `bbox` podpisu nebo regi
 | Cesta | Co vrací | Audit |
 |---|---|---|
 | `GET …/documents/{d}/pages` | `pages[{page, preview_url}]` (PNG `analysis/<d>/pages/<n>.png`), `preview_pdf_url` (`redacted/<d>.pdf`), oba 300 s; `redacted`, `original_available`, `reveal_path` | ne |
-| `GET …/documents/{d}/original` | JSON `{url, expires_in: 60, filename, content_type}`: předpodepsaný odkaz na originál s `inline; filename*=` | `event: document_reveal`, výsledek `revealed/not_found/error` |
+| `GET …/documents/{d}/original` | JSON `{url, expires_in: 60, filename, content_type, pages[{page, url}]}`: předpodepsaný odkaz na originál s `inline; filename*=` a na čitelné stránky PNG (`original-pages/<d>/<n>.png`, 60 s, `url: null` u nevykreslené) | `event: document_reveal`, výsledek `revealed/not_found/error` |
 
 - Náhled se vydá jen u dokumentu s `redacted_s3_key` (pod `cases/<case>/redacted/`): stránky dokumentů zpracovaných před
   redakcí vznikly z čitelného originálu, proto mají `preview_url: null` a `redacted: false` (stejně jako nezmigrované výřezy).
@@ -145,8 +145,10 @@ Hlavní použití: UI ukáže stranu a vyznačí na ní `bbox` podpisu nebo regi
   názvy a dají `404`.
 - Originál se nevrací v těle: Lambda má limit odpovědi 6 MB, ingest přijímá až desítky MB. Odkaz je 60 s „na doručitele“; audit
   zaznamená každé vydání, ne každé stažení (to by šlo jen přes S3 server access logy nebo CloudTrail data events).
-- IAM: `s3:GetObject` na `cases/*/redacted/*` a `cases/*/original/*` (předpodepsaný odkaz platí jen s oprávněním podepisující role),
-  `s3:ListBucket` s předponami `analysis`, `redacted`, `original`, `dynamodb:GetItem` na tabulku ingestu.
+- Čitelné stránky vykresluje pipeline po redakci (stejné DPI jako zamaskované, takže `bbox` sedí); starší dokumenty dovykreslí
+  `python -I -m pipeline original_pages_case <case_id>…`.
+- IAM: `s3:GetObject` na `cases/*/redacted/*`, `cases/*/original/*` a `cases/*/original-pages/*` (předpodepsaný odkaz platí jen s oprávněním podepisující role),
+  `s3:ListBucket` s předponami `analysis`, `redacted`, `original`, `original-pages`, `dynamodb:GetItem` na tabulku ingestu.
 - Testy: `test_document_view.py` (moto).
 
 ## Předpoklady nad rámec kontraktu (potvrdit s ostatními sessions)

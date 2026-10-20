@@ -826,7 +826,7 @@ class Api:
             key, name, ctype = found
             out = {"case_id": case_id, "document_id": document_id, "filename": name, "content_type": ctype,
                    "url": self.repo.presign(key, ttl=ORIGINAL_TTL, content_type=ctype, filename=name),
-                   "expires_in": ORIGINAL_TTL}
+                   "expires_in": ORIGINAL_TTL, "pages": self._original_pages(case_id, document_id)}
             outcome = "revealed"
             return out
         except ApiError as e:
@@ -834,6 +834,18 @@ class Api:
             raise
         finally:
             _audit(meta, case_id, document_id, None, outcome, event="document_reveal")
+
+    def _original_pages(self, case_id, document_id):
+        """Readable page renders (original-pages/<doc>/<n>.png, the size of pages/<n>.png, so the evidence boxes fit),
+        presigned like the original for 60 s; `url: null` for a page not rendered (yet)."""
+        prefix = f"cases/{case_id}/original-pages/{document_id}/"
+        numbers = {int(m.group(1)) for k in self.repo.list_keys(prefix)
+                   for m in [re.match(re.escape(prefix) + r"(\d+)\.png$", k)] if m}
+        # the processed page count wins, so renders left over from an earlier, longer run are never handed out
+        row = self.repo.get_row(case_id, document_id) or {}
+        count = int(row.get("page_count") or 0) or max(numbers, default=0)
+        return [{"page": n, "url": self.repo.presign(f"{prefix}{n}.png", ttl=ORIGINAL_TTL, content_type="image/png")
+                 if n in numbers else None} for n in range(1, count + 1)]
 
     # směrování
     ROUTES = [

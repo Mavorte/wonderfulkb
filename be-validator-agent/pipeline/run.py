@@ -66,6 +66,10 @@ def analysis_prefix(case_id, document_id):
     return f"cases/{case_id}/analysis/{document_id}/"
 
 
+def original_pages_prefix(case_id, document_id):
+    return f"cases/{case_id}/original-pages/{document_id}/"
+
+
 def derive_document_id(case_id, data):
     return str(uuid.uuid5(DOC_NAMESPACE, f"{case_id}:{hashlib.sha256(data).hexdigest()}"))
 
@@ -272,23 +276,26 @@ def run_document(case_id, document_id=None, *, source=None, options=None, execut
     sha256 = hashlib.sha256(data).hexdigest()
     reused = _try_reuse(options, report, case_id, document_id, title, sha256, previous)
     if reused is not None:
+        _original_pages(options, report, case_id, document_id, key, data)
         return _finish_reused(options, report, reused, started, source is None, sha256, audit=audit)
     redaction = None
     if settings.redact:
-        # the readable original goes no further than this step: everything below reads the masked copy
+        # the readable original goes no further than this step and its page renders: everything below reads the masked copy
         try:
             redaction = redaction_step.run(options, case_id, document_id, key, data)
         except redaction_step.RedactionError as error:
             audit.emit("StepFailed", stage="source_validation", error_code="SOURCE_VALIDATION_FAILED",
                        duration_ms=(time.monotonic() - source_started) * 1000)
             return _fail(aws, case_id, document_id, title, error.code, audit=audit)
-        data = redaction.redacted
         report["redaction"] = redaction.info
         report["redacted"] = True
     else:
         log.warning("%s/%s: PIPELINE_REDACT is off, the readable original feeds pages, text and vectors "
                     "(debugging only, never for real data)", case_id, document_id)
         report["redaction"] = {"status": "disabled"}
+    _original_pages(options, report, case_id, document_id, key, data)
+    if redaction is not None:
+        data = redaction.redacted
     try:
         pdf = pdfmod.open_pdf(data)
     except pdfmod.InvalidPdf as error:
@@ -342,7 +349,7 @@ def run_document(case_id, document_id=None, *, source=None, options=None, execut
 
     # Signature detection, regions and the copy check never change the document status (an empty finding is valid).
     degraded = bool(failed) or any(s["status"] in ("failed", "unavailable") for name, s in report["steps"].items()
-                                   if name not in ("signatures", "copy_check", "regions"))
+                                   if name not in ("signatures", "copy_check", "regions", "original_pages"))
     if failed and len(failed) == len(pages):
         row["processing_status"] = "failed"
     else:
@@ -356,6 +363,61 @@ def run_document(case_id, document_id=None, *, source=None, options=None, execut
     if source is None:
         _register_hash(report, case_id, document_id, sha256, row.get("label"))
     return row
+
+
+def _original_pages(options, report, case_id, document_id, key, data):
+    """Readable renders of the original's pages into original-pages/<doc>/<n>.png, rendered like pages/<n>.png so the
+    evidence boxes fit both; the API hands them out only with the audited reveal of the original. Runs once the
+    redaction succeeded (a failed redaction writes nothing) or the analysis was reused, so a duplicate gets its own.
+    Never changes the document status. A masked input has no readable original."""
+    if redaction_step.is_redacted_key(key):
+        return
+    settings, aws = options.settings, options.get_aws()
+
+    def work():
+        pdf = pdfmod.open_pdf(data)
+        try:
+            pngs = [pdfmod.render_png(pdf, i, settings.page_dpi, settings.max_pixels) for i in range(len(pdf))]
+        finally:
+            pdf.close()
+        prefix = original_pages_prefix(case_id, document_id)
+        for number, png in enumerate(pngs, start=1):
+            aws.put_bytes(f"{prefix}{number}.png", png, "image/png", tagging=redaction_step.TAGGING)
+        return len(pngs)
+
+    count = _step(report, "original_pages", work)
+    if count is not None:
+        report["steps"]["original_pages"]["pages"] = count
+
+
+def original_pages_case(case_id, options=None, document_ids=None):
+    """Only the original page renders for the ingested documents of a case (documents processed before the step
+    existed). Nothing else is read or written. Returns one entry per document."""
+    options = options or Options()
+    aws = options.get_aws()
+    out = []
+    for item in aws.list_documents(case_id):
+        document_id = item["document_id"]
+        if document_ids and document_id not in document_ids:
+            continue
+        key = item.get("s3_key") or f"cases/{case_id}/original/{document_id}.pdf"
+        entry = {"document_id": document_id, "title": item.get("filename")}
+        out.append(entry)
+        if redaction_step.is_redacted_key(key):
+            entry["status"] = "masked_input"
+            continue
+        try:
+            data = aws.get_bytes_or_none(key)
+        except Exception as error:  # noqa: BLE001 - one unreadable original must not stop the batch
+            entry.update(status="failed", error=f"DOWNLOAD_FAILED: {type(error).__name__}")
+            continue
+        if data is None:
+            entry["status"] = "no_original"
+            continue
+        report = {"steps": {}}
+        _original_pages(options, report, case_id, document_id, key, data)
+        entry.update(report["steps"]["original_pages"])
+    return out
 
 
 def _try_reuse(options, report, case_id, document_id, title, sha256, previous):

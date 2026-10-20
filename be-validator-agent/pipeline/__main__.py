@@ -1,5 +1,6 @@
 """CLI: python -I -m pipeline run_case <case_id> | run_document <case_id> <document_id> | run_s3 <case_id> <s3_key>
-| regions_case <case_id> (only the regions step of processed, masked documents)"""
+| regions_case <case_id> (only the regions step of processed, masked documents)
+| original_pages_case <case_id>… (only the original page renders)"""
 import argparse
 import dataclasses
 import json
@@ -8,7 +9,7 @@ import sys
 
 from .config import STEPS, Settings
 from .copies import copy_case
-from .run import DocumentNotFound, Options, Source, regions_case, run_case, run_document, run_prefix
+from .run import DocumentNotFound, Options, Source, original_pages_case, regions_case, run_case, run_document, run_prefix
 
 
 def parse_args(argv):
@@ -44,6 +45,10 @@ def parse_args(argv):
     regions.add_argument("case_id")
     regions.add_argument("--document-id", action="append", help="only these documents (repeatable)")
     regions.add_argument("--no-llm", action="store_true", help="regex labels only (PIPELINE_REGIONS_LLM=0)")
+    pages = sub.add_parser("original_pages_case", help="only the readable page renders of the originals of the given "
+                                                      "cases (for the audited reveal; nothing else is recomputed)")
+    pages.add_argument("case_ids", nargs="+")
+    pages.add_argument("--document-id", action="append", help="only these documents (repeatable)")
     report = sub.add_parser("report", help="table of analysed documents of the given cases (reads rows and run.json)")
     report.add_argument("case_ids", nargs="+")
     return ap.parse_args(argv)
@@ -87,6 +92,11 @@ def main(argv=None):
         results = regions_case(args.case_id, options, args.document_id)
         print(json.dumps(results, ensure_ascii=False, indent=1))
         return 0 if all(r["status"] in ("ok", "not_redacted", "not_ready") for r in results) else 1
+    if args.command == "original_pages_case":
+        options = Options()
+        results = {case_id: original_pages_case(case_id, options, args.document_id) for case_id in args.case_ids}
+        print(json.dumps(results, ensure_ascii=False, indent=1))
+        return 0 if all(r["status"] in ("ok", "masked_input", "no_original") for rs in results.values() for r in rs) else 1
     skip = {s.strip() for s in args.skip.split(",") if s.strip()}
     unknown = skip - set(STEPS)
     if unknown:
