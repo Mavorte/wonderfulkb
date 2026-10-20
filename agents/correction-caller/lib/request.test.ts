@@ -18,6 +18,8 @@ describe("lastNameMatches", () => {
     expect(lastNameMatches("Křemínek", "Křemeník")).toBe(true);
     expect(lastNameMatches("Nová", "Novák")).toBe(true);
     expect(lastNameMatches("Nov", "Novák")).toBe(false);
+    expect(lastNameMatches("Kremeshnik", "Křemeník")).toBe(true);
+    expect(lastNameMatches("Přemešník", "Křemeník")).toBe(true);
   });
 
   it("rejects a different surname", () => {

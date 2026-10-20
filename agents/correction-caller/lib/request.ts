@@ -91,9 +91,16 @@ const FOLD: Record<string, string> = {
 
 // Speech-to-text drops or swaps diacritics and case, so compare the bare letters.
 export function normalizeName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z]/g, (ch) => FOLD[ch] ?? "");
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z]/g, (ch) => FOLD[ch] ?? "")
+      // English spellings of Czech sounds (Kremeshnik for Křemešník) fold to the same letters.
+      .replace(/sh/g, "s")
+      .replace(/zh/g, "z")
+      .replace(/ch/g, "c")
+      .replace(/w/g, "v")
+  );
 }
 
 function editDistance(a: string, b: string): number {
@@ -131,4 +138,16 @@ const LEGAL_FORM = /[,\s]+(spol\.\s*s\s*r\.\s*o\.|s\.\s*r\.\s*o\.|a\.\s*s\.|v\.\
 /** The company name as the agent says it: accents kept, legal form dropped. */
 export function spokenCompanyName(name: string): string {
   return name.trim().replace(LEGAL_FORM, "").trim();
+}
+
+type TranscriptContext = { session: { getTranscription(): { speaker: string; text: string }[] } };
+
+/** What the caller said last, straight from speech recognition, without bracketed system tags. */
+export function lastCustomerUtterance(ctx: TranscriptContext): string {
+  try {
+    const turns = ctx.session.getTranscription().filter((t) => t.speaker === "customer");
+    return (turns[turns.length - 1]?.text ?? "").replace(/\[[^\]]*\]/g, "").replace(/[.,!?]/g, " ").trim();
+  } catch {
+    return "";
+  }
 }
