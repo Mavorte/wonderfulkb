@@ -17,7 +17,7 @@ export default w.tool({
       return { found: false, instruction: "There is no correction request for this call. Apologise briefly and call end_call." };
     }
 
-    const state = { row_id: request.id, request_id: request.data.request_id, verified: false, attempts: 0, email_sent: false };
+    const state = { row_id: request.id, request_id: request.data.request_id, verified: false, attempts: 0, email_sent: false, findings_told: 0 };
     setState(ctx, state);
     await updateRow(ctx, state, { status: "in_call", communication_id: comm?.id ?? "" });
 

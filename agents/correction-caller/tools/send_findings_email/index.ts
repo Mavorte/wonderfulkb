@@ -18,6 +18,10 @@ export default w.tool({
     state.email_sent = true;
     setState(ctx, state);
     await updateRow(ctx, state, { status: "email_sent" });
-    return { sent: true, instruction: "Tell the client the email with all findings and the upload link has been sent to their address on file." };
+    return {
+      sent: true,
+      say: "This was just a quick overview for you. We've sent you the full list by email, along with a link to re-upload the documents.",
+      instruction: "Say the `say` text, then continue with the closing steps.",
+    };
   },
 });

@@ -44,11 +44,10 @@ export default w.tool({
 
     return {
       verified: true,
+      say: "Thank you, that matches our records.",
       company_name: row.company_name,
-      findings: parseFindings(row.findings),
-      reviewer_note: row.note || null,
-      instruction:
-        "In one or two short English sentences, summarise the main problem. Do not go through every finding. Then call send_findings_email.",
+      findings_total: parseFindings(row.findings).length,
+      instruction: "Say the `say` text, then call next_finding.",
     };
   },
 });
