@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import RevealOriginalButton, { type RevealedOriginal } from "./RevealOriginalButton";
+import PageMagnifier from "./PageMagnifier";
 import StatusIcon from "./StatusIcon";
 import { shortTitle, toneOf, type DocView, type Mark, type RequiredDoc } from "./evaluation";
 import { visibleMarks, type Focus } from "./focus";
@@ -28,6 +29,7 @@ export default function DocumentPanel({
   const doc = docs.find((d) => d.key === focus?.docKey) ?? docs[0];
   // The revealed original replaces the masked pages until hidden or another document is opened.
   const [original, setOriginal] = useState<(RevealedOriginal & { docKey: string }) | null>(null);
+  const [magnifier, setMagnifier] = useState(true);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
@@ -139,6 +141,17 @@ export default function DocumentPanel({
               Open PDF
             </button>
           )}
+          {hasPreview && !shownOriginal && (
+            <button
+              type="button"
+              className={`kb-btn kb-btn--tertiary kb-btn--small${magnifier ? " is-hover" : ""}`}
+              aria-pressed={magnifier}
+              onClick={() => setMagnifier((on) => !on)}
+              title="Enlarge the page under the mouse"
+            >
+              Magnifier {magnifier ? "on" : "off"}
+            </button>
+          )}
           <RevealOriginalButton
             key={doc.key}
             caseId={caseId}
@@ -214,6 +227,7 @@ export default function DocumentPanel({
                       />
                     );
                   })}
+                  {magnifier && <PageMagnifier src={src} />}
                 </>
               ) : (
                 <div className="cr-page__missing">No preview for this page</div>
