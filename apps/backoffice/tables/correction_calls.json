@@ -13,8 +13,7 @@
     { "name": "status", "type": "string", "required": true },
     { "name": "requested_by", "type": "string" },
     { "name": "requested_at", "type": "datetime", "required": true },
-    { "name": "communication_id", "type": "string" },
-    { "name": "sms_sent_at", "type": "datetime" }
+    { "name": "communication_id", "type": "string" }
   ],
   "indexes": [{ "name": "by_phone_status", "columns": ["phone_number", "status", "requested_at"] }]
 }

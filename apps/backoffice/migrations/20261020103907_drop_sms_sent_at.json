@@ -1,0 +1,10 @@
+{
+  "backup": true,
+  "ops": [
+    {
+      "op": "drop_column",
+      "table": "correction_calls",
+      "name": "sms_sent_at"
+    }
+  ]
+}
