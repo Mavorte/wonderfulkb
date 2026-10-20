@@ -11,7 +11,7 @@ from uuid import UUID, uuid4
 
 from boto3.dynamodb.types import TypeSerializer, TypeDeserializer
 
-from case_client_repository import (InvalidRequest, NotFound, normalize_name,
+from case_client_repository import (CASE_STATUSES, InvalidRequest, NotFound, normalize_name,
                                     active_client, metadata_json)
 
 _SERIALIZER = TypeSerializer()
@@ -74,14 +74,16 @@ def _decode(item, kind):
     """Validate public fields, ignore unverified internal attributes, invent no defaults."""
     try:
         fields = (_CLIENT_FIELDS | set(_NESTED) if kind == 'clients' else
-                  {'case_id', 'client_id', 'status', 'created_at', 'metadata'})
+                  {'case_id', 'client_id', 'status', 'created_at', 'status_updated_at', 'metadata'})
         value = {k: _DESERIALIZER.deserialize(v) for k, v in item.items() if k in fields}
         if not _uuid(value['client_id']):
             raise ValueError()
         if kind == 'cases':
-            if not _case_id(value['case_id']) or value['status'] != 'open':
+            if not _case_id(value['case_id']) or value['status'] not in CASE_STATUSES:
                 raise ValueError()
             _utc(value['created_at'])
+            if 'status_updated_at' in value:
+                _utc(value['status_updated_at'])
             if 'metadata' in value:
                 _metadata(value['metadata'])
         else:
@@ -331,3 +333,19 @@ class DynamoDBCaseClientRepository:
                     raise RuntimeError('Unresolved client condition') from None
                 raise
         raise RuntimeError('Unable to allocate case ID')
+
+    def set_case_status(self, case_id, status):
+        if status not in CASE_STATUSES:
+            raise InvalidRequest('Invalid status')
+        try:
+            response = self.sdk.update_item(
+                TableName=self.cases_table, Key={'case_id': {'S': case_id}},
+                UpdateExpression='SET #status = :status, #at = :at',
+                ConditionExpression='attribute_exists(#id)',
+                ExpressionAttributeNames={'#id': 'case_id', '#status': 'status', '#at': 'status_updated_at'},
+                ExpressionAttributeValues={':status': {'S': status}, ':at': {'S': datetime.now(
+                    timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')}},
+                ReturnValues='ALL_NEW')
+        except self.sdk.exceptions.ConditionalCheckFailedException:
+            raise NotFound('Case not found') from None
+        return _decode(response['Attributes'], 'cases')

@@ -62,7 +62,8 @@ Resources:
                 Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ClientsTable}"
               - Sid: CaseClientCases
                 Effect: Allow
-                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Scan]
+                # UpdateItem: PUT /cases/{case_id}/status (Wonderful posouvá stav případu)
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:Scan]
                 Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
               - Sid: CaseClientIndexes
                 Effect: Allow
@@ -205,6 +206,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /cases
             Method: POST
+        SetCaseStatus:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /cases/{case_id}/status
+            Method: PUT
         Health:
           Type: HttpApi
           Properties:

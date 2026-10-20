@@ -139,7 +139,7 @@ step_trigger() {
   local key; key=$(kms_arn)
   [ -n "$key" ] || { echo "KMS alias/wonderfulkb-signatures not found." >&2; exit 1; }
   local params=("StreamArn=$stream" "SignatureKmsKeyArn=$key")
-  for p in MaxConcurrency BedrockRpm WorkerMemory AlarmTopicArn; do
+  for p in MaxConcurrency BedrockRpm WorkerMemory AlarmTopicArn WonderfulWebhookSecretName; do
     [ -z "${!p:-}" ] || params+=("$p=${!p}")
   done
   aws ecr get-login-password | docker login --username AWS --password-stdin "${repo%%/*}" >/dev/null

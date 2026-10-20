@@ -10,7 +10,7 @@ import re
 from threading import Lock
 from uuid import uuid4
 
-from case_client_repository import InvalidRequest, NotFound, normalize_name, active_client
+from case_client_repository import CASE_STATUSES, InvalidRequest, NotFound, normalize_name, active_client
 
 
 def _page(items, id_field, scope, filters, limit, token):
@@ -105,3 +105,13 @@ class MockCaseClientRepository:
             cases, next_token = _page(items, 'case_id', ['client-cases', client_id],
                                      filters, limit, token)
             return {'client_id': client_id, 'cases': cases, 'next_token': next_token}
+
+    def set_case_status(self, case_id, status):
+        if status not in CASE_STATUSES:
+            raise InvalidRequest('Invalid status')
+        with self._lock:
+            if case_id not in self._cases:
+                raise NotFound('Case not found')
+            self._cases[case_id].update(status=status, status_updated_at=datetime.now(
+                timezone.utc).isoformat().replace('+00:00', 'Z'))
+            return deepcopy(self._cases[case_id])

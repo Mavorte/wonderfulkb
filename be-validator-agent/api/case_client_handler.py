@@ -8,7 +8,7 @@ from threading import Lock
 from uuid import UUID
 from contextvars import ContextVar
 
-from case_client_repository import (CaseClientRepository, Conflict, InvalidRequest, NotFound,
+from case_client_repository import (CASE_STATUSES, CaseClientRepository, Conflict, InvalidRequest, NotFound,
                                     normalize_name, metadata_json)
 from case_client_mock_repository import MockCaseClientRepository
 
@@ -20,7 +20,7 @@ def _remaining():
     return max(0, context.get_remaining_time_in_millis() / 1000 - 1) if context else 7.0
 
 CLIENT_FIELDS = {'client_id', 'ico', 'dic', 'name', 'legal_form', 'address', 'status', 'source'}
-CASE_FIELDS = {'case_id', 'client_id', 'status', 'created_at', 'metadata'}
+CASE_FIELDS = {'case_id', 'client_id', 'status', 'created_at', 'status_updated_at', 'metadata'}
 NESTED_FIELDS = {'contacts': {'name', 'role', 'email', 'phone', 'preferred_channel'},
                  'signatories': {'name', 'function', 'authorized'},
                  'kyc': {'status', 'checked_at'}}
@@ -96,7 +96,7 @@ def _query(event, clients=False):
         raise InvalidRequest('limit must be an integer from 1 to 100')
     filters = {}
     if 'status' in query:
-        statuses = {'active', 'inactive', 'blocked'} if clients else {'open'}
+        statuses = {'active', 'inactive', 'blocked'} if clients else set(CASE_STATUSES)
         if query['status'] not in statuses:
             raise InvalidRequest('Invalid status')
         filters['status'] = query['status']
@@ -117,16 +117,31 @@ def _reject_constant(value):
     raise ValueError('Nonstandard JSON constant')
 
 
+def _body(event):
+    raw = event.get('body')
+    if event.get('isBase64Encoded', False):
+        raw = base64.b64decode(raw, validate=True).decode('utf-8')
+    if not isinstance(raw, str):
+        raise ValueError()
+    body = json.loads(raw, parse_constant=_reject_constant, use_decimal=True)
+    if not isinstance(body, dict):
+        raise ValueError()
+    return body
+
+
+def _status_request(event):
+    try:
+        body = _body(event)
+    except (ValueError, TypeError, UnicodeError, binascii.Error, RecursionError):
+        raise InvalidRequest('Invalid JSON request') from None
+    if set(body) != {'status'} or body['status'] not in CASE_STATUSES:
+        raise InvalidRequest('Body must be {"status": ...} with one of: ' + ', '.join(CASE_STATUSES))
+    return body['status']
+
+
 def _request(event):
     try:
-        raw = event.get('body')
-        if event.get('isBase64Encoded', False):
-            raw = base64.b64decode(raw, validate=True).decode('utf-8')
-        if not isinstance(raw, str):
-            raise ValueError()
-        body = json.loads(raw, parse_constant=_reject_constant, use_decimal=True)
-        if not isinstance(body, dict):
-            raise ValueError()
+        body = _body(event)
         client_id = _client_id(body.get('client_id'))
         metadata = body.get('metadata', {})
         if not isinstance(metadata, dict):
@@ -137,11 +152,18 @@ def _request(event):
         raise InvalidRequest('Invalid JSON request or fields (metadata limit: 16 KiB)') from None
 
 
+METHODS = {'/cases': ('GET', 'POST'), '/cases/{case_id}/status': ('PUT',)}
+
+
 def _route(event):
     resource = event.get('resource') or event.get('path', '')
     params = event.get('pathParameters') or {}
-    if resource in ('/clients', '/cases', '/cases/{case_id}', '/clients/{client_id}/cases'):
+    if resource in ('/clients', '/cases', '/cases/{case_id}', '/cases/{case_id}/status',
+                    '/clients/{client_id}/cases'):
         return resource, params
+    match = re.fullmatch(r'/cases/([^/]+)/status', resource)
+    if match:
+        return '/cases/{case_id}/status', {'case_id': match[1]}
     match = re.fullmatch(r'/cases/([^/]+)', resource)
     if match:
         return '/cases/{case_id}', {'case_id': match[1]}
@@ -174,8 +196,7 @@ def create_handler(repository: CaseClientRepository = None):
             if route is None:
                 return response(404, {'error': 'Route not found'})
             method = event.get('httpMethod')
-            if method != ('POST' if route == '/cases' else 'GET') and not (
-                    route == '/cases' and method == 'GET'):
+            if method not in METHODS.get(route, ('GET',)):
                 return response(405, {'error': 'Method not allowed'})
             if route == '/clients':
                 data = repository.list_clients(*_query(event, clients=True))
@@ -186,6 +207,9 @@ def create_handler(repository: CaseClientRepository = None):
                     return response(201, _public_case(case))
                 data = repository.list_cases(*_query(event))
                 data['cases'] = [_public_case(c) for c in data['cases']]
+            elif route == '/cases/{case_id}/status':
+                case_id = _case_id(params.get('case_id'))
+                data = _public_case(repository.set_case_status(case_id, _status_request(event)))
             elif route == '/cases/{case_id}':
                 data = _public_case(repository.get_case(_case_id(params.get('case_id'))))
             else:

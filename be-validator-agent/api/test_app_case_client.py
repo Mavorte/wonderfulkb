@@ -55,3 +55,12 @@ def test_documents_routes_stay_in_core(monkeypatch):
     monkeypatch.setattr(core, "handle", lambda *a, **k: seen.append(a[1]) or (200, {}))
     app.handler(ev("GET", "/v1/cases/abc/documents"))
     assert seen == ["/v1/cases/abc/documents"]
+
+
+def test_set_case_status_goes_to_case_client():
+    assert app.handler(ev("PUT", "/v1/cases/abc/status", key=None))["statusCode"] == 401
+    r = app.handler(ev("GET", "/v1/clients"))
+    active = next(c for c in json.loads(r["body"])["clients"] if c["status"] == "active")
+    case_id = json.loads(app.handler(ev("POST", "/v1/cases", body=json.dumps({"client_id": active["client_id"]})))["body"])["case_id"]
+    r = app.handler(ev("PUT", f"/v1/cases/{case_id}/status", body=json.dumps({"status": "awaiting_decision"})))
+    assert r["statusCode"] == 200 and json.loads(r["body"])["status"] == "awaiting_decision"

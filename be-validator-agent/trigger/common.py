@@ -25,6 +25,9 @@ TERMINAL = ("completed", "partial", "failed")
 # always finds the claim expired.
 LEASE_SECONDS = 930
 NAMESPACE = "wonderfulkb/Trigger"
+# Case statuses this side sets (architecture/case-statuses.md); Wonderful sets the others through the agent API.
+INTAKE_FROM = ("open", "awaiting_clarification")  # a new document starts intake; later states are left alone
+EVALUATE_FROM = ("open", "intake_in_progress")
 
 
 class BadMessage(ValueError):
@@ -85,10 +88,11 @@ class Context:
     """boto3 handles and names, created lazily from the environment (tests pass their own)."""
 
     def __init__(self, region=None, analysis_table=None, documents_table=None, bucket=None, queue_url=None,
-                 dlq_url=None, ddb=None, sqs=None, s3=None):
+                 dlq_url=None, ddb=None, sqs=None, s3=None, cases_table=None):
         self.region = region or os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "eu-central-1"
         self.analysis_name = analysis_table or os.environ.get("ANALYSIS_TABLE", "wonderfulkb-uw-document-analysis")
         self.documents_name = documents_table or os.environ.get("DOCUMENTS_TABLE", "wonderfulkb-uw-documents")
+        self.cases_name = cases_table or os.environ.get("CASES_TABLE", "wonderfulkb-uw-cases")
         self.bucket = bucket or os.environ.get("RAW_BUCKET", "wonderfulkb-raw-document-storage")
         self.queue_url = queue_url or os.environ.get("QUEUE_URL", "")
         self.dlq_url = dlq_url or os.environ.get("DLQ_URL", "")
@@ -119,6 +123,13 @@ class Context:
     @property
     def documents(self):
         return self.ddb.Table(self.documents_name)
+
+    @property
+    def cases(self):
+        return self.ddb.Table(self.cases_name)
+
+    def get_case(self, case_id):
+        return self.cases.get_item(Key={"case_id": case_id}, ConsistentRead=True).get("Item")
 
     def get_document(self, case_id, document_id):
         return self.documents.get_item(Key={"case_id": case_id, "document_id": document_id}).get("Item")
@@ -220,6 +231,25 @@ def claim_document(ctx, case_id, document_id):
             raise
     row = ctx.get_row(case_id, document_id)
     return row.get("processing_status", "unknown") if row else "unknown"
+
+
+def set_case_status(ctx, case_id, status, from_statuses):
+    """Move the case to `status` if it is in one of `from_statuses`. True when the row changed.
+
+    A missing case or one in another status is left alone (a repeated message, or Wonderful already moved it on)."""
+    values = {":s": status, ":t": iso(now_dt())}
+    values.update({f":f{i}": s for i, s in enumerate(from_statuses)})
+    try:
+        ctx.cases.update_item(
+            Key={"case_id": case_id}, UpdateExpression="SET #s = :s, status_updated_at = :t",
+            ConditionExpression=f"attribute_exists(case_id) AND #s IN ({', '.join(f':f{i}' for i in range(len(from_statuses)))})",
+            ExpressionAttributeNames={"#s": "status"}, ExpressionAttributeValues=values)
+        log.info("case %s: status %s", case_id, status)
+        return True
+    except ClientError as error:
+        if not _conditional_failed(error):
+            raise
+        return False
 
 
 def case_ready(ctx, case_id):

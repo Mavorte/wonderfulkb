@@ -191,6 +191,24 @@ class DynamoDBRepositoryTests(unittest.TestCase):
             self.assertNotIn('secret', result['body'])
         return data
 
+    def test_set_case_status_is_a_conditional_update(self):
+        params = {'TableName': ENV['CASES_TABLE_NAME'], 'Key': {'case_id': {'S': 'offline-db'}},
+                  'UpdateExpression': 'SET #status = :status, #at = :at',
+                  'ConditionExpression': 'attribute_exists(#id)',
+                  'ExpressionAttributeNames': {'#id': 'case_id', '#status': 'status', '#at': 'status_updated_at'},
+                  'ExpressionAttributeValues': {':status': {'S': 'approved'},
+                                                ':at': {'S': '2026-10-20T08:00:00.000000Z'}},
+                  'ReturnValues': 'ALL_NEW'}
+        stored = case(status='approved', status_updated_at='2026-10-20T08:00:00.000000Z')
+        self.stub.add_response('update_item', {'Attributes': wire(stored)}, params)
+        self.stub.add_client_error('update_item', service_error_code='ConditionalCheckFailedException',
+                                   expected_params=params)
+        with patch('case_client_dynamodb_repository.datetime') as clock:
+            clock.now.return_value = datetime(2026, 10, 20, 8, tzinfo=timezone.utc)
+            data = self.invoke('/cases/offline-db/status', 'PUT', body=json.dumps({'status': 'approved'}))
+            self.assertEqual(data, stored)
+            self.invoke('/cases/offline-db/status', 'PUT', body=json.dumps({'status': 'approved'}), expected=404)
+
     def test_handler_scan_and_allowlisted_nested_client(self):
         stored = client(internal='hidden', contacts=[{'name': 'Test', 'internal': 'hidden'}],
                         kyc={'status': 'ok', 'checked_at': '2026-10-19', 'private': True})

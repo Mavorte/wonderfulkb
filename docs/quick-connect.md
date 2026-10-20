@@ -23,6 +23,7 @@ Dřívější samostatné Case & Client API (`<CASE_API_ID>`, Lambda `wonderfulk
 | `GET /cases?limit=50` | Všechny case (Scan, pořadí není garantováno) |
 | `POST /cases` | Založí case; služba vygeneruje UUIDv4 `case_id` |
 | `GET /cases/{case_id}` | Detail case |
+| `PUT /cases/{case_id}/status` | Změna stavu case, tělo `{"status": "awaiting_decision"}` (stavy v `architecture/case-statuses.md`) |
 | `GET /clients/{client_id}/cases` | Case jednoho klienta, od nejnovějšího |
 | `GET /cases/{case_id}/documents` | Dokumenty case včetně nahraných a ještě nezpracovaných (`queued`) |
 | `GET /cases/{case_id}/documents/{document_id}` | Text, štítek, popis (`409`, dokud OCR nedoběhlo) |

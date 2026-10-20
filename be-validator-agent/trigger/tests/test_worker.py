@@ -163,13 +163,13 @@ def test_failed_last_document_also_completes_the_case(ctx, worker):
 
 def test_case_message_runs_the_case_step_once_per_message(ctx, worker, monkeypatch):
     calls = []
-    monkeypatch.setattr(worker_handler.case_step, "run", lambda case_id, options: calls.append(case_id) or {})
+    monkeypatch.setattr(worker_handler.case_step, "run", lambda case_id, options, ctx=None: calls.append(case_id) or {})
     worker.handler(sqs_event({"v": 1, "type": "case", "case_id": CASE}))
     assert calls == [CASE]
 
 
 def test_case_step_failure_is_retried(ctx, worker, monkeypatch):
-    def boom(case_id, options):
+    def boom(case_id, options, ctx=None):
         raise RuntimeError("S3 down")
     monkeypatch.setattr(worker_handler.case_step, "run", boom)
     assert worker.handler(sqs_event({"v": 1, "type": "case", "case_id": CASE}))["batchItemFailures"] == [

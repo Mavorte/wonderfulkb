@@ -96,7 +96,7 @@ def handle_record(ctx, record):
         dead_letter(ctx, record.get("body"), f"MALFORMED: {error}")
         return "malformed"
     if message["type"] == "case":
-        return case_step.run(message["case_id"], options())
+        return case_step.run(message["case_id"], options(), ctx)
     return process_document(ctx, message)
 
 

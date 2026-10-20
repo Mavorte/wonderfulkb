@@ -1,8 +1,14 @@
-"""The four-operation persistence boundary; no transport or AWS dependency."""
+"""The persistence boundary; no transport or AWS dependency."""
 from typing import Protocol
 import re
 import unicodedata
 import simplejson as json
+
+
+# Case lifecycle (architecture/case-statuses.md). Our side sets open, intake_in_progress and evaluating;
+# Wonderful sets the rest through PUT /cases/{case_id}/status.
+CASE_STATUSES = ('open', 'intake_in_progress', 'evaluating', 'awaiting_decision',
+                 'awaiting_clarification', 'approved', 'completed')
 
 
 class InvalidRequest(ValueError):
@@ -65,3 +71,5 @@ class CaseClientRepository(Protocol):
 
     def list_client_cases(self, client_id: str, filters: dict,
                           limit: int, token: str = None) -> dict: ...
+
+    def set_case_status(self, case_id: str, status: str) -> dict: ...
