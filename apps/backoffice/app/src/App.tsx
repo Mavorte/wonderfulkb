@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, Navigate, Route, Routes, matchPath, useLocation } from "react-router-dom";
-import KbLogo from "./kb/kb-logo.svg?react";
+import KbLogo from "./kb/kb-logo-inverse.svg?react";
 import NewCasePage from "./cases/NewCasePage";
 import ClientsPage from "./clients/ClientsPage";
 import QueueLayout from "./queue/QueueLayout";
@@ -41,7 +41,7 @@ export default function App() {
     <div className="app-root bo-shell">
       <aside className="bo-rail">
         <Link className="bo-rail__brand" to="/queue" aria-label="Komerční banka Backoffice">
-          <KbLogo aria-hidden="true" viewBox="0 0 32.4 32" height={32} width={32} />
+          <KbLogo aria-hidden="true" viewBox="0 0 31.1 32" height={32} width={31} />
         </Link>
         <nav aria-label="Main">
           <ul className="bo-rail__nav">
