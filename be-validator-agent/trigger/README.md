@@ -15,7 +15,10 @@ ingest (App Runner)           DynamoDB wonderfulkb-uw-documents
                          Lambda wonderfulkb-trigger-worker (kontejnerový image, 900 s)
                          claim řádku → pipeline.run_document → řádek completed / partial / failed
                          poslední dokument případu ──▶ zpráva `case` ──▶ pipeline.copies.copy_case (copy_suspicion)
+                                                                          ──▶ webhook Wonderful → case `evaluating`
 ```
+
+**Stav případu** (`wonderfulkb-uw-cases`, [case-statuses.md](../../architecture/case-statuses.md)): enqueue po zařazení dokumentu nastaví `intake_in_progress` (jen z `open` nebo `awaiting_clarification`, best effort: chyba nezdrží dokument, jen metrika `CaseStatusFailed`). Případový krok po kontrole kopií zavolá webhook Wonderful (`wonderful_webhook.py`, URL a `X-Webhook-Secret` ze secretu `wonderfulkb/wonderful-webhook` jako JSON `{"url", "secret"}`, parametr `WonderfulWebhookSecretName`; prázdný = vypnuto) a teprve po odpovědi 2xx nastaví `evaluating`. Obojí jen dokud je případ `open` nebo `intake_in_progress`, takže opakovaná zpráva `case` druhou evaluaci nespustí. Selhání webhooku vrátí zprávu do fronty (stav se nemění). Selhání kontroly kopií evaluaci nezdrží. Ostatní stavy nastavuje Wonderful přes `PUT /cases/{case_id}/status`.
 
 Kdo co dělá: **enqueue** (jen zápis řádku a zpráva, bez AWS volání mimo DynamoDB a SQS), **worker** (jediný, kdo volá Bedrock a Textract), **DLQ obsluha** (označí řádek `failed`, aby agent API vrátilo `failed`, ne věčné `queued`).
 

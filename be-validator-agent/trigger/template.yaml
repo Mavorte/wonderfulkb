@@ -10,6 +10,15 @@ Parameters:
     AllowedPattern: "^arn:aws:dynamodb:eu-central-1:[0-9]{12}:table/wonderfulkb-uw-documents/stream/.+$"
   DocumentsTable: {Type: String, Default: wonderfulkb-uw-documents}
   AnalysisTable: {Type: String, Default: wonderfulkb-uw-document-analysis}
+  CasesTable: {Type: String, Default: wonderfulkb-uw-cases}
+  WonderfulWebhookSecretName:
+    Type: String
+    Default: ""
+    AllowedValues: ["", wonderfulkb/wonderful-webhook]
+    Description: >-
+      Secrets Manager secret {"url": ..., "secret": ...} of the Wonderful webhook that starts the evaluation agent
+      once the documents of a case are processed (trigger/wonderful_webhook.py). Empty = no webhook, the case stays
+      intake_in_progress.
   RawBucket: {Type: String, Default: wonderfulkb-raw-document-storage}
   VectorBucket: {Type: String, Default: wonderfulkb-vectors}
   MaxConcurrency:
@@ -52,6 +61,7 @@ Globals:
       Variables:
         ANALYSIS_TABLE: !Ref AnalysisTable
         DOCUMENTS_TABLE: !Ref DocumentsTable
+        CASES_TABLE: !Ref CasesTable
         RAW_BUCKET: !Ref RawBucket
         QUEUE_URL: !Ref DocumentQueue
         DLQ_URL: !Ref DeadLetterQueue
@@ -117,6 +127,11 @@ Resources:
                 Effect: Allow
                 Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem]
                 Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+              - Sid: CaseIntake
+                # case -> intake_in_progress (conditional update, only from open / awaiting_clarification)
+                Effect: Allow
+                Action: dynamodb:UpdateItem
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
               - Sid: Send
                 Effect: Allow
                 Action: sqs:SendMessage
@@ -197,6 +212,16 @@ Resources:
                 Effect: Allow
                 Action: [dynamodb:GetItem, dynamodb:BatchGetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:Query]
                 Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AnalysisTable}"
+              - Sid: CaseEvaluating
+                # case step: read the case, -> evaluating after the Wonderful webhook
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:UpdateItem]
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CasesTable}"
+              - Sid: WonderfulWebhookSecret
+                # the only secret name WonderfulWebhookSecretName allows; unused while the parameter is empty
+                Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:wonderfulkb/wonderful-webhook-*"
               - Sid: ReadOriginalsMaskedCopiesAndOwnOutput
                 Effect: Allow
                 Action: s3:GetObject
@@ -312,6 +337,7 @@ Resources:
           PIPELINE_REDACT: "1"
           PRIVACY_KMS_KEY_ID: !Ref SignatureKmsKeyArn
           DEDUP_HASHES_TABLE: !Ref HashesTable
+          WONDERFUL_WEBHOOK_SECRET: !Ref WonderfulWebhookSecretName
       Events:
         Documents:
           Type: SQS

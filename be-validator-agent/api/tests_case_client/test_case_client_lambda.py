@@ -67,6 +67,22 @@ class CaseClientLambdaTests(unittest.TestCase):
         omitted = self.invoke('POST', '/cases', body={'client_id': ACTIVE}, expected=201)
         self.assertEqual(UUID(omitted['case_id']).version, 4)
 
+    def test_set_case_status(self):
+        case_id = self.post()['case_id']
+        data = self.invoke('PUT', f'/cases/{case_id}/status', body={'status': 'awaiting_decision'})
+        self.assertEqual(data['status'], 'awaiting_decision')
+        self.assertRegex(data['status_updated_at'], r'^\d{4}-\d{2}-\d{2}T.*Z$')
+        self.assertEqual(self.invoke(resource=f'/cases/{case_id}')['status'], 'awaiting_decision')
+        listed = self.invoke(resource='/cases', query={'status': 'awaiting_decision'})['cases']
+        self.assertEqual([c['case_id'] for c in listed], [case_id])
+        for body in ({'status': 'rejected'}, {'status': 'open', 'extra': 1}, {}, ['open']):
+            self.invoke('PUT', f'/cases/{case_id}/status', body=body, expected=400)
+        self.invoke('PUT', f'/cases/{case_id}/status', raw='{not json', expected=400)
+        self.invoke('PUT', '/cases/no-such-case/status', body={'status': 'approved'}, expected=404)
+        self.invoke('PUT', '/cases/bad%id/status', body={'status': 'approved'}, expected=400)
+        self.invoke('GET', f'/cases/{case_id}/status', expected=405)
+        self.invoke('POST', f'/cases/{case_id}/status', body={'status': 'approved'}, expected=405)
+
     def test_global_cases_route_returns_shared_public_list(self):
         response = self.handler({
             'httpMethod': 'GET', 'resource': '/cases', 'path': '/cases',

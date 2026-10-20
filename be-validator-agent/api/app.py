@@ -1,7 +1,7 @@
 """AWS Lambda adaptér (API Gateway REST proxy, payload 1.0, i HTTP API 2.0). Handler: app.handler
 
 Jedna Lambda pro všechny endpointy: dokumenty, vektory a podpisy obsluhuje `core`, případy a klienty
-(`/cases`, `/cases/{case_id}`, `/clients`, `/clients/{client_id}/cases`, dříve Lambda wonderfulkb-case-client)
+(`/cases`, `/cases/{case_id}`, `PUT /cases/{case_id}/status`, `/clients`, `/clients/{client_id}/cases`, dříve Lambda wonderfulkb-case-client)
 obsluhuje `case_client_handler`, regiony (`/cases/{case_id}/regions`, `…/documents/{document_id}/regions`)
 `regions_api`. Vše za stejnou kontrolou x-api-key.
 """
@@ -12,7 +12,7 @@ import core
 import regions_api
 
 # Cesty Case & Client API; /cases/{case_id}/documents… zůstávají v core.
-CASE_CLIENT_RX = re.compile(r"^/(?:cases|clients)(?:/[^/]+)?$|^/clients/[^/]+/cases$")
+CASE_CLIENT_RX = re.compile(r"^/(?:cases|clients)(?:/[^/]+)?$|^/clients/[^/]+/cases$|^/cases/[^/]+/status$")
 
 
 def _case_client(event, context, method, path, headers):
