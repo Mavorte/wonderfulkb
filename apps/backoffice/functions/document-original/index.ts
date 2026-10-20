@@ -1,7 +1,8 @@
 // Reveals the readable original of one case document (body: case_id,
 // document_id) on a reviewer's explicit action. The AWS API audits the call
 // under this app's API key, so this Function adds an audit line naming the
-// signed-in user. The link is presigned for 60 s and is never logged.
+// signed-in user by the id and email the platform puts on context.user. The
+// link is presigned for 60 s and is never logged.
 
 import type { FunctionContext } from "@wonderful/types";
 import { getErrorMessage, requestAwsApi } from "../lib/awsApi.ts";
@@ -17,7 +18,7 @@ type DocumentOriginalResponse =
   | { error: "bad_request" | "unauthenticated" | "not_found" | "upstream" };
 
 function audit(context: FunctionContext, caseId: string, documentId: string, outcome: Outcome) {
-  const record = { event: "document_reveal", user_id: context.user?.id, case_id: caseId, document_id: documentId, outcome };
+  const record = { event: "document_reveal", user_id: context.user?.id, user_email: context.user?.email, case_id: caseId, document_id: documentId, outcome };
   console.log(JSON.stringify(record));
 }
 
