@@ -124,3 +124,11 @@ export function lastNameMatches(spoken: string, onFile: string): boolean {
   if (!expected || words.length === 0 || words.length > 3) return false;
   return [spoken, ...words].some((candidate) => isClose(normalizeName(candidate), expected));
 }
+
+// Czech legal forms; said aloud they only get in the way of the name.
+const LEGAL_FORM = /[,\s]+(spol\.\s*s\s*r\.\s*o\.|s\.\s*r\.\s*o\.|a\.\s*s\.|v\.\s*o\.\s*s\.|k\.\s*s\.|z\.\s*s\.|se)$/i;
+
+/** The company name as the agent says it: accents kept, legal form dropped. */
+export function spokenCompanyName(name: string): string {
+  return name.trim().replace(LEGAL_FORM, "").trim();
+}

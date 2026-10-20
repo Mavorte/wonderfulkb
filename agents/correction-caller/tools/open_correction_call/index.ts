@@ -1,5 +1,5 @@
 import { s, w } from "@wonderful/types/schema";
-import { MAX_ATTEMPTS, findPending, setState, updateRow } from "../../lib/request";
+import { MAX_ATTEMPTS, findPending, setState, spokenCompanyName, updateRow } from "../../lib/request";
 
 const UNKNOWN_CALL = "Hello, I'm an AI assistant calling from Komerční banka. Sorry, I don't have the details for this call, we'll be in touch again.";
 
@@ -21,7 +21,7 @@ export default w.tool({
     setState(ctx, state);
     await updateRow(ctx, state, { status: "in_call", communication_id: comm?.id ?? "" });
 
-    const company = request.data.company_name;
+    const company = spokenCompanyName(request.data.company_name);
     // Bias speech recognition toward the surname and company it is about to hear.
     try {
       ctx.transcriber.updateSessionConfig({ terms: [request.data.contact_last_name, company].filter(Boolean) });
