@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
 import getErrorCode from "../getErrorCode";
 import type { CaseView } from "./evaluation";
+import useCorrectionCall, { describeCall, isActive } from "./useCorrectionCall";
 
 type DecisionKind = "approve" | "return" | "escalate" | "reject";
 
@@ -21,7 +22,7 @@ const callErrors: Record<string, string> = {
   call_failed: "The call couldn't be placed. Try again.",
 };
 
-type CallState = { status: "idle" | "calling" } | { status: "placed"; phone: string } | { status: "failed"; message: string };
+type CallState = { status: "idle" | "calling" } | { status: "failed"; message: string };
 
 export default function DecisionPanel({ view }: { view: CaseView }) {
   const recommended = view.decision;
@@ -32,6 +33,8 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
   const [confirming, setConfirming] = useState(false);
   const [call, setCall] = useState<CallState>({ status: "idle" });
   const { api } = useWonderful();
+  const { call: lastCall, refresh } = useCorrectionCall(view.evaluation.case_id);
+  const outcome = lastCall && describeCall(lastCall);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const deviates = recommended !== null && choice !== recommended;
@@ -52,7 +55,7 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
   const placeCall = async () => {
     setCall({ status: "calling" });
     try {
-      const result = await api.invokeFunction<{ phone_number: string }>("backoffice/correction-call", {
+      await api.invokeFunction("backoffice/correction-call", {
         method: "POST",
         params: {
           case_id: view.evaluation.case_id,
@@ -60,8 +63,9 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
           note: reason.trim(),
         },
       });
-      setCall({ status: "placed", phone: result.phone_number });
+      setCall({ status: "idle" });
       setConfirming(false);
+      refresh();
     } catch (error) {
       const code = getErrorCode(error);
       setCall({ status: "failed", message: callErrors[code ?? ""] ?? callErrors.call_failed });
@@ -120,13 +124,13 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
             type="button"
             className="kb-btn kb-btn--primary cr-confirm"
             onClick={confirm}
-            disabled={call.status === "placed" || view.fixes.length === 0}
+            disabled={isActive(lastCall) || view.fixes.length === 0}
           >
             Request correction
           </button>
-          {call.status === "placed" ? (
-            <p className="cr-disabled-note" role="status">
-              Calling the client on {call.phone}. The agent verifies their surname, explains the findings and texts the upload link.
+          {outcome ? (
+            <p className={`cr-call-status cr-call-status--${outcome.tone}`} role="status">
+              {outcome.text}
             </p>
           ) : (
             view.fixes.length === 0 && <p className="cr-disabled-note">There are no findings to correct.</p>
@@ -159,8 +163,8 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
             </header>
             <div className="cr-dialog__body">
               <p className="cr-dialog__lead">
-                An agent calls {view.borrower ?? "the client"}, confirms the contact person's surname against the one on file, explains what to
-                correct and texts a link to upload the corrected documents.
+                An AI agent calls {view.borrower ?? "the client"}, verifies the contact's surname, summarises the problem and emails the full list
+                with an upload link.
               </p>
               <ol className="cr-dialog__list">
                 {view.fixes.map((f) => (

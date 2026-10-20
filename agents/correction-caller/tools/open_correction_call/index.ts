@@ -1,7 +1,7 @@
 import { s, w } from "@wonderful/types/schema";
 import { MAX_ATTEMPTS, findPending, setState, updateRow } from "../../lib/request";
 
-const UNKNOWN_CALL = "Dobrý den, tady Komerční banka. Omlouvám se, k tomuto hovoru teď nemám podklady, ozveme se vám znovu.";
+const UNKNOWN_CALL = "Dobrý den, jsem AI asistent Komerční banky. Omlouvám se, k tomuto hovoru nemám podklady, ozveme se znovu.";
 
 export default w.tool({
   name: "open_correction_call",
@@ -17,14 +17,14 @@ export default w.tool({
       return { found: false, instruction: "There is no correction request for this call. Apologise briefly and call end_call." };
     }
 
-    const state = { row_id: request.id, request_id: request.data.request_id, verified: false, attempts: 0, sms_sent: false };
+    const state = { row_id: request.id, request_id: request.data.request_id, verified: false, attempts: 0, email_sent: false };
     setState(ctx, state);
     await updateRow(ctx, state, { status: "in_call", communication_id: comm?.id ?? "" });
 
     const company = request.data.company_name;
     ctx.agent.announce(
-      `Dobrý den, tady Komerční banka. Volám kvůli žádosti o úvěr${company ? ` společnosti ${company}` : ""}. ` +
-        "Než budeme pokračovat, potřebuji ověřit, že mluvím se správnou osobou. Řekněte mi prosím své příjmení.",
+      `Dobrý den, jsem AI asistent oddělení kontroly úvěrů Komerční banky. Volám kvůli žádosti o úvěr${company ? ` společnosti ${company}` : ""}. ` +
+        "Nejdřív vás musím ověřit. Jaké je vaše příjmení?",
     );
     return {
       found: true,

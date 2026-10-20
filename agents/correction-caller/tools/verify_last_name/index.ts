@@ -42,7 +42,7 @@ export default w.tool({
       findings: parseFindings(row.findings),
       reviewer_note: row.note || null,
       instruction:
-        "Explain in plain Czech, briefly, what must be corrected, one finding at a time. Then call send_upload_link and tell the client the SMS with the upload link was sent.",
+        "In one or two short Czech sentences, summarise the main problem. Do not go through every finding. Then call send_findings_email.",
     };
   },
 });
