@@ -1,8 +1,8 @@
 // Reveals the readable original of one case document (body: case_id,
 // document_id) on a reviewer's explicit action. The AWS API audits the call
 // under this app's API key, so this Function adds an audit line naming the
-// signed-in user by the id and email the platform puts on context.user. The
-// link is presigned for 60 s and is never logged.
+// signed-in user by the id and email the platform puts on context.metadata.user.
+// The link is presigned for 60 s and is never logged.
 
 import type { FunctionContext } from "@wonderful/types";
 import { getErrorMessage, requestAwsApi } from "../lib/awsApi.ts";
@@ -17,8 +17,10 @@ type DocumentOriginalResponse =
   | { filename: string; contentType: string; url: string; expiresIn: number }
   | { error: "bad_request" | "unauthenticated" | "not_found" | "upstream" };
 
-function audit(context: FunctionContext, caseId: string, documentId: string, outcome: Outcome) {
-  const record = { event: "document_reveal", user_id: context.user?.id, user_email: context.user?.email, case_id: caseId, document_id: documentId, outcome };
+type Caller = FunctionContext["metadata"]["user"];
+
+function audit(user: Caller, caseId: string, documentId: string, outcome: Outcome) {
+  const record = { event: "document_reveal", user_id: user?.id, user_email: user?.email, case_id: caseId, document_id: documentId, outcome };
   console.log(JSON.stringify(record));
 }
 
@@ -30,7 +32,8 @@ export async function userFunction(context: FunctionContext): Promise<DocumentOr
     return { error: "bad_request" };
   }
   // Only a person may reveal an original; the audit has to name them.
-  if (!context.user?.id) {
+  const user = context.metadata?.user;
+  if (!user?.id) {
     context.response.setStatus(401);
     return { error: "unauthenticated" };
   }
@@ -54,7 +57,7 @@ export async function userFunction(context: FunctionContext): Promise<DocumentOr
   } catch (error) {
     console.log(`${path} request failed: ${getErrorMessage(error)}`);
   } finally {
-    audit(context, request.caseId, documentId, outcome);
+    audit(user, request.caseId, documentId, outcome);
   }
   context.response.setStatus(502);
   return { error: "upstream" };
