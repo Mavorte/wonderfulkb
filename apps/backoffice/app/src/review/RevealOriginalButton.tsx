@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useWonderful } from "@wonderful/app-sdk";
 import type { DocView } from "./evaluation";
 
-/** The readable original as the document-original Function returns it; the link expires after 60 s. */
-export type RevealedOriginal = { url: string; filename: string; contentType: string };
+/**
+ * The readable original as the document-original Function returns it; the links expire after 60 s.
+ * `pages[i]` renders page i + 1 at the size of the masked page, so the same boxes fit; null while not rendered.
+ */
+export type RevealedOriginal = { url: string; filename: string; contentType: string; pages: (string | null)[] };
 
 type OriginalResponse = (RevealedOriginal & { expiresIn: number; error?: undefined }) | { error: string };
 
@@ -42,7 +45,7 @@ function HostRevealOriginalButton({ caseId, doc, revealed, onReveal, onHide }: P
         params: { case_id: caseId, document_id: doc.documentId },
       });
       if (result.error !== undefined) throw new Error(errorText[result.error] ?? `Couldn't reveal the original (${result.error}).`);
-      onReveal({ url: result.url, filename: result.filename, contentType: result.contentType });
+      onReveal({ url: result.url, filename: result.filename, contentType: result.contentType, pages: result.pages ?? [] });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

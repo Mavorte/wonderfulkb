@@ -173,3 +173,48 @@ def test_original_auth_not_audited(env, caplog):
     assert call(api, f"/cases/{cid}/documents/{did}/original", key="spatny")[0] == 403
     assert call(api, f"/cases/{cid}/documents/..%2F/original")[0] in (400, 404)
     assert audit_records(caplog) == []
+
+
+def test_original_reveal_includes_readable_page_links(env, caplog):
+    api, clients, cid, did = env
+    key = ingest(clients, cid, did)
+    put(clients, key, b"%PDF-original")
+    set_row(clients, cid, did, page_count=3)
+    for n in (1, 2):
+        put(clients, f"cases/{cid}/original-pages/{did}/{n}.png", b"\x89PNG")
+    caplog.set_level(logging.INFO, logger=AUDIT)
+    st, b = call(api, f"/cases/{cid}/documents/{did}/original")
+    assert st == 200 and [p["page"] for p in b["pages"]] == [1, 2, 3] and b["pages"][2]["url"] is None
+    u = urllib.parse.urlparse(b["pages"][1]["url"])
+    q = urllib.parse.parse_qs(u.query)
+    assert u.path.endswith(f"/original-pages/{did}/2.png") and q["X-Amz-Expires"] == ["60"]
+    assert q["response-content-type"] == ["image/png"]
+    [rec] = audit_records(caplog)
+    assert rec["outcome"] == "revealed" and not any(p["url"] in caplog.text for p in b["pages"][:2])
+
+
+def test_original_reveal_without_page_renders(env):
+    """A document processed before the page renders existed: the original link only."""
+    api, clients, cid, did = env
+    put(clients, ingest(clients, cid, did), b"%PDF")
+    set_row(clients, cid, did, page_count=2)
+    st, b = call(api, f"/cases/{cid}/documents/{did}/original")
+    assert st == 200 and b["url"] and b["pages"] == [{"page": 1, "url": None}, {"page": 2, "url": None}]
+
+
+def test_pages_never_link_the_readable_page_renders(env):
+    api, clients, cid, did = env
+    redact(clients, cid, did, pages=(1,))
+    put(clients, f"cases/{cid}/original-pages/{did}/1.png", b"\x89PNG")
+    st, b = call(api, f"/cases/{cid}/documents/{did}/pages")
+    assert st == 200 and "original-pages" not in json.dumps(b)
+
+
+def test_original_reveal_skips_renders_beyond_the_page_count(env):
+    api, clients, cid, did = env
+    put(clients, ingest(clients, cid, did), b"%PDF")
+    set_row(clients, cid, did, page_count=1)
+    for n in (1, 2):  # page 2 is left over from an earlier run
+        put(clients, f"cases/{cid}/original-pages/{did}/{n}.png", b"\x89PNG")
+    st, b = call(api, f"/cases/{cid}/documents/{did}/original")
+    assert st == 200 and [p["page"] for p in b["pages"]] == [1]

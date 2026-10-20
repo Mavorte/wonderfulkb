@@ -506,3 +506,70 @@ def test_an_unmasked_source_is_not_reused(ingest, opts, aws_env, monkeypatch):
     row = run_document("c9", "d9", options=opts())
     assert calls == [] and row["redacted_s3_key"] == "cases/c9/redacted/d9.pdf"
     assert json.loads(get(aws_env, "cases/c9/analysis/d9/run.json"))["reuse"]["status"] == "source_not_redacted"
+
+
+def _signature_ink(png):
+    """Mean grey inside the signature box of a page render (dark ink: low, black mask: ~0, empty paper: ~255)."""
+    page = Image.open(io.BytesIO(png)).convert("L")
+    w, h = page.size
+    inner = page.crop((int(SIG_BBOX[0] * w) + 4, int(SIG_BBOX[1] * h) + 4, int(SIG_BBOX[2] * w) - 4, int(SIG_BBOX[3] * h) - 4))
+    return sum(inner.getdata()) / (inner.size[0] * inner.size[1])
+
+
+def test_original_pages_are_readable_renders_the_size_of_the_masked_pages(ingest, opts, aws_env):
+    ingest(CASE, DOC, signed_pdf())
+    row = run_document(CASE, DOC, options=opts())
+    assert row["processing_status"] == "completed"
+    original = get(aws_env, f"cases/{CASE}/original-pages/{DOC}/1.png")
+    masked = get(aws_env, PREFIX + "pages/1.png")
+    assert Image.open(io.BytesIO(original)).size == Image.open(io.BytesIO(masked)).size  # the same boxes fit both
+    assert _signature_ink(masked) < 12 < 40 < _signature_ink(original) < 250              # black mask vs. ink on paper
+    tags = aws_env.get_object_tagging(Bucket=BUCKET, Key=f"cases/{CASE}/original-pages/{DOC}/1.png")["TagSet"]
+    assert tags == [{"Key": "project", "Value": "wonderfulkb"}]
+    step = json.loads(get(aws_env, PREFIX + "run.json"))["steps"]["original_pages"]
+    assert step["status"] == "ok" and step["pages"] == 1
+
+
+def test_a_duplicate_gets_its_own_original_pages(ingest, opts, aws_env, monkeypatch):
+    original = signed_pdf()
+    ingest(CASE, DOC, original)
+    source_row = run_document(CASE, DOC, options=opts())
+    ingest("c9", "d9", original)
+    _fake_reuse(monkeypatch, source_row, PREFIX)
+    run_document("c9", "d9", options=opts(detector=FakeDetector()))
+    assert get(aws_env, "cases/c9/original-pages/d9/1.png") == get(aws_env, f"cases/{CASE}/original-pages/{DOC}/1.png")
+
+
+def test_a_masked_input_gets_no_original_pages(ingest, opts, aws_env):
+    ingest(CASE, DOC, signed_pdf())
+    run_document(CASE, DOC, options=opts())
+    run_document("c2", None, source=Source(f"cases/{CASE}/redacted/{DOC}.pdf", "masked.pdf"), options=opts())
+    assert not [k for k in keys(aws_env, "cases/c2/") if "/original-pages/" in k]
+
+
+def test_a_failed_original_render_does_not_degrade_the_document(ingest, opts, aws_env, monkeypatch):
+    from pipeline import pdf as pdfmod
+    real = pdfmod.render_png
+    calls = []
+
+    def first_call_fails(*args):
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError("render failed")
+        return real(*args)
+    monkeypatch.setattr(pdfmod, "render_png", first_call_fails)
+    ingest(CASE, DOC, signed_pdf())
+    row = run_document(CASE, DOC, options=opts())
+    assert row["processing_status"] == "completed"
+    assert json.loads(get(aws_env, PREFIX + "run.json"))["steps"]["original_pages"]["status"] == "failed"
+    assert not [k for k in keys(aws_env) if "/original-pages/" in k]
+
+
+def test_original_pages_case_renders_only_the_original_pages(ingest, opts, aws_env):
+    from pipeline import original_pages_case
+    ingest(CASE, DOC, signed_pdf())
+    ingest(CASE, "d2", signed_pdf(seed=3))
+    assert original_pages_case(CASE, opts(), ["d2"]) == [{"document_id": "d2", "title": "doc.pdf", "status": "ok",
+                                                          "seconds": pytest.approx(0, abs=30), "pages": 1}]
+    assert keys(aws_env) == sorted([f"cases/{CASE}/original/{DOC}.pdf", f"cases/{CASE}/original/d2.pdf",
+                                    f"cases/{CASE}/original-pages/d2/1.png"])

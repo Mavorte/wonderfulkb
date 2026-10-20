@@ -63,13 +63,15 @@ Rozhodnutí: **čitelný originál a čitelné stránky se mohou zamaskovat, pok
 | Vrstva | Co se ukládá | Co se přestane ukládat |
 |---|---|---|
 | **(a) Výřezy podpisů** | `signatures/<sig>.png.enc` (envelope AES-256-GCM + KMS) a `signatures/<sig>.preview.png` (zkreslený náhled) | čitelné `signatures/<sig>.png` (42 existujících: migrace, část 8) |
-| **(b) Stránky** | stránky vykreslené **ze zamaskovaného PDF** (nebo vůbec ne trvale) | stránky vykreslené z originálu (23 existujících: migrace) |
+| **(b) Stránky** | stránky vykreslené **ze zamaskovaného PDF** v `analysis/<doc>/pages/`; čitelné stránky z originálu jen v `cases/<case>/original-pages/<doc>/<n>.png` pro auditované odkrytí originálu (viz níže) | stránky vykreslené z originálu pod `analysis/` (23 existujících: migrace) |
 | **(c) Originální PDF** | zamaskovaná kopie `cases/<case>/redacted/<document_id>.pdf` s metadaty `original_sha256`, `original_size`; šifrované výřezy | čitelný `original/<document_id>.pdf` a čitelné ZIP balíky: **až po schválení migrace** |
 | Odvozená data | `phash`, `bbox`, `role`, `role_evidence`, `copy_suspicion`, `text.txt`; embedding výřezu z paměti, embedding stránky ze zamaskované stránky; maska 64×64 se neukládá | – |
 
 **Co zamaskování neřeší (důležité): detekce podpisů je neúplná.** Textract podle měření týmu nalezne u generických podpisů asi 92 %, u rukopisných asi 59 %; záloha `page_images` a zóna ukotvená na popisek se teprve měří. Zamaskování jen nalezených podpisů proto **nezaručuje**, že v uložených datech žádný čitelný podpis nezůstal. Zamaskovaný soubor je „podpisy odstraněny, kde jsme je našli nebo čekali“, ne „bez podpisů“. Důsledky a zbytkové riziko jsou v části 4; do doby, než se úplnost změří, nesmí se tvrdit víc.
 
 Pořadí v pipeline: detekce na originále (v paměti) → konzervativní oblasti → zamaskování PDF → ověření (`verify_redacted`) → výřez z **originálu** v paměti → `phash`, embedding, `distorted_preview` → `encrypt_image` → zápis `redacted/…pdf`, `.png.enc`, `.preview.png` → čitelné bajty zahodit. Další zpracování (OCR, stránky, embedding) čte jen zamaskovanou kopii.
+
+Změna 20. 10. 2026 (rozhodnutí uživatele): odkrytý originál má v UI ukázat tytéž obdélníky důkazů jako zamaskované stránky, stejným mechanismem (předem vykreslené PNG, předpodepsané odkazy). Pipeline proto po úspěšné redakci vykreslí stránky **originálu** do `cases/<case>/original-pages/<document_id>/<n>.png` (stejné DPI a rozměr jako `pages/<n>.png`, tag `project=wonderfulkb`); při selhání redakce nic. API je vydá jen v odpovědi `revealDocumentOriginal` (60 s, audit `document_reveal`), nikdy v `getDocumentPages`. Jsou to čitelná data stejné citlivosti jako `original/*.pdf`: zálohují a mažou se spolu s originály.
 
 ## 4. Redakce podpisových oblastí (`privacy/signature_privacy/redact.py`)
 
@@ -270,6 +272,7 @@ Rozhodnutí uživatele (19. 10. 2026): **čitelná data se před smazáním zál
 
 Co se zálohuje (všechny verze, ne jen poslední; bucket je verzovaný):
 - čitelné originály `cases/*/original/*.pdf`,
+- čitelné stránky originálů `cases/*/original-pages/*/*.png` (od 20. 10. 2026),
 - čitelné stránky `cases/*/analysis/*/pages/*.png`,
 - čitelné výřezy `cases/*/analysis/*/signatures/sig_*.png` (ne `.png.enc` ani `.preview.png`),
 - volitelně ZIP balíky `cases/*.zip` (`INCLUDE_ZIPS=1`; `codex-tmp.zip` má 446 MB).

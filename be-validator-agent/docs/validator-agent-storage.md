@@ -32,6 +32,8 @@ Všechno v `eu-central-1`, účet `<ACCOUNT_ID>`, profil CLI `hackathon` (`aws s
 - `signatures/<signature_id>.png`: výřezy podpisů.
 - `pages/<n>.png`: vykreslené stránky (pro obrazové vektory a lidskou kontrolu).
 
+Čitelné stránky originálu: `cases/<case_id>/original-pages/<document_id>/<n>.png` (stejný rozměr jako `pages/<n>.png`), vydává je jen auditované odkrytí originálu.
+
 ## Vektory (S3 Vectors)
 Bucket `wonderfulkb-vectors`, indexy `wonderfulkb-text`, `wonderfulkb-image`, `wonderfulkb-signatures`, všechny **1024 dimenzí, cosine, ENHANCED**. Změna dimenze znamená smazat a založit index znovu, proto nejdřív zapsat a ověřit.
 

@@ -273,12 +273,14 @@ Resources:
                   - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/redacted/*"
                   - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
               - Sid: WriteMaskedCopyAndOwnOutput
-                # no write access to original/: the readable original is only ever read
+                # no write access to original/: the readable original is only ever read;
+                # original-pages/ holds its page renders for the audited reveal
                 Effect: Allow
                 Action: [s3:PutObject, s3:PutObjectTagging]
                 Resource:
                   - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/redacted/*"
                   - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/analysis/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawBucket}/cases/*/original-pages/*"
               - Sid: ListForMissingKeys
                 # without ListBucket a missing key answers 403 instead of 404 (cache and signatures.json checks)
                 Effect: Allow
