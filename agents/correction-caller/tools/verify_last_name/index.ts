@@ -1,5 +1,5 @@
 import { s, w } from "@wonderful/types/schema";
-import { MAX_ATTEMPTS, getState, lastNameMatches, loadRow, parseFindings, setState, spokenCompanyName, updateRow } from "../../lib/request";
+import { MAX_ATTEMPTS, getState, lastCustomerUtterance, lastNameMatches, loadRow, parseFindings, setState, spokenCompanyName, updateRow } from "../../lib/request";
 
 const RETRY = "Sorry, I couldn't verify that. Could you say your last name once more, or spell it for me?";
 const LOCKED = "I'm sorry, I can't verify you right now. The bank will contact you another way. Goodbye.";
@@ -24,7 +24,9 @@ export default w.tool({
         return { verified: false, attempts_left: 0, say: LOCKED, instruction: "Say the `say` text word for word, then call end_call." };
       }
       state.attempts += 1;
-      state.verified = lastNameMatches(last_name, row.contact_last_name);
+      // The model may respell what it heard, so also check the raw transcript.
+      const heard = [last_name, lastCustomerUtterance(ctx)];
+      state.verified = heard.some((answer) => lastNameMatches(answer, row.contact_last_name));
       setState(ctx, state);
       if (!state.verified) {
         const attemptsLeft = MAX_ATTEMPTS - state.attempts;
