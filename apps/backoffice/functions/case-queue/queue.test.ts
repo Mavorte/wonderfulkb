@@ -16,8 +16,9 @@ test("latestEvaluations keeps the newest real run per case and skips mock runs",
   assert.deepEqual([...latest.values()].map((e) => e.evaluation_id), ["new"]);
 });
 
-test("createQueue lists each evaluated case with its client and only the rules that did not pass", () => {
+test("createQueue lists every case with its client and only the rules its latest run did not pass", () => {
   const [queued] = createQueue(
+    [awsCase],
     latestEvaluations([run]),
     [
       { evaluation_id: "ev1", rule_id: "invoice_contents", status: "missing", found: "No invoice", reasoning: "Not uploaded" },
@@ -25,21 +26,31 @@ test("createQueue lists each evaluated case with its client and only the rules t
       { evaluation_id: "ev1", rule_id: "guarantee_contents", status: "not_applicable", reasoning: "Not required" },
       { evaluation_id: "other", rule_id: "invoice_contents", status: "conflict", reasoning: "Other run" },
     ],
-    new Map([["SYN-A01", awsCase]]),
     [client],
   );
   assert.equal(queued.case_found, true);
   assert.equal(queued.created_at, "2026-10-19T09:00:00Z");
   assert.deepEqual(queued.client, { name: "Agroluh Vřesava s.r.o.", ico: "98007106", kyc_status: "ok" });
   assert.deepEqual(
-    queued.evaluation.issues.map((i) => [i.rule_id, i.status]),
+    queued.evaluation?.issues.map((i) => [i.rule_id, i.status]),
     [["invoice_contents", "missing"]],
   );
 });
 
+test("createQueue lists a case the evaluator has not run on yet", () => {
+  const fresh = { ...awsCase, case_id: "SYN-A02", status: "intake_in_progress" };
+  const queue = createQueue([awsCase, fresh], latestEvaluations([run]), [], [client]);
+  assert.deepEqual(queue.map((c) => [c.case_id, c.status, c.evaluation?.evaluation_id ?? null]), [
+    ["SYN-A01", "open", "ev1"],
+    ["SYN-A02", "intake_in_progress", null],
+  ]);
+  assert.equal(queue[1].client?.name, "Agroluh Vřesava s.r.o.");
+});
+
 test("createQueue keeps a run whose case the case API does not know", () => {
-  const [queued] = createQueue(latestEvaluations([run]), [], new Map(), [client]);
+  const [queued] = createQueue([], latestEvaluations([run]), [], [client]);
   assert.equal(queued.case_found, false);
   assert.equal(queued.client, null);
   assert.equal(queued.status, "open");
+  assert.equal(queued.evaluation?.evaluation_id, "ev1");
 });

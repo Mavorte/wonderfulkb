@@ -31,6 +31,13 @@ test("an open case is placed by its latest evaluator run", () => {
   assert.equal(statusOf({ ...base, status: "approved" }), "approved");
 });
 
+test("a case the evaluator has not run on yet waits on the client", () => {
+  assert.equal(statusOf({ ...base, evaluation: null }), "open");
+  assert.equal(statusOf({ ...base, status: "intake_in_progress", evaluation: null }), "intake_in_progress");
+  assert.deepEqual(findIssues({ ...base, evaluation: null }), []);
+  assert.equal(triage([{ ...base, evaluation: null }])[0].tier, "waiting");
+});
+
 test("evaluator conflicts block, missing items are material, blocking findings come first", () => {
   const findings = findIssues({
     ...base,

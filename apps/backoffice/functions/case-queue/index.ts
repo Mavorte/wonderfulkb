@@ -1,7 +1,6 @@
-// Lists the Work queue: one row per case with a case-evaluator run, from the
-// agent-functions tables linked to this app (latest run per case and the rules
-// it did not pass). The AWS case/client API adds each case's client
-// (GET /cases/{case_id}, GET /clients).
+// Lists the Work queue: one row per case of the AWS case/client API (GET /cases)
+// with its client (GET /clients) and, from the agent-functions tables linked to
+// this app, its latest case-evaluator run and the rules that run did not pass.
 
 import type { FunctionContext } from "@wonderful/types";
 import type { AwsClient } from "../client-directory/directory";
@@ -48,14 +47,18 @@ async function readEvaluations(context: FunctionContext) {
   return { latest, results, truncated };
 }
 
-async function readCases(context: FunctionContext, caseIds: string[]) {
-  const casesById = new Map<string, AwsCase>();
-  await forEachLimited(caseIds.filter((id) => CASE_ID_PATTERN.test(id)), async (caseId) => {
+/** Every case of the case API, plus the evaluated cases a truncated list left out. */
+async function readCases(context: FunctionContext, evaluatedIds: string[]) {
+  const page = await listAll<AwsCase>(context, "/cases", "cases");
+  if (!page.truncated) return page;
+  const listed = new Set(page.items.map((c) => c.case_id));
+  const unlisted = evaluatedIds.filter((id) => !listed.has(id) && CASE_ID_PATTERN.test(id));
+  await forEachLimited(unlisted, async (caseId) => {
     const response = await requestAwsApi<AwsCase>(context, `/cases/${encodeURIComponent(caseId)}`);
-    if (response.ok && response.body) casesById.set(caseId, response.body);
+    if (response.ok && response.body) page.items.push(response.body);
     else if (response.status !== 404) throw new Error(`/cases/${caseId} returned ${response.status}`);
   });
-  return casesById;
+  return page;
 }
 
 async function userFunction(context: FunctionContext): Promise<CaseQueueResponse> {
@@ -69,13 +72,13 @@ async function userFunction(context: FunctionContext): Promise<CaseQueueResponse
   }
 
   try {
-    const [casesById, clients] = await Promise.all([
+    const [cases, clients] = await Promise.all([
       readCases(context, [...evaluations.latest.keys()]),
       listAll<AwsClient>(context, "/clients", "clients"),
     ]);
     return {
-      cases: createQueue(evaluations.latest, evaluations.results, casesById, clients.items),
-      truncated: evaluations.truncated || clients.truncated,
+      cases: createQueue(cases.items, evaluations.latest, evaluations.results, clients.items),
+      truncated: evaluations.truncated || cases.truncated || clients.truncated,
     };
   } catch (error) {
     console.log(`case queue request failed: ${getErrorMessage(error)}`);

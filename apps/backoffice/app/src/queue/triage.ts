@@ -1,4 +1,4 @@
-// Ranks the backoffice work queue: one row per case with a case-evaluator run.
+// Ranks the backoffice work queue: one row per case, evaluated or not yet.
 // A case's status says whose move it is; its latest run and the client registry
 // say how acute it is.
 
@@ -16,6 +16,7 @@ export type QueueCase = {
   status: string;
   created_at: string | null;
   client: { name: string; ico: string; kyc_status: string | null } | null;
+  // Null until the case-evaluator has run on the case.
   evaluation: {
     evaluation_id: string;
     status: string;
@@ -24,7 +25,7 @@ export type QueueCase = {
     started_at: string | null;
     finished_at: string | null;
     issues: QueueIssue[];
-  };
+  } | null;
 };
 
 // Blocking stops the case; material must be resolved before a decision.
@@ -67,8 +68,10 @@ const issueAction: Record<string, string> = {
 // The case API does not move cases along the lifecycle yet and leaves them
 // "open", so an open case is placed by its latest evaluator run. A failed run
 // waits on the worker to run it again, so it counts as awaiting a decision.
+// An open case with no run yet still waits for the client's documents.
 export function statusOf(c: QueueCase): CaseStatus {
   if (c.status !== "open" && isCaseStatus(c.status)) return c.status;
+  if (!c.evaluation) return "open";
   if (c.evaluation.status === "completed" || c.evaluation.status === "failed") return "awaiting_decision";
   return "evaluating";
 }
@@ -97,7 +100,7 @@ export function findIssues(c: QueueCase): Finding[] {
   }
 
   const evaluation = c.evaluation;
-  if (evaluation.status === "failed") {
+  if (evaluation?.status === "failed") {
     findings.push({
       severity: "material",
       title: "Checks did not finish",
@@ -105,7 +108,7 @@ export function findIssues(c: QueueCase): Finding[] {
     });
   }
 
-  if (evaluation.status === "completed") {
+  if (evaluation?.status === "completed") {
     for (const issue of evaluation.issues) {
       const label = ruleLabels[issue.rule_id] ?? issue.rule_id.replace(/_/g, " ");
       findings.push({
@@ -122,13 +125,13 @@ export function findIssues(c: QueueCase): Finding[] {
 
 const count = (c: TriagedCase, severity: Severity) => c.findings.filter((f) => f.severity === severity).length;
 
-/** Most acute first: tier, then blocking and material findings, then the longest-waiting run. */
+/** Most acute first: tier, then blocking and material findings, then the longest-waiting run or case. */
 export function compareCases(a: TriagedCase, b: TriagedCase): number {
   return (
     tiers.indexOf(a.tier) - tiers.indexOf(b.tier) ||
     count(b, "blocking") - count(a, "blocking") ||
     count(b, "material") - count(a, "material") ||
-    (a.evaluation.started_at ?? "").localeCompare(b.evaluation.started_at ?? "")
+    (a.evaluation?.started_at ?? a.created_at ?? "").localeCompare(b.evaluation?.started_at ?? b.created_at ?? "")
   );
 }
 
