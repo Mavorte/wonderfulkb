@@ -3,6 +3,7 @@ import { useWonderful } from "@wonderful/app-sdk";
 import { Alert, Box, Button, InputText, PageLayout, Stack, Text } from "@wonderful/ui-base";
 import { useEffect, useRef, useState } from "react";
 import CasePanel from "./components/CasePanel";
+import ClearEvaluationsButton from "./components/ClearEvaluationsButton";
 import ClientCasesPanel from "./components/ClientCasesPanel";
 import ClientsPanel from "./components/ClientsPanel";
 import UpstreamStatus from "./components/UpstreamStatus";
@@ -31,6 +32,7 @@ export default function App() {
   const [client, setClient] = useState<Client | null>(null);
   const [caseId, setCaseId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [evaluationsKey, setEvaluationsKey] = useState(0);
   const [run, setRun] = useState<EvaluatorRun>(null);
   const [isClientsOpen, setIsClientsOpen] = useState(readClientsOpen);
 
@@ -101,6 +103,7 @@ export default function App() {
               >
                 Run evaluator
               </Button>
+              <ClearEvaluationsButton onCleared={() => setEvaluationsKey((key) => key + 1)} />
             </Box>
           </Box>
         </PageLayout.Header>
@@ -168,6 +171,7 @@ export default function App() {
                       }}
                       onRunEvaluator={runEvaluator}
                       onClose={() => setCaseId(null)}
+                      evaluationsKey={evaluationsKey}
                     />
                   )}
                   {!client && !caseId && (

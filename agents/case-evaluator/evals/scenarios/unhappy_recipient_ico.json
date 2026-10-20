@@ -38,6 +38,7 @@
       ],
       "expected_final_status": "completed",
       "max_execution_time_seconds": 900,
+      "timeout_per_scenario_seconds": 900,
       "expected_behavior": "Calls start_evaluation for mock-unhappy and reads the loan agreement. Records recipient_matches_client as conflict, with the agreement IČO YYYYYYY against the client's 04606812. Records required_documents_present as missing for at least the supplier tax document/invoice. Records handover_protocol_contents as missing: the pages with the filled-in handover certificate and the signatures are blank. Records guarantee_contents as missing: the guarantee has no declaration text (scope, commitment, secured contract) and only one of the two SGEF signatories. Mentions in the summary that the payment agreement (dohoda o zaplacení kupní ceny) is blank. Records provider_consistent as conflict: the agreement names SGX Finance Czech Republic s.r.o., with DIČ XXXXXXX and account 0162710187/0000, while the other documents name SG Equipment Finance Czech Republic s.r.o., DIČ CZ61061344 and account 0162710187/0100. Records recipient_consistent as conflict for the IČO YYYYYYY. finish_evaluation is accepted with the verdict needs_correction, and the task completes with a summary stating the verdict and the IČO conflict.",
       "table_assertions": [
         {
@@ -132,7 +133,7 @@
           "status": "completed",
           "verdict": "ready",
           "summary": "Seed row so the eval table copy knows its columns.",
-          "rules_total": 3,
+          "rules_total": 19,
           "is_mock": true,
           "started_at": "2026-10-19T00:00:00Z",
           "finished_at": "2026-10-19T00:00:01Z"
@@ -143,6 +144,7 @@
           "evaluation_id": "ev-fixture-seed",
           "rule_id": "loan_agreement_present",
           "case_id": "fixture-seed",
+          "category": "completeness",
           "status": "passed",
           "expected": "Smlouva o úvěru",
           "found": "seed.pdf",

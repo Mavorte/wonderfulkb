@@ -2,7 +2,7 @@
 // agent_functions tables, which the backoffice app polls.
 
 import type { Region } from "./regions";
-import { type DocumentType, RULE_IDS, type RuleId, type Status, type Verdict } from "./rules";
+import { type DocumentType, PENDING, RULE_CATEGORIES, RULE_IDS, type RuleId, type Status, type Verdict } from "./rules";
 
 export const EVALUATIONS_TABLE = "agent_functions.case_evaluations";
 export const RESULTS_TABLE = "agent_functions.case_evaluation_results";
@@ -109,6 +109,18 @@ export async function startRun(ctx: RunContext, run: Omit<Run, "evaluation_id" |
     is_mock: run.is_mock,
     started_at: new Date().toISOString(),
   });
+  // One pending row per rule, so the app can list the checks before they run.
+  // Recording a rule replaces its row (saveResult).
+  for (const ruleId of RULE_IDS) {
+    await ctx.tables.insert(RESULTS_TABLE, {
+      evaluation_id: evaluationId,
+      rule_id: ruleId,
+      case_id: run.case_id,
+      category: RULE_CATEGORIES[ruleId],
+      status: PENDING,
+      reasoning: "",
+    });
+  }
   const started: Run = { evaluation_id: evaluationId, row_id: row.id, ...run };
   ctx.kv.set(RUN_KEY, started);
   return started;
@@ -197,6 +209,7 @@ export async function saveResult(ctx: RunContext, run: Run, result: RuleResult):
     evaluation_id: run.evaluation_id,
     rule_id: result.rule_id,
     case_id: run.case_id,
+    category: RULE_CATEGORIES[result.rule_id],
     status: result.status,
     expected: result.expected,
     found: result.found,
@@ -213,11 +226,12 @@ export async function saveResult(ctx: RunContext, run: Run, result: RuleResult):
   else await ctx.tables.insert(RESULTS_TABLE, data);
 }
 
+// The recorded rules' statuses; pending rows are left out.
 export async function getStatuses(ctx: RunContext, run: Run): Promise<Partial<Record<RuleId, string>>> {
   const { rows } = await ctx.tables.filter(RESULTS_TABLE, [
     { column: "evaluation_id", operator: "eq", value: run.evaluation_id },
   ], 100, 0);
-  return Object.fromEntries(rows.map((r) => [r.data.rule_id, r.data.status]));
+  return Object.fromEntries(rows.filter((r) => r.data.status !== PENDING).map((r) => [r.data.rule_id, r.data.status]));
 }
 
 export async function finishRun(ctx: RunContext, run: Run, status: "completed" | "failed", summary: string, verdict?: Verdict): Promise<void> {

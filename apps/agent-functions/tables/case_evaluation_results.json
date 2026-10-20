@@ -11,6 +11,7 @@
     },
     { "name": "rule_id", "type": "string", "required": true, "primary_key": true },
     { "name": "case_id", "type": "string", "required": true },
+    { "name": "category", "type": "string" },
     { "name": "status", "type": "string", "required": true },
     { "name": "expected", "type": "string" },
     { "name": "found", "type": "string" },

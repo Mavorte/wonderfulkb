@@ -60,11 +60,14 @@ export default function CasePanel({
   onOpenClient,
   onRunEvaluator,
   onClose,
+  evaluationsKey,
 }: {
   caseId: string;
   onOpenClient: (clientId: string) => void;
   onRunEvaluator: (caseId: string) => void;
   onClose: () => void;
+  // Changing it remounts the Evaluations panel, so it reloads after the evaluations were cleared.
+  evaluationsKey?: number;
 }) {
   const caseResult = useFunctionResult<Case>("case-get", { case_id: caseId });
   const documents = useFunctionResult<DocumentList>("documents-list", { case_id: caseId });
@@ -151,7 +154,7 @@ export default function CasePanel({
 
       {documentId && <DocumentPanel caseId={caseId} documentId={documentId} />}
 
-      <EvaluationsPanel caseId={caseId} />
+      <EvaluationsPanel key={evaluationsKey} caseId={caseId} />
     </Stack>
   );
 }

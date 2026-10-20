@@ -50,9 +50,36 @@ test("document-original returns the short-lived link and audits the user", async
   logs.restore();
 
   assert.equal(status(), 200);
-  assert.deepEqual(body, { filename: "0_Smlouva.pdf", contentType: "application/pdf", url: "https://s3/o.pdf?sig", expiresIn: 60 });
+  assert.deepEqual(body, { filename: "0_Smlouva.pdf", contentType: "application/pdf", url: "https://s3/o.pdf?sig", expiresIn: 60, pages: [] });
   assert.deepEqual(paths, [ORIGINAL]);
   assert.deepEqual(JSON.parse(logs.lines[0]), { event: "document_reveal", user_id: "u1", user_email: "reviewer@kb.test", case_id: "C1", document_id: "d1", outcome: "revealed" });
+  assert.ok(logs.lines.every((l) => !l.includes("https://s3")));
+});
+
+test("document-original passes the readable page links in page order", async () => {
+  stubFetch({
+    [ORIGINAL]: {
+      status: 200,
+      body: {
+        filename: "0_Smlouva.pdf",
+        content_type: "application/pdf",
+        url: "https://s3/o.pdf?sig",
+        expires_in: 60,
+        pages: [
+          { page: 3, url: null },
+          { page: 1, url: "https://s3/1.png?sig" },
+          { page: 2, url: "https://s3/2.png?sig" },
+        ],
+      },
+    },
+  });
+  const logs = captureLogs();
+  const { context } = createContext({ case_id: "C1", document_id: "d1" });
+  const body = await userFunction(context);
+  logs.restore();
+
+  assert.ok(!("error" in body) || body.error === undefined);
+  assert.deepEqual("pages" in body && body.pages, ["https://s3/1.png?sig", "https://s3/2.png?sig", null]);
   assert.ok(logs.lines.every((l) => !l.includes("https://s3")));
 });
 

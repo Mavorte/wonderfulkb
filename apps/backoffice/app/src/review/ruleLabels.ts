@@ -12,6 +12,14 @@ export const ruleLabels: Record<string, string> = {
   guarantee_contents: "Guarantee declaration",
   payment_proof_contents: "Proof of payment",
   technical_specification_contents: "Technical specification",
+  recipient_consistent: "Recipient details match",
+  supplier_consistent: "Supplier details match",
+  provider_consistent: "Provider (SGEF) details match",
+  asset_consistent: "Financed asset matches",
+  amounts_consistent: "Amounts match",
+  contract_number_consistent: "Contract number matches",
+  guarantor_consistent: "Guarantor details match",
+  client_status_valid: "Client active, KYC and signatories",
 };
 
 export const rawStatusLabel: Record<string, string> = {
@@ -21,4 +29,5 @@ export const rawStatusLabel: Record<string, string> = {
   failed: "Failed",
   cannot_verify: "Can't verify",
   not_applicable: "Not applicable",
+  pending: "Pending",
 };

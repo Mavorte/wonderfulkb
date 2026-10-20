@@ -4,25 +4,32 @@ import getErrorCode from "../getErrorCode";
 import type { CaseView } from "./evaluation";
 import useCorrectionCall, { describeCall, isActive } from "./useCorrectionCall";
 
-type DecisionKind = "approve" | "return" | "escalate" | "reject";
+type DecisionKind = "approve" | "return" | "reject";
 
 const options: { kind: DecisionKind; label: string }[] = [
   { kind: "approve", label: "Approve disbursement" },
   { kind: "return", label: "Request correction" },
-  { kind: "escalate", label: "Escalate to risk" },
   { kind: "reject", label: "Reject" },
 ];
 
-const notConnected = "Recording decisions isn't connected yet";
+const notConnected = "Rejecting isn't connected yet";
 
 const callErrors: Record<string, string> = {
   no_contact: "The client has no contact person on file to verify.",
   case_not_found: "The case wasn't found.",
+  not_awaiting_decision: "The case isn't awaiting a decision.",
   not_configured: "Calling isn't configured for this workspace.",
   call_failed: "The call couldn't be placed. Try again.",
 };
 
+const approveErrors: Record<string, string> = {
+  case_not_found: "The case wasn't found.",
+  not_awaiting_decision: "The case isn't awaiting a decision.",
+  upstream: "The approval couldn't be saved. Try again.",
+};
+
 type CallState = { status: "idle" | "calling" } | { status: "failed"; message: string };
+type ApproveState = { status: "idle" | "saving" | "approved" } | { status: "failed"; message: string };
 
 export default function DecisionPanel({ view }: { view: CaseView }) {
   const recommended = view.decision;
@@ -32,6 +39,8 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
   const [noteOpen, setNoteOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [call, setCall] = useState<CallState>({ status: "idle" });
+  const [requested, setRequested] = useState<{ statusSaved: boolean } | null>(null);
+  const [approval, setApproval] = useState<ApproveState>({ status: "idle" });
   const { api } = useWonderful();
   const { call: lastCall, refresh } = useCorrectionCall(view.evaluation.case_id);
   const outcome = lastCall && describeCall(lastCall);
@@ -50,12 +59,25 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
   const confirm = () => {
     if (deviates && !reason.trim()) return setShowError(true);
     if (choice === "return") setConfirming(true);
+    if (choice === "approve") void approve();
   };
+
+  const approve = async () => {
+    setApproval({ status: "saving" });
+    try {
+      await api.invokeFunction("backoffice/case-approve", { method: "POST", params: { case_id: view.evaluation.case_id } });
+      setApproval({ status: "approved" });
+    } catch (error) {
+      setApproval({ status: "failed", message: approveErrors[getErrorCode(error) ?? ""] ?? approveErrors.upstream });
+    }
+  };
+
+  const decided = requested !== null || approval.status === "approved";
 
   const placeCall = async () => {
     setCall({ status: "calling" });
     try {
-      await api.invokeFunction("backoffice/correction-call", {
+      const result = await api.invokeFunction<{ case_status_error?: string }>("backoffice/correction-call", {
         method: "POST",
         params: {
           case_id: view.evaluation.case_id,
@@ -64,6 +86,7 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
         },
       });
       setCall({ status: "idle" });
+      setRequested({ statusSaved: !result.case_status_error });
       setConfirming(false);
       refresh();
     } catch (error) {
@@ -83,6 +106,7 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
               name="cr-decision"
               value={o.kind}
               checked={choice === o.kind}
+              disabled={decided}
               onChange={() => {
                 setChoice(o.kind);
                 setShowError(false);
@@ -124,7 +148,7 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
             type="button"
             className="kb-btn kb-btn--primary cr-confirm"
             onClick={confirm}
-            disabled={isActive(lastCall) || view.fixes.length === 0}
+            disabled={decided || isActive(lastCall) || view.fixes.length === 0}
           >
             Request correction
           </button>
@@ -134,6 +158,27 @@ export default function DecisionPanel({ view }: { view: CaseView }) {
             </p>
           ) : (
             view.fixes.length === 0 && <p className="cr-disabled-note">There are no findings to correct.</p>
+          )}
+          {requested && !requested.statusSaved && (
+            <p className="kb-field__error" role="alert">
+              The case status couldn't be set to awaiting clarification, so it still shows as awaiting a decision.
+            </p>
+          )}
+        </>
+      ) : choice === "approve" ? (
+        <>
+          <button type="button" className="kb-btn kb-btn--primary cr-confirm" onClick={confirm} disabled={decided || approval.status === "saving"}>
+            {approval.status === "saving" ? "Approving…" : "Approve disbursement"}
+          </button>
+          {approval.status === "approved" && (
+            <p className="cr-disabled-note" role="status">
+              Approved. The case now waits for the write to the legacy system.
+            </p>
+          )}
+          {approval.status === "failed" && (
+            <p className="kb-field__error" role="alert">
+              {approval.message}
+            </p>
           )}
         </>
       ) : (

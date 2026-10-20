@@ -37,6 +37,7 @@ const tables = {
   ],
   "agent_functions.case_evaluation_results": [
     { evaluation_id: "a-new", rule_id: "r1", recorded_at: "2026-10-03T00:01:00Z" },
+    { evaluation_id: "a-new", rule_id: "r2", status: "pending" },
     { evaluation_id: "b-1", rule_id: "r1", recorded_at: "2026-10-02T00:01:00Z" },
   ],
 };
@@ -48,13 +49,15 @@ async function call(data: Row) {
 }
 
 test("evaluation-get returns the latest run overall, of a case, or the requested run", async () => {
-  assert.deepEqual(await call({}), { status: 200, evaluationId: "a-new", results: 1, error: undefined });
+  // Pending rows, with no recorded_at, come back too.
+  assert.deepEqual(await call({}), { status: 200, evaluationId: "a-new", results: 2, error: undefined });
   assert.deepEqual(await call({ case_id: "B" }), { status: 200, evaluationId: "b-1", results: 1, error: undefined });
   assert.equal((await call({ case_id: "A" })).evaluationId, "a-new");
   assert.equal((await call({ evaluation_id: "a-old", case_id: "B" })).evaluationId, "a-old");
 });
 
-test("evaluation-get answers 404 for an unknown case or run", async () => {
-  assert.equal((await call({ case_id: "missing" })).status, 404);
-  assert.equal((await call({ evaluation_id: "missing" })).error, "evaluation_not_found");
+test("evaluation-get returns no run, not an error, for a case without one or an unknown run", async () => {
+  const none = { status: 200, evaluationId: undefined, results: 0, error: undefined };
+  assert.deepEqual(await call({ case_id: "missing" }), none);
+  assert.deepEqual(await call({ evaluation_id: "missing" }), none);
 });

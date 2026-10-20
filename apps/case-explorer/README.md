@@ -25,6 +25,7 @@ All `POST`, called as `case-explorer/<slug>`. Each returns `{ url, status, ok, b
 | `evaluations-list` | `case_id` | `agent_functions.case_evaluations` and `case_evaluation_results`, filtered by `case_id` |
 | `evaluation-results` | `evaluation_id` | One run's row in `case_evaluations` and its rows in `case_evaluation_results` |
 | `evaluations-delete` | `case_id` | Deletes the case's rows: results first, then runs. Returns the counts. |
+| `evaluations-clear` | none | Deletes the rows of every case in both tables (the header's **Clear all evaluations** button). Returns the counts. |
 
 ## Configuration
 

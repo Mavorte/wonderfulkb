@@ -1,0 +1,7 @@
+{
+  "kind": "http",
+  "name": "Case Approve",
+  "description": "Approve disbursement (body: case_id): moves a case from awaiting_decision to approved through agent-functions/case-status-set",
+  "method": "POST",
+  "path_slug": "case-approve"
+}

@@ -29,6 +29,38 @@ export const RULE_IDS = Object.keys(RULES) as RuleId[];
 
 export type Status = "passed" | "missing" | "conflict" | "cannot_verify" | "not_applicable";
 
+// A result row's status: startRun writes every rule as pending, and recording
+// the rule replaces it with one of Status.
+export type RowStatus = Status | typeof PENDING;
+
+export const PENDING = "pending";
+
+// The backoffice checklist group each rule is shown under. Written on every
+// result row, so the app can show each group's progress while the run is open.
+export type Category = "completeness" | "consistency" | "client_status" | "supplier";
+
+export const RULE_CATEGORIES: Record<RuleId, Category> = {
+  loan_agreement_present: "completeness",
+  required_documents_present: "completeness",
+  handover_protocol_contents: "completeness",
+  technical_specification_contents: "completeness",
+  payment_proof_contents: "completeness",
+  security_transfer_contents: "completeness",
+  insurance_vinculation_contents: "completeness",
+  guarantee_contents: "completeness",
+  recipient_matches_client: "consistency",
+  recipient_consistent: "consistency",
+  supplier_consistent: "consistency",
+  provider_consistent: "consistency",
+  asset_consistent: "consistency",
+  amounts_consistent: "consistency",
+  contract_number_consistent: "consistency",
+  guarantor_consistent: "consistency",
+  client_status_valid: "client_status",
+  invoice_contents: "supplier",
+  purchase_contract_contents: "supplier",
+};
+
 export type Verdict = "ready" | "needs_correction" | "needs_review";
 
 // Kinds of required documents (business_rules.docx). required_documents_present

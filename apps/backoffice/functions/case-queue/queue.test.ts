@@ -24,6 +24,7 @@ test("createQueue lists every case with its client and only the rules its latest
       { evaluation_id: "ev1", rule_id: "invoice_contents", status: "missing", found: "No invoice", reasoning: "Not uploaded" },
       { evaluation_id: "ev1", rule_id: "loan_agreement_present", status: "passed", reasoning: "Found" },
       { evaluation_id: "ev1", rule_id: "guarantee_contents", status: "not_applicable", reasoning: "Not required" },
+      { evaluation_id: "ev1", rule_id: "client_status_valid", status: "pending", reasoning: "" },
       { evaluation_id: "other", rule_id: "invoice_contents", status: "conflict", reasoning: "Other run" },
     ],
     [client],

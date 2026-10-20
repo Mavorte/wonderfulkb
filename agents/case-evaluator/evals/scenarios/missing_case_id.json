@@ -37,6 +37,7 @@
         "fail_evaluation"
       ],
       "max_execution_time_seconds": 300,
+      "timeout_per_scenario_seconds": 300,
       "expected_behavior": "The request names no case. The agent does not invent or guess a case ID and does not call start_evaluation or any evaluate_* tool. It stops and says that a case_id is needed to evaluate the case.",
       "table_assertions": []
     },
@@ -49,7 +50,7 @@
           "status": "completed",
           "verdict": "ready",
           "summary": "Seed row so the eval table copy knows its columns.",
-          "rules_total": 3,
+          "rules_total": 19,
           "is_mock": true,
           "started_at": "2026-10-19T00:00:00Z",
           "finished_at": "2026-10-19T00:00:01Z"
@@ -60,6 +61,7 @@
           "evaluation_id": "ev-fixture-seed",
           "rule_id": "loan_agreement_present",
           "case_id": "fixture-seed",
+          "category": "completeness",
           "status": "passed",
           "expected": "Smlouva o úvěru",
           "found": "seed.pdf",

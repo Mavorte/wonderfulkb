@@ -38,6 +38,7 @@
       ],
       "expected_final_status": "completed",
       "max_execution_time_seconds": 900,
+      "timeout_per_scenario_seconds": 900,
       "expected_behavior": "Calls start_evaluation for mock-solom-rec and reads the loan agreement 170170/25 with get_document. Records loan_agreement_present as passed and recipient_matches_client as passed (SOLOM Rec s.r.o., IČO 04606812). Records required_documents_present as missing, with the supplier tax document/invoice having no document, and refers to requirements by name, never by a letter. Records invoice_contents as missing because the invoice is required but was not uploaded. Reads the order and records purchase_contract_contents as missing, because the supplier's confirmation/signature box is empty. Records guarantee_contents as passed. Every rule gets a record call with reasoning. It does not claim an invoice or bank statement was uploaded. Records supplier_consistent as conflict: the agreement names Epirock s.r.o., IČO 06493399, while the order and the payment agreement name Epiroc Czech Republic s.r.o., IČO 06493394. Records contract_number_consistent as conflict: the payment agreement (and the guarantee) refer to loan 17023644/25 instead of 170170/25. Records client_status_valid as conflict: Petr Fiala signs for SOLOM Rec, but the client's authorized signatory is Jiří Labuda. finish_evaluation is accepted with the verdict needs_correction, and the task completes with a summary stating the verdict.",
       "table_assertions": [
         {
@@ -141,7 +142,7 @@
           "status": "completed",
           "verdict": "ready",
           "summary": "Seed row so the eval table copy knows its columns.",
-          "rules_total": 3,
+          "rules_total": 19,
           "is_mock": true,
           "started_at": "2026-10-19T00:00:00Z",
           "finished_at": "2026-10-19T00:00:01Z"
@@ -152,6 +153,7 @@
           "evaluation_id": "ev-fixture-seed",
           "rule_id": "loan_agreement_present",
           "case_id": "fixture-seed",
+          "category": "completeness",
           "status": "passed",
           "expected": "Smlouva o úvěru",
           "found": "seed.pdf",

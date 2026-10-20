@@ -38,6 +38,7 @@
       ],
       "expected_final_status": "completed",
       "max_execution_time_seconds": 900,
+      "timeout_per_scenario_seconds": 900,
       "expected_behavior": "Calls start_evaluation for mock-eval-technical-specification-required. The agreement asks for a technical specification and not for an insurance vinculation. Records technical_specification_contents as passed (Volvo Construction Equipment EC220E, serial VCEC220EV00312345), and insurance_vinculation_contents as not_applicable even though a vinculation was uploaded. Every other rule passes, and finish_evaluation is accepted with the verdict ready.",
       "table_assertions": [
         {
@@ -251,7 +252,7 @@
           "status": "completed",
           "verdict": "ready",
           "summary": "Seed row so the eval table copy knows its columns.",
-          "rules_total": 3,
+          "rules_total": 19,
           "is_mock": true,
           "started_at": "2026-10-19T00:00:00Z",
           "finished_at": "2026-10-19T00:00:01Z"
@@ -262,6 +263,7 @@
           "evaluation_id": "ev-fixture-seed",
           "rule_id": "loan_agreement_present",
           "case_id": "fixture-seed",
+          "category": "completeness",
           "status": "passed",
           "expected": "Smlouva o úvěru",
           "found": "seed.pdf",

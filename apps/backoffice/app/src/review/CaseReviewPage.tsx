@@ -51,7 +51,7 @@ function countRules(rules: RuleView[], status: CheckStatus) {
 
 function rawCounts(rules: RuleView[]) {
   const counts = new Map<string, number>();
-  for (const r of rules) counts.set(r.rawStatus, (counts.get(r.rawStatus) ?? 0) + 1);
+  for (const r of rules) if (r.status !== "pending") counts.set(r.rawStatus, (counts.get(r.rawStatus) ?? 0) + 1);
   return [...counts.entries()];
 }
 
@@ -185,6 +185,7 @@ function GroupCard({
   }
   const issues = group.rules.filter((r) => r.status === "fail" || r.status === "warn");
   const rest = group.rules.filter((r) => r.status === "pass" || r.status === "na");
+  const pending = group.rules.filter((r) => r.status === "pending");
   return (
     <li className={`cr-rule cr-rule--${group.status}`}>
       <button type="button" className="cr-rule__head" aria-expanded={open} onClick={onToggle}>
@@ -194,6 +195,9 @@ function GroupCard({
             {group.title}
           </span>
           <span className="cr-rule__counts">
+            <span className="cr-count cr-count--done">
+              {group.done}/{group.rules.length} checked
+            </span>
             {rawCounts(group.rules).map(([raw, n]) => (
               <span key={raw} className={`cr-count cr-count--${raw}`}>
                 {n} {(rawStatusLabel[raw] ?? raw).toLowerCase()}
@@ -222,6 +226,9 @@ function GroupCard({
             ) : (
               rest.map((r) => <RuleRow key={r.id} rule={r} selected={r.id === selectedRuleId} onOpen={onOpen} />)
             )}
+            {pending.map((r) => (
+              <RuleRow key={r.id} rule={r} selected={false} onOpen={onOpen} />
+            ))}
           </ul>
         </div>
       )}
@@ -619,7 +626,7 @@ export default function CaseReviewPage() {
   if (state.status === "loading") return <ReviewSkeleton />;
   if (state.status === "error") return <p className="cr-state cr-state--error">Couldn't load the evaluation: {state.message}</p>;
   if (!view) {
-    const missing = evaluationId ? `Evaluation ${evaluationId} not found.` : caseId ? `Case ${caseId} has no evaluation yet.` : "No evaluation yet.";
+    const missing = evaluationId ? `Evaluation ${evaluationId} not found.` : caseId ? `Case ${caseId} has no evaluation yet. It is waiting for the client's documents.` : "No evaluation yet.";
     return <p className="cr-state">{missing}</p>;
   }
   // "/cases" shows the latest run; give it its case's address so the link can be shared.

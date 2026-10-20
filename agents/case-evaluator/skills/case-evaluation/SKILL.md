@@ -15,7 +15,7 @@ The task gives you a `case_id`. You check the case's documents against the busin
 4. Record the eight document contents rules. Read one matched document at a time with `get_document`, record its rule, then move on.
 5. Read the documents you haven't read yet, such as the payment agreement and the VOP. After reading each document, write down a short note of the values it shows for the consistency rules (below), with its ref and page.
 6. Record the eight consistency rules from your notes.
-7. Call `finish_evaluation` with a short summary. It is refused while any rule is unrecorded.
+7. Call `finish_evaluation` with a short summary. It is refused while any rule is unrecorded. It also moves the case to `awaiting_decision` for the KB worker; if it reports that the status could not be set, call it again.
 8. Complete the task with the verdict and summary.
 
 If an evaluate tool returns `accepted: false`, read its `problems`, correct the input and call it again. Recording a rule again replaces its earlier result. If a tool keeps failing after `start_evaluation`, call `fail_evaluation` with the reason, then set the task to failed.

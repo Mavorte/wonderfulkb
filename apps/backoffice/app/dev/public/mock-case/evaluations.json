@@ -699,7 +699,8 @@
       "recorded_at": "2026-10-19T19:14:19.858Z",
       "rule_id": "guarantee_contents",
       "sources": "[{\"document_id\":\"2a8176e6-09cf-5294-8742-4bd956736d04\",\"title\":\"04_Ruceni.pdf\",\"page\":1},{\"document_id\":\"2a8176e6-09cf-5294-8742-4bd956736d04\",\"title\":\"04_Ruceni.pdf\",\"page\":2},{\"document_id\":\"2a8176e6-09cf-5294-8742-4bd956736d04\",\"title\":\"04_Ruceni.pdf\",\"page\":3}]",
-      "status": "passed"
+      "status": "passed",
+      "category": "completeness"
     },
     {
       "case_id": "SYN-RUN",
@@ -711,7 +712,8 @@
       "recorded_at": "2026-10-19T19:14:12.553Z",
       "rule_id": "security_transfer_contents",
       "sources": "[{\"document_id\":\"4958e179-0f22-52a4-9d0a-7979e73b6667\",\"title\":\"02_Zajistovaci_prevod.pdf\",\"page\":1},{\"document_id\":\"4958e179-0f22-52a4-9d0a-7979e73b6667\",\"title\":\"02_Zajistovaci_prevod.pdf\",\"page\":2},{\"document_id\":\"4958e179-0f22-52a4-9d0a-7979e73b6667\",\"title\":\"02_Zajistovaci_prevod.pdf\",\"page\":6}]",
-      "status": "missing"
+      "status": "missing",
+      "category": "completeness"
     },
     {
       "case_id": "SYN-RUN",
@@ -723,7 +725,8 @@
       "recorded_at": "2026-10-19T19:13:19.144Z",
       "rule_id": "insurance_vinculation_contents",
       "sources": "[{\"document_id\":\"c9969f0b-2059-5fff-933c-a0cd78249ca9\",\"title\":\"03_Vinkulace.pdf\",\"page\":1},{\"document_id\":\"c9969f0b-2059-5fff-933c-a0cd78249ca9\",\"title\":\"03_Vinkulace.pdf\",\"page\":2}]",
-      "status": "passed"
+      "status": "passed",
+      "category": "completeness"
     },
     {
       "case_id": "SYN-RUN",
@@ -735,7 +738,8 @@
       "recorded_at": "2026-10-19T19:13:11.167Z",
       "rule_id": "handover_protocol_contents",
       "sources": "[{\"document_id\":\"b90c00fe-96cc-5423-8979-4a0984eefb99\",\"title\":\"11_Predavaci_protokol.pdf\",\"page\":1},{\"document_id\":\"b90c00fe-96cc-5423-8979-4a0984eefb99\",\"title\":\"11_Predavaci_protokol.pdf\",\"page\":2},{\"document_id\":\"b90c00fe-96cc-5423-8979-4a0984eefb99\",\"title\":\"11_Predavaci_protokol.pdf\",\"page\":3},{\"document_id\":\"b90c00fe-96cc-5423-8979-4a0984eefb99\",\"title\":\"11_Predavaci_protokol.pdf\",\"page\":4}]",
-      "status": "missing"
+      "status": "missing",
+      "category": "completeness"
     },
     {
       "case_id": "SYN-RUN",
@@ -747,7 +751,8 @@
       "recorded_at": "2026-10-19T19:13:03.936Z",
       "rule_id": "purchase_contract_contents",
       "sources": "[{\"document_id\":\"febddf34-e8b0-5f99-b62d-f22d16f637a7\",\"title\":\"10_Objednavka.pdf\",\"page\":1},{\"document_id\":\"febddf34-e8b0-5f99-b62d-f22d16f637a7\",\"title\":\"10_Objednavka.pdf\",\"page\":2}]",
-      "status": "missing"
+      "status": "missing",
+      "category": "supplier"
     },
     {
       "case_id": "SYN-RUN",
@@ -759,7 +764,177 @@
       "recorded_at": "2026-10-19T19:12:54.993Z",
       "rule_id": "technical_specification_contents",
       "sources": "[]",
-      "status": "not_applicable"
+      "status": "not_applicable",
+      "category": "completeness"
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "loan_agreement_present",
+      "case_id": "SYN-RUN",
+      "category": "completeness",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "required_documents_present",
+      "case_id": "SYN-RUN",
+      "category": "completeness",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "payment_proof_contents",
+      "case_id": "SYN-RUN",
+      "category": "completeness",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "recipient_matches_client",
+      "case_id": "SYN-RUN",
+      "category": "consistency",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "recipient_consistent",
+      "case_id": "SYN-RUN",
+      "category": "consistency",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "supplier_consistent",
+      "case_id": "SYN-RUN",
+      "category": "consistency",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "provider_consistent",
+      "case_id": "SYN-RUN",
+      "category": "consistency",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "asset_consistent",
+      "case_id": "SYN-RUN",
+      "category": "consistency",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "amounts_consistent",
+      "case_id": "SYN-RUN",
+      "category": "consistency",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "contract_number_consistent",
+      "case_id": "SYN-RUN",
+      "category": "consistency",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "guarantor_consistent",
+      "case_id": "SYN-RUN",
+      "category": "consistency",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "client_status_valid",
+      "case_id": "SYN-RUN",
+      "category": "client_status",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
+    },
+    {
+      "evaluation_id": "ev-SYN-RUN-mvgd0000-abcd",
+      "rule_id": "invoice_contents",
+      "case_id": "SYN-RUN",
+      "category": "supplier",
+      "status": "pending",
+      "expected": null,
+      "found": null,
+      "sources": null,
+      "details": null,
+      "reasoning": "",
+      "recorded_at": null
     }
   ]
 }
