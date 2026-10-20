@@ -27,6 +27,8 @@ export type CallState = {
   verified: boolean;
   attempts: number;
   email_sent: boolean;
+  // Findings already walked through with the client.
+  findings_told: number;
 };
 
 type Ctx = {
