@@ -9,7 +9,6 @@
   display: flex; flex-direction: column; align-items: center; gap: var(--kb-space-6);
 }
 .bo-rail__brand { display: block; line-height: 0; border-radius: var(--kb-radius-2xs); }
-.bo-rail__brand svg path[fill="#000"] { fill: var(--kb-white); }
 .bo-rail__brand:focus-visible { outline: 2px solid var(--kb-focus-ring); outline-offset: 3px; }
 .bo-rail__nav { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--kb-space-3); }
 .bo-rail__item {
