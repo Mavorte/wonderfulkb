@@ -18,7 +18,9 @@ import {
   type RuleView,
 } from "./evaluation";
 import { rawStatusLabel } from "./ruleLabels";
+import formatDate from "../cases/formatDate";
 import getCasePath from "../cases/getCasePath";
+import useQueueContext from "../queue/useQueueContext";
 import useDocumentPreviews from "./useDocumentPreviews";
 import useEvaluation from "./useEvaluation";
 
@@ -185,6 +187,7 @@ function Review({ view }: { view: CaseView }) {
       },
       { replace: true },
     );
+  const queued = useQueueContext().queue?.find((c) => c.case_id === ev.case_id);
   const evaluatedGroups = view.groups.filter((g) => g.evaluated);
   const duration = formatDuration(ev.started_at, ev.finished_at);
   const running = isRunning(ev);
@@ -214,30 +217,34 @@ function Review({ view }: { view: CaseView }) {
     if (source) setFocus({ docKey: source.docKey, page: source.page ?? 1, nonce: Date.now() });
   };
 
+  const title = queued?.client?.name ?? view.borrower ?? `Case ${shortId(ev.case_id)}`;
+  const ico = queued?.client?.ico ?? view.ico;
+  const meta = [
+    ico && `IČO ${ico}`,
+    view.loanNo && `Loan contract ${view.loanNo}`,
+    queued?.created_at && `opened ${formatDate(queued.created_at)}`,
+  ].filter(Boolean);
+
   return (
     <div className="cr">
       <header className="cr-header">
         <nav aria-label="Breadcrumb">
           <ol className="kb-breadcrumb cr-crumbs">
             <li>
-              <Link to="/queue">Cases</Link>
+              <Link to="/queue">Work queue</Link>
             </li>
             <li aria-hidden="true">/</li>
-            <li>{ev.case_id}</li>
+            <li aria-current="page">{title}</li>
           </ol>
         </nav>
         <div className="cr-header__row">
           <div>
-            <h1 className="cr-title" title={view.borrower ? undefined : ev.case_id}>
-              {view.borrower ?? `Case ${shortId(ev.case_id)}`}
-              {view.amount && <span className="cr-title__amount">{view.amount}</span>}
+            <h1 className="cr-title" title={`Case ${ev.case_id}`}>
+              {title}
             </h1>
-            <p className="cr-header__meta">
-              {view.borrower && <span title={ev.case_id}>Case {shortId(ev.case_id)} · </span>}
-              <span title={ev.evaluation_id}>Run {ev.evaluation_id.replace(`${ev.case_id}-`, "")}</span>
-            </p>
+            {meta.length > 0 && <p className="cr-header__meta">{meta.join(" · ")}</p>}
           </div>
-          <div className="cr-run">
+          <div className="cr-run" title={`Evaluation ${ev.evaluation_id}`}>
             {ev.is_mock && <span className="cr-mock">Mock data</span>}
             {running ? (
               <span className="cr-live">Agent evaluating</span>
@@ -247,8 +254,8 @@ function Review({ view }: { view: CaseView }) {
               </span>
             )}
             <span>
-              {running ? `Started ${formatTime(ev.started_at)}` : formatTime(ev.started_at)}
-              {duration && ` · ${duration}`}
+              {running ? "Started" : "Checked"} {formatTime(ev.started_at)}
+              {duration && `${running ? " ·" : " in"} ${duration}`}
             </span>
           </div>
         </div>
