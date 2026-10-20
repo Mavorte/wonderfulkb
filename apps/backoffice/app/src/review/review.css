@@ -170,6 +170,7 @@
 }
 .cr-finding--fail { background: #fff7f8; }
 .cr-finding--warn { background: #fffcef; }
+.cr-finding.is-selected { box-shadow: inset 3px 0 0 var(--kb-accent); }
 .cr-finding.is-flash { background: var(--kb-yellow-10); box-shadow: 0 0 0 2px #e8a33a; }
 .cr-finding__title { margin: 0; font-weight: var(--kb-weight-semibold); line-height: 1.5rem; }
 .cr-sev {
@@ -206,6 +207,24 @@
 .cr-evidence:hover { border-color: var(--kb-border-strong); }
 .cr-evidence:focus-visible { outline: 2px solid var(--kb-focus-ring); outline-offset: 1px; }
 .cr-evidence .kb-icon { fill: var(--kb-accent); }
+.cr-problems { list-style: none; margin: 0 0 var(--kb-space-2); padding: 0; display: grid; gap: var(--kb-space-2); font-size: 0.8125rem; line-height: 1.25rem; }
+.cr-problem { display: grid; gap: 4px; }
+.cr-problem__title { font-weight: var(--kb-weight-semibold); }
+.cr-problem__title::first-letter { text-transform: uppercase; }
+.cr-problem__places, .cr-problem__side { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.cr-problem__ne { color: var(--kb-text-secondary); font-weight: var(--kb-weight-semibold); }
+.cr-problem__letter { padding: 0 5px; border-radius: var(--kb-radius-2xs); background: var(--kb-surface-muted); font-size: 0.6875rem; font-weight: var(--kb-weight-semibold); color: var(--kb-text-secondary); }
+.cr-place {
+  display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; min-width: 0;
+  padding: 2px 8px; border: 1px solid var(--kb-border); border-left-width: 3px; border-radius: var(--kb-radius-xs);
+  background: var(--kb-surface-card); font: inherit; color: var(--kb-text); text-align: left; cursor: pointer;
+}
+.cr-place:hover { border-color: var(--kb-border-strong); }
+.cr-place:focus-visible { outline: 2px solid var(--kb-focus-ring); outline-offset: 1px; }
+.cr-place--fail { border-left-color: var(--kb-error); }
+.cr-place--warn { border-left-color: #e8a33a; }
+.cr-place__quote { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 16rem; }
+.cr-place__src { color: var(--kb-text-secondary); white-space: nowrap; }
 .cr-evidence--external { cursor: default; background: var(--kb-surface-muted); border-style: dashed; }
 .cr-evidence--external .kb-icon { fill: var(--kb-text-secondary); }
 .cr-evidence__src { font-weight: var(--kb-weight-semibold); white-space: nowrap; }
@@ -257,17 +276,23 @@
 
 .cr-docs__pages { flex: 1; overflow-y: auto; padding: var(--kb-space-4); background: var(--kb-surface-subtle); display: grid; gap: var(--kb-space-4); align-content: start; }
 .cr-page { position: relative; background: var(--kb-white); box-shadow: var(--kb-shadow-card); border-radius: var(--kb-radius-3xs); }
-.cr-page img { display: block; width: 100%; height: auto; }
+/* A4 until the image loads, so pages below keep their place while scrolling to a box. */
+.cr-page img { display: block; width: 100%; height: auto; aspect-ratio: auto 210 / 297; }
 .cr-page__missing { display: grid; place-items: center; aspect-ratio: 210 / 297; font-size: 0.875rem; color: var(--kb-text-muted); }
 .cr-page__no { position: absolute; bottom: 6px; right: 8px; font-size: 0.6875rem; line-height: 1rem; color: var(--kb-text-secondary); background: #ffffffd0; padding: 0 6px; border-radius: var(--kb-radius-3xs); }
-.cr-mark { position: absolute; padding: 0; border: 2px solid; border-radius: 3px; cursor: pointer; mix-blend-mode: multiply; transition: box-shadow var(--kb-duration) var(--kb-ease); }
-.cr-mark--fail { border-color: #e0000099; background: #e0000014; }
-.cr-mark--warn { border-color: #e8a33aaa; background: #ffd56b33; }
-.cr-mark--pass { border-color: #267c2966; background: #267c2910; }
-.cr-mark.is-active { animation: cr-pulse 1.4s var(--kb-ease) 2; border-width: 3px; }
+/* The padding grows the box 3px past the bbox on each side (the negative margin keeps it centred),
+   so a one-line box stays visible in the narrow viewer; the outline doesn't take space. */
+.cr-mark { position: absolute; box-sizing: content-box; margin: -3px; padding: 3px; border: 0; outline: 2px solid; border-radius: 3px; cursor: pointer; mix-blend-mode: multiply; transition: box-shadow var(--kb-duration) var(--kb-ease); }
+.cr-mark--fail { outline-color: #e0000099; background: #e0000014; }
+.cr-mark--warn { outline-color: #e8a33aaa; background: #ffd56b33; }
+.cr-mark--evidence { outline-color: #1a6fb566; background: #1a6fb50d; outline-width: 1px; }
+/* region covers a paragraph or table row: lighter than a tight lines box. */
+.cr-mark--region { outline-style: dashed; }
+.cr-mark:hover { box-shadow: 0 0 0 3px #e8a33a55; }
+.cr-mark.is-active { animation: cr-pulse 1.4s var(--kb-ease) 2; outline-width: 3px; }
 .cr-mark--fail.is-active { background: #e0000026; }
 .cr-mark--warn.is-active { background: #ffd56b66; }
-.cr-mark:focus-visible { outline: 2px solid var(--kb-focus-ring); outline-offset: 2px; }
+.cr-mark:focus-visible { box-shadow: 0 0 0 4px var(--kb-focus-ring); }
 @keyframes cr-pulse { 0% { box-shadow: 0 0 0 0 #e8a33a99; } 70% { box-shadow: 0 0 0 10px #e8a33a00; } 100% { box-shadow: 0 0 0 0 #e8a33a00; } }
 
 @media (max-width: 1439px) {

@@ -1,4 +1,4 @@
-import type { Focus } from "./DocumentPanel";
+import type { Focus } from "./focus";
 import EvidenceChip from "./EvidenceChip";
 import StatusIcon from "./StatusIcon";
 import { groupSources, type CaseView, type CheckStatus, type SourceRef } from "./evaluation";

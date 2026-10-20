@@ -1,7 +1,7 @@
 // Case-evaluator data for the review screen: rows from agent_functions.case_evaluations
 // and agent_functions.case_evaluation_results, mapped into what the page renders.
 
-import { ruleLabels } from "./ruleLabels";
+import { ruleLabels } from "./ruleLabels.ts";
 
 export type CheckStatus = "pass" | "fail" | "warn" | "na";
 
@@ -36,11 +36,43 @@ export interface EvaluationPayload {
   results: ResultRow[];
 }
 
+// [x0, y0, x1, y1] as fractions of the rendered page, origin top left.
+export type BBox = [number, number, number, number];
+
+// lines: bbox is tight around the value; region: it covers the paragraph or table row;
+// page_only: no box, only the page (scans, values not found in the text, rows recorded before regions).
+export type Anchor = "lines" | "region" | "page_only";
+
 export interface SourceRef {
+  // `${ruleId}#${index}`, unique within the run.
+  id: string;
+  ruleId: string;
   docKey: string;
   documentId?: string;
   title: string;
   page?: number;
+  regionId?: string;
+  bbox?: BBox;
+  anchor: Anchor;
+  quote?: string;
+  // evidence, declaration, missing_value or compare_a, compare_b, …; absent on a plain reference.
+  role?: string;
+  field?: string;
+  issue?: string;
+  // Shows a problem (drawn in the rule's status colour) rather than supporting evidence.
+  problem: boolean;
+}
+
+// Problems of rules that didn't pass take the rule's status colour; everything else is plain evidence.
+export function toneOf(source: SourceRef, status: CheckStatus): "fail" | "warn" | "evidence" {
+  return source.problem && (status === "fail" || status === "warn") ? status : "evidence";
+}
+
+export interface Mark {
+  source: SourceRef;
+  ruleId: string;
+  ruleLabel: string;
+  status: CheckStatus;
 }
 
 export interface Field {
@@ -105,6 +137,8 @@ export interface DocView {
   fields: Field[];
   referencedPages: number[];
   status?: CheckStatus;
+  // Every source on this document that has a box.
+  marks: Mark[];
 }
 
 export interface FixItem {
@@ -209,7 +243,8 @@ const previewsByPrefix: Record<string, { name: string; count: number; pad?: numb
 };
 
 function previewFor(caseId: string, title: string): { pages: string[]; pdf: string } | null {
-  if (!import.meta.env.DEV || caseId !== previewCase) return null;
+  // import.meta.env is undefined outside Vite (node --test).
+  if (!import.meta.env?.DEV || caseId !== previewCase) return null;
   const prefix = String(Number(title.split("_")[0]));
   const p = previewsByPrefix[prefix];
   if (!p) return null;
@@ -236,7 +271,58 @@ interface DocDetails {
   confidence?: number;
 }
 
-type RawSource = { document_id?: string | null; title?: string | null; page?: number | null };
+type RawSource = {
+  document_id?: string | null;
+  title?: string | null;
+  page?: number | null;
+  region_id?: string | null;
+  bbox?: unknown;
+  quote?: string | null;
+  role?: string | null;
+  field?: string | null;
+  issue?: string | null;
+  anchor?: string | null;
+};
+
+// Documents are matched by their API id; the title is only a fallback for sources without one.
+function docKeyOf(documentId: string | null | undefined, title: string): string {
+  return documentId || `title:${title}`;
+}
+
+function toBBox(raw: unknown): BBox | undefined {
+  if (!Array.isArray(raw) || raw.length !== 4 || !raw.every((n) => typeof n === "number" && Number.isFinite(n))) return undefined;
+  const [x0, y0, x1, y1] = raw.map((n: number) => Math.min(1, Math.max(0, n)));
+  return x1 > x0 && y1 > y0 ? [x0, y0, x1, y1] : undefined;
+}
+
+function isProblemRole(role: string | undefined): boolean {
+  return !!role && (role.startsWith("compare_") || role === "declaration" || role === "missing_value");
+}
+
+export function toSource(raw: RawSource, ruleId: string, index: number): SourceRef | null {
+  if (!raw.title) return null;
+  const page = raw.page ?? undefined;
+  // A box needs its page; anchor page_only (and rows recorded before regions) never draw one.
+  const bbox = page && raw.anchor !== "page_only" ? toBBox(raw.bbox) : undefined;
+  const role = raw.role ?? undefined;
+  const issue = raw.issue ?? undefined;
+  return {
+    id: `${ruleId}#${index}`,
+    ruleId,
+    docKey: docKeyOf(raw.document_id, raw.title),
+    documentId: raw.document_id ?? undefined,
+    title: raw.title,
+    page,
+    regionId: raw.region_id ?? undefined,
+    bbox,
+    anchor: bbox ? (raw.anchor === "lines" ? "lines" : "region") : "page_only",
+    quote: raw.quote ?? undefined,
+    role,
+    field: raw.field ?? undefined,
+    issue,
+    problem: !!issue || isProblemRole(role),
+  };
+}
 
 const severity: Record<CheckStatus, number> = { na: 0, pass: 1, warn: 2, fail: 3 };
 
@@ -247,14 +333,10 @@ export function worst(statuses: CheckStatus[]): CheckStatus {
 function toRule(row: ResultRow): RuleView {
   const details = parseJson<DocDetails | RequiredDoc[]>(row.details);
   const docDetails = details && !Array.isArray(details) ? details : null;
-  const sources = (parseJson<RawSource[]>(row.sources) ?? [])
-    .filter((s) => s.title)
-    .map((s) => ({
-      docKey: s.title as string,
-      documentId: s.document_id ?? undefined,
-      title: s.title as string,
-      page: s.page ?? undefined,
-    }));
+  const raw = parseJson<RawSource[]>(row.sources);
+  const sources = (Array.isArray(raw) ? raw : [])
+    .map((s, i) => toSource(s ?? {}, row.rule_id, i))
+    .filter((s): s is SourceRef => !!s);
   return {
     id: row.rule_id,
     label: ruleLabels[row.rule_id] ?? row.rule_id.replace(/_/g, " "),
@@ -287,15 +369,68 @@ function party(value: string | null): string | null {
   return value?.replace(/,\s*IČO?:?\s*/, " · ") ?? null;
 }
 
+export interface CitedDoc {
+  docKey: string;
+  title: string;
+  pages: number[];
+  // Where opening the document lands: its first source with a box, else its first source.
+  first: SourceRef;
+}
+
 // One entry per document, with every cited page.
-export function groupSources(sources: SourceRef[]): { docKey: string; title: string; pages: number[] }[] {
-  const byDoc = new Map<string, { docKey: string; title: string; pages: number[] }>();
+export function groupSources(sources: SourceRef[]): CitedDoc[] {
+  const byDoc = new Map<string, CitedDoc>();
   for (const s of sources) {
-    const entry = byDoc.get(s.docKey) ?? { docKey: s.docKey, title: s.title, pages: [] };
+    const entry = byDoc.get(s.docKey) ?? { docKey: s.docKey, title: s.title, pages: [], first: s };
     if (s.page && !entry.pages.includes(s.page)) entry.pages.push(s.page);
+    if ((s.bbox && !entry.first.bbox) || (s.page && !entry.first.page)) entry.first = s;
     byDoc.set(s.docKey, entry);
   }
+  for (const entry of byDoc.values()) entry.pages.sort((a, b) => a - b);
   return [...byDoc.values()];
+}
+
+export interface Problem {
+  key: string;
+  kind: "compare" | "missing_value" | "declaration" | "issue";
+  // The field or requirement the places show, e.g. "ico", "recipient signature", "faktura".
+  label: string;
+  // Compare sides in letter order (a is the reference); other kinds have one side, "".
+  sides: { side: string; sources: SourceRef[] }[];
+}
+
+// A rule's problem places, one entry per field or issue.
+export function problemsOf(rule: RuleView): Problem[] {
+  const byKey = new Map<string, Problem>();
+  for (const s of rule.sources.filter((src) => src.problem)) {
+    const compare = s.role?.match(/^compare_(\w+)$/);
+    const kind: Problem["kind"] = compare ? "compare" : s.role === "missing_value" || s.role === "declaration" ? s.role : "issue";
+    const label = (kind === "compare" ? (s.field ?? s.issue) : (s.issue ?? s.field)) ?? "value";
+    const key = `${kind}:${label}`;
+    const problem = byKey.get(key) ?? { key, kind, label, sides: [] };
+    const side = compare?.[1] ?? "";
+    const entry = problem.sides.find((x) => x.side === side);
+    if (entry) entry.sources.push(s);
+    else problem.sides.push({ side, sources: [s] });
+    byKey.set(key, problem);
+  }
+  for (const p of byKey.values()) p.sides.sort((a, b) => a.side.localeCompare(b.side));
+  return [...byKey.values()];
+}
+
+// Where opening a rule lands: a problem with a box, any problem, a source with a box, any source.
+export function focusSourceOf(rule: RuleView): SourceRef | undefined {
+  const { sources } = rule;
+  return (
+    sources.find((s) => s.problem && s.bbox) ??
+    sources.find((s) => s.problem) ??
+    sources.find((s) => s.bbox) ??
+    sources[0]
+  );
+}
+
+export function shortTitle(title: string) {
+  return title.replace(/\.pdf$/i, "").replace(/^\d+_/, "").replace(/_/g, " ");
 }
 
 const verdicts: Record<string, { decision: CaseView["decision"]; headline: string }> = {
@@ -324,14 +459,23 @@ export function createCaseView(evaluation: EvaluationRow, results: ResultRow[]):
     };
   });
 
+  // A source without document_id joins the document of the same title that has one.
+  const idByTitle = new Map<string, string>();
+  for (const s of rules.flatMap((r) => r.sources)) if (s.documentId) idByTitle.set(s.title, s.documentId);
+  for (const s of rules.flatMap((r) => r.sources)) {
+    const id = idByTitle.get(s.title);
+    if (!s.documentId && id) s.docKey = id;
+  }
+
   const docs = new Map<string, DocView>();
   for (const rule of rules) {
     for (const s of rule.sources) {
       const doc =
         docs.get(s.docKey) ??
-        ({ key: s.docKey, title: s.title, pages: [], fields: [], referencedPages: [], ...previewFor(evaluation.case_id, s.title) } as DocView);
+        ({ key: s.docKey, title: s.title, pages: [], fields: [], referencedPages: [], marks: [], ...previewFor(evaluation.case_id, s.title) } as DocView);
       doc.documentId ??= s.documentId;
       if (s.page && !doc.referencedPages.includes(s.page)) doc.referencedPages.push(s.page);
+      if (s.bbox) doc.marks.push({ source: s, ruleId: rule.id, ruleLabel: rule.label, status: rule.status });
       // required_documents_present cites the documents that are there, so it doesn't mark them.
       if (rule.id !== "required_documents_present" && rule.status !== "pass" && rule.status !== "na") {
         doc.status = worst([doc.status ?? "na", rule.status]);

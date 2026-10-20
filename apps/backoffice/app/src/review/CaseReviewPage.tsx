@@ -3,19 +3,26 @@ import Skeleton from "../Skeleton";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import ActivityTimeline from "./ActivityTimeline";
 import DecisionPanel from "./DecisionPanel";
-import DocumentPanel, { type Focus } from "./DocumentPanel";
+import DocumentPanel from "./DocumentPanel";
+import { focusOn, type Focus } from "./focus";
 import EvidenceChip from "./EvidenceChip";
 import StatusIcon from "./StatusIcon";
 import {
   createCaseView,
+  focusSourceOf,
   groupSources,
+  problemsOf,
+  shortTitle,
+  toneOf,
   formatDuration,
   formatTime,
   isRunning,
   type CaseView,
   type CheckStatus,
+  type Problem,
   type RuleGroup,
   type RuleView,
+  type SourceRef,
 } from "./evaluation";
 import { rawStatusLabel } from "./ruleLabels";
 import formatDate from "../cases/formatDate";
@@ -48,9 +55,57 @@ function rawCounts(rules: RuleView[]) {
   return [...counts.entries()];
 }
 
-function RuleRow({ rule, onOpen }: { rule: RuleView; onOpen: (focus: Focus) => void }) {
+function Place({ source, tone, onOpen }: { source: SourceRef; tone: string; onOpen: (focus: Focus) => void }) {
+  const where = `${shortTitle(source.title)}${source.page ? ` · p. ${source.page}` : ""}`;
   return (
-    <li className={`cr-finding cr-finding--${rule.status}`} id={`rule-${rule.id}`}>
+    <button
+      type="button"
+      className={`cr-place cr-place--${tone}`}
+      title={[`${source.title}${source.page ? `, page ${source.page}` : ""}`, source.quote].filter(Boolean).join(": ")}
+      onClick={() => onOpen(focusOn(source))}
+    >
+      {source.quote && <span className="cr-place__quote">{source.quote}</span>}
+      <span className="cr-place__src">{where}</span>
+    </button>
+  );
+}
+
+function problemTitle(p: Problem) {
+  const label = p.label.replace(/_/g, " ");
+  if (p.kind === "compare") return `${label} differs`;
+  if (p.kind === "missing_value") return `${label} missing`;
+  if (p.kind === "declaration") return `Requires ${label}`;
+  return label;
+}
+
+function ProblemList({ rule, onOpen }: { rule: RuleView; onOpen: (focus: Focus) => void }) {
+  const problems = problemsOf(rule);
+  if (!problems.length) return null;
+  return (
+    <ul className="cr-problems">
+      {problems.map((p) => (
+        <li key={p.key} className="cr-problem">
+          <span className="cr-problem__title">{problemTitle(p)}</span>
+          <span className="cr-problem__places">
+            {p.sides.map((side, i) => (
+              <span key={side.side} className="cr-problem__side">
+                {i > 0 && <span className="cr-problem__ne" aria-label="differs from">≠</span>}
+                {side.side && <span className="cr-problem__letter">{side.side.toUpperCase()}</span>}
+                {side.sources.map((src) => (
+                  <Place key={src.id} source={src} tone={toneOf(src, rule.status)} onOpen={onOpen} />
+                ))}
+              </span>
+            ))}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function RuleRow({ rule, selected, onOpen }: { rule: RuleView; selected: boolean; onOpen: (focus: Focus) => void }) {
+  return (
+    <li className={`cr-finding cr-finding--${rule.status}${selected ? " is-selected" : ""}`} id={`rule-${rule.id}`}>
       <StatusIcon status={rule.status} size={16} />
       <div className="cr-finding__body">
         <p className="cr-finding__title">
@@ -79,6 +134,7 @@ function RuleRow({ rule, onOpen }: { rule: RuleView; onOpen: (focus: Focus) => v
             <p className="cr-muted cr-finding__conf">Extraction confidence {Math.round(rule.confidence * 100)} %</p>
           )}
         </div>
+        <ProblemList rule={rule} onOpen={onOpen} />
         {rule.sources.length > 0 && (
           <div className="cr-finding__evidence">
             {groupSources(rule.sources).map((s) => (
@@ -97,14 +153,19 @@ function GroupCard({
   onToggle,
   onOpen,
   running,
+  selectedRuleId,
+  showRest,
+  onShowRest,
 }: {
   running: boolean;
+  selectedRuleId: string | undefined;
+  showRest: boolean;
+  onShowRest: () => void;
   group: RuleGroup;
   open: boolean;
   onToggle: () => void;
   onOpen: (focus: Focus) => void;
 }) {
-  const [showRest, setShowRest] = useState(false);
   if (!group.evaluated) {
     return (
       <li className="cr-rule cr-rule--disabled" aria-disabled="true">
@@ -149,17 +210,17 @@ function GroupCard({
         <div className="cr-rule__body">
           <ul className="cr-findings">
             {issues.map((r) => (
-              <RuleRow key={r.id} rule={r} onOpen={onOpen} />
+              <RuleRow key={r.id} rule={r} selected={r.id === selectedRuleId} onOpen={onOpen} />
             ))}
             {rest.length > 0 && issues.length > 0 && !showRest ? (
               <li>
-                <button type="button" className="cr-passed" onClick={() => setShowRest(true)}>
+                <button type="button" className="cr-passed" onClick={onShowRest}>
                   <StatusIcon status="pass" size={16} />
                   {rest.length} passed or not applicable
                 </button>
               </li>
             ) : (
-              rest.map((r) => <RuleRow key={r.id} rule={r} onOpen={onOpen} />)
+              rest.map((r) => <RuleRow key={r.id} rule={r} selected={r.id === selectedRuleId} onOpen={onOpen} />)
             )}
           </ul>
         </div>
@@ -171,6 +232,8 @@ function GroupCard({
 function Review({ view }: { view: CaseView }) {
   const { evaluation: ev } = view;
   const [focus, setFocus] = useState<Focus | null>(null);
+  // Groups whose passed and not-applicable rules are unfolded.
+  const [showRest, setShowRest] = useState<Set<number>>(() => new Set());
   const previews = useDocumentPreviews(ev.case_id, view.docs);
   const [open, setOpen] = useState<Set<number>>(
     () => new Set(view.groups.filter((g) => g.status === "fail" || g.status === "warn").map((g) => g.id)),
@@ -202,19 +265,23 @@ function Review({ view }: { view: CaseView }) {
       return next;
     });
 
-  const jumpToRule = (ruleId: string) => {
+  // Opens the rule in the list and shows `source` (default: its first problem place) in the viewer.
+  const jumpToRule = (ruleId: string, source?: SourceRef) => {
     const group = view.groups.find((g) => g.rules.some((r) => r.id === ruleId));
     if (!group) return;
+    const rule = group.rules.find((r) => r.id === ruleId)!;
     setTab("rules");
     setOpen((prev) => new Set(prev).add(group.id));
+    // The passed and not-applicable rules are folded away until shown.
+    if (rule.status === "pass" || rule.status === "na") setShowRest((prev) => new Set(prev).add(group.id));
     requestAnimationFrame(() => {
       const el = document.getElementById(`rule-${ruleId}`);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
       el?.classList.add("is-flash");
       window.setTimeout(() => el?.classList.remove("is-flash"), 1200);
     });
-    const source = view.rules.find((r) => r.id === ruleId)?.sources[0];
-    if (source) setFocus({ docKey: source.docKey, page: source.page ?? 1, nonce: Date.now() });
+    const target = source ?? focusSourceOf(rule);
+    if (target) setFocus(focusOn(target));
   };
 
   const title = queued?.client?.name ?? view.borrower ?? `Case ${shortId(ev.case_id)}`;
@@ -426,7 +493,17 @@ function Review({ view }: { view: CaseView }) {
             {tab === "rules" ? (
               <ol className="cr-rules">
                 {view.groups.map((g) => (
-                  <GroupCard key={g.id} running={running} group={g} open={open.has(g.id)} onToggle={() => toggle(g.id)} onOpen={setFocus} />
+                  <GroupCard
+                    key={g.id}
+                    running={running}
+                    group={g}
+                    open={open.has(g.id)}
+                    onToggle={() => toggle(g.id)}
+                    onOpen={setFocus}
+                    selectedRuleId={focus?.ruleId}
+                    showRest={showRest.has(g.id)}
+                    onShowRest={() => setShowRest((prev) => new Set(prev).add(g.id))}
+                  />
                 ))}
               </ol>
             ) : (
@@ -444,6 +521,7 @@ function Review({ view }: { view: CaseView }) {
           missing={view.missingDocs}
           focus={focus}
           onSelect={setFocus}
+          onOpenMark={(mark) => jumpToRule(mark.ruleId, mark.source)}
           onPreviewError={previews.refresh}
         />
       </div>

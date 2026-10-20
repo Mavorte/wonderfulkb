@@ -10,7 +10,7 @@
     "preview": "vite preview --configLoader runner",
     "package": "node scripts/package.js",
     "runner": "node runner/server.mjs",
-    "test": "node --test \"infra/**/*.test.mjs\""
+    "test": "node --test \"infra/**/*.test.mjs\" \"src/**/*.test.ts\""
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19.0.0",
