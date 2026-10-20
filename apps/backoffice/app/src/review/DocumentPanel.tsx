@@ -1,18 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import RevealOriginalButton, { type RevealedOriginal } from "./RevealOriginalButton";
 import StatusIcon from "./StatusIcon";
-import type { DocView, RequiredDoc } from "./evaluation";
-
-export interface Focus {
-  docKey: string;
-  page: number;
-  // Changes on every click so re-selecting the same page scrolls again.
-  nonce: number;
-}
-
-function shortTitle(title: string) {
-  return title.replace(/\.pdf$/i, "").replace(/^\d+_/, "").replace(/_/g, " ");
-}
+import { shortTitle, toneOf, type DocView, type Mark, type RequiredDoc } from "./evaluation";
+import { visibleMarks, type Focus } from "./focus";
 
 export default function DocumentPanel({
   caseId,
@@ -20,6 +10,7 @@ export default function DocumentPanel({
   missing,
   focus,
   onSelect,
+  onOpenMark,
   onPreviewError,
   running,
 }: {
@@ -29,6 +20,8 @@ export default function DocumentPanel({
   missing: RequiredDoc[];
   focus: Focus | null;
   onSelect: (focus: Focus) => void;
+  // A box on a page was clicked: select its rule.
+  onOpenMark: (mark: Mark) => void;
   // A preview image failed to load, e.g. because its presigned link expired.
   onPreviewError: () => void;
 }) {
@@ -39,6 +32,18 @@ export default function DocumentPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
 
+  // A box is placed a third down the viewer; without one, the page top is.
+  const scrollToFocus = useCallback(() => {
+    const scroller = scrollRef.current;
+    const page = focus && pageRefs.current[focus.page - 1];
+    if (!scroller || !page) return;
+    const bbox = focus.source?.page === focus.page ? focus.source.bbox : undefined;
+    const top = page.offsetTop - scroller.offsetTop + (bbox ? bbox[1] * page.offsetHeight - scroller.clientHeight / 3 : 0);
+    scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }, [focus]);
+
+  const hasPreview = !!doc?.pages.some(Boolean);
+
   useEffect(() => {
     if (!focus) return;
     // In the stacked (narrow) layout the panel can sit below the fold.
@@ -46,10 +51,10 @@ export default function DocumentPanel({
     if (focus.nonce && rect && (rect.top > window.innerHeight || rect.bottom < 0)) {
       sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    const scroller = scrollRef.current;
-    const page = pageRefs.current[focus.page - 1];
-    if (scroller && page) scroller.scrollTo({ top: page.offsetTop - scroller.offsetTop, behavior: "smooth" });
   }, [focus]);
+
+  // Pages arriving after the click (a document still loading) scroll once they render.
+  useEffect(scrollToFocus, [scrollToFocus, hasPreview]);
 
   if (!doc) {
     return (
@@ -60,7 +65,6 @@ export default function DocumentPanel({
   }
 
   const activePage = focus?.docKey === doc.key ? focus.page : null;
-  const hasPreview = doc.pages.some(Boolean);
   const shownOriginal = original?.docKey === doc.key ? original : null;
 
   return (
@@ -75,7 +79,8 @@ export default function DocumentPanel({
               role="tab"
               aria-selected={d.key === doc.key}
               className="cr-thumb"
-              onClick={() => onSelect({ docKey: d.key, page: d.referencedPages[0] ?? 1, nonce: Date.now() })}
+              // Switching documents keeps the selected rule, so its boxes stay drawn.
+              onClick={() => onSelect({ docKey: d.key, page: d.referencedPages[0] ?? 1, ruleId: focus?.ruleId, nonce: Date.now() })}
               title={d.title}
             >
               <span className={`cr-thumb__img${cover ? "" : " is-unavailable"}`}>
@@ -184,7 +189,32 @@ export default function DocumentPanel({
               }}
             >
               {src ? (
-                <img src={src} alt={`${doc.title}, page ${i + 1}`} loading={i < 3 ? "eager" : "lazy"} onError={onPreviewError} />
+                <>
+                  <img
+                    src={src}
+                    alt={`${doc.title}, page ${i + 1}`}
+                    loading={i < 3 || activePage === i + 1 ? "eager" : "lazy"}
+                    onError={onPreviewError}
+                    // The page's real height is known only now; re-aim at the box, unless a later link refresh reloads it.
+                    onLoad={activePage === i + 1 ? () => focus && Date.now() - focus.nonce < 5000 && scrollToFocus() : undefined}
+                  />
+                  {visibleMarks(doc.marks, i + 1, focus).map(({ mark: m, label }) => {
+                    const [x0, y0, x1, y1] = m.source.bbox!;
+                    const active = m.source.id === focus?.source?.id;
+                    const tone = toneOf(m.source, m.status);
+                    return (
+                      <button
+                        key={m.source.id}
+                        type="button"
+                        className={`cr-mark cr-mark--${tone} cr-mark--${m.source.anchor}${active ? " is-active" : ""}`}
+                        style={{ left: `${x0 * 100}%`, top: `${y0 * 100}%`, width: `${(x1 - x0) * 100}%`, height: `${(y1 - y0) * 100}%` }}
+                        title={label}
+                        aria-label={label}
+                        onClick={() => onOpenMark(m)}
+                      />
+                    );
+                  })}
+                </>
               ) : (
                 <div className="cr-page__missing">No preview for this page</div>
               )}
