@@ -27,7 +27,7 @@ export AWS_PROFILE=hackathon AWS_DEFAULT_REGION=eu-central-1   # aws sso login -
 .venv/bin/python -I -m pipeline report <case_id> [<case_id> ...]      # tabulka stran a stavů
 ./run_rest.sh                                                         # zbytek datasetu, viz „Dávka“
 ```
-Přepínače: `--skip classify,embed,signatures` (nebo `PIPELINE_SKIP`), `--no-vision` (nevolá Bedrock, skeny skončí v `pages_failed`), `--force-vision` (všechny strany vizuálně), `--json`, `--resume` (přeskočí dokumenty `completed` touto verzí), `--report soubor.json` (čas, stav a počty volání AWS/Bedrocku po dokumentu, průběžně přepisováno). Návratový kód je 1, když některý dokument skončil `failed`.
+Přepínače: `--skip classify,embed,signatures,copy,regions` (nebo `PIPELINE_SKIP`), `--no-vision` (nevolá Bedrock, skeny skončí v `pages_failed`), `--force-vision` (všechny strany vizuálně), `--json`, `--resume` (přeskočí dokumenty `completed` touto verzí), `--report soubor.json` (čas, stav a počty volání AWS/Bedrocku po dokumentu, průběžně přepisováno). Návratový kód je 1, když některý dokument skončil `failed`.
 
 Z Pythonu: `from pipeline import run_document, run_case, Source, Options`; `run_document("case", None, source=Source("cases/.../x.pdf"))` je přímý režim, `document_id` se pak odvodí jako v ingestu (`uuid5` z `case_id` a SHA-256). Výstupy přímého režimu jdou do `cases/<case_id>/analysis/<document_id>/` s vaším `case_id`, originál se jen čte.
 
@@ -42,6 +42,27 @@ Z Pythonu: `from pipeline import run_document, run_case, Source, Options`; `run_
   Požadavek na modul `signatures/`: ink masky se neukládají (správně, viz privacy), takže `copy_case` pro ně musí projít `process_pdf` včetně rolí a výřezu v paměti. Stačila by veřejná funkce `masks_for(pdf, signatures)` bez rolí; do té doby to funguje, jen pomaleji. Ověřeno na `solom-rec` (`--dry-run`): přepočet reprodukuje existující úrovně `suspected`, rozdíl jen v `matches` jednoho dokumentu.
 - **Výřezy:** při zapnuté redakci (výchozí) se zapisují jen šifrované (`.png.enc` + zkreslený `.preview.png`), viz „Redakce a šifrování výřezů“. Bez ní (`--no-redact`) platí starší chování: žádné výřezy, šifrované jen s `PIPELINE_ENCRYPT_CROPS=1`. Pilotní běh 19. 10. dopoledne ještě čitelné výřezy `signatures/sig_NN.png` zapsal, než se `S3CropStore` zpřísnil; verzovaný bucket, migrace patří privacy (v-redact-migrate).
 - **Podpisy (bez redakce, `--no-redact`):** selhání nebo nedostupnost podpisového kroku **nemění** `processing_status` (jen se zapíše do `run.json`); prázdný nález je platný a zapíše se jako `signatures: []`. Adaptér volá `signature_pipeline.detect_signatures(pdf, None, case_id=, document_id=, crop_store=S3CropStore)` a zapíše `signatures.json` bez `crop_url` plus `signatures_s3_key`. Podezření na kopii napříč dokumenty (`process_case`) pipeline nepočítá.
+
+- **Regiony (`regions`, od 20. 10. 2026):** po klasifikaci a vektorech se ze **zamaskované kopie** (bez redakce
+  z originálu) postaví regiony modulem `../regions/region_pipeline` (odstavce s `bbox`, textem a štítky) a zapíšou se
+  do `analysis/<document_id>/regions.json`; řádek dostane `regions_s3_key`. Štítkovací model dostane `label` dokumentu
+  z klasifikace (`doc_label`). Štítky z modelu (Haiku 4.5, vlastní limiter `REGIONS_MAX_RPM`, výchozí 20/min) jsou
+  výchozí, `PIPELINE_REGIONS_LLM=0` nechá jen regexovou zálohu. Krok **nemění** `processing_status` (jako podpisy),
+  selhání je jen v `run.json` (`steps.regions`, se statistikou `labels`: volání, kolik štítků z modelu a kolik ze
+  zálohy, chyby). `--skip regions` nic nepočítá a existující `regions.json` jen odkáže. Skeny bez textové vrstvy mají
+  zatím `pages[].source = no_text_layer` a žádné regiony. Při znovupoužití analýzy (dedup) se `regions.json` zdroje
+  zkopíruje se změněným `case_id`/`document_id`/`title`; chybí-li u zdroje, regiony se postaví z vlastní zamaskované
+  kopie. V testech (`tests/conftest.py`) je `PIPELINE_REGIONS_LLM=0`, Bedrock se nevolá.
+  **Jen regiony pro už zpracované dokumenty:** `python -I -m pipeline regions_case <case_id> [--document-id ID]
+  [--no-llm]` vezme zamaskovanou kopii (`redacted_s3_key`), zapíše `regions.json`, řádku přidá **jen**
+  `regions_s3_key` (UpdateItem) a do `run.json` `steps.regions` s `via: regions_case`; text, štítek, vektory ani
+  podpisy se nepřepočítávají. Dokument bez zamaskované kopie se přeskočí (`not_redacted`), z čitelného originálu
+  regiony nevznikají.
+  **Dávka 20. 10. 2026** (na pokyn uživatele, Haiku 4.5): `SYN-A01` (9 dokumentů) a `f5d68b03-647e-434d-9fa9-b60de81c6446`
+  (SYN-B05 Zervanta, 7 dokumentů), vše `ok`, 30 volání modelu, bez chyb; výsledky v `runs/regions-<case>.json`.
+  Model vynechal 42 id jen u 19stránkových VOP (dostaly regexovou zálohu). `solom-rec` se nezpracoval: v tabulce
+  analýzy je jen `pipeline-sample-solom-rec` bez zamaskované kopie (potřebuje plný běh s redakcí). Samotný případ
+  `SYN-B05` v tabulce analýzy není (nahrán, nezpracován), jeho obsah je pod `f5d68b03-…`.
 
 ## Redakce a šifrování výřezů (`redaction_step.py`)
 Podle [validator-agent-privacy.md](../../../be-validator-agent/docs/validator-agent-privacy.md), část 3 a 4. Čitelný originál nesmí napájet nic dalšího: `run_document` ho po stažení (a po případném znovupoužití analýzy) prožene tímto krokem a dál pracuje **jen se zamaskovanou kopií**.

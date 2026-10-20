@@ -35,7 +35,8 @@ def test_row_has_exactly_the_contract_attributes(ingest, make_options):
     ingest("c1", "d1", text_pdf(LONG))
     row = run_document("c1", "d1", options=make_options())
     allowed = {"case_id", "document_id", "title", "label", "label_status", "description", "confidence", "page_count",
-               "processing_status", "pages_failed", "text_s3_key", "signatures_s3_key", "pipeline_version", "updated_at"}
+               "processing_status", "pages_failed", "text_s3_key", "signatures_s3_key", "regions_s3_key",
+               "pipeline_version", "updated_at"}
     assert set(row) <= allowed
     assert row["label_status"] == "predicted" and row["description"].startswith("Kupni smlouva")
     assert row["updated_at"].endswith("Z")

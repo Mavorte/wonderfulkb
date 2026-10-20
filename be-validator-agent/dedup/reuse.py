@@ -62,6 +62,19 @@ def _signatures_body(raw, src_case, src_doc, case_id, document_id):
     return json.dumps(body, ensure_ascii=False).encode("utf-8")
 
 
+def _regions_body(raw, case_id, document_id, title):
+    """`regions.json` pro nový dokument: stejný obsah, tedy stejné regiony a id; mění se jen identifikace.
+    Poškozený soubor zdroje se nekopíruje (pipeline pak regiony postaví z vlastní zamaskované kopie)."""
+    try:
+        body = json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return None
+    if not isinstance(body, dict) or not isinstance(body.get("regions"), list):
+        return None
+    body.update(case_id=case_id, document_id=document_id, title=title)
+    return json.dumps(body, ensure_ascii=False).encode("utf-8")
+
+
 def reuse_analysis(aws, source, case_id, document_id, title, *, skip=frozenset(), previous=None, pipeline_version,
                    now, s3v=None) -> tuple:
     """Zkopíruje analýzu dokumentu `source` (řádek tabulky analýzy) pod `case_id` / `document_id`.
@@ -104,6 +117,12 @@ def reuse_analysis(aws, source, case_id, document_id, title, *, skip=frozenset()
             except (ValueError, UnicodeDecodeError) as error:
                 raise NotReusable("signatures.json původního dokumentu není platný JSON") from error
 
+    regions_raw = None
+    if "regions" not in skip:
+        raw = aws.get_bytes_or_none(source.get("regions_s3_key") or src_prefix + "regions.json")
+        if raw is not None:
+            regions_raw = _regions_body(raw, case_id, document_id, title)
+
     # 3) zápis: S3 objekty, vektory, nakonec řádek
     aws.put_bytes(prefix + "text.txt", text, "text/plain; charset=utf-8")
     copied_pages = 0
@@ -128,7 +147,11 @@ def reuse_analysis(aws, source, case_id, document_id, title, *, skip=frozenset()
         aws.put_bytes(prefix + "signatures.json", signatures_raw, "application/json")
     if signatures_raw is not None or keep_signatures:
         row["signatures_s3_key"] = prefix + "signatures.json"
+    if regions_raw is not None:
+        aws.put_bytes(prefix + "regions.json", regions_raw, "application/json")
+        row["regions_s3_key"] = prefix + "regions.json"
     row["updated_at"] = now()
     report = {"reused_from": row["reused_from"], "pages_copied": copied_pages, "vectors": written,
-              "signatures_copied": signatures_raw is not None, "signatures_kept": keep_signatures}
+              "signatures_copied": signatures_raw is not None, "signatures_kept": keep_signatures,
+              "regions_copied": regions_raw is not None}
     return row, report

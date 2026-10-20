@@ -1,4 +1,5 @@
-"""CLI: python -I -m pipeline run_case <case_id> | run_document <case_id> <document_id> | run_s3 <case_id> <s3_key>"""
+"""CLI: python -I -m pipeline run_case <case_id> | run_document <case_id> <document_id> | run_s3 <case_id> <s3_key>
+| regions_case <case_id> (only the regions step of processed, masked documents)"""
 import argparse
 import dataclasses
 import json
@@ -7,7 +8,7 @@ import sys
 
 from .config import STEPS, Settings
 from .copies import copy_case
-from .run import DocumentNotFound, Options, Source, run_case, run_document, run_prefix
+from .run import DocumentNotFound, Options, Source, regions_case, run_case, run_document, run_prefix
 
 
 def parse_args(argv):
@@ -38,6 +39,11 @@ def parse_args(argv):
     copy = sub.add_parser("copy_case", help="recompute copy_suspicion across the documents of a case (signatures.json)")
     copy.add_argument("case_id")
     copy.add_argument("--dry-run", action="store_true", help="compute and report, write nothing")
+    regions = sub.add_parser("regions_case", help="only the regions step for processed documents of a case "
+                                                  "(from the masked copy; nothing else is recomputed)")
+    regions.add_argument("case_id")
+    regions.add_argument("--document-id", action="append", help="only these documents (repeatable)")
+    regions.add_argument("--no-llm", action="store_true", help="regex labels only (PIPELINE_REGIONS_LLM=0)")
     report = sub.add_parser("report", help="table of analysed documents of the given cases (reads rows and run.json)")
     report.add_argument("case_ids", nargs="+")
     return ap.parse_args(argv)
@@ -75,6 +81,12 @@ def main(argv=None):
         return 0
     if args.command == "report":
         return report_table(args.case_ids) or 0
+    if args.command == "regions_case":
+        settings = Settings()
+        options = Options(settings=dataclasses.replace(settings, regions_llm=settings.regions_llm and not args.no_llm))
+        results = regions_case(args.case_id, options, args.document_id)
+        print(json.dumps(results, ensure_ascii=False, indent=1))
+        return 0 if all(r["status"] in ("ok", "not_redacted", "not_ready") for r in results) else 1
     skip = {s.strip() for s in args.skip.split(",") if s.strip()}
     unknown = skip - set(STEPS)
     if unknown:

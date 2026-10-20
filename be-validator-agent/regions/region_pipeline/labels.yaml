@@ -1,0 +1,93 @@
+# Štítky regionů (odstavců). Malá pevná sada, aby šlo filtrovat napříč případem (GET /cases/{c}/regions?label=…).
+# `rules` jsou regexová záloha bez LLM: hledají se v textu regionu bez diakritiky a malými písmeny, vyhrává první štítek
+# v pořadí `order`, jehož pravidlo sedí. Viz be-validator-agent/docs/regiony-dokumentu-navrh.md.
+version: 1
+
+labels:
+  povinny_podklad:
+    description: Jen v úvěrové dokumentaci (smlouva o úvěru, VOP, dodatek) text, podle kterého musí příjemce financování doložit poskytovateli dokument nebo splnit podmínku před čerpáním úvěru (seznam podkladů, podmínky čerpání, položky výčtu podkladů, seznam příloh smlouvy). Povinnosti mezi dodavatelem a objednatelem, technické parametry a kontrolní seznamy to nejsou; pouhá zmínka nebo číslo jiného dokumentu je odkaz_na_dokument.
+    rules:
+      - 'pred\s+cerpanim'
+      - '(predlozit|dolozit|dolozen\w*|predlozen\w*)\b.{0,80}\b(podklad|doklad|faktur|objednav|protokol|smlouv|vypis|prohlaseni)'
+      - 'nize\s+uvedene\s+podklady|nasledujici\s+podklady'
+  odkaz_na_dokument:
+    description: Zmínka o jiném dokumentu s jeho číslem nebo identifikací (číslo smlouvy o úvěru v objednávce, číslo objednávky nebo faktury), bez povinnosti ho doložit.
+    rules:
+      - '^(?=.{0,90}$)(smlouv\w*|objednavk\w*|faktur\w*|pojistn\w* smlouv\w*|cislo smlouvy)[^|]{0,40}\|\s*\S'
+      - '^(?=.{0,60}$)(smlouva|objednavka|faktura)\b.{0,25}\b(c\.|cislo)\s*:?\s*[a-z]{0,4}-?\d'
+  smluvni_strana:
+    description: Identifikace strany (název, IČO, DIČ, sídlo, zápis v rejstříku, účet) nebo nadpis/řádek, který stranu uvádí.
+    rules:
+      # Popisek strany jen u krátkého textu: věta „Příjemce financování je povinen …“ stranu neidentifikuje.
+      - '^(?=.{0,120}$)(dodavatel|prodavajici|kupujici|objednatel|odberatel|poskytovatel|veritel|uverujici|uverovany|prijemce financovani|dluznik|rucitel|pojistitel|pojistnik|zastavce)\b'
+      - '\bic(o)?\s*(/\s*dic)?\s*:?\s*(\|\s*)?\d{6,8}\b'
+      - '^(?=.{0,80}$)ic(o)?\b[^|]{0,30}\|\s*\d{6,8}\b'
+      - '\b(s\.\s?r\.\s?o\.|a\.\s?s\.|spol\.\s*s\s*r\.\s*o\.)\s*$'
+      - '^(zapis v or|modelovy rejstrik|sidlo|bankovni spojeni)\b'
+  podpisovy_blok:
+    description: Místo pro podpisy (Podpis, Jméno, Funkce, Za …, datum a místo podpisu u podpisů).
+    rules:
+      - '^\.{3,}|\.{6,}'
+      - '^(podpis|jmeno|funkce|razitko)\b|\b(podpis|jmeno|funkce)$'
+      - '^(?=.{0,120}$).*\bza\s+(poskytovatele|prijemce|dodavatele|kupujiciho|prodavajiciho|rucitele|veritele|dluznika)\b'
+      - '(prvni|druhy) podpis'
+  cena_platba:
+    description: Ceny, DPH, výše úvěru, splátky, úroky, poplatky, platební podmínky, účty pro platbu.
+    rules:
+      - '\d[\d  .]*,\d{2}\s*(czk|kc|eur)\b'
+      - '\b(dph|kupni cen\w*|cena|splatk\w*|urok\w*|jistin\w*|poplatek|zaloh\w*|splatnost)\b'
+  predmet:
+    description: Předmět financování nebo dodávky (stroj, typ, výrobce, výrobní číslo, specifikace, příslušenství).
+    rules:
+      - '\b(predmet financovani|predmet|vyrobni cislo|vyr\.\s*c\.|vyrobce|specifikac\w*|prislusenstvi|polozka)\b'
+  zajisteni:
+    description: Zajištění úvěru (ručení, zajišťovací převod, zástava, pojištění a vinkulace).
+    rules:
+      - '\b(ruc\w*|zajistovac\w*|zajisten\w*|zastav\w*|vinkulac\w*|pojist\w*)\b'
+  predani:
+    description: Předání a převzetí předmětu, stav při předání, přechod vlastnictví.
+    rules:
+      - '\b(predan\w*|prevzet\w*|predavaci|dodaci list|prechod\w* vlastnic\w*)\b'
+  termin_misto:
+    description: Data, místa a lhůty (datum vystavení, podpisu, dodání, místo plnění).
+    rules:
+      - '\b(datum|dne|lhut\w*|misto plneni|doba plneni|vystaveno|dodani)\b'
+      - '^\d{1,2}\.\s?\d{1,2}\.\s?\d{4}$'
+  hlavicka:
+    description: Název a číslo dokumentu, úvodní identifikace dokumentu.
+    rules:
+      - '^(smlouva|objednavka|faktura|protokol|potvrzeni|prohlaseni|dohoda|vseobecne obchodni podminky)\b'
+  obecne_ustanoveni:
+    description: Obecný právní text (VOP, závěrečná ustanovení, prohlášení stran), který nepatří jinam.
+    rules: []
+  jine:
+    description: Cokoli jiného (záhlaví a zápatí strany, poznámky, kódy).
+    rules: []
+
+# Typy dokumentů (classify/taxonomy.yaml), ve kterých smí být povinny_podklad. U jiného známého typu se štítek nahradí.
+podklady_in: [smlouva_o_uveru, vop, dodatek_ke_smlouve, data_ze_systemu]
+
+# Pořadí, v jakém se zkouší regexová pravidla (první shoda vyhrává).
+order: [povinny_podklad, hlavicka, odkaz_na_dokument, smluvni_strana, podpisovy_blok, predmet, cena_platba, zajisteni, predani, termin_misto]
+
+# Strany smlouvy (stejný výčet jako role podpisů). Klíčová slova pro zálohu: nadpis nebo popisek řádku nastaví stranu
+# i pro regiony pod ním (řádek „IČO / DIČ“ pod řádkem „Dodavatel“).
+parties:
+  supplier: ['dodavatel', 'prodavajici']
+  buyer: ['kupujici', 'objednatel', 'odberatel']
+  provider: ['poskytovatel', 'veritel', 'uverujici']
+  borrower: ['prijemce financovani', 'dluznik', 'uverovany']
+  guarantor: ['rucitel']
+  insurer: ['pojistitel', 'pojistovna']
+
+# Položka podkladu nebo odkaz → štítky dokumentů z classify/taxonomy.yaml (refers_to). Převzato z ref-agent/rules.yaml (R-COMPLETE).
+refers_to:
+  smlouva_o_uveru: ['smlouv\w*\s+o\s+uver']
+  faktura: ['danov\w*\s+doklad', 'faktur']
+  objednavka: ['kupni\s+smlouv', 'objednavk']
+  predavaci_protokol: ['predani\s+a\s+prevzeti', 'predavaci\s+protokol', 'dodaci\s+list', 'predani\s+stroje', 'potvrzeni\s+dodavatele\s+o\s+prevodu']
+  uhrada_kupni_ceny: ['doklad\s+o\s+(zaplaceni|uhrade)', 'vypis\w*\s+z\s+uctu', 'uhrad\w*\s+dph', 'zaplaceni\s+predmetu']
+  ruceni: ['prohlaseni\s+o\s+ruceni', 'rucitelsk\w*\s+prohlaseni']
+  zajistovaci_prevod_vlastnickeho_prava: ['zajistovac\w*\s+prevod']
+  vinkulace_pojisteni: ['vinkulac', 'pojistn\w*\s+smlouv']
+  technicka_specifikace: ['technick\w*\s+specifikac', 'detailni\s+specifikac']

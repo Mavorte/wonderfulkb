@@ -2,12 +2,14 @@
 
 Jedna Lambda pro všechny endpointy: dokumenty, vektory a podpisy obsluhuje `core`, případy a klienty
 (`/cases`, `/cases/{case_id}`, `/clients`, `/clients/{client_id}/cases`, dříve Lambda wonderfulkb-case-client)
-obsluhuje `case_client_handler`. Obojí za stejnou kontrolou x-api-key.
+obsluhuje `case_client_handler`, regiony (`/cases/{case_id}/regions`, `…/documents/{document_id}/regions`)
+`regions_api`. Vše za stejnou kontrolou x-api-key.
 """
 import base64
 import re
 
 import core
+import regions_api
 
 # Cesty Case & Client API; /cases/{case_id}/documents… zůstávají v core.
 CASE_CLIENT_RX = re.compile(r"^/(?:cases|clients)(?:/[^/]+)?$|^/clients/[^/]+/cases$")
@@ -39,6 +41,11 @@ def handler(event, context=None):
     headers = event.get("headers") or {}
     if CASE_CLIENT_RX.match(core.strip_base(path)):
         return _case_client(event, context, method, core.strip_base(path), headers)
+    if regions_api.matches(core.strip_base(path)):
+        status, body = regions_api.handle(method, core.strip_base(path), q, headers)
+        return {"statusCode": status,
+                "headers": {"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store"},
+                "body": core.dumps(body).decode("utf-8")}
     request = {"request_id": rc.get("requestId") or getattr(context, "aws_request_id", None),
                "api_key_id": (rc.get("identity") or {}).get("apiKeyId")}  # jen REST API s usage plan; HTTP API ne
     status, body = core.handle(method, path, q, headers, request=request)

@@ -11,6 +11,7 @@ import pytest
 
 os.environ.update(AWS_ACCESS_KEY_ID="testing", AWS_SECRET_ACCESS_KEY="testing", AWS_SESSION_TOKEN="testing",
                   AWS_DEFAULT_REGION="eu-central-1", AWS_REGION="eu-central-1")
+os.environ["PIPELINE_REGIONS_LLM"] = "0"  # region labels from regexes, never Bedrock
 for name in ("AWS_PROFILE", "PIPELINE_SKIP", "AWS_ENDPOINT_URL"):
     os.environ.pop(name, None)
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # infra/validator-agent

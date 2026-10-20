@@ -10,4 +10,5 @@ COPY embed ${LAMBDA_TASK_ROOT}/embed
 COPY dedup ${LAMBDA_TASK_ROOT}/dedup
 COPY signatures ${LAMBDA_TASK_ROOT}/signatures
 COPY privacy ${LAMBDA_TASK_ROOT}/privacy
+COPY regions ${LAMBDA_TASK_ROOT}/regions
 CMD ["trigger.worker_handler.handler"]
